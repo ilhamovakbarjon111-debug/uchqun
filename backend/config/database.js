@@ -3,13 +3,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME || 'uchqun',
-  process.env.DB_USER || 'postgres',
-  process.env.DB_PASSWORD || 'postgres',
-  {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
+// Support both DATABASE_URL format and individual variables
+let sequelize;
+
+if (process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL) {
+  // Use DATABASE_URL if provided (Railway, Heroku, etc.)
+  const dbUrl = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL;
+  sequelize = new Sequelize(dbUrl, {
     dialect: 'postgres',
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {
@@ -18,8 +18,33 @@ const sequelize = new Sequelize(
       acquire: 30000,
       idle: 10000,
     },
-  }
-);
+    dialectOptions: {
+      ssl: process.env.NODE_ENV === 'production' ? {
+        require: true,
+        rejectUnauthorized: false
+      } : false
+    }
+  });
+} else {
+  // Use individual variables
+  sequelize = new Sequelize(
+    process.env.DB_NAME || 'uchqun',
+    process.env.DB_USER || 'postgres',
+    process.env.DB_PASSWORD || 'postgres',
+    {
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 5432,
+      dialect: 'postgres',
+      logging: process.env.NODE_ENV === 'development' ? console.log : false,
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+      },
+    }
+  );
+}
 
 export default sequelize;
 
