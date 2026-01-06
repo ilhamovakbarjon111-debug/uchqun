@@ -37,6 +37,11 @@ FRONTEND_URL=http://localhost:5173,http://localhost:5174,http://localhost:5175,h
 - Local development URLs (localhost:5173, etc.)
 - Production frontend URLs (Vercel, Railway, etc.)
 
+**For this project, use:**
+```
+FRONTEND_URL=http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177,https://uchqun-platform.vercel.app
+```
+
 For production, use your actual frontend URLs with HTTPS.
 
 ### 3. Database Configuration
