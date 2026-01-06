@@ -19,6 +19,11 @@ npm install
 
 2. Create a `.env` file (optional):
 ```env
+VITE_API_URL=https://uchqun-production.up.railway.app/api
+```
+
+For local development:
+```env
 VITE_API_URL=http://localhost:5000/api
 ```
 
@@ -62,7 +67,7 @@ teacher/
 
 ## Backend API
 
-This frontend connects to the backend API at `http://localhost:5000/api`. Make sure the backend is running before starting the frontend.
+This frontend connects to the backend API at `https://uchqun-production.up.railway.app/api` (production) or `http://localhost:5000/api` (local development). Make sure the backend is running before starting the frontend.
 
 ## Login
 
