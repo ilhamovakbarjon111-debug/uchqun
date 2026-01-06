@@ -47,7 +47,24 @@ const envSchema = Joi.object({
   JWT_REFRESH_EXPIRE: Joi.string().default('7d'),
 
   // CORS Configuration
-  FRONTEND_URL: Joi.string().uri().required(),
+  // Can be a single URL or multiple URLs separated by commas
+  // Example: "http://localhost:5173" or "http://localhost:5173,http://localhost:5174,https://app.example.com"
+  FRONTEND_URL: Joi.string().required().custom((value, helpers) => {
+    // Split by comma and validate each URL
+    const urls = value.split(',').map(url => url.trim()).filter(url => url.length > 0);
+    if (urls.length === 0) {
+      return helpers.error('string.base');
+    }
+    // Validate each URL
+    for (const url of urls) {
+      try {
+        new URL(url);
+      } catch (e) {
+        return helpers.error('string.uri', { value: url });
+      }
+    }
+    return value;
+  }, 'Multiple URLs validation'),
 
   // Database Sync (development only)
   FORCE_SYNC: Joi.string().valid('true', 'false').default('false'),
@@ -100,8 +117,10 @@ export function validateEnv() {
 
   // Additional validation: Check that production has HTTPS
   if (value.NODE_ENV === 'production') {
-    if (value.FRONTEND_URL && !value.FRONTEND_URL.startsWith('https://')) {
-      console.warn('Warning: FRONTEND_URL should use HTTPS in production');
+    const frontendUrls = value.FRONTEND_URL.split(',').map(url => url.trim());
+    const nonHttpsUrls = frontendUrls.filter(url => !url.startsWith('https://'));
+    if (nonHttpsUrls.length > 0) {
+      console.warn(`Warning: The following FRONTEND_URL(s) should use HTTPS in production: ${nonHttpsUrls.join(', ')}`);
     }
   }
 

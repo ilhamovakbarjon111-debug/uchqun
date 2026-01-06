@@ -21,11 +21,19 @@ JWT_REFRESH_EXPIRE=7d
 
 ### 2. Frontend URL (Required)
 
+You can set a single URL or multiple URLs separated by commas:
+
+**Single URL:**
 ```
 FRONTEND_URL=https://your-frontend-domain.com
 ```
 
-For production, use your actual frontend URL with HTTPS.
+**Multiple URLs (for multiple frontend applications):**
+```
+FRONTEND_URL=https://admin.example.com,https://teacher.example.com,https://reception.example.com,https://super-admin.example.com
+```
+
+For production, use your actual frontend URLs with HTTPS.
 
 ### 3. Database Configuration
 
@@ -58,7 +66,7 @@ FORCE_SYNC=false
 
    - `JWT_SECRET` - Generate a secure random string (at least 32 characters)
    - `JWT_REFRESH_SECRET` - Generate a different secure random string (at least 32 characters)
-   - `FRONTEND_URL` - Your frontend application URL (e.g., `https://your-app.vercel.app`)
+   - `FRONTEND_URL` - Your frontend application URL(s). For multiple frontends, separate with commas (e.g., `https://admin.vercel.app,https://teacher.vercel.app`)
    - `NODE_ENV=production` (optional, defaults to development)
    - `PORT=5000` (optional, Railway sets this automatically)
 
@@ -108,5 +116,5 @@ Make sure you've set:
 1. Check the deployment logs in Railway
 2. Verify all required environment variables are set
 3. Ensure `JWT_SECRET` and `JWT_REFRESH_SECRET` are different
-4. Check that `FRONTEND_URL` is a valid URL
+4. Check that `FRONTEND_URL` is a valid URL (or comma-separated URLs)
 
