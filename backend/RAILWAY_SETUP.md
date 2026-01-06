@@ -30,8 +30,12 @@ FRONTEND_URL=https://your-frontend-domain.com
 
 **Multiple URLs (for multiple frontend applications):**
 ```
-FRONTEND_URL=https://admin.example.com,https://teacher.example.com,https://reception.example.com,https://super-admin.example.com
+FRONTEND_URL=http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177,https://uchqun-platform.vercel.app
 ```
+
+**IMPORTANT:** Make sure to include ALL frontend URLs that will access the backend, including:
+- Local development URLs (localhost:5173, etc.)
+- Production frontend URLs (Vercel, Railway, etc.)
 
 For production, use your actual frontend URLs with HTTPS.
 
