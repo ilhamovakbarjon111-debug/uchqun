@@ -34,9 +34,29 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Debug: Check if password field exists and is a valid hash
+    if (!user.password) {
+      logger.error('User found but password field is missing', { email: normalizedEmail, userId: user.id });
+      return res.status(500).json({ error: 'User account error. Please contact support.' });
+    }
+
+    // Check if password is a valid bcrypt hash (starts with $2a$, $2b$, or $2y$)
+    if (!user.password.startsWith('$2')) {
+      logger.error('User password is not properly hashed', { 
+        email: normalizedEmail, 
+        userId: user.id,
+        passwordLength: user.password?.length 
+      });
+      return res.status(500).json({ error: 'User account error. Password needs to be reset.' });
+    }
+
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-      logger.warn('Login attempt with invalid password', { email: normalizedEmail, userId: user.id });
+      logger.warn('Login attempt with invalid password', { 
+        email: normalizedEmail, 
+        userId: user.id,
+        passwordHashPrefix: user.password.substring(0, 7) // First 7 chars of hash for debugging
+      });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 

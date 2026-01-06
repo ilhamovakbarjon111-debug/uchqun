@@ -13,6 +13,7 @@
     "remove:demo": "node scripts/remove-demo-users.js",
     "create:teacher": "node scripts/create-teacher.js",
     "create:admin": "node scripts/create-admin.js",
+    "reset:admin": "node scripts/reset-admin-password.js",
     "fix:varchar": "node scripts/fix-varchar-limits.js",
     "migrate": "node config/migrate.js",
     "migrate:undo": "echo 'Manual rollback required - check migrations directory'"
