@@ -13,6 +13,7 @@ import {
   updateParent,
   deleteTeacher,
   deleteParent,
+  createChildForParent,
 } from '../controllers/receptionController.js';
 import { getGroups } from '../controllers/groupController.js';
 
@@ -43,11 +44,13 @@ router.get('/teachers', getTeachers);
 router.put('/teachers/:id', updateTeacher);
 router.delete('/teachers/:id', deleteTeacher);
 
-// Parent management
-router.post('/parents', createParent);
+// Parent management (with file upload support for child photo)
+router.post('/parents', upload.fields([{ name: 'child[photo]', maxCount: 1 }]), createParent);
 router.get('/parents', getParents);
 router.put('/parents/:id', updateParent);
 router.delete('/parents/:id', deleteParent);
+// Add child to existing parent (separate endpoint to avoid route conflicts)
+router.post('/children', upload.fields([{ name: 'child[photo]', maxCount: 1 }]), createChildForParent);
 
 // Groups (for parent assignment)
 router.get('/groups', getGroups);

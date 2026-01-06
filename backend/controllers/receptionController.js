@@ -5,6 +5,8 @@ import Document from '../models/Document.js';
 import logger from '../utils/logger.js';
 import bcrypt from 'bcryptjs';
 import { Op } from 'sequelize';
+import { uploadFile } from '../config/storage.js';
+import fs from 'fs';
 
 /**
  * Reception Controller
@@ -180,11 +182,48 @@ export const createTeacher = async (req, res) => {
  */
 export const createParent = async (req, res) => {
   try {
-    const { email, password, firstName, lastName, phone, teacherId, groupId, child } = req.body;
+    // Debug: Log request body and files
+    logger.info('Create parent request', {
+      bodyKeys: Object.keys(req.body),
+      hasFiles: !!req.files,
+      filesKeys: req.files ? Object.keys(req.files) : [],
+    });
+    
+    // Parse nested FormData fields (child[fieldName] -> child.fieldName)
+    let child = null;
+    const childFirstName = req.body['child[firstName]'] || req.body.child?.firstName;
+    if (childFirstName) {
+      child = {
+        firstName: childFirstName,
+        lastName: req.body['child[lastName]'] || req.body.child?.lastName || '',
+        dateOfBirth: req.body['child[dateOfBirth]'] || req.body.child?.dateOfBirth || '',
+        gender: req.body['child[gender]'] || req.body.child?.gender || 'Male',
+        disabilityType: req.body['child[disabilityType]'] || req.body.child?.disabilityType || '',
+        specialNeeds: req.body['child[specialNeeds]'] || req.body.child?.specialNeeds || null,
+        school: req.body['child[school]'] || req.body.child?.school || 'Uchqun School',
+        photo: null, // Will be handled from req.files
+      };
+    }
+    
+    // Get parent data from FormData or regular body
+    const email = req.body.email;
+    const password = req.body.password;
+    const firstName = req.body.firstName;
+    const lastName = req.body.lastName;
+    const phone = req.body.phone || null;
+    const teacherId = req.body.teacherId || null;
+    const groupId = req.body.groupId || null;
 
     if (!email || !password || !firstName || !lastName) {
+      logger.warn('Create parent validation failed', {
+        email: !!email,
+        password: !!password,
+        firstName: !!firstName,
+        lastName: !!lastName,
+        bodyKeys: Object.keys(req.body),
+      });
       return res.status(400).json({ 
-        error: 'Email, password, first name, and last name are required' 
+        error: 'Email, password, first name, and last name are required'
       });
     }
 
@@ -236,27 +275,29 @@ export const createParent = async (req, res) => {
     if (child && child.firstName && child.lastName) {
       let childClassName = '';
       let childTeacherName = '';
+      let photoUrl = null;
       
-      // If groupId is provided, get class and teacher from group
-      if (child.groupId) {
-        const selectedGroup = await Group.findByPk(child.groupId, {
-          include: [
-            {
-              model: User,
-              as: 'teacher',
-              attributes: ['id', 'firstName', 'lastName'],
-            },
-          ],
-        });
-        
-        if (selectedGroup) {
-          // Use group name as class
-          childClassName = selectedGroup.name;
-          // Use teacher's name
-          if (selectedGroup.teacher) {
-            childTeacherName = `${selectedGroup.teacher.firstName} ${selectedGroup.teacher.lastName}`;
+      // Handle photo file upload if provided
+      if (req.files && req.files['child[photo]'] && req.files['child[photo]'][0]) {
+        const photoFile = req.files['child[photo]'][0];
+        try {
+          const fileBuffer = fs.readFileSync(photoFile.path);
+          const uploadResult = await uploadFile(fileBuffer, photoFile.filename, photoFile.mimetype);
+          photoUrl = uploadResult.url;
+          
+          // Delete local file after upload
+          try {
+            fs.unlinkSync(photoFile.path);
+          } catch (e) {
+            logger.warn('Error deleting local photo file after upload', { error: e.message });
           }
+        } catch (error) {
+          logger.error('Error uploading child photo', { error: error.message });
+          // Continue without photo if upload fails
         }
+      } else if (child.photo && typeof child.photo === 'string') {
+        // If photo is a URL string (legacy support)
+        photoUrl = child.photo;
       }
       
       await Child.create({
@@ -267,12 +308,12 @@ export const createParent = async (req, res) => {
         gender: child.gender,
         disabilityType: child.disabilityType,
         specialNeeds: child.specialNeeds || null,
-        photo: child.photo || null,
+        photo: photoUrl,
         school: child.school,
         class: childClassName || child.class || '',
         teacher: childTeacherName || child.teacher || '',
-        groupId: child.groupId || null,
-        emergencyContact: child.emergencyContact || {},
+        groupId: null, // Removed groupId from child
+        emergencyContact: {}, // Removed emergency contact
       });
     }
 
@@ -604,6 +645,102 @@ export const deleteParent = async (req, res) => {
   } catch (error) {
     logger.error('Delete parent error', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to delete parent' });
+  }
+};
+
+/**
+ * Create a Child for an existing Parent
+ * POST /api/reception/parents/:parentId/children
+ * 
+ * Business Logic:
+ * - Reception can add children to parents they created
+ * - Supports file upload for child photo
+ */
+export const createChildForParent = async (req, res) => {
+  try {
+    // Get parentId from params or body
+    const parentId = req.params.id || req.body.parentId;
+    
+    // Verify parent exists and was created by this reception user
+    const parent = await User.findOne({
+      where: { id: parentId, role: 'parent', createdBy: req.user.id },
+    });
+
+    if (!parent) {
+      return res.status(404).json({ error: 'Parent not found or you do not have permission to add children to this parent' });
+    }
+
+    // Parse FormData fields
+    const firstName = req.body['child[firstName]'] || req.body.firstName;
+    const lastName = req.body['child[lastName]'] || req.body.lastName;
+    const dateOfBirth = req.body['child[dateOfBirth]'] || req.body.dateOfBirth;
+    const gender = req.body['child[gender]'] || req.body.gender || 'Male';
+    const disabilityType = req.body['child[disabilityType]'] || req.body.disabilityType;
+    const specialNeeds = req.body['child[specialNeeds]'] || req.body.specialNeeds || null;
+    const school = req.body['child[school]'] || req.body.school || 'Uchqun School';
+
+    if (!firstName || !lastName || !dateOfBirth || !gender || !disabilityType || !school) {
+      return res.status(400).json({ 
+        error: 'First name, last name, date of birth, gender, disability type, and school are required' 
+      });
+    }
+
+    let photoUrl = null;
+    
+    // Handle photo file upload if provided
+    if (req.files && req.files['child[photo]'] && req.files['child[photo]'][0]) {
+      const photoFile = req.files['child[photo]'][0];
+      try {
+        const fileBuffer = fs.readFileSync(photoFile.path);
+        const uploadResult = await uploadFile(fileBuffer, photoFile.filename, photoFile.mimetype);
+        photoUrl = uploadResult.url;
+        
+        // Delete local file after upload
+        try {
+          fs.unlinkSync(photoFile.path);
+        } catch (e) {
+          logger.warn('Error deleting local photo file after upload', { error: e.message });
+        }
+      } catch (error) {
+        logger.error('Error uploading child photo', { error: error.message });
+        // Continue without photo if upload fails
+      }
+    } else if (req.body['child[photo]'] && typeof req.body['child[photo]'] === 'string') {
+      // If photo is a URL string (legacy support)
+      photoUrl = req.body['child[photo]'];
+    }
+
+    // Create child
+    const child = await Child.create({
+      parentId: parent.id,
+      firstName,
+      lastName,
+      dateOfBirth,
+      gender,
+      disabilityType,
+      specialNeeds,
+      photo: photoUrl,
+      school,
+      class: '', // Will be set from group if needed
+      teacher: '', // Will be set from group if needed
+      groupId: null,
+      emergencyContact: {},
+    });
+
+    logger.info('Child created by Reception', {
+      childId: child.id,
+      parentId: parent.id,
+      createdBy: req.user.id,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Child created successfully',
+      data: child.toJSON(),
+    });
+  } catch (error) {
+    logger.error('Create child error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to create child' });
   }
 };
 
