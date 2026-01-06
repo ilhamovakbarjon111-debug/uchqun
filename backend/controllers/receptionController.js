@@ -690,14 +690,15 @@ export const createChildForParent = async (req, res) => {
       return res.status(404).json({ error: 'Parent not found or you do not have permission to add children to this parent' });
     }
 
-    // Parse FormData fields
-    const firstName = req.body['child[firstName]'] || req.body.firstName;
-    const lastName = req.body['child[lastName]'] || req.body.lastName;
-    const dateOfBirth = req.body['child[dateOfBirth]'] || req.body.dateOfBirth;
-    const gender = req.body['child[gender]'] || req.body.gender || 'Male';
-    const disabilityType = req.body['child[disabilityType]'] || req.body.disabilityType;
-    const specialNeeds = req.body['child[specialNeeds]'] || req.body.specialNeeds || null;
-    const school = req.body['child[school]'] || req.body.school || 'Uchqun School';
+    // Parse FormData fields - try multiple formats
+    // Multer might parse nested fields differently
+    const firstName = req.body['child[firstName]'] || req.body['child.firstName'] || req.body.firstName || req.body.child?.firstName;
+    const lastName = req.body['child[lastName]'] || req.body['child.lastName'] || req.body.lastName || req.body.child?.lastName;
+    const dateOfBirth = req.body['child[dateOfBirth]'] || req.body['child.dateOfBirth'] || req.body.dateOfBirth || req.body.child?.dateOfBirth;
+    const gender = req.body['child[gender]'] || req.body['child.gender'] || req.body.gender || req.body.child?.gender || 'Male';
+    const disabilityType = req.body['child[disabilityType]'] || req.body['child.disabilityType'] || req.body.disabilityType || req.body.child?.disabilityType;
+    const specialNeeds = req.body['child[specialNeeds]'] || req.body['child.specialNeeds'] || req.body.specialNeeds || req.body.child?.specialNeeds || null;
+    const school = req.body['child[school]'] || req.body['child.school'] || req.body.school || req.body.child?.school || 'Uchqun School';
 
     // Debug: Log parsed values
     logger.info('Create child: parsed values', {

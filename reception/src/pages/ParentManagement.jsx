@@ -254,6 +254,7 @@ const ParentManagement = () => {
       loadParents();
     } catch (error) {
       console.error('Error adding child:', error);
+      console.error('Error response:', error.response?.data);
       const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to add child';
       const errorDetails = error.response?.data?.missing ? `Missing: ${JSON.stringify(error.response.data.missing)}` : '';
       showError(`${errorMessage}${errorDetails ? ` - ${errorDetails}` : ''}`);
