@@ -21,6 +21,8 @@
   },
   "dashboard": {
     "role": "Mening rolim: O'qituvchi",
+    "roleTeacher": "Mening rolim: O'qituvchi",
+    "roleAdmin": "Mening rolim: Admin",
     "welcome": "Xush kelibsiz",
     "overview": "Umumiy ko'rinish",
     "parents": "Ota-onalar",

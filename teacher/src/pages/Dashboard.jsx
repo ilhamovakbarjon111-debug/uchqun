@@ -66,13 +66,22 @@ const Dashboard = () => {
     { title: t('dashboard.media'), value: stats?.media || 0, icon: Camera },
   ];
 
+  // Get role display text based on user role
+  const getRoleText = () => {
+    if (user?.role === 'admin') {
+      return t('dashboard.roleAdmin') || 'My Role: Admin';
+    } else if (user?.role === 'teacher') {
+      return t('dashboard.roleTeacher') || 'My Role: Teacher';
+    }
+    return t('dashboard.role') || 'My Role: Teacher';
+  };
 
   return (
     <div className="space-y-6">
       <div className="bg-orange-500 rounded-2xl p-6 md:p-8 -mx-4 md:mx-0">
         <div className="flex items-center gap-3 mb-2">
           <Users className="w-6 h-6 text-white" />
-          <p className="text-white/90 text-sm font-medium">{t('dashboard.role')}</p>
+          <p className="text-white/90 text-sm font-medium">{getRoleText()}</p>
         </div>
         <p className="text-white/90 text-sm mb-1">{t('dashboard.welcome')}</p>
         <h1 className="text-3xl md:text-4xl font-bold text-white">

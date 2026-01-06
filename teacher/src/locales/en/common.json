@@ -21,6 +21,8 @@
   },
   "dashboard": {
     "role": "My Role: Teacher",
+    "roleTeacher": "My Role: Teacher",
+    "roleAdmin": "My Role: Admin",
     "welcome": "Welcome back",
     "overview": "Admin Overview",
     "parents": "Parents",
