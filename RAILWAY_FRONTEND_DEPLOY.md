@@ -139,3 +139,6 @@ Railway'da frontend deploy qilish:
 3. ✅ Build va start command'lar to'g'ri ishlayotganini tekshiring
 4. ✅ Deploy qiling va test qiling
 
+
+
+

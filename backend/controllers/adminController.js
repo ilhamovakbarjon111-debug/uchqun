@@ -884,17 +884,26 @@ export const getStatistics = async (req, res) => {
  * 
  * Business Logic:
  * - Super admin can create Admin accounts
+ * - If role is 'superAdmin', can be created without token
  * - Only email and password are required
  * - firstName and lastName are set to default values
  */
 export const createAdmin = async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, role } = req.body;
 
     if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({ 
         error: 'First name, last name, email and password are required' 
       });
+    }
+
+    // If role is 'superAdmin', allow creation without authentication
+    const isSuperAdmin = role === 'superAdmin';
+    
+    // For regular admin creation, require authentication
+    if (!isSuperAdmin && !req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
     // Check if user already exists
@@ -904,23 +913,25 @@ export const createAdmin = async (req, res) => {
     }
 
     // Create admin with provided firstName and lastName
+    // If role is 'superAdmin', create as 'admin' role (since User model only has 'admin' role)
     const admin = await User.create({
       email: email.toLowerCase(),
       password,
       firstName,
       lastName,
-      role: 'admin',
+      role: 'admin', // User model only supports 'admin', 'reception', 'teacher', 'parent'
     });
 
     logger.info('Admin account created', {
       adminId: admin.id,
       email: admin.email,
-      createdBy: req.user?.id || 'super-admin',
+      isSuperAdmin,
+      createdBy: req.user?.id || (isSuperAdmin ? 'direct-creation' : 'unknown'),
     });
 
     res.status(201).json({
       success: true,
-      message: 'Admin account created successfully',
+      message: isSuperAdmin ? 'Super admin account created successfully' : 'Admin account created successfully',
       data: admin.toJSON(),
     });
   } catch (error) {
