@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Calendar, Image as ImageIcon, User, LogOut, CookingPot} from 'lucide-react';
+import { Home, Calendar, Image as ImageIcon, User, LogOut, CookingPot, Bot} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 
@@ -14,6 +14,7 @@ const BottomNav = () => {
     { name: t('nav.activities'), href: '/activities', icon: Calendar },
     { name: t('nav.media'), href: '/media', icon: ImageIcon },
     { name: t('nav.meals'), href: '/meals', icon: CookingPot },
+    { name: t('nav.aiChat'), href: '/ai-chat', icon: Bot },
     { name: t('nav.profile'), href: '/child', icon: User },
   ];
 
