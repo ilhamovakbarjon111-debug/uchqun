@@ -9,6 +9,17 @@ import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 
+// Remove any legacy local-file URLs pointing to /uploads to avoid broken links
+function sanitizeMediaUrls(media) {
+  const data = media.toJSON ? media.toJSON() : media;
+  const cleanField = (value) => (value && typeof value === 'string' && value.includes('/uploads/')) ? null : value;
+  return {
+    ...data,
+    url: cleanField(data.url),
+    thumbnail: cleanField(data.thumbnail),
+  };
+}
+
 export const getMedia = async (req, res) => {
   try {
     const { type, limit, offset, date, childId } = req.query;
@@ -111,7 +122,8 @@ export const getMedia = async (req, res) => {
       ],
     });
 
-    res.json(Array.isArray(media) ? media : []);
+    const sanitized = Array.isArray(media) ? media.map(sanitizeMediaUrls) : [];
+    res.json(sanitized);
   } catch (error) {
     logger.error('Get media error', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to get media' });
@@ -186,7 +198,7 @@ export const getMediaItem = async (req, res) => {
       return res.status(404).json({ error: 'Media not found' });
     }
 
-    res.json(mediaItem);
+    res.json(sanitizeMediaUrls(mediaItem));
   } catch (error) {
     logger.error('Get media item error', { error: error.message, stack: error.stack, mediaId: req.params.id });
     res.status(500).json({ error: 'Failed to get media item' });
@@ -375,7 +387,7 @@ export const uploadMedia = async (req, res) => {
       );
     }
 
-    res.status(201).json(createdMedia);
+    res.status(201).json(sanitizeMediaUrls(createdMedia));
   } catch (error) {
     logger.error('Upload media error', { error: error.message, stack: error.stack, userId: req.user?.id });
     
