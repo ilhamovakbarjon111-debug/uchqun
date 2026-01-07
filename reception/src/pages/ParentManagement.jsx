@@ -748,20 +748,20 @@ const ParentManagement = () => {
                     </div>
 
                     <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        School <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.child.school}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          child: { ...formData.child, school: e.target.value }
-                        })}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      />
-                    </div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          School <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.child.school}
+                          onChange={(e) => setFormData({ 
+                            ...formData, 
+                            child: { ...formData.child, school: e.target.value }
+                          })}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        />
+                      </div>
 
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
@@ -827,47 +827,47 @@ const ParentManagement = () => {
 
             <form onSubmit={handleSubmitChild} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                     First Name <span className="text-red-500">*</span>
-                  </label>
+                        </label>
                   <input
                     type="text"
-                    required
+                          required
                     value={childFormData.firstName}
                     onChange={(e) => setChildFormData({ ...childFormData, firstName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
-                </div>
+                      </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Last Name <span className="text-red-500">*</span>
                   </label>
-                  <input
+                      <input
                     type="text"
                     required
                     value={childFormData.lastName}
                     onChange={(e) => setChildFormData({ ...childFormData, lastName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
                 </div>
-              </div>
+                    </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
                     Date of Birth <span className="text-red-500">*</span>
-                  </label>
-                  <input
+                          </label>
+                          <input
                     type="date"
-                    required
+                            required
                     value={childFormData.dateOfBirth}
                     onChange={(e) => setChildFormData({ ...childFormData, dateOfBirth: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
                     Gender <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -886,15 +886,15 @@ const ParentManagement = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Disability Type <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
+                          </label>
+                          <input
+                            type="text"
+                            required
                   value={childFormData.disabilityType}
                   onChange={(e) => setChildFormData({ ...childFormData, disabilityType: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-              </div>
+                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                        </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Special Needs</label>
@@ -906,18 +906,18 @@ const ParentManagement = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
                   School <span className="text-red-500">*</span>
-                </label>
-                <input
+                          </label>
+                          <input
                   type="text"
-                  required
+                            required
                   value={childFormData.school}
                   onChange={(e) => setChildFormData({ ...childFormData, school: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-              </div>
+                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                        </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
@@ -935,10 +935,10 @@ const ParentManagement = () => {
                         alt="Preview" 
                         className="w-32 h-32 object-cover rounded-lg border border-gray-200"
                       />
-                    </div>
+                      </div>
                   )}
-                </div>
-              </div>
+                    </div>
+                  </div>
 
               <div className="flex gap-3 pt-4">
                 <button
