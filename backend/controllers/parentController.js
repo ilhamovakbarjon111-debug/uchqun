@@ -355,3 +355,206 @@ export const getParentData = async (req, res) => {
   }
 };
 
+/**
+ * Get AI advice for parents
+ * POST /api/parent/ai/chat
+ * 
+ * Business Logic:
+ * - Parents can ask AI for advice about caring for their child at home
+ * - AI provides advice about caring for children with disabilities
+ * - Uses OpenAI API or fallback to rule-based responses
+ */
+export const getAIAdvice = async (req, res) => {
+  try {
+    const { message, childInfo } = req.body;
+
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Get parent's children info for context
+    const children = await Child.findAll({
+      where: { parentId: req.user.id },
+      attributes: ['firstName', 'lastName', 'dateOfBirth', 'gender', 'disabilityType', 'specialNeeds'],
+      limit: 1,
+    });
+
+    const child = children.length > 0 ? children[0] : null;
+
+    // Prepare context for AI
+    const context = {
+      parentName: `${req.user.firstName} ${req.user.lastName}`,
+      child: child ? {
+        name: `${child.firstName} ${child.lastName}`,
+        age: child.dateOfBirth ? Math.floor((new Date() - new Date(child.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)) : null,
+        gender: child.gender,
+        disabilityType: child.disabilityType,
+        specialNeeds: child.specialNeeds,
+      } : null,
+      message: message.trim(),
+    };
+
+    // Try to use OpenAI API if available
+    let aiResponse;
+    const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0;
+    
+    logger.info('AI chat request', {
+      parentId: req.user.id,
+      hasOpenAIKey,
+      messageLength: message.trim().length,
+    });
+    
+    if (hasOpenAIKey) {
+      try {
+        const OpenAI = (await import('openai')).default;
+        const openai = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY,
+        });
+
+        const systemPrompt = `You are a helpful AI assistant specialized in providing advice to parents of children with special needs and disabilities. 
+You provide practical, empathetic, and evidence-based advice about:
+- How to care for children with disabilities at home
+- Daily routines and activities
+- Nutrition and meal planning
+- Communication strategies
+- Behavioral support
+- Emotional support for both children and parents
+- Safety considerations
+- Educational activities at home
+
+Always respond in a warm, supportive, and professional manner. If the parent mentions their child's specific disability type or special needs, incorporate that into your advice.`;
+
+        const userPrompt = child
+          ? `Parent: ${context.parentName}
+Child: ${context.child.name} (${context.child.age} years old, ${context.child.gender})
+Disability Type: ${context.child.disabilityType || 'Not specified'}
+Special Needs: ${context.child.specialNeeds || 'None specified'}
+
+Parent's Question: ${context.message}
+
+Please provide helpful, practical advice.`
+          : `Parent: ${context.parentName}
+
+Parent's Question: ${context.message}
+
+Please provide helpful, practical advice about caring for children with special needs.`;
+
+        const completion = await openai.chat.completions.create({
+          model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 500,
+        });
+
+        aiResponse = completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response. Please try again.';
+        
+        logger.info('OpenAI API response generated successfully', {
+          parentId: req.user.id,
+          messageLength: context.message.length,
+          responseLength: aiResponse.length,
+        });
+      } catch (openaiError) {
+        logger.error('OpenAI API error', { 
+          error: openaiError.message,
+          stack: openaiError.stack,
+          parentId: req.user.id,
+        });
+        // Fallback to rule-based response
+        aiResponse = generateFallbackResponse(context);
+      }
+    } else {
+      // Fallback to rule-based response if OpenAI is not configured
+      aiResponse = generateFallbackResponse(context);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        message: context.message,
+        response: aiResponse,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    logger.error('Get AI advice error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to get AI advice' });
+  }
+};
+
+/**
+ * Generate fallback response when OpenAI is not available
+ */
+function generateFallbackResponse(context) {
+  const message = context.message.toLowerCase();
+  const child = context.child;
+
+  // Basic keyword-based responses
+  if (message.includes('uy') || message.includes('home') || message.includes('qanday qarash') || message.includes('care')) {
+    return `Uyda bolangizni parvarish qilish uchun quyidagi maslahatlarni amalga oshirishingiz mumkin:
+
+1. **Kun tartibi yarating**: Har kuni bir xil vaqtda uyg'onish, ovqatlanish va uxlash vaqtlarini belgilang. Bu bolangizga tushunish va kutilishni o'rgatadi.
+
+2. **Xavfsiz muhit yarating**: Uy atrofida xavfsizlikni ta'minlang - burchaklar, o'tkir narsalar va xavfli materiallarni olib tashlang.
+
+3. **Muloqotni rag'batlantiring**: Bolangiz bilan muntazam ravishda gaplashing, ertak o'qing va qo'shiq aytib bering. Bu til rivojlanishiga yordam beradi.
+
+4. **Faol o'yinlar**: Bolangizning yoshiga va qobiliyatlariga mos o'yinlar va mashg'ulotlar tashkil qiling.
+
+5. **Sabr va muhabbat**: Eng muhimi - bolangizga sabr va muhabbat bilan yondashing. Har bir kichik yutuqni nishonlang.
+
+Agar bolangizning maxsus ehtiyojlari bo'lsa, ularni hisobga oling va tegishli mutaxassislar bilan maslahatlashing.`;
+  }
+
+  if (message.includes('nogiron') || message.includes('disability') || message.includes('maxsus')) {
+    return `Nogironligi bor bolani parvarish qilishda quyidagilarni yodda tuting:
+
+1. **Individual yondashuv**: Har bir bola boshqacha, shuning uchun bolangizning ehtiyojlariga mos yondashuvni toping.
+
+2. **Professional yordam**: Mutaxassislar (logoped, psixolog, fizioterapevt) bilan muntazam aloqada bo'ling.
+
+3. **Mashg'ulotlar**: Uyda professional tavsiyalar asosida mashg'ulotlar o'tkazing.
+
+4. **Oilaviy qo'llab-quvvatlash**: Barcha oila a'zolari bolangizni qo'llab-quvvatlashda ishtirok etishi kerak.
+
+5. **O'z-o'ziga g'amxo'rlik**: O'zingizga ham vaqt ajrating - dam oling va qo'llab-quvvatlovchi oila a'zolari yoki do'stlar bilan aloqada bo'ling.
+
+6. **Muvaffaqiyatlarni nishonlash**: Kichik yutuqlarni ham katta muvaffaqiyat sifatida qabul qiling.
+
+Agar aniq savollaringiz bo'lsa, mutaxassislar bilan maslahatlashing.`;
+  }
+
+  if (message.includes('ovqat') || message.includes('meal') || message.includes('nutrition') || message.includes('parvarish')) {
+    return `Bolangizning ovqatlanishi uchun maslahatlar:
+
+1. **Muntazam ovqatlanish**: Kuniga 3-4 marta muntazam ovqat berish bolangizning sog'lig'i uchun muhim.
+
+2. **Balanslangan ovqat**: Meva, sabzavot, protein va karbohidratlarni muvozanatlashtiring.
+
+3. **Maxsus ehtiyojlar**: Agar bolangizning allergiyasi yoki maxsus dietasi bo'lsa, uni qat'iy rioya qiling.
+
+4. **Sabr**: Ba'zi bolalar ovqatlanishda qiyinchiliklarga duch kelishi mumkin. Sabr bilan yondashing.
+
+5. **Ijodkorlik**: Ovqatni qiziqarli va jozibali qilib taqdim eting - rangli idishlar, qiziqarli shakllar.
+
+Agar ovqatlanish bilan bog'liq muammolaringiz bo'lsa, dietolog yoki pediatr bilan maslahatlashing.`;
+  }
+
+  // Default response
+  return `Rahmat, savolingizni qabul qildim. Bolangizni uyda parvarish qilish haqida quyidagi umumiy maslahatlarni berishim mumkin:
+
+1. **Muntazam kun tartibi**: Har kuni bir xil vaqtda uyg'onish, ovqatlanish va uxlash vaqtlarini belgilang.
+
+2. **Xavfsiz muhit**: Uy atrofida xavfsizlikni ta'minlang va bolangizning yoshiga mos o'yinchoqlar va materiallar tayyorlang.
+
+3. **Muloqot va o'yin**: Bolangiz bilan muntazam ravishda gaplashing, ertak o'qing va o'yinlar o'tkazing.
+
+4. **Professional yordam**: Mutaxassislar bilan muntazam aloqada bo'ling va ularning tavsiyalarini amalga oshiring.
+
+5. **Sabr va muhabbat**: Eng muhimi - bolangizga sabr va muhabbat bilan yondashing.
+
+Agar aniq savollaringiz bo'lsa, iltimos, batafsilroq yozing va men sizga yanada aniq maslahat beraman.`;
+}
+
