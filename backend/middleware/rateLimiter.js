@@ -52,10 +52,11 @@ export const passwordResetLimiter = rateLimit({
   },
 });
 
-// Rate limiter for file uploads (10 uploads per 15 minutes)
+// Rate limiter for file uploads (50 uploads per 15 minutes in production, 200 in development)
+// Can be overridden with UPLOAD_LIMIT_MAX and UPLOAD_LIMIT_WINDOW_MS env vars
 export const uploadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 uploads per windowMs
+  windowMs: Number(process.env.UPLOAD_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: Number(process.env.UPLOAD_LIMIT_MAX) || (process.env.NODE_ENV === 'production' ? 50 : 200), // Higher limit in development
   message: 'Too many file uploads, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,

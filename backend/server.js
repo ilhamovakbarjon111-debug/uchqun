@@ -6,7 +6,6 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 // Import security middleware
 import { securityHeaders, enforceHTTPS } from './middleware/security.js';
-import { apiLimiter } from './middleware/rateLimiter.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import logger from './utils/logger.js';
 
@@ -49,7 +48,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(enforceHTTPS);
 }
 
-// Trust proxy (needed for rate limiting and HTTPS behind reverse proxy)
+// Trust proxy (needed for HTTPS behind reverse proxy)
 app.set('trust proxy', 1);
 
 // CORS Configuration
@@ -122,15 +121,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 if (process.env.NODE_ENV !== 'production') {
   app.use('/uploads', express.static('uploads'));
 }
-
-// Apply general rate limiting to all API routes (except health checks)
-app.use('/api', (req, res, next) => {
-  // Skip rate limiting for health checks
-  if (req.path.startsWith('/health')) {
-    return next();
-  }
-  apiLimiter(req, res, next);
-});
 
 // Health check routes (before API routes, no rate limiting)
 app.use('/health', healthRoutes);

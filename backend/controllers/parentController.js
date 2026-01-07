@@ -488,60 +488,79 @@ Please provide helpful, practical advice about caring for children with special 
           isOpenRouter,
         });
         
-        // If OpenRouter and insufficient credits or model not found, try free models
+        // If OpenRouter and insufficient credits or model not found, try to get available models
         if (isOpenRouter && (openaiError.message.includes('402') || openaiError.message.includes('404') || openaiError.message.includes('credits'))) {
-          // List of free models to try (in order of preference)
-          const freeModels = [
-            'qwen/qwen-2.5-7b-instruct:free',
-            'deepseek/deepseek-r1-0528:free',
-            'meta-llama/llama-3.2-3b-instruct:free',
-            'google/gemini-flash-1.5',
-          ];
-          
-          let freeModelSuccess = false;
-          
-          for (const freeModel of freeModels) {
-            try {
-              logger.info(`Trying free OpenRouter model: ${freeModel}`);
-              const OpenAI = (await import('openai')).default;
-              const openaiFree = new OpenAI({
-                apiKey: process.env.OPENAI_API_KEY,
-                baseURL: process.env.OPENAI_BASE_URL,
-                defaultHeaders: {
-                  'HTTP-Referer': process.env.FRONTEND_URL?.split(',')[0] || 'https://uchqun-production.up.railway.app',
-                  'X-Title': 'Uchqun Parent Portal',
-                },
-              });
-
-              const freeCompletion = await openaiFree.chat.completions.create({
-                model: freeModel,
-                messages: [
-                  { role: 'system', content: systemPrompt },
-                  { role: 'user', content: userPrompt },
-                ],
-                temperature: 0.7,
-                max_tokens: 500,
-              });
-
-              aiResponse = freeCompletion.choices[0]?.message?.content || 'I apologize, but I could not generate a response. Please try again.';
-              freeModelSuccess = true;
+          // Try to fetch available models from OpenRouter API
+          try {
+            logger.info('Fetching available models from OpenRouter');
+            const response = await fetch('https://openrouter.ai/api/v1/models', {
+              headers: {
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                'HTTP-Referer': process.env.FRONTEND_URL?.split(',')[0] || 'https://uchqun-production.up.railway.app',
+                'X-Title': 'Uchqun Parent Portal',
+              },
+            });
+            
+            if (response.ok) {
+              const modelsData = await response.json();
+              const freeModels = modelsData.data
+                ?.filter(model => model.pricing?.prompt === '0' || model.id.includes(':free'))
+                ?.map(model => model.id)
+                ?.slice(0, 5) || [];
               
-              logger.info('Free OpenRouter model response generated successfully', {
-                parentId: req.user.id,
-                responseLength: aiResponse.length,
-                model: freeModel,
-              });
-              break; // Success, exit loop
-            } catch (freeModelError) {
-              logger.warn(`Free model ${freeModel} failed, trying next`, { 
-                error: freeModelError.message,
-              });
-              // Continue to next model
+              logger.info(`Found ${freeModels.length} free models on OpenRouter`, { models: freeModels });
+              
+              // Try free models
+              for (const freeModel of freeModels) {
+                try {
+                  logger.info(`Trying free OpenRouter model: ${freeModel}`);
+                  const OpenAI = (await import('openai')).default;
+                  const openaiFree = new OpenAI({
+                    apiKey: process.env.OPENAI_API_KEY,
+                    baseURL: process.env.OPENAI_BASE_URL,
+                    defaultHeaders: {
+                      'HTTP-Referer': process.env.FRONTEND_URL?.split(',')[0] || 'https://uchqun-production.up.railway.app',
+                      'X-Title': 'Uchqun Parent Portal',
+                    },
+                  });
+
+                  const freeCompletion = await openaiFree.chat.completions.create({
+                    model: freeModel,
+                    messages: [
+                      { role: 'system', content: systemPrompt },
+                      { role: 'user', content: userPrompt },
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 500,
+                  });
+
+                  aiResponse = freeCompletion.choices[0]?.message?.content || 'I apologize, but I could not generate a response. Please try again.';
+                  
+                  logger.info('Free OpenRouter model response generated successfully', {
+                    parentId: req.user.id,
+                    responseLength: aiResponse.length,
+                    model: freeModel,
+                  });
+                  break; // Success, exit loop
+                } catch (freeModelError) {
+                  logger.warn(`Free model ${freeModel} failed`, { 
+                    error: freeModelError.message,
+                  });
+                  // Continue to next model
+                }
+              }
+              
+              // If no free models worked, use fallback
+              if (!aiResponse || aiResponse === 'I apologize, but I could not generate a response. Please try again.') {
+                logger.warn('No free models worked, using fallback');
+                aiResponse = generateFallbackResponse(context);
+              }
+            } else {
+              logger.warn('Could not fetch OpenRouter models, using fallback');
+              aiResponse = generateFallbackResponse(context);
             }
-          }
-          
-          if (!freeModelSuccess) {
-            logger.error('All free OpenRouter models failed, using fallback');
+          } catch (fetchError) {
+            logger.error('Error fetching OpenRouter models', { error: fetchError.message });
             // Fallback to rule-based response
             aiResponse = generateFallbackResponse(context);
           }

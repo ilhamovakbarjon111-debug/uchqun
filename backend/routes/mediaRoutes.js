@@ -11,7 +11,6 @@ import { authenticate, requireRole } from '../middleware/auth.js';
 import { createMediaValidator, updateMediaValidator, mediaIdValidator } from '../validators/mediaValidator.js';
 import { paginationValidator, dateQueryValidator, childIdQueryValidator } from '../validators/queryValidator.js';
 import { handleValidationErrors } from '../middleware/validation.js';
-import { uploadLimiter } from '../middleware/rateLimiter.js';
 import { uploadSingle, handleUploadError } from '../middleware/upload.js';
 import { body } from 'express-validator';
 
@@ -25,7 +24,6 @@ router.get('/:id', mediaIdValidator, handleValidationErrors, getMediaItem);
 // File upload endpoint (multipart/form-data)
 router.post('/upload', 
   requireRole('teacher', 'admin'), 
-  uploadLimiter, 
   uploadSingle,
   [
     body('childId')
@@ -55,7 +53,7 @@ router.post('/upload',
 );
 
 // URL-based media creation (legacy support)
-router.post('/', requireRole('teacher', 'admin'), uploadLimiter, createMediaValidator, handleValidationErrors, createMedia);
+router.post('/', requireRole('teacher', 'admin'), createMediaValidator, handleValidationErrors, createMedia);
 router.put('/:id', requireRole('teacher', 'admin'), mediaIdValidator.concat(updateMediaValidator), handleValidationErrors, updateMedia);
 router.delete('/:id', requireRole('teacher', 'admin'), mediaIdValidator, handleValidationErrors, deleteMedia);
 
