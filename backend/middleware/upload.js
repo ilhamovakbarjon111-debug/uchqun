@@ -2,21 +2,21 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// Use a temp directory for uploads (Appwrite/GCS will store permanently)
+const tempUploadsDir = path.join(os.tmpdir(), 'uchqun-uploads-temp');
+if (!fs.existsSync(tempUploadsDir)) {
+  fs.mkdirSync(tempUploadsDir, { recursive: true });
 }
 
 // Configure storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // For production, this should upload to GCS instead
-    cb(null, uploadsDir);
+    cb(null, tempUploadsDir);
   },
   filename: (req, file, cb) => {
     // Generate unique filename

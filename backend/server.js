@@ -117,9 +117,6 @@ app.use(requestLogger);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve uploaded files (always). Note: files are stored locally when GCS is not configured.
-app.use('/uploads', express.static('uploads'));
-
 // Health check routes (before API routes, no rate limiting)
 app.use('/health', healthRoutes);
 

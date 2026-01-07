@@ -1,12 +1,7 @@
 import { Storage } from '@google-cloud/storage';
 import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
 import { Client as AppwriteClient, Storage as AppwriteStorage, ID } from 'node-appwrite';
 import { InputFile } from 'node-appwrite/file';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 let storage;
 let bucket;
@@ -56,7 +51,7 @@ if (process.env.GCP_PROJECT_ID && process.env.GCS_BUCKET_NAME) {
 }
 
 /**
- * Upload file to storage (GCS in production, local in development)
+ * Upload file to storage (Appwrite preferred, GCS fallback)
  * @param {Buffer|Stream} file - File buffer or stream
  * @param {string} filename - Destination filename
  * @param {string} mimetype - File MIME type
@@ -119,36 +114,9 @@ export async function uploadFile(file, filename, mimetype) {
         file.pipe(stream);
       }
     });
-  } else {
-    // Local file storage (development)
-    const uploadsDir = path.join(__dirname, '../uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
-    const filepath = path.join(uploadsDir, filename);
-    
-    if (Buffer.isBuffer(file)) {
-      fs.writeFileSync(filepath, file);
-    } else {
-      // If it's a stream, write it to disk
-      const writeStream = fs.createWriteStream(filepath);
-      file.pipe(writeStream);
-      await new Promise((resolve, reject) => {
-        writeStream.on('finish', resolve);
-        writeStream.on('error', reject);
-      });
-    }
-
-    // Return URL (in production, this should be your API URL)
-    const baseUrl = process.env.API_URL || 'http://localhost:5000';
-    const url = `${baseUrl}/uploads/${filename}`;
-    
-    return {
-      url,
-      path: filepath,
-    };
   }
+
+  throw new Error('No storage configured. Please set Appwrite or GCS credentials.');
 }
 
 /**
@@ -185,16 +153,10 @@ export async function deleteFile(filepath) {
     const filename = getFilename(filepath);
     const blob = bucket.file(filename);
     await blob.delete();
-  } else {
-    // Delete from local storage
-    const uploadsDir = path.join(__dirname, '../uploads');
-    const filename = getFilename(filepath);
-    const fullPath = path.join(uploadsDir, filename);
-    
-    if (fs.existsSync(fullPath)) {
-      fs.unlinkSync(fullPath);
-    }
+    return;
   }
+
+  throw new Error('No storage configured. Please set Appwrite or GCS credentials.');
 }
 
 /**
@@ -219,11 +181,9 @@ export async function getSignedUrl(filename, expiresIn = 3600) {
       expires: Date.now() + expiresIn * 1000,
     });
     return url;
-  } else {
-    // Local file - return public URL
-    const baseUrl = process.env.API_URL || 'http://localhost:5000';
-    return `${baseUrl}/uploads/${filename}`;
   }
+
+  throw new Error('No storage configured. Please set Appwrite or GCS credentials.');
 }
 
 async function streamToBuffer(stream) {
