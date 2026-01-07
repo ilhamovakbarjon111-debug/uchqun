@@ -7,11 +7,11 @@ import { useToast } from '../context/ToastContext';
 
 const AIChat = () => {
   const { t } = useTranslation();
-  const { showToast } = useToast();
+  const { error: showErrorToast } = useToast();
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: t('aiChat.welcomeMessage'),
+      content: t('aiChat.welcomeMessage') || 'Hello! I\'m your AI assistant. How can I help you today?',
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -27,6 +27,13 @@ const AIChat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Ensure translation function is available
+  useEffect(() => {
+    if (typeof t !== 'function') {
+      console.error('Translation function not available');
+    }
+  }, [t]);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -63,11 +70,11 @@ const AIChat = () => {
       console.error('AI chat error:', error);
       const errorMessage = {
         role: 'assistant',
-        content: t('aiChat.errorMessage'),
+        content: t('aiChat.errorMessage') || 'I apologize, but I encountered an error. Please try again in a moment.',
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMessage]);
-      showToast(t('aiChat.errorToast'), 'error');
+      showErrorToast(t('aiChat.errorToast') || 'Failed to get AI response. Please try again.');
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -81,11 +88,11 @@ const AIChat = () => {
         <div className="flex items-center gap-3 mb-2">
           <Bot className="w-6 h-6 text-white" />
           <h1 className="text-2xl md:text-3xl font-bold text-white">
-            {t('aiChat.title')}
+            {t('aiChat.title') || 'AI Assistant'}
           </h1>
         </div>
         <p className="text-white/90 text-sm md:text-base">
-          {t('aiChat.subtitle')}
+          {t('aiChat.subtitle') || 'Get advice on caring for your child at home'}
         </p>
       </div>
 
@@ -156,7 +163,7 @@ const AIChat = () => {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={t('aiChat.inputPlaceholder')}
+              placeholder={t('aiChat.inputPlaceholder') || 'Ask a question about caring for your child...'}
               className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               disabled={loading}
             />
@@ -170,11 +177,11 @@ const AIChat = () => {
               ) : (
                 <Send className="w-5 h-5" />
               )}
-              <span className="hidden md:inline">{t('aiChat.send')}</span>
+              <span className="hidden md:inline">{t('aiChat.send') || 'Send'}</span>
             </button>
           </form>
           <p className="text-xs text-gray-500 mt-2 text-center">
-            {t('aiChat.footer')}
+            {t('aiChat.footer') || 'AI responses are for informational purposes only.'}
           </p>
         </div>
       </Card>

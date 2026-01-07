@@ -27,6 +27,12 @@ const router = express.Router();
  */
 
 // Parent's own data routes (require Parent authentication)
+// AI chat route must come before other routes to avoid conflicts
+router.post('/ai/chat', authenticate, requireParent, (req, res, next) => {
+  console.log('AI chat route hit!', req.path, req.method);
+  getAIAdvice(req, res, next);
+});
+
 router.get('/children', authenticate, requireParent, getMyChildren);
 router.get('/activities', authenticate, requireParent, getMyActivities);
 router.get('/activities/:id', authenticate, requireParent, getActivityById);
@@ -35,7 +41,6 @@ router.get('/meals/:id', authenticate, requireParent, getMealById);
 router.get('/media', authenticate, requireParent, getMyMedia);
 router.get('/media/:id', authenticate, requireParent, getMediaById);
 router.get('/profile', authenticate, requireParent, getMyProfile);
-router.post('/ai/chat', authenticate, requireParent, getAIAdvice);
 
 // View parent data (accessible by Admin or Reception when clicking on parent in list)
 // This route must come after all specific routes to avoid conflicts
