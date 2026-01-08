@@ -57,7 +57,11 @@ app.set('trust proxy', 1);
 // CORS Configuration
 const allowedOrigins = process.env.FRONTEND_URL 
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
-  : ['http://localhost:5173', 'http://localhost:5174'];
+  : [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'https://uchqun-platform.vercel.app',
+    ];
 
 // Default: allow all origins unless explicitly made strict
 const allowAllOrigins = process.env.CORS_STRICT === 'true' ? false : true;

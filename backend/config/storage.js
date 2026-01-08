@@ -72,26 +72,35 @@ if (process.env.GCP_PROJECT_ID && process.env.GCS_BUCKET_NAME) {
 export async function uploadFile(file, filename, mimetype) {
   // Prefer Appwrite if configured
   if (appwriteConfigured) {
-    if (!appwriteStorage || !appwriteBucketId) {
-      throw new Error('Appwrite storage not initialized');
-    }
-    const buffer = Buffer.isBuffer(file) ? file : await streamToBuffer(file);
-    const createdFile = await appwriteStorage.createFile(
-      appwriteBucketId,
-      ID.unique(),
-      InputFile.fromBuffer(buffer, filename),
-      {
-        contentType: mimetype,
+    try {
+      if (!appwriteStorage || !appwriteBucketId) {
+        throw new Error('Appwrite storage not initialized');
       }
-    );
+      const buffer = Buffer.isBuffer(file) ? file : await streamToBuffer(file);
+      const createdFile = await appwriteStorage.createFile(
+        appwriteBucketId,
+        ID.unique(),
+        InputFile.fromBuffer(buffer, filename),
+        {
+          contentType: mimetype,
+        }
+      );
 
-    const baseEndpoint = process.env.APPWRITE_ENDPOINT.replace(/\/+$/, '');
-    const url = `${baseEndpoint}/storage/buckets/${appwriteBucketId}/files/${createdFile.$id}/view?project=${appwriteProjectId}`;
+      const baseEndpoint = process.env.APPWRITE_ENDPOINT.replace(/\/+$/, '');
+      const url = `${baseEndpoint}/storage/buckets/${appwriteBucketId}/files/${createdFile.$id}/view?project=${appwriteProjectId}`;
 
-    return {
-      url,
-      path: createdFile.$id,
-    };
+      return {
+        url,
+        path: createdFile.$id,
+      };
+    } catch (err) {
+      // If Appwrite fails and fallback allowed, continue to local storage
+      if (process.env.LOCAL_STORAGE_FALLBACK !== 'false') {
+        console.warn('⚠ Appwrite upload failed, falling back to local storage:', err.message);
+      } else {
+        throw err;
+      }
+    }
   }
 
   if (bucket && process.env.NODE_ENV === 'production') {
