@@ -152,6 +152,8 @@
       "type": "Turi",
       "date": "Sana",
       "url": "Media manzili",
+      "file": "Media fayl",
+      "fileHelp": "Rasm yoki video fayl yuklang",
       "videoUrlHelp": "YouTube, Vimeo yoki to'g'ridan-to'g'ri video manzillaridan foydalaning (.mp4, .webm va h.k.)",
       "cancel": "Bekor qilish",
       "save": "Saqlash",
