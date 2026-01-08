@@ -5,7 +5,8 @@ import {
   LayoutDashboard, 
   LogOut,
   Users,
-  Utensils
+  Utensils,
+  MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../shared/context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +23,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.activities'), href: '/teacher/activities', icon: ClipboardList },
     { name: t('nav.meals'), href: '/teacher/meals', icon: Utensils },
     { name: t('nav.media'), href: '/teacher/media', icon: ImageIcon },
-    { name: t('nav.chat'), href: '/teacher/chat', icon: Plus },
+    { name: t('nav.chat'), href: '/teacher/chat', icon: MessageCircle },
   ];
 
   const isActive = (path) => {
