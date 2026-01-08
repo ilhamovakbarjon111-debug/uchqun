@@ -9,14 +9,12 @@ import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 
-// Remove any legacy local-file URLs pointing to /uploads to avoid broken links
+// Normalize media output: keep URL as-is, drop thumbnail
 function sanitizeMediaUrls(media) {
   const data = media.toJSON ? media.toJSON() : media;
-  const cleanField = (value) => (value && typeof value === 'string' && value.includes('/uploads/')) ? null : value;
   return {
     ...data,
-    url: cleanField(data.url),
-    thumbnail: null, // drop thumbnail entirely
+    thumbnail: null,
   };
 }
 
