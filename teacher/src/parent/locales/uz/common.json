@@ -109,7 +109,10 @@
     "send": "Yuborish",
     "empty": "Hozircha xabarlar yo‘q",
     "you": "Siz",
-    "teacher": "O‘qituvchi"
+    "parent": "Ota-ona",
+    "teacher": "O‘qituvchi",
+    "edit": "Tahrirlash",
+    "delete": "O‘chirish"
   },
   "language": "Til"
 }

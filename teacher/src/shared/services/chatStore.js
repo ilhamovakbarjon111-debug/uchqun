@@ -1,8 +1,12 @@
 const STORAGE_KEY = 'uchqun-chat-messages';
 
-export function loadMessages() {
+function key(conversationId) {
+  return `${STORAGE_KEY}:${conversationId || 'default'}`;
+}
+
+export function loadMessages(conversationId = 'default') {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key(conversationId));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -12,34 +16,34 @@ export function loadMessages() {
   }
 }
 
-function persist(messages) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-200)));
+function persist(conversationId, messages) {
+  localStorage.setItem(key(conversationId), JSON.stringify(messages.slice(-200)));
 }
 
-export function addMessage(author, text) {
+export function addMessage(author, text, conversationId = 'default') {
   const msg = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     author,
     text,
     time: new Date().toISOString(),
   };
-  const current = loadMessages();
+  const current = loadMessages(conversationId);
   const updated = [...current, msg];
-  persist(updated);
+  persist(conversationId, updated);
   return updated;
 }
 
-export function updateMessage(id, text) {
-  const current = loadMessages();
+export function updateMessage(id, text, conversationId = 'default') {
+  const current = loadMessages(conversationId);
   const updated = current.map((m) => (m.id === id ? { ...m, text } : m));
-  persist(updated);
+  persist(conversationId, updated);
   return updated;
 }
 
-export function deleteMessage(id) {
-  const current = loadMessages();
+export function deleteMessage(id, conversationId = 'default') {
+  const current = loadMessages(conversationId);
   const updated = current.filter((m) => m.id !== id);
-  persist(updated);
+  persist(conversationId, updated);
   return updated;
 }
 

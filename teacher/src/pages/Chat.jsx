@@ -2,16 +2,36 @@ import { useEffect, useMemo, useState } from 'react';
 import { MessageCircle, Send, Edit2, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { loadMessages, addMessage, updateMessage, deleteMessage } from '../shared/services/chatStore';
+import api from '../shared/services/api';
 
 const Chat = () => {
   const { t } = useTranslation();
-  const [messages, setMessages] = useState(() => loadMessages());
+  const [parents, setParents] = useState([]);
+  const [selectedParent, setSelectedParent] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
-    setMessages(loadMessages());
+    const fetchParents = async () => {
+      try {
+        const res = await api.get('/teacher/parents');
+        setParents(res.data.parents || []);
+        if ((res.data.parents || []).length > 0) {
+          setSelectedParent(res.data.parents[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load parents for chat', err);
+      }
+    };
+    fetchParents();
   }, []);
+
+  useEffect(() => {
+    if (!selectedParent) return;
+    const convoId = `parent:${selectedParent.id}`;
+    setMessages(loadMessages(convoId));
+  }, [selectedParent]);
 
   const sorted = useMemo(
     () => [...messages].sort((a, b) => new Date(a.time) - new Date(b.time)),
@@ -21,9 +41,11 @@ const Chat = () => {
   const handleSend = () => {
     const trimmed = input.trim();
     if (!trimmed) return;
+    if (!selectedParent) return;
+    const convoId = `parent:${selectedParent.id}`;
     const updated = editingId
-      ? updateMessage(editingId, trimmed)
-      : addMessage('teacher', trimmed);
+      ? updateMessage(editingId, trimmed, convoId)
+      : addMessage('teacher', trimmed, convoId);
     setMessages(updated);
     setInput('');
     setEditingId(null);
@@ -35,7 +57,9 @@ const Chat = () => {
   };
 
   const handleDelete = (id) => {
-    const updated = deleteMessage(id);
+    if (!selectedParent) return;
+    const convoId = `parent:${selectedParent.id}`;
+    const updated = deleteMessage(id, convoId);
     setMessages(updated);
     if (editingId === id) {
       setEditingId(null);
@@ -53,6 +77,26 @@ const Chat = () => {
           <h1 className="text-2xl font-bold text-gray-900">{t('chat.title')}</h1>
           <p className="text-gray-500 text-sm">{t('chat.subtitle')}</p>
         </div>
+      </div>
+
+      {/* Parent selector */}
+      <div className="bg-white border border-gray-100 rounded-xl p-3 flex gap-3 items-center shadow-sm">
+        <span className="text-sm font-medium text-gray-600">{t('chat.parent') || 'Parent'}:</span>
+        <select
+          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          value={selectedParent?.id || ''}
+          onChange={(e) => {
+            const p = parents.find((x) => x.id === e.target.value);
+            setSelectedParent(p || null);
+          }}
+        >
+          {(parents || []).length === 0 && <option value="">{t('chat.empty')}</option>}
+          {(parents || []).map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.firstName} {p.lastName}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 h-[60vh] flex flex-col">

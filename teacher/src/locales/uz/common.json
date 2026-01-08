@@ -185,7 +185,9 @@
     "empty": "Hozircha xabarlar yo'q",
     "you": "Siz",
     "parent": "Ota-ona",
-    "teacher": "O'qituvchi"
+    "teacher": "O'qituvchi",
+    "edit": "Tahrirlash",
+    "delete": "O‘chirish"
   }
 }
 

@@ -185,7 +185,9 @@
     "empty": "No messages yet",
     "you": "You",
     "parent": "Parent",
-    "teacher": "Teacher"
+    "teacher": "Teacher",
+    "edit": "Edit",
+    "delete": "Delete"
   }
 }
 

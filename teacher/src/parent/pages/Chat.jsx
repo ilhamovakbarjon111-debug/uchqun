@@ -2,16 +2,19 @@ import { useState, useMemo, useEffect } from 'react';
 import { MessageCircle, Send, Edit2, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { loadMessages, addMessage, updateMessage, deleteMessage } from '../../shared/services/chatStore';
+import { useAuth } from '../context/AuthContext';
 
 const Chat = () => {
   const { t } = useTranslation();
-  const [messages, setMessages] = useState(() => loadMessages());
+  const { user } = useAuth();
+  const conversationId = user?.id ? `parent:${user.id}` : 'parent';
+  const [messages, setMessages] = useState(() => loadMessages(conversationId));
   const [input, setInput] = useState('');
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
-    setMessages(loadMessages());
-  }, []);
+    setMessages(loadMessages(conversationId));
+  }, [conversationId]);
 
   const sorted = useMemo(
     () => [...messages].sort((a, b) => new Date(a.time) - new Date(b.time)),
@@ -22,8 +25,8 @@ const Chat = () => {
     const trimmed = input.trim();
     if (!trimmed) return;
     const updated = editingId
-      ? updateMessage(editingId, trimmed)
-      : addMessage('parent', trimmed);
+      ? updateMessage(editingId, trimmed, conversationId)
+      : addMessage('parent', trimmed, conversationId);
     setMessages(updated);
     setInput('');
     setEditingId(null);
@@ -35,7 +38,7 @@ const Chat = () => {
   };
 
   const handleDelete = (id) => {
-    const updated = deleteMessage(id);
+    const updated = deleteMessage(id, conversationId);
     setMessages(updated);
     if (editingId === id) {
       setEditingId(null);

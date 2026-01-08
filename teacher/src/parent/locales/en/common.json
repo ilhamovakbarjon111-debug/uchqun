@@ -109,7 +109,10 @@
     "send": "Send",
     "empty": "No messages yet",
     "you": "You",
-    "teacher": "Teacher"
+    "parent": "Parent",
+    "teacher": "Teacher",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "language": "Language"
 }
