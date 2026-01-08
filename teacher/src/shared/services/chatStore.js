@@ -26,6 +26,8 @@ export function addMessage(author, text, conversationId = 'default') {
     author,
     text,
     time: new Date().toISOString(),
+    readByParent: author === 'parent',
+    readByTeacher: author === 'teacher',
   };
   const current = loadMessages(conversationId);
   const updated = [...current, msg];
@@ -45,5 +47,41 @@ export function deleteMessage(id, conversationId = 'default') {
   const updated = current.filter((m) => m.id !== id);
   persist(conversationId, updated);
   return updated;
+}
+
+export function markRead(conversationId = 'default', role = 'parent') {
+  const current = loadMessages(conversationId);
+  const updated = current.map((m) => {
+    if (role === 'parent') {
+      return { ...m, readByParent: true };
+    }
+    return { ...m, readByTeacher: true };
+  });
+  persist(conversationId, updated);
+  return updated;
+}
+
+export function getUnreadCount(conversationId = 'default', role = 'parent') {
+  const current = loadMessages(conversationId);
+  return current.filter((m) => {
+    if (role === 'parent') {
+      return m.author !== 'parent' && !m.readByParent;
+    }
+    return m.author !== 'teacher' && !m.readByTeacher;
+  }).length;
+}
+
+export function getUnreadTotalForPrefix(prefix = 'parent:', role = 'teacher') {
+  const allKeys = Object.keys(localStorage).filter((k) => k.startsWith(`${STORAGE_KEY}:${prefix}`));
+  return allKeys.reduce((acc, k) => {
+    const convoId = k.replace(`${STORAGE_KEY}:`, '');
+    return acc + getUnreadCount(convoId, role);
+  }, 0);
+}
+
+export function listConversations(prefix = '') {
+  return Object.keys(localStorage)
+    .filter((k) => k.startsWith(`${STORAGE_KEY}:${prefix}`))
+    .map((k) => k.replace(`${STORAGE_KEY}:`, ''));
 }
 

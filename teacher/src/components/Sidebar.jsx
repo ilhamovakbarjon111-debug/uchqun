@@ -10,12 +10,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../shared/context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { getUnreadTotalForPrefix } from '../shared/services/chatStore';
 
 const Sidebar = ({ onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
    const { t } = useTranslation();
+  const unreadChat = getUnreadTotalForPrefix('parent:', 'teacher');
 
   const navigation = [
     { name: t('nav.dashboard'), href: '/teacher', icon: LayoutDashboard },
@@ -23,7 +25,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.activities'), href: '/teacher/activities', icon: ClipboardList },
     { name: t('nav.meals'), href: '/teacher/meals', icon: Utensils },
     { name: t('nav.media'), href: '/teacher/media', icon: ImageIcon },
-    { name: t('nav.chat'), href: '/teacher/chat', icon: MessageCircle },
+    { name: t('nav.chat'), href: '/teacher/chat', icon: MessageCircle, badge: unreadChat },
   ];
 
   const isActive = (path) => {
@@ -66,11 +68,18 @@ const Sidebar = ({ onClose }) => {
               }`}
               onClick={onClose}
             >
-              <item.icon 
-                className={`mr-3 h-5 w-5 transition-colors ${
-                  Active ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'
-                }`} 
-              />
+              <div className="relative flex items-center">
+                <item.icon 
+                  className={`mr-3 h-5 w-5 transition-colors ${
+                    Active ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'
+                  }`} 
+                />
+                {item.badge > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] leading-none font-bold rounded-full px-1.5 py-1 border-2 border-white">
+                    {item.badge > 9 ? '9+' : item.badge}
+                  </span>
+                )}
+              </div>
               <span className="text-sm font-medium">{item.name}</span>
               {Active && (
                 <div className="ml-auto w-1.5 h-1.5 rounded-full bg-orange-600" />

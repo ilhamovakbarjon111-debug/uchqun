@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { MessageCircle, Send, Edit2, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { loadMessages, addMessage, updateMessage, deleteMessage } from '../../shared/services/chatStore';
+import { loadMessages, addMessage, updateMessage, deleteMessage, markRead } from '../../shared/services/chatStore';
 import { useAuth } from '../context/AuthContext';
 
 const Chat = () => {
@@ -14,6 +14,7 @@ const Chat = () => {
 
   useEffect(() => {
     setMessages(loadMessages(conversationId));
+    markRead(conversationId, 'parent');
   }, [conversationId]);
 
   const sorted = useMemo(

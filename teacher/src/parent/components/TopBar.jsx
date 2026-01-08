@@ -4,11 +4,13 @@ import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
+import { getUnreadCount } from '../../shared/services/chatStore';
 
 const TopBar = ({ onMenuClick }) => {
   const { count, refreshNotifications } = useNotification();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const unreadChat = user?.id ? getUnreadCount(`parent:${user.id}`, 'parent') : 0;
   const { t } = useTranslation();
 
   const handleLogout = () => {
@@ -69,7 +71,14 @@ const TopBar = ({ onMenuClick }) => {
           aria-label={t('nav.chat')}
           title={t('nav.chat')}
         >
-          <MessageCircle className="w-6 h-6" />
+          <div className="relative">
+            <MessageCircle className="w-6 h-6" />
+            {unreadChat > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] leading-none font-bold rounded-full px-1.5 py-1 border-2 border-orange-500">
+                {unreadChat > 9 ? '9+' : unreadChat}
+              </span>
+            )}
+          </div>
         </Link>
 
         <LanguageSwitcher />

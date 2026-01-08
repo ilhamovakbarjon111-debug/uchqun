@@ -2,12 +2,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Calendar, Home, Image as ImageIcon, LogOut, Users, Utensils, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { getUnreadTotalForPrefix } from '../services/chatStore';
 
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { t } = useTranslation();
+  const unreadChat = getUnreadTotalForPrefix('parent:', 'teacher');
 
   const handleLogout = () => {
     logout();
@@ -20,7 +22,7 @@ const BottomNav = () => {
     { name: t('nav.activities'), href: '/teacher/activities', icon: Calendar },
     { name: t('nav.meals'), href: '/teacher/meals', icon: Utensils },
     { name: t('nav.media'), href: '/teacher/media', icon: ImageIcon },
-    { name: t('nav.chat'), href: '/teacher/chat', icon: MessageCircle },
+    { name: t('nav.chat'), href: '/teacher/chat', icon: MessageCircle, badge: unreadChat },
   ];
 
   const isActive = (path) => {
@@ -43,7 +45,14 @@ const BottomNav = () => {
                 active ? 'text-orange-600' : 'text-gray-500'
               }`}
             >
-              <item.icon className={`w-5 h-5 mb-1 ${active ? 'text-orange-600' : 'text-gray-500'}`} />
+              <div className="relative">
+                <item.icon className={`w-5 h-5 mb-1 ${active ? 'text-orange-600' : 'text-gray-500'}`} />
+                {item.badge > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] leading-none font-bold rounded-full px-1.5 py-1 border-2 border-white">
+                    {item.badge > 9 ? '9+' : item.badge}
+                  </span>
+                )}
+              </div>
               <span className={`text-xs font-medium ${active ? 'text-orange-600' : 'text-gray-500'}`}>
                 {item.name}
               </span>
