@@ -167,12 +167,24 @@ const Media = () => {
     title: '',
     description: '',
     type: 'photo',
-    thumbnail: '',
     date: new Date().toISOString().split('T')[0],
   });
   const [children, setChildren] = useState([]);
   const { t, i18n } = useTranslation();
   const [file, setFile] = useState(null);
+  // Defensive: remove any legacy thumbnail field rendered from old bundles
+  useEffect(() => {
+    if (!showModal) return;
+    const thumbInput = document.querySelector('input[placeholder="https://example.com/thumbnail.jpg"]');
+    if (thumbInput) {
+      const container = thumbInput.closest('div');
+      if (container && container.parentElement) {
+        container.parentElement.removeChild(container);
+      } else {
+        thumbInput.remove();
+      }
+    }
+  }, [showModal]);
 
   const locale = (() => {
     if (i18n.language === 'uz') return 'uz-UZ';
@@ -231,7 +243,6 @@ const Media = () => {
       title: '',
       description: '',
       type: 'photo',
-      thumbnail: '',
       date: new Date().toISOString().split('T')[0],
     });
     setShowModal(true);
@@ -246,7 +257,6 @@ const Media = () => {
       title: mediaItem.title || '',
       description: mediaItem.description || '',
       type: mediaItem.type || 'photo',
-      thumbnail: mediaItem.thumbnail || mediaItem.url || '',
       date: mediaItem.date ? mediaItem.date.split('T')[0] : new Date().toISOString().split('T')[0],
     });
     setShowModal(true);
@@ -280,8 +290,7 @@ const Media = () => {
           title: formData.title,
           description: formData.description,
           type: formData.type,
-          date: formData.date,
-          thumbnail: formData.thumbnail,
+          date: formData.date
         });
         success(t('mediaPage.toastUpdate'));
       } else {
@@ -381,7 +390,7 @@ const Media = () => {
               {/* Image Container */}
               <div className="relative aspect-[4/5] overflow-hidden">
                 <img
-                  src={item.thumbnail || item.url}
+                  src={item.url}
                   alt={item.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
@@ -638,24 +647,6 @@ const Media = () => {
                   <p className="text-xs text-gray-500 mt-1">{t('mediaPage.modal.fileHelp')}</p>
                 </div>
               )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('mediaPage.modal.thumbnail')} <span className="text-gray-400 text-xs">(optional)</span>
-                </label>
-                <input
-                  type="url"
-                  value={formData.thumbnail}
-                  onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                  placeholder="https://example.com/thumbnail.jpg"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-                {formData.type === 'video' && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    {t('mediaPage.modal.thumbHelp')}
-                  </p>
-                )}
-              </div>
 
               <div className="flex gap-3 pt-4">
                 <button
