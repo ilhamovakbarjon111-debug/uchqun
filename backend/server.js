@@ -56,6 +56,9 @@ const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
   : ['http://localhost:5173', 'http://localhost:5174'];
 
+// Optional override to allow all origins (use only for troubleshooting)
+const allowAllOrigins = process.env.CORS_ALLOW_ALL === 'true';
+
 // Log allowed origins in development
 if (process.env.NODE_ENV === 'development') {
   logger.info('CORS allowed origins:', { origins: allowedOrigins });
@@ -63,6 +66,10 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use(cors({
   origin: (origin, callback) => {
+    if (allowAllOrigins) {
+      return callback(null, true);
+    }
+
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
       // In production, be more strict about no-origin requests
