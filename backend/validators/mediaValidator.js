@@ -36,11 +36,6 @@ export const createMediaValidator = [
     .withMessage('Media URL is required')
     .isURL()
     .withMessage('Media URL must be a valid URL'),
-  body('thumbnail')
-    .optional()
-    .trim()
-    .isURL()
-    .withMessage('Thumbnail URL must be a valid URL'),
   body('title')
     .trim()
     .notEmpty()

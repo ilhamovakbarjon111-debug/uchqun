@@ -16,7 +16,7 @@ function sanitizeMediaUrls(media) {
   return {
     ...data,
     url: cleanField(data.url),
-    thumbnail: cleanField(data.thumbnail),
+    thumbnail: null, // drop thumbnail entirely
   };
 }
 
@@ -420,7 +420,7 @@ export const createMedia = async (req, res) => {
       return res.status(403).json({ error: 'Only teachers can create media' });
     }
 
-    const { childId, activityId, type, url, thumbnail, title, description, date } = req.body;
+    const { childId, activityId, type, url, title, description, date } = req.body;
 
     // Validate required fields
     if (!childId) {
@@ -458,7 +458,7 @@ export const createMedia = async (req, res) => {
       activityId: activityId || null,
       type,
       url,
-      thumbnail: thumbnail || url,
+      thumbnail: null,
       title,
       description: description || '',
       date,
@@ -530,7 +530,9 @@ export const updateMedia = async (req, res) => {
       return res.status(404).json({ error: 'Media not found' });
     }
 
-    await media.update(req.body);
+    const payload = { ...req.body };
+    delete payload.thumbnail;
+    await media.update(payload);
 
     const updatedMedia = await Media.findByPk(id, {
       include: [
