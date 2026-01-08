@@ -233,6 +233,16 @@ async function generateThumbnail(filePath, filename) {
 }
 
 // Upload media file (teachers only)
+// Helper to clean temp file safely
+function safeCleanup(filePath) {
+  if (!filePath) return;
+  try {
+    fs.unlinkSync(filePath);
+  } catch (e) {
+    logger.warn('Error cleaning up temp file', { error: e.message, path: filePath });
+  }
+}
+
 export const uploadMedia = async (req, res) => {
   try {
     const appwriteConfigured = Boolean(
@@ -333,7 +343,18 @@ export const uploadMedia = async (req, res) => {
 
     // Upload file to Appwrite storage (single URL persisted)
     const fileBuffer = fs.readFileSync(req.file.path);
-    const uploadResult = await uploadFile(fileBuffer, req.file.filename, req.file.mimetype);
+    let uploadResult;
+    try {
+      uploadResult = await uploadFile(fileBuffer, req.file.filename, req.file.mimetype);
+    } catch (err) {
+      safeCleanup(req.file.path);
+      logger.error('Storage upload failed', { error: err.message, stack: err.stack });
+      return res.status(502).json({
+        error: 'Storage upload failed',
+        message: 'Failed to upload file to Appwrite storage. Check Appwrite credentials, bucket permissions, and endpoint connectivity.',
+        details: err.message,
+      });
+    }
 
     const usingAppwrite = Boolean(
       process.env.APPWRITE_ENDPOINT &&
@@ -347,11 +368,7 @@ export const uploadMedia = async (req, res) => {
     // Delete local temp file only when using remote storage (Appwrite or GCS)
     const shouldDeleteLocalFile = usingRemoteStorage;
     if (shouldDeleteLocalFile) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (e) {
-        logger.warn('Error deleting local file after upload', { error: e.message, path: req.file.path });
-      }
+      safeCleanup(req.file.path);
     }
 
     // Create media record
@@ -402,11 +419,7 @@ export const uploadMedia = async (req, res) => {
     
     // Clean up uploaded file if it exists
     if (req.file && req.file.path) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (e) {
-        logger.warn('Error cleaning up file after upload error', { error: e.message, path: req.file.path });
-      }
+      safeCleanup(req.file.path);
     }
     
     res.status(500).json({ error: 'Failed to upload media' });
