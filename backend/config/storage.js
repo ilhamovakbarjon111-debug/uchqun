@@ -161,26 +161,34 @@ export async function uploadFile(file, filename, mimetype) {
  */
 export async function deleteFile(filepath) {
   if (appwriteConfigured) {
-    if (!appwriteStorage || !appwriteBucketId) {
-      throw new Error('Appwrite storage not initialized');
-    }
-    let fileId = filepath;
-    // If a full Appwrite URL was provided, extract the file id from it
     try {
-      if (fileId.startsWith('http')) {
-        const url = new URL(fileId);
-        // URL pattern: /storage/buckets/{bucketId}/files/{fileId}/view
-        const match = url.pathname.match(/\/files\/([^/]+)\//);
-        if (match && match[1]) {
-          fileId = match[1];
-        }
+      if (!appwriteStorage || !appwriteBucketId) {
+        throw new Error('Appwrite storage not initialized');
       }
-    } catch {
-      // Ignore URL parsing errors and fall back to the provided value
-    }
+      let fileId = filepath;
+      // If a full Appwrite URL was provided, extract the file id from it
+      try {
+        if (fileId.startsWith('http')) {
+          const url = new URL(fileId);
+          // URL pattern: /storage/buckets/{bucketId}/files/{fileId}/view
+          const match = url.pathname.match(/\/files\/([^/]+)\//);
+          if (match && match[1]) {
+            fileId = match[1];
+          }
+        }
+      } catch {
+        // Ignore URL parsing errors and fall back to the provided value
+      }
 
-    await appwriteStorage.deleteFile(appwriteBucketId, fileId);
-    return;
+      await appwriteStorage.deleteFile(appwriteBucketId, fileId);
+      return;
+    } catch (err) {
+      if (process.env.LOCAL_STORAGE_FALLBACK !== 'false') {
+        console.warn('⚠ Appwrite delete failed, falling back to local delete:', err.message);
+      } else {
+        throw err;
+      }
+    }
   }
 
   if (bucket && process.env.NODE_ENV === 'production') {

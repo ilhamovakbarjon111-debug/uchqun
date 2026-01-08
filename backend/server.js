@@ -42,6 +42,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const localUploadsRoot = process.env.LOCAL_UPLOADS_DIR || path.join(process.cwd(), 'uploads');
 
 // Security middleware (should be first)
 app.use(securityHeaders);
@@ -127,8 +128,8 @@ app.use(requestLogger);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve local uploads when remote storage isn't configured
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve local uploads (works for both fallback and misconfigured remote storage)
+app.use('/uploads', express.static(localUploadsRoot));
 
 // Health check routes (before API routes, no rate limiting)
 app.use('/health', healthRoutes);
