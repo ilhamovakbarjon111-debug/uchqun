@@ -56,8 +56,8 @@ const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
   : ['http://localhost:5173', 'http://localhost:5174'];
 
-// Optional override to allow all origins (use only for troubleshooting)
-const allowAllOrigins = process.env.CORS_ALLOW_ALL === 'true';
+// Default: allow all origins unless explicitly made strict
+const allowAllOrigins = process.env.CORS_STRICT === 'true' ? false : true;
 
 // Log allowed origins in development
 if (process.env.NODE_ENV === 'development') {
@@ -72,10 +72,6 @@ app.use(cors({
 
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
-      // In production, be more strict about no-origin requests
-      if (process.env.NODE_ENV === 'production') {
-        return callback(new Error('CORS: Origin header is required'));
-      }
       return callback(null, true);
     }
     
