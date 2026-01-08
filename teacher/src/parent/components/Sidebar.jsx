@@ -23,7 +23,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.activities'), href: '/activities', icon: ClipboardList },
     { name: t('nav.meals'), href: '/meals', icon: Utensils },
     { name: t('nav.media'), href: '/media', icon: ImageIcon },
-    { name: t('nav.chat'), href: '/chat', icon: Bot },
+    { name: t('nav.aiChat'), href: '/ai-chat', icon: Bot },
   ];
 
   const isActive = (path) => location.pathname === path;
