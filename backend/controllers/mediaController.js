@@ -331,15 +331,12 @@ export const uploadMedia = async (req, res) => {
       }
     }
 
-    // Upload file to storage
+    // Upload file to Appwrite storage
     const fileBuffer = fs.readFileSync(req.file.path);
     const uploadResult = await uploadFile(fileBuffer, req.file.filename, req.file.mimetype);
 
-    // Generate thumbnail for images
-    let thumbnailUrl = null;
-    if (isImage) {
-      thumbnailUrl = await generateThumbnail(req.file.path, req.file.filename);
-    }
+    // We now store only the main image URL; thumbnails are not persisted
+    const thumbnailUrl = null;
 
     const usingAppwrite = Boolean(
       process.env.APPWRITE_ENDPOINT &&
@@ -365,8 +362,8 @@ export const uploadMedia = async (req, res) => {
       childId,
       activityId: activityId || null,
       type: mediaType,
-      url: uploadResult.url,
-      thumbnail: thumbnailUrl || uploadResult.url,
+      url: uploadResult.url,     // store only the Appwrite file URL
+      thumbnail: thumbnailUrl,   // no thumbnails persisted
       title,
       description: description || '',
       date: date || new Date().toISOString().split('T')[0],
@@ -401,7 +398,8 @@ export const uploadMedia = async (req, res) => {
       );
     }
 
-    res.status(201).json(sanitizeMediaUrls(createdMedia));
+    // Frontend expects only the uploaded image URL
+    res.status(201).json({ imageUrl: uploadResult.url });
   } catch (error) {
     logger.error('Upload media error', { error: error.message, stack: error.stack, userId: req.user?.id });
     
