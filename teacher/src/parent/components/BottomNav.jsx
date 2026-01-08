@@ -1,12 +1,9 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Calendar, Image as ImageIcon, User, LogOut, CookingPot, Bot} from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { Link, useLocation } from 'react-router-dom';
+import { Home, Calendar, Image as ImageIcon, User, CookingPot, Bot} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const BottomNav = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { logout } = useAuth();
   const { t } = useTranslation();
 
   const navigation = [
@@ -17,11 +14,6 @@ const BottomNav = () => {
     { name: t('nav.aiChat'), href: '/ai-chat', icon: Bot },
     { name: t('nav.profile'), href: '/child', icon: User },
   ];
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const isActive = (path) => {
     if (path === '/') {
@@ -50,15 +42,6 @@ const BottomNav = () => {
             </Link>
           );
         })}
-        {/* Exit Button */}
-        <button
-          onClick={handleLogout}
-          className="flex flex-col items-center justify-center flex-1 h-full transition-colors text-red-600 hover:text-red-700"
-          aria-label="Exit"
-        >
-          <LogOut className="w-5 h-5 mb-1" />
-              <span className="text-xs font-medium">{t('nav.exit')}</span>
-        </button>
       </nav>
     </div>
   );

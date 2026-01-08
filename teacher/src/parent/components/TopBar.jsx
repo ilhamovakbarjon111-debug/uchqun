@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Bell, LogOut } from 'lucide-react';
+import { Menu, Bell, LogOut, Home, User, Star, MessageCircle } from 'lucide-react';
 import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +32,46 @@ const TopBar = ({ onMenuClick }) => {
 
       {/* Right Side Icons */}
       <div className="flex items-center gap-2">
+        {/* Home */}
+        <Link
+          to="/"
+          className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+          aria-label={t('nav.home')}
+          title={t('nav.home')}
+        >
+          <Home className="w-6 h-6" />
+        </Link>
+
+        {/* Profile */}
+        <Link
+          to="/child"
+          className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+          aria-label={t('nav.profile')}
+          title={t('nav.profile')}
+        >
+          <User className="w-6 h-6" />
+        </Link>
+
+        {/* Rating / Feedback (re-use help page as feedback) */}
+        <Link
+          to="/help"
+          className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+          aria-label={t('nav.rating') || 'Rating'}
+          title={t('nav.rating') || 'Rating'}
+        >
+          <Star className="w-6 h-6" />
+        </Link>
+
+        {/* Chat with teacher (reuse AI/chat page) */}
+        <Link
+          to="/ai-chat"
+          className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+          aria-label={t('nav.chat') || 'Chat'}
+          title={t('nav.chat') || 'Chat'}
+        >
+          <MessageCircle className="w-6 h-6" />
+        </Link>
+
         <LanguageSwitcher />
         {/* Bell Icon with Notification Badge */}
         <button
