@@ -237,7 +237,7 @@ const Media = () => {
               {/* Image Container */}
               <div className="relative aspect-[4/5] overflow-hidden">
                 <img
-                  src={item.thumbnail}
+                  src={item.url}
                   alt={item.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
