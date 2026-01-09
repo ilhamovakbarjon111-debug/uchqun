@@ -35,6 +35,7 @@ import notificationRoutes from './routes/notificationRoutes.js';
 // Legacy routes (kept for backward compatibility if needed)
 import progressRoutes from './routes/progressRoutes.js';
 import groupRoutes from './routes/groupRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -153,6 +154,7 @@ app.use('/api/activities', activityRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/meals', mealRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Legacy routes (kept for backward compatibility if needed)
 app.use('/api/progress', progressRoutes);

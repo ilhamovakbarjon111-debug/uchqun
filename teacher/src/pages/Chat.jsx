@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MessageCircle, Send, Edit2, Trash2 } from 'lucide-react';
+import { MessageCircle, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { loadMessages, addMessage, updateMessage, deleteMessage, markRead } from '../shared/services/chatStore';
+import { loadMessages, addMessage, markRead } from '../shared/services/chatStore';
 import api from '../shared/services/api';
 
 const Chat = () => {
@@ -28,10 +28,14 @@ const Chat = () => {
   }, []);
 
   useEffect(() => {
-    if (!selectedParent) return;
-    const convoId = `parent:${selectedParent.id}`;
-    setMessages(loadMessages(convoId));
-    markRead(convoId, 'teacher');
+    const load = async () => {
+      if (!selectedParent) return;
+      const convoId = `parent:${selectedParent.id}`;
+      const msgs = await loadMessages(convoId);
+      setMessages(Array.isArray(msgs) ? msgs : []);
+      await markRead(convoId);
+    };
+    load();
   }, [selectedParent]);
 
   const sorted = useMemo(
@@ -39,33 +43,15 @@ const Chat = () => {
     [messages]
   );
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed) return;
     if (!selectedParent) return;
     const convoId = `parent:${selectedParent.id}`;
-    const updated = editingId
-      ? updateMessage(editingId, trimmed, convoId)
-      : addMessage('teacher', trimmed, convoId);
-    setMessages(updated);
+    await addMessage('teacher', trimmed, convoId);
+    const msgs = await loadMessages(convoId);
+    setMessages(Array.isArray(msgs) ? msgs : []);
     setInput('');
-    setEditingId(null);
-  };
-
-  const handleEdit = (msg) => {
-    setEditingId(msg.id);
-    setInput(msg.text);
-  };
-
-  const handleDelete = (id) => {
-    if (!selectedParent) return;
-    const convoId = `parent:${selectedParent.id}`;
-    const updated = deleteMessage(id, convoId);
-    setMessages(updated);
-    if (editingId === id) {
-      setEditingId(null);
-      setInput('');
-    }
   };
 
   return (

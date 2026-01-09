@@ -1,87 +1,46 @@
-const STORAGE_KEY = 'uchqun-chat-messages';
+import api from './api';
 
-function key(conversationId) {
-  return `${STORAGE_KEY}:${conversationId || 'default'}`;
+export async function loadMessages(conversationId) {
+  if (!conversationId) return [];
+  const res = await api.get('/chat/messages', { params: { conversationId, limit: 200 } });
+  return Array.isArray(res.data) ? res.data : [];
 }
 
-export function loadMessages(conversationId = 'default') {
-  try {
-    const raw = localStorage.getItem(key(conversationId));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
-  } catch {
-    return [];
-  }
+export async function addMessage(author, text, conversationId) {
+  if (!conversationId) return [];
+  const res = await api.post('/chat/messages', { conversationId, content: text });
+  return res.data;
 }
 
-function persist(conversationId, messages) {
-  localStorage.setItem(key(conversationId), JSON.stringify(messages.slice(-200)));
+export async function markRead(conversationId) {
+  if (!conversationId) return;
+  await api.post('/chat/read', { conversationId });
 }
 
-export function addMessage(author, text, conversationId = 'default') {
-  const msg = {
-    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    author,
-    text,
-    time: new Date().toISOString(),
-    readByParent: author === 'parent',
-    readByTeacher: author === 'teacher',
-  };
-  const current = loadMessages(conversationId);
-  const updated = [...current, msg];
-  persist(conversationId, updated);
-  return updated;
-}
-
-export function updateMessage(id, text, conversationId = 'default') {
-  const current = loadMessages(conversationId);
-  const updated = current.map((m) => (m.id === id ? { ...m, text } : m));
-  persist(conversationId, updated);
-  return updated;
-}
-
-export function deleteMessage(id, conversationId = 'default') {
-  const current = loadMessages(conversationId);
-  const updated = current.filter((m) => m.id !== id);
-  persist(conversationId, updated);
-  return updated;
-}
-
-export function markRead(conversationId = 'default', role = 'parent') {
-  const current = loadMessages(conversationId);
-  const updated = current.map((m) => {
-    if (role === 'parent') {
-      return { ...m, readByParent: true };
-    }
-    return { ...m, readByTeacher: true };
-  });
-  persist(conversationId, updated);
-  return updated;
-}
-
-export function getUnreadCount(conversationId = 'default', role = 'parent') {
-  const current = loadMessages(conversationId);
-  return current.filter((m) => {
-    if (role === 'parent') {
-      return m.author !== 'parent' && !m.readByParent;
-    }
-    return m.author !== 'teacher' && !m.readByTeacher;
+export async function getUnreadCount(conversationId, role = 'parent') {
+  const msgs = await loadMessages(conversationId);
+  return msgs.filter((m) => {
+    if (role === 'parent') return m.senderRole !== 'parent' && !m.readByParent;
+    return m.senderRole !== 'teacher' && !m.readByTeacher;
   }).length;
 }
 
-export function getUnreadTotalForPrefix(prefix = 'parent:', role = 'teacher') {
-  const allKeys = Object.keys(localStorage).filter((k) => k.startsWith(`${STORAGE_KEY}:${prefix}`));
-  return allKeys.reduce((acc, k) => {
-    const convoId = k.replace(`${STORAGE_KEY}:`, '');
-    return acc + getUnreadCount(convoId, role);
-  }, 0);
+export async function getUnreadTotalForPrefix(prefix = 'parent:', role = 'teacher') {
+  // Not implemented for server-side yet; fallback to zero
+  return 0;
 }
 
-export function listConversations(prefix = '') {
-  return Object.keys(localStorage)
-    .filter((k) => k.startsWith(`${STORAGE_KEY}:${prefix}`))
-    .map((k) => k.replace(`${STORAGE_KEY}:`, ''));
+export async function listConversations() {
+  return [];
+}
+
+export async function updateMessage() {
+  // Not supported server-side
+  return [];
+}
+
+export async function deleteMessage() {
+  // Not supported server-side
+  return [];
 }
 
