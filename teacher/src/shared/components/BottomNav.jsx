@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { getUnreadTotalForPrefix } from '../services/chatStore';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 
-const BottomNav = ({ variant = 'bottom', allowed, showLanguageSwitcher = false }) => {
+const BottomNav = ({ variant = 'bottom', allowed, showLanguageSwitcher = false, showExit = true }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -68,15 +68,16 @@ const BottomNav = ({ variant = 'bottom', allowed, showLanguageSwitcher = false }
             </Link>
           );
         })}
-        {/* Exit Button */}
-        <button
-          onClick={handleLogout}
-          className="flex-1 min-w-[72px] max-w-[96px] flex flex-col items-center justify-center h-full transition-colors text-red-600 hover:text-red-700"
-          aria-label="Exit"
-        >
-          <LogOut className="w-5 h-5 mb-1" />
-          <span className="text-[11px] font-medium leading-tight">{t('nav.logout')}</span>
-        </button>
+        {showExit && (
+          <button
+            onClick={handleLogout}
+            className="flex-1 min-w-[72px] max-w-[96px] flex flex-col items-center justify-center h-full transition-colors text-red-600 hover:text-red-700"
+            aria-label="Exit"
+          >
+            <LogOut className="w-5 h-5 mb-1" />
+            <span className="text-[11px] font-medium leading-tight">{t('nav.logout')}</span>
+          </button>
+        )}
 
         {showLanguageSwitcher && (
           <div className="flex-none">

@@ -36,6 +36,7 @@ const Layout = () => {
             '/teacher/media',
             '/teacher/parents',
           ]}
+          showExit={false}
         />
       </div>
     </div>
