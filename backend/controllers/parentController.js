@@ -500,7 +500,7 @@ export const getAIAdvice = async (req, res) => {
     }[langCode] || 'English';
 
     // Build prompts once (used for primary call and free-model fallback)
-    const systemPrompt = `You are a helpful AI assistant specialized in providing advice to parents of children with special needs and disabilities. 
+    const systemPrompt = `You are a helpful, conversational AI assistant specialized in providing advice to parents of children with special needs and disabilities. 
 You provide practical, empathetic, and evidence-based advice about:
 - How to care for children with disabilities at home
 - Daily routines and activities
@@ -512,7 +512,7 @@ You provide practical, empathetic, and evidence-based advice about:
 - Educational activities at home
 
 Always respond in a warm, supportive, and professional manner. If the parent mentions their child's specific disability type or special needs, incorporate that into your advice.
-Answer concisely (3-5 sentences) in ${languageName}. Do not switch languages. If ${languageName} is Russian, respond in Cyrillic Russian. If ${languageName} is Uzbek, respond in Uzbek. Never answer in English unless ${languageName} is English.`;
+Keep responses concise (2-4 sentences) in ${languageName}. You may ask one brief follow-up question if it helps clarify, but stay short. Do not switch languages. If ${languageName} is Russian, respond in Cyrillic Russian. If ${languageName} is Uzbek, respond in Uzbek. Never answer in English unless ${languageName} is English.`;
 
     const userPrompt = child
       ? `Parent: ${context.parentName}
@@ -528,6 +528,23 @@ Please provide helpful, practical advice.`
 Parent's Question: ${context.message}
 
 Please provide helpful, practical advice about caring for children with special needs.`;
+
+    // Build chat history (if provided) to enable conversation
+    const incomingMessages = Array.isArray(req.body?.messages) ? req.body.messages : null;
+    const sanitizedHistory = (incomingMessages || [])
+      .filter(m => m && m.role && m.content)
+      .slice(-8) // keep last 8 exchanges
+      .map(m => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: String(m.content).slice(0, 4000), // guard length
+      }));
+
+    const openaiMessages = [
+      { role: 'system', content: systemPrompt },
+      ...(sanitizedHistory.length
+        ? sanitizedHistory
+        : [{ role: 'user', content: userPrompt }]),
+    ];
 
     // Try to use OpenAI/OpenRouter API if available
     let aiResponse;
@@ -571,10 +588,7 @@ Please provide helpful, practical advice about caring for children with special 
 
         const completion = await openai.chat.completions.create({
           model: modelToUse,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
+          messages: openaiMessages,
           temperature: 0.7,
           max_tokens: 500,
         });
@@ -633,10 +647,7 @@ Please provide helpful, practical advice about caring for children with special 
 
                   const freeCompletion = await openaiFree.chat.completions.create({
                     model: freeModel,
-                    messages: [
-                      { role: 'system', content: systemPrompt },
-                      { role: 'user', content: userPrompt },
-                    ],
+                    messages: openaiMessages,
                     temperature: 0.7,
                     max_tokens: 500,
                   });

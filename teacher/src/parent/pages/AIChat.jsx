@@ -74,9 +74,15 @@ const AIChat = () => {
     setLoading(true);
 
     try {
+      const historyForRequest = [...messages, newUserMessage].slice(-8);
       const response = await api.post('/parent/ai/chat', {
         message: userMessage,
         lang: i18n.language,
+        messages: historyForRequest.map((m) => ({
+          role: m.role,
+          content: m.content,
+          timestamp: m.timestamp,
+        })),
       });
 
       if (response.data.success) {
