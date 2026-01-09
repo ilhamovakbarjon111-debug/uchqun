@@ -6,7 +6,6 @@ import {
   ClipboardList,
   Utensils,
   Image as ImageIcon,
-  Star,
   LogOut,
   Bot,
 } from 'lucide-react';
@@ -25,7 +24,6 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.meals'), href: '/meals', icon: Utensils },
     { name: t('nav.media'), href: '/media', icon: ImageIcon },
     { name: t('nav.aiChat'), href: '/ai-chat', icon: Bot },
-    { name: t('nav.rating'), href: '/rating', icon: Star },
   ];
 
   const isActive = (path) => location.pathname === path;
