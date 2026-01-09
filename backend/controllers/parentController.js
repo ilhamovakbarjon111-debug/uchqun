@@ -512,7 +512,7 @@ You provide practical, empathetic, and evidence-based advice about:
 - Educational activities at home
 
 Always respond in a warm, supportive, and professional manner. If the parent mentions their child's specific disability type or special needs, incorporate that into your advice.
-Answer concisely (3-5 sentences) in ${languageName}.`;
+Answer concisely (3-5 sentences) in ${languageName}. Do not switch languages. If ${languageName} is Russian, respond in Cyrillic Russian. If ${languageName} is Uzbek, respond in Uzbek. Never answer in English unless ${languageName} is English.`;
 
     const userPrompt = child
       ? `Parent: ${context.parentName}
