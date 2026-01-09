@@ -3,8 +3,9 @@ import { Calendar, Home, Image as ImageIcon, LogOut, Users, Utensils, MessageCir
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { getUnreadTotalForPrefix } from '../services/chatStore';
+import LanguageSwitcher from '../../components/LanguageSwitcher';
 
-const BottomNav = ({ variant = 'bottom' }) => {
+const BottomNav = ({ variant = 'bottom', allowed, showLanguageSwitcher = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -16,7 +17,7 @@ const BottomNav = ({ variant = 'bottom' }) => {
     navigate('/login');
   };
 
-  const navigation = [
+  const defaultNavigation = [
     { name: t('nav.dashboard'), href: '/teacher', icon: Home },
     { name: t('nav.parents'), href: '/teacher/parents', icon: Users },
     { name: t('nav.activities'), href: '/teacher/activities', icon: Calendar },
@@ -24,6 +25,9 @@ const BottomNav = ({ variant = 'bottom' }) => {
     { name: t('nav.media'), href: '/teacher/media', icon: ImageIcon },
     { name: t('nav.chat'), href: '/teacher/chat', icon: MessageCircle, badge: unreadChat },
   ];
+  const navigation = (allowed
+    ? defaultNavigation.filter((item) => allowed.includes(item.href))
+    : defaultNavigation);
 
   const isActive = (path) => {
     if (path === '/teacher') {
@@ -73,6 +77,12 @@ const BottomNav = ({ variant = 'bottom' }) => {
           <LogOut className="w-5 h-5 mb-1" />
           <span className="text-[11px] font-medium leading-tight">{t('nav.logout')}</span>
         </button>
+
+        {showLanguageSwitcher && (
+          <div className="flex-none">
+            <LanguageSwitcher />
+          </div>
+        )}
       </nav>
     </div>
   );
