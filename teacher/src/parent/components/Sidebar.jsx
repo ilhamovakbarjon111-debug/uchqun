@@ -8,6 +8,7 @@ import {
   Image as ImageIcon,
   Bot,
   Star,
+  MessageCircle,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -24,6 +25,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.media'), href: '/media', icon: ImageIcon },
     { name: t('nav.rating'), href: '/rating', icon: Star },
     { name: t('nav.aiChat'), href: '/ai-chat', icon: Bot },
+    { name: t('nav.chat'), href: '/chat', icon: MessageCircle },
   ];
 
   const isActive = (path) => location.pathname === path;
