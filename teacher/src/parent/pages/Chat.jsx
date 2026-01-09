@@ -1,20 +1,24 @@
 import { useState, useMemo, useEffect } from 'react';
-import { MessageCircle, Send, Edit2, Trash2 } from 'lucide-react';
+import { MessageCircle, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { loadMessages, addMessage, updateMessage, deleteMessage, markRead } from '../../shared/services/chatStore';
+import { loadMessages, addMessage, markRead } from '../../shared/services/chatStore';
 import { useAuth } from '../context/AuthContext';
 
 const Chat = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const conversationId = user?.id ? `parent:${user.id}` : 'parent';
-  const [messages, setMessages] = useState(() => loadMessages(conversationId));
+  const conversationId = user?.id ? `parent:${user.id}` : null;
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
-    setMessages(loadMessages(conversationId));
-    markRead(conversationId, 'parent');
+    const load = async () => {
+      if (!conversationId) return;
+      const msgs = await loadMessages(conversationId);
+      setMessages(Array.isArray(msgs) ? msgs : []);
+      await markRead(conversationId);
+    };
+    load();
   }, [conversationId]);
 
   const sorted = useMemo(
@@ -22,29 +26,14 @@ const Chat = () => {
     [messages]
   );
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed) return;
-    const updated = editingId
-      ? updateMessage(editingId, trimmed, conversationId)
-      : addMessage('parent', trimmed, conversationId);
-    setMessages(updated);
+    if (!conversationId) return;
+    await addMessage('parent', trimmed, conversationId);
+    const msgs = await loadMessages(conversationId);
+    setMessages(Array.isArray(msgs) ? msgs : []);
     setInput('');
-    setEditingId(null);
-  };
-
-  const handleEdit = (msg) => {
-    setEditingId(msg.id);
-    setInput(msg.text);
-  };
-
-  const handleDelete = (id) => {
-    const updated = deleteMessage(id, conversationId);
-    setMessages(updated);
-    if (editingId === id) {
-      setEditingId(null);
-      setInput('');
-    }
   };
 
   return (
@@ -84,24 +73,6 @@ const Chat = () => {
                     {msg.author === 'parent' ? t('chat.you') : t('chat.teacher')}
                   </div>
                   <div className="whitespace-pre-wrap break-words">{msg.text}</div>
-                  {isYou && (
-                    <div className="flex justify-end gap-2 mt-2 text-xs text-gray-500">
-                      <button
-                        onClick={() => handleEdit(msg)}
-                        className="flex items-center gap-1 hover:text-orange-600"
-                        type="button"
-                      >
-                        <Edit2 className="w-3 h-3" /> {t('chat.edit') || 'Edit'}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(msg.id)}
-                        className="flex items-center gap-1 hover:text-red-600"
-                        type="button"
-                      >
-                        <Trash2 className="w-3 h-3" /> {t('chat.delete') || 'Delete'}
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             );

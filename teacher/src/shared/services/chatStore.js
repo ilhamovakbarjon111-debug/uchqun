@@ -2,19 +2,33 @@ import api from './api';
 
 export async function loadMessages(conversationId) {
   if (!conversationId) return [];
-  const res = await api.get('/chat/messages', { params: { conversationId, limit: 200 } });
-  return Array.isArray(res.data) ? res.data : [];
+  try {
+    const res = await api.get('/chat/messages', { params: { conversationId, limit: 200 } });
+    return Array.isArray(res.data) ? res.data : [];
+  } catch (e) {
+    console.warn('loadMessages error', e?.response?.status, e?.response?.data);
+    return [];
+  }
 }
 
 export async function addMessage(author, text, conversationId) {
   if (!conversationId) return [];
-  const res = await api.post('/chat/messages', { conversationId, content: text });
-  return res.data;
+  try {
+    const res = await api.post('/chat/messages', { conversationId, content: text });
+    return res.data;
+  } catch (e) {
+    console.warn('addMessage error', e?.response?.status, e?.response?.data);
+    return null;
+  }
 }
 
 export async function markRead(conversationId) {
   if (!conversationId) return;
-  await api.post('/chat/read', { conversationId });
+  try {
+    await api.post('/chat/read', { conversationId });
+  } catch (e) {
+    console.warn('markRead error', e?.response?.status);
+  }
 }
 
 export async function getUnreadCount(conversationId, role = 'parent') {
