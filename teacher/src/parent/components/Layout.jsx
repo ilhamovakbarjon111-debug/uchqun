@@ -61,16 +61,18 @@ const Layout = () => {
         <BottomNav />
       </div>
 
-      {/* Floating chat button */}
-      <div className="lg:hidden fixed bottom-20 right-4 z-50">
-        <a
-          href="/chat"
-          className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-orange-500 text-white shadow-lg hover:bg-orange-600 transition"
-          aria-label="Chat"
-        >
-          <MessageCircle className="w-6 h-6" />
-        </a>
-      </div>
+      {/* Floating chat button (hide on chat page) */}
+      {location.pathname !== '/chat' && (
+        <div className="lg:hidden fixed bottom-20 right-4 z-50">
+          <a
+            href="/chat"
+            className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-orange-500 text-white shadow-lg hover:bg-orange-600 transition"
+            aria-label="Chat"
+          >
+            <MessageCircle className="w-6 h-6" />
+          </a>
+        </div>
+      )}
     </div>
   );
 };
