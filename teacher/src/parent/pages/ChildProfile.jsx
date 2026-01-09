@@ -20,6 +20,7 @@ const ChildProfile = () => {
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [teacherName, setTeacherName] = useState('');
   const [weeklyStats, setWeeklyStats] = useState({
     activities: 0,
     meals: 0,
@@ -40,14 +41,20 @@ const ChildProfile = () => {
         try {
           setLoading(true);
           setError(null);
-          const [childResponse, activitiesResponse, mealsResponse, mediaResponse] = await Promise.all([
+          const [childResponse, activitiesResponse, mealsResponse, mediaResponse, profileResponse] = await Promise.all([
             api.get(`/child/${selectedChildId}`),
             api.get(`/activities?childId=${selectedChildId}`).catch(() => ({ data: [] })),
             api.get(`/meals?childId=${selectedChildId}`).catch(() => ({ data: [] })),
             api.get(`/media?childId=${selectedChildId}`).catch(() => ({ data: [] })),
+            api.get('/parent/profile').catch(() => null),
           ]);
           
           setChild(childResponse.data);
+          const assignedTeacher = profileResponse?.data?.data?.user?.assignedTeacher;
+          const combinedTeacherName = assignedTeacher
+            ? [assignedTeacher.firstName, assignedTeacher.lastName].filter(Boolean).join(' ')
+            : childResponse.data?.teacher;
+          setTeacherName(combinedTeacherName || '');
           
           // Calculate weekly stats (last 7 days)
           const now = new Date();
@@ -247,7 +254,7 @@ const ChildProfile = () => {
               <InfoItem label={t('child.fullName')} value={`${child.firstName} ${child.lastName}`} icon={User} />
               <InfoItem label={t('child.birthDate')} value={new Date(child.dateOfBirth).toLocaleDateString(locale)} icon={Calendar} />
               <InfoItem label={t('child.disability')} value={child.disabilityType} icon={ShieldAlert} color="text-red-500" />
-              <InfoItem label={t('child.teacher')} value={child.teacher} icon={Award} color="text-blue-500" />
+              <InfoItem label={t('child.teacher')} value={teacherName || child.teacher || '—'} icon={Award} color="text-blue-500" />
             </div>
           </section>
 
