@@ -489,6 +489,15 @@ export const getAIAdvice = async (req, res) => {
       message: message.trim(),
     };
 
+    // Determine preferred language from headers (fallback to en)
+    const acceptLanguage = req.headers['accept-language'] || '';
+    const langCode = acceptLanguage.split(',')[0]?.split('-')[0]?.toLowerCase() || 'en';
+    const languageName = {
+      uz: 'Uzbek',
+      ru: 'Russian',
+      en: 'English',
+    }[langCode] || 'English';
+
     // Build prompts once (used for primary call and free-model fallback)
     const systemPrompt = `You are a helpful AI assistant specialized in providing advice to parents of children with special needs and disabilities. 
 You provide practical, empathetic, and evidence-based advice about:
@@ -501,7 +510,8 @@ You provide practical, empathetic, and evidence-based advice about:
 - Safety considerations
 - Educational activities at home
 
-Always respond in a warm, supportive, and professional manner. If the parent mentions their child's specific disability type or special needs, incorporate that into your advice.`;
+Always respond in a warm, supportive, and professional manner. If the parent mentions their child's specific disability type or special needs, incorporate that into your advice.
+Answer concisely (3-5 sentences) in ${languageName}.`;
 
     const userPrompt = child
       ? `Parent: ${context.parentName}
