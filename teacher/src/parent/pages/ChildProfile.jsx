@@ -231,10 +231,6 @@ const ChildProfile = () => {
                 <School className="w-4 h-4 text-blue-500" />
                 <span className="text-sm font-bold text-gray-700">{child.school}</span>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
-                <Award className="w-4 h-4 text-purple-500" />
-                <span className="text-sm font-bold text-gray-700">{child.class}</span>
-              </div>
             </div>
           </div>
         </div>
