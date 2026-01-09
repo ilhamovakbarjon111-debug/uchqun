@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import api from "../src/shared/services/api";
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -95,6 +96,7 @@ export default function Activities() {
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date()));
   const [scheduleData, setScheduleData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingActivities, setLoadingActivities] = useState(false);
   const [form, setForm] = useState({
     day: "Monday",
     start: "09:00",
@@ -102,7 +104,11 @@ export default function Activities() {
     title: "",
     status: "attended",
     participation: "great",
+    saveToChild: false,
   });
+  const [children, setChildren] = useState([]);
+  const [selectedChildId, setSelectedChildId] = useState("");
+  const [activities, setActivities] = useState([]);
   const isTeacher = true; // in real app: derive from auth/role
 
   useEffect(() => {
@@ -114,6 +120,48 @@ export default function Activities() {
     }, 400);
     return () => clearTimeout(timer);
   }, [weekStart]);
+
+  useEffect(() => {
+    loadChildren();
+  }, []);
+
+  useEffect(() => {
+    if (selectedChildId) {
+      loadActivities(selectedChildId);
+    }
+  }, [selectedChildId]);
+
+  const loadChildren = async () => {
+    try {
+      const parentsRes = await api.get("/teacher/parents");
+      const allChildren = [];
+      parentsRes.data.parents?.forEach((p) => {
+        if (Array.isArray(p.children)) {
+          allChildren.push(...p.children);
+        }
+      });
+      setChildren(allChildren);
+      if (allChildren.length > 0) {
+        setSelectedChildId(allChildren[0].id);
+      }
+    } catch (err) {
+      console.error("Failed to load children", err);
+      setChildren([]);
+    }
+  };
+
+  const loadActivities = async (childId) => {
+    try {
+      setLoadingActivities(true);
+      const res = await api.get(`/activities?childId=${childId}`);
+      setActivities(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Failed to load activities", err);
+      setActivities([]);
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
 
   const weekDays = days.map((day, idx) => {
     const date = addDays(weekStart, idx);
@@ -132,6 +180,10 @@ export default function Activities() {
     e.preventDefault();
     if (!form.title.trim()) return;
     if (form.end <= form.start) return;
+
+    const startMinutes = parseInt(form.start.split(":")[0], 10) * 60 + parseInt(form.start.split(":")[1], 10);
+    const endMinutes = parseInt(form.end.split(":")[0], 10) * 60 + parseInt(form.end.split(":")[1], 10);
+    const durationMinutes = Math.max(1, endMinutes - startMinutes);
 
     setScheduleData((prev) => {
       const existing = [...prev];
@@ -161,7 +213,30 @@ export default function Activities() {
       return existing.sort((a, b) => a.start.localeCompare(b.start));
     });
 
-    setForm((f) => ({ ...f, title: "" }));
+    // Optionally push to child activity feed as a record
+    if (form.saveToChild && selectedChildId) {
+      const dayIdx = days.findIndex((d) => d === form.day);
+      const dateIso =
+        dayIdx >= 0
+          ? addDays(weekStart, dayIdx).toISOString().split("T")[0]
+          : new Date().toISOString().split("T")[0];
+
+      api
+        .post("/activities", {
+          childId: selectedChildId,
+          title: form.title.trim(),
+          description: `${form.day} • ${form.start}–${form.end}`,
+          type: "Learning",
+          duration: durationMinutes,
+          date: dateIso,
+          studentEngagement: "Medium",
+          notes: "",
+        })
+        .then(() => loadActivities(selectedChildId))
+        .catch((err) => console.error("Failed to save activity", err));
+    }
+
+    setForm((f) => ({ ...f, title: "", saveToChild: false }));
   };
 
   const handleAddButtonClick = () => {
@@ -195,6 +270,22 @@ export default function Activities() {
             <span className="px-2 py-1 rounded-xl bg-amber-50 border border-amber-100 font-semibold text-amber-700">
               {weekRangeLabel}
             </span>
+            {children.length > 0 && (
+              <div className="flex items-center gap-2 ml-2 text-sm">
+                <span className="text-gray-600 font-semibold">Child:</span>
+                <select
+                  value={selectedChildId}
+                  onChange={(e) => setSelectedChildId(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-gray-800"
+                >
+                  {children.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.firstName} {c.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             {isTeacher && (
               <button
                 onClick={handleAddButtonClick}
@@ -304,7 +395,15 @@ export default function Activities() {
               ))}
             </select>
           </div>
-          <div className="md:col-span-6 flex justify-end">
+          <div className="md:col-span-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={form.saveToChild}
+                onChange={(e) => setForm((f) => ({ ...f, saveToChild: e.target.checked }))}
+              />
+              <span>Save to child activities</span>
+            </label>
             <button
               type="submit"
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-emerald-400 text-white font-semibold shadow hover:shadow-md transition"
@@ -314,6 +413,64 @@ export default function Activities() {
           </div>
         </form>
       )}
+
+      {/* Child activity feed (real data) */}
+      <div className="max-w-6xl mx-auto mb-8">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900">Child activities</h3>
+            {loadingActivities && (
+              <span className="text-xs text-gray-500 animate-pulse">Loading...</span>
+            )}
+          </div>
+          {activities.length === 0 && !loadingActivities && (
+            <div className="text-sm text-gray-500">No activities yet for this child.</div>
+          )}
+          <div className="grid gap-4">
+            {activities.map((act) => (
+              <div
+                key={act.id}
+                className="border border-gray-100 rounded-xl p-4 bg-gradient-to-br from-white to-gray-50 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-orange-600">
+                    {act.type || "Activity"}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {act.date ? new Date(act.date).toLocaleDateString() : ""}
+                  </div>
+                </div>
+                <h4 className="mt-1 text-base font-bold text-gray-900">{act.title}</h4>
+                {act.description && (
+                  <p className="text-sm text-gray-600 mt-1 leading-relaxed">{act.description}</p>
+                )}
+                <div className="flex flex-wrap gap-2 mt-3 text-xs font-semibold">
+                  {act.studentEngagement && (
+                    <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 border border-gray-200">
+                      Engagement: {act.studentEngagement}
+                    </span>
+                  )}
+                  {act.duration && (
+                    <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 border border-gray-200">
+                      {act.duration} min
+                    </span>
+                  )}
+                  {act.teacher && (
+                    <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 border border-gray-200">
+                      Teacher: {act.teacher}
+                    </span>
+                  )}
+                </div>
+                {act.notes && (
+                  <div className="mt-3 text-xs text-gray-600 italic border-l-4 border-orange-400 pl-3">
+                    “{act.notes}”
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
 
       <div className="overflow-x-auto relative">

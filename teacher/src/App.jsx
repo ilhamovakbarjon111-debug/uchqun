@@ -12,6 +12,7 @@ import Activities from './pages/Activities';
 import Meals from './pages/Meals';
 import Media from './pages/Media';
 import Chat from './pages/Chat';
+import Profile from './pages/Profile';
 import ParentApp from './parent/ParentApp';
 import ParentDashboard from './parent/pages/Dashboard';
 import ChildProfile from './parent/pages/ChildProfile';
@@ -66,6 +67,7 @@ function App() {
               >
                 <Route index element={<Dashboard />} />
                 <Route path="parents" element={<ParentManagement />} />
+                <Route path="profile" element={<Profile />} />
                 <Route path="activities" element={<Activities />} />
                 <Route path="meals" element={<Meals />} />
                 <Route path="media" element={<Media />} />

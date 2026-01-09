@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Calendar, Home, Image as ImageIcon, LogOut, Users, Utensils, MessageCircle } from 'lucide-react';
+import { Home, LogOut, UserCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { getUnreadTotalForPrefix } from '../services/chatStore';
@@ -19,11 +19,7 @@ const BottomNav = ({ variant = 'bottom', allowed, showLanguageSwitcher = false, 
 
   const defaultNavigation = [
     { name: t('nav.dashboard'), href: '/teacher', icon: Home },
-    { name: t('nav.parents'), href: '/teacher/parents', icon: Users },
-    { name: t('nav.activities'), href: '/teacher/activities', icon: Calendar },
-    { name: t('nav.meals'), href: '/teacher/meals', icon: Utensils },
-    { name: t('nav.media'), href: '/teacher/media', icon: ImageIcon },
-    { name: t('nav.chat'), href: '/teacher/chat', icon: MessageCircle, badge: unreadChat },
+    { name: t('nav.profile'), href: '/teacher/profile', icon: UserCircle },
   ];
   const navigation = (allowed
     ? defaultNavigation.filter((item) => allowed.includes(item.href))

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useChild } from '../context/ChildContext';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -12,11 +14,14 @@ import {
   Baby,
   Award,
   ChevronRight,
+  LogOut,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const ChildProfile = () => {
   const { children, selectedChild, selectedChildId, selectChild, loading: childrenLoading } = useChild();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

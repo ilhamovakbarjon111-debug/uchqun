@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Image as ImageIcon, CookingPot, Bot } from 'lucide-react';
+import { Home, User, Star, Bot } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const BottomNav = () => {
@@ -7,9 +7,9 @@ const BottomNav = () => {
   const { t } = useTranslation();
 
   const navigation = [
-    { name: t('nav.activities'), href: '/activities', icon: Calendar },
-    { name: t('nav.media'), href: '/media', icon: ImageIcon },
-    { name: t('nav.meals'), href: '/meals', icon: CookingPot },
+    { name: t('nav.home'), href: '/', icon: Home },
+    { name: t('nav.profile'), href: '/child', icon: User },
+    { name: t('nav.rating'), href: '/rating', icon: Star },
     { name: t('nav.aiChat'), href: '/ai-chat', icon: Bot },
   ];
 

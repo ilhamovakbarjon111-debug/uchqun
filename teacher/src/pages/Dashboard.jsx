@@ -60,10 +60,10 @@ const Dashboard = () => {
   }
 
   const overviewCards = [
-    { title: t('dashboard.parents'), value: stats?.parents || 0, icon: Users },
-    { title: t('dashboard.activities'), value: stats?.activities || 0, icon: Activity },
-    { title: t('dashboard.meals'), value: stats?.meals || 0, icon: UtensilsCrossed },
-    { title: t('dashboard.media'), value: stats?.media || 0, icon: Camera },
+    { title: t('dashboard.parents'), value: stats?.parents || 0, icon: Users, href: '/teacher/parents' },
+    { title: t('dashboard.activities'), value: stats?.activities || 0, icon: Activity, href: '/teacher/activities' },
+    { title: t('dashboard.meals'), value: stats?.meals || 0, icon: UtensilsCrossed, href: '/teacher/meals' },
+    { title: t('dashboard.media'), value: stats?.media || 0, icon: Camera, href: '/teacher/media' },
   ];
 
   // Get role display text based on user role
@@ -93,8 +93,8 @@ const Dashboard = () => {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.overview')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {overviewCards.map((card) => (
-            <Card key={card.title} className="p-4">
-              <div className="flex items-center gap-4">
+            <Card key={card.title} className="p-4 hover:shadow-lg transition">
+              <a href={card.href} className="flex items-center gap-4">
                 <div className="p-3 bg-orange-50 rounded-xl">
                   <card.icon className="w-6 h-6 text-orange-600" />
                 </div>
@@ -102,7 +102,7 @@ const Dashboard = () => {
                   <p className="text-2xl font-bold text-gray-900">{card.value}</p>
                   <p className="text-sm text-gray-600">{card.title}</p>
                 </div>
-              </div>
+              </a>
             </Card>
           ))}
         </div>

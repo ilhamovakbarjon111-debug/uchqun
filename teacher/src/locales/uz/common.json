@@ -8,6 +8,7 @@
     "media": "Media",
     "chat": "Chat",
     "logout": "Chiqish",
+    "profile": "Profil",
     "menu": "Menyu"
   },
   "login": {
@@ -78,7 +79,13 @@
     "toastDelete": "Mashg'ulot o'chirildi",
     "toastError": "Mashg'ulotni saqlashda xatolik",
     "toastLoadError": "Mashg'ulotlarni yuklashda xatolik",
-    "selectChildError": "Iltimos, bolani tanlang"
+    "selectChildError": "Iltimos, bolani tanlang",
+    "weeklySchedule": "Haftalik dars jadvali",
+    "lastAdded": "Oxirgi qo'shilgan darslar",
+    "scheduleDay": "Hafta kuni",
+    "scheduleStart": "Boshlanish vaqti",
+    "scheduleEnd": "Tugash vaqti",
+    "addToSchedule": "Jadvalga qo'shish"
   },
   "mealsPage": {
     "title": "Taomlar va ovqatlanish",

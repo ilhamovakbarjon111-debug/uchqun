@@ -8,6 +8,7 @@
     "media": "Медиа",
     "chat": "Чат",
     "logout": "Выход",
+    "profile": "Профиль",
     "menu": "Меню"
   },
   "login": {
@@ -78,7 +79,13 @@
     "toastDelete": "Занятие удалено",
     "toastError": "Ошибка при сохранении занятия",
     "toastLoadError": "Ошибка загрузки занятий",
-    "selectChildError": "Пожалуйста, выберите ребенка"
+    "selectChildError": "Пожалуйста, выберите ребенка",
+    "weeklySchedule": "Недельное расписание",
+    "lastAdded": "Последние добавленные слоты",
+    "scheduleDay": "День недели",
+    "scheduleStart": "Время начала",
+    "scheduleEnd": "Время окончания",
+    "addToSchedule": "Добавить в расписание"
   },
   "mealsPage": {
     "title": "Питание и рацион",

@@ -8,6 +8,7 @@
     "media": "Media",
     "chat": "Chat",
     "logout": "Logout",
+    "profile": "Profile",
     "menu": "Menu"
   },
   "login": {
@@ -78,7 +79,13 @@
     "toastDelete": "Activity deleted successfully",
     "toastError": "Error saving activity",
     "toastLoadError": "Error loading activities",
-    "selectChildError": "Please select a child"
+    "selectChildError": "Please select a child",
+    "weeklySchedule": "Weekly schedule",
+    "lastAdded": "Last added slots",
+    "scheduleDay": "Week day",
+    "scheduleStart": "Start time",
+    "scheduleEnd": "End time",
+    "addToSchedule": "Add to weekly schedule"
   },
   "mealsPage": {
     "title": "Meals & Nutrition",

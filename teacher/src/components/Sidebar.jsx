@@ -7,6 +7,7 @@ import {
   Users,
   Utensils,
   MessageCircle,
+  UserCircle,
 } from 'lucide-react';
 import { useAuth } from '../shared/context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +23,7 @@ const Sidebar = ({ onClose }) => {
   const navigation = [
     { name: t('nav.dashboard'), href: '/teacher', icon: LayoutDashboard },
     { name: t('nav.parents'), href: '/teacher/parents', icon: Users },
+    { name: t('nav.profile') || 'Profile', href: '/teacher/profile', icon: UserCircle },
     { name: t('nav.activities'), href: '/teacher/activities', icon: ClipboardList },
     { name: t('nav.meals'), href: '/teacher/meals', icon: Utensils },
     { name: t('nav.media'), href: '/teacher/media', icon: ImageIcon },

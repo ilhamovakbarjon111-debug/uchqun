@@ -42,8 +42,13 @@ const Activities = () => {
     studentEngagement: 'Medium',
     notes: '',
     teacher: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher',
+    addToSchedule: false,
+    scheduleDay: 'Monday',
+    scheduleStart: '09:00',
+    scheduleEnd: '10:00',
   });
   const [children, setChildren] = useState([]);
+  const [schedule, setSchedule] = useState([]);
 
   const locale = (() => {
     if (i18n.language === 'uz') return 'uz-UZ';
@@ -102,6 +107,10 @@ const Activities = () => {
       studentEngagement: 'Medium',
       notes: '',
       teacher: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher',
+      addToSchedule: false,
+      scheduleDay: 'Monday',
+      scheduleStart: '09:00',
+      scheduleEnd: '10:00',
     });
     setShowModal(true);
   };
@@ -118,6 +127,10 @@ const Activities = () => {
       studentEngagement: activity.studentEngagement || 'Medium',
       notes: activity.notes || '',
       teacher: activity.teacher || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher'),
+      addToSchedule: false,
+      scheduleDay: 'Monday',
+      scheduleStart: '09:00',
+      scheduleEnd: '10:00',
     });
     setShowModal(true);
   };
@@ -151,6 +164,22 @@ const Activities = () => {
         }
         await api.post('/activities', formData);
         success(t('activitiesPage.toastCreate'));
+
+        // Optional: add to local weekly schedule display
+        if (formData.addToSchedule) {
+          setSchedule((prev) => {
+            const next = [...prev];
+            next.push({
+              id: crypto.randomUUID(),
+              day: formData.scheduleDay,
+              start: formData.scheduleStart,
+              end: formData.scheduleEnd,
+              title: formData.title,
+              type: formData.type,
+            });
+            return next.sort((a, b) => a.start.localeCompare(b.start));
+          });
+        }
       }
       
       setShowModal(false);
@@ -252,6 +281,25 @@ const Activities = () => {
                     {isTeacher && (
                       <div className="flex gap-1">
                         <button
+                          onClick={() => {
+                            setSchedule((prev) => [
+                              ...prev,
+                              {
+                                id: crypto.randomUUID(),
+                                day: new Date(activity.date).toLocaleDateString(locale, { weekday: 'long' }),
+                                start: '09:00',
+                                end: '10:00',
+                                title: activity.title,
+                                type: activity.type,
+                              },
+                            ]);
+                          }}
+                          className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-indigo-600 transition-colors"
+                          title={t('activitiesPage.addToSchedule') || 'Add to schedule'}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleEdit(activity)}
                           className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-blue-600 transition-colors"
                           title="Edit"
@@ -287,7 +335,6 @@ const Activities = () => {
                     <User className="w-3 h-3" /> {activity.teacher}
                   </div>
                 </div>
-
                 {activity.notes && (
                   <div className="relative p-4 bg-orange-50/50 rounded-2xl border-l-4 border-orange-400">
                     <MessageCircle className="w-4 h-4 text-orange-400 absolute top-2 right-2 opacity-50" />
@@ -313,6 +360,28 @@ const Activities = () => {
           </div>
         )}
       </div>
+
+      {/* Weekly schedule preview */}
+      {schedule.length > 0 && (
+        <div className="mt-10 bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-gray-900">{t('activitiesPage.weeklySchedule') || 'Weekly schedule'}</h3>
+            <span className="text-xs text-gray-500">{t('activitiesPage.lastAdded') || 'Last added slots'}</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {schedule.slice(-8).map((slot) => (
+              <div key={slot.id} className="rounded-2xl border border-gray-100 p-4 bg-gray-50">
+                <div className="text-xs font-bold uppercase text-orange-600 mb-1">{slot.day}</div>
+                <div className="text-sm font-semibold text-gray-900">
+                  {slot.start} – {slot.end}
+                </div>
+                <div className="text-sm text-gray-700 mt-1">{slot.title}</div>
+                <div className="text-[11px] text-gray-500 mt-1 uppercase tracking-tight">{slot.type}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Create/Edit Modal */}
       {showModal && (
@@ -439,6 +508,54 @@ const Activities = () => {
                   </select>
                 </div>
               </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('activitiesPage.scheduleDay') || 'Week day'}
+                  </label>
+                  <select
+                    value={formData.scheduleDay}
+                    onChange={(e) => setFormData(prev => ({ ...prev, scheduleDay: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  >
+                    {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('activitiesPage.scheduleStart') || 'Start time'}
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.scheduleStart}
+                    onChange={(e) => setFormData(prev => ({ ...prev, scheduleStart: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('activitiesPage.scheduleEnd') || 'End time'}
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.scheduleEnd}
+                    onChange={(e) => setFormData(prev => ({ ...prev, scheduleEnd: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={formData.addToSchedule}
+                  onChange={(e) => setFormData(prev => ({ ...prev, addToSchedule: e.target.checked }))}
+                />
+                <span>{t('activitiesPage.addToSchedule') || 'Add to weekly schedule'}</span>
+              </label>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
