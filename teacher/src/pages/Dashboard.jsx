@@ -22,23 +22,34 @@ const Dashboard = () => {
       try {
         setLoading(true);
         
-        // Fetch all data in parallel
-        const [parentsRes, activitiesRes, mealsRes, mediaRes] = await Promise.all([
-          api.get('/teacher/parents').catch(() => ({ data: { parents: [] } })),
-          api.get('/activities').catch(() => ({ data: [] })),
-          api.get('/meals').catch(() => ({ data: [] })),
-          api.get('/media').catch(() => ({ data: [] })),
+        const parentsRes = await api.get('/teacher/parents').catch(() => ({ data: { parents: [] } }));
+        const allParents = Array.isArray(parentsRes.data.parents) ? parentsRes.data.parents : [];
+        const parents = user?.id ? allParents.filter((p) => p.teacherId === user.id) : allParents;
+        const childIds = parents.flatMap((p) => Array.isArray(p.children) ? p.children.map(c => c.id) : []).filter(Boolean);
+
+        const fetchCount = async (path, key) => {
+          const requests = childIds.length
+            ? childIds.map((id) => api.get(`${path}?childId=${id}`).catch(() => ({ data: [] })))
+            : [api.get(path).catch(() => ({ data: [] }))];
+          const responses = await Promise.all(requests);
+          return responses.reduce((acc, res) => {
+            const data = res.data;
+            if (Array.isArray(data)) return acc + data.length;
+            if (Array.isArray(data?.[key])) return acc + data[key].length;
+            return acc;
+          }, 0);
+        };
+
+        const [activitiesCount, mealsCount, mediaCount] = await Promise.all([
+          fetchCount('/activities', 'activities'),
+          fetchCount('/meals', 'meals'),
+          fetchCount('/media', 'media'),
         ]);
 
-        const activities = Array.isArray(activitiesRes.data) ? activitiesRes.data : [];
-        const meals = Array.isArray(mealsRes.data) ? mealsRes.data : [];
-        const media = Array.isArray(mediaRes.data) ? mediaRes.data : [];
-        const parents = Array.isArray(parentsRes.data.parents) ? parentsRes.data.parents : [];
-
         setStats({
-          activities: activities.length,
-          meals: meals.length,
-          media: media.length,
+          activities: activitiesCount,
+          meals: mealsCount,
+          media: mediaCount,
           parents: parents.length,
         });
       } catch (error) {
