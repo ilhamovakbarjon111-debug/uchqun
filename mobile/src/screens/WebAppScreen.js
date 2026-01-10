@@ -74,8 +74,13 @@ export function WebAppScreen() {
       <WebView
         ref={webRef}
         source={{ uri: startUrl }}
+        // Dev-only: avoid stale web assets/styles during iteration
+        // (In production, keep caching for speed.)
+        incognito={__DEV__}
         domStorageEnabled
         javaScriptEnabled
+        cacheEnabled={!__DEV__}
+        cacheMode={__DEV__ ? 'LOAD_NO_CACHE' : 'LOAD_DEFAULT'}
         injectedJavaScriptBeforeContentLoaded={injectedBeforeLoad}
         onLoadStart={() => {
           setWebError('');
