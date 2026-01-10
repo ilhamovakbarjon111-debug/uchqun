@@ -65,6 +65,14 @@ PORT=5000
 FORCE_SYNC=false
 ```
 
+## Recommended: railway.toml
+
+This repo includes `backend/railway.toml` which sets:
+- `startCommand`: `npm start`
+- `healthcheckPath`: `/health`
+
+In Railway, set **Root Directory** to `backend` so this config is picked up.
+
 ## How to Set Environment Variables in Railway
 
 1. Go to your Railway project dashboard
