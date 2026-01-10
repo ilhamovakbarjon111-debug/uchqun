@@ -59,37 +59,37 @@ const ChildProfile = () => {
             api.get(`/media?childId=${selectedChildId}`).catch(() => ({ data: [] })),
             api.get('/parent/profile').catch(() => null),
           ]);
-
+          
           setChild(childResponse.data);
           const assignedTeacher = profileResponse?.data?.data?.user?.assignedTeacher;
           const combinedTeacherName = assignedTeacher
             ? [assignedTeacher.firstName, assignedTeacher.lastName].filter(Boolean).join(' ')
             : childResponse.data?.teacher;
           setTeacherName(combinedTeacherName || '');
-
+          
           // Calculate weekly stats (last 7 days)
           const now = new Date();
           const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
+          
           const activities = Array.isArray(activitiesResponse.data) ? activitiesResponse.data : [];
           const meals = Array.isArray(mealsResponse.data) ? mealsResponse.data : [];
           const media = Array.isArray(mediaResponse.data) ? mediaResponse.data : [];
-
+          
           const activitiesThisWeek = activities.filter(a => {
             const activityDate = new Date(a.date);
             return activityDate >= weekAgo;
           }).length;
-
+          
           const mealsThisWeek = meals.filter(m => {
             const mealDate = new Date(m.date);
             return mealDate >= weekAgo;
           }).length;
-
+          
           const mediaThisWeek = media.filter(m => {
             const mediaDate = new Date(m.date);
             return mediaDate >= weekAgo;
           }).length;
-
+          
           setWeeklyStats({
             activities: activitiesThisWeek,
             meals: mealsThisWeek,
@@ -186,7 +186,7 @@ const ChildProfile = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-
+      
       {/* Child Selector (if multiple children) */}
       {children.length > 1 && (
         <div className="mb-6">
@@ -210,18 +210,14 @@ const ChildProfile = () => {
       {/* --- Top Profile Hero --- */}
       <div className="relative overflow-hidden bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8 md:p-10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full -mr-32 -mt-32 opacity-50" />
-
+        
         <div className="relative flex flex-col md:flex-row items-center gap-8">
           <div className="relative">
             <img
-              src={childPhotoUrl || '/avatar-placeholder.png'}
+              src={child.photo}
               alt={child.firstName}
               className="w-40 h-40 rounded-3xl object-cover shadow-2xl border-4 border-white"
-              onError={(e) => {
-                e.currentTarget.src = '/avatar-placeholder.png';
-              }}
             />
-
             <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-white shadow-sm" title="Active" />
           </div>
 
@@ -252,10 +248,10 @@ const ChildProfile = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
+        
         {/* --- Left Column: Details --- */}
         <div className="lg:col-span-2 space-y-8">
-
+          
           {/* Detailed Info Grid */}
           <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
             <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
@@ -309,20 +305,20 @@ const ChildProfile = () => {
             </div>
             <h3 className="text-xl font-bold mb-6 text-white">{t('child.weeklyResults')}</h3>
             <div className="space-y-6 relative z-10">
-              <StatRow
-                label={t('child.activities')}
-                value={weeklyStats.activities}
-                color="bg-blue-500"
+              <StatRow 
+                label={t('child.activities')} 
+                value={weeklyStats.activities} 
+                color="bg-blue-500" 
               />
-              <StatRow
-                label={t('child.meals')}
-                value={weeklyStats.meals}
-                color="bg-orange-500"
+              <StatRow 
+                label={t('child.meals')} 
+                value={weeklyStats.meals} 
+                color="bg-orange-500" 
               />
-              <StatRow
-                label={t('child.media')}
-                value={weeklyStats.media}
-                color="bg-purple-500"
+              <StatRow 
+                label={t('child.media')} 
+                value={weeklyStats.media} 
+                color="bg-purple-500" 
               />
             </div>
           </section>
