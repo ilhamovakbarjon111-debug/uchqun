@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { joinUrl, WEB_URL } from '../config';
@@ -27,6 +27,7 @@ export function WebAppScreen() {
   const { user, accessToken, refreshToken, logout } = useAuth();
   const [webLoading, setWebLoading] = useState(true);
   const [webError, setWebError] = useState('');
+  const loadTimeoutRef = useRef(null);
 
   const startUrl = useMemo(() => {
     const role = user?.role;
@@ -69,6 +70,12 @@ export function WebAppScreen() {
     [logout]
   );
 
+  useEffect(() => {
+    return () => {
+      if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+    };
+  }, []);
+
   return (
     <View style={styles.container}>
       <WebView
@@ -85,13 +92,32 @@ export function WebAppScreen() {
         onLoadStart={() => {
           setWebError('');
           setWebLoading(true);
+          if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+          // Fallback: if load events don't fire (WebView edge-cases), don't keep spinner forever.
+          loadTimeoutRef.current = setTimeout(() => setWebLoading(false), 12000);
         }}
-        onLoadEnd={() => setWebLoading(false)}
-        onError={(e) => setWebError(e?.nativeEvent?.description || 'Web error')}
-        onHttpError={(e) => setWebError(`HTTP ${e?.nativeEvent?.statusCode || ''}`)}
+        onLoadProgress={(e) => {
+          const p = e?.nativeEvent?.progress;
+          if (typeof p === 'number' && p >= 1) setWebLoading(false);
+        }}
+        onLoadEnd={() => {
+          if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+          setWebLoading(false);
+        }}
+        onError={(e) => {
+          if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+          setWebError(e?.nativeEvent?.description || 'Web error');
+          setWebLoading(false);
+        }}
+        onHttpError={(e) => {
+          if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+          setWebError(`HTTP ${e?.nativeEvent?.statusCode || ''}`);
+          setWebLoading(false);
+        }}
         onMessage={handleMessage}
         onNavigationStateChange={(navState) => {
           if (navState?.url) maybeInterceptLogin(navState.url);
+          if (typeof navState?.loading === 'boolean') setWebLoading(navState.loading);
         }}
         onShouldStartLoadWithRequest={(req) => {
           // If web redirects to /login, treat as logged out and stop navigating there.
