@@ -34,11 +34,11 @@ export const getChildren = async (req, res) => {
 export const getChild = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const child = await Child.findOne({
-      where: { 
+      where: {
         id,
-        parentId: req.user.id 
+        parentId: req.user.id
       },
       include: [
         {
@@ -66,11 +66,11 @@ export const getChild = async (req, res) => {
 export const updateChild = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const child = await Child.findOne({
-      where: { 
+      where: {
         id,
-        parentId: req.user.id 
+        parentId: req.user.id,
       },
     });
 
@@ -78,7 +78,13 @@ export const updateChild = async (req, res) => {
       return res.status(404).json({ error: 'Child not found' });
     }
 
+    // Agar rasm yuklangan bo‘lsa
+    if (req.file) {
+      req.body.photo = `/uploads/children/${req.file.filename}`;
+    }
+
     await child.update(req.body);
+
     const updatedChild = await Child.findByPk(child.id);
     const childData = updatedChild.toJSON();
     childData.age = updatedChild.getAge();
@@ -89,4 +95,5 @@ export const updateChild = async (req, res) => {
     res.status(500).json({ error: 'Failed to update child' });
   }
 };
+
 

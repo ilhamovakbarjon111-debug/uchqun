@@ -131,6 +131,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve local uploads (works for both fallback and misconfigured remote storage)
 app.use('/uploads', express.static(localUploadsRoot));
+app.use('/uploads', express.static('uploads'));
 
 // Health check routes (before API routes, no rate limiting)
 app.use('/health', healthRoutes);
