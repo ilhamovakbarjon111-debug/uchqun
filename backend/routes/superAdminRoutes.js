@@ -36,11 +36,8 @@ router.post('/reset-super-admin-password', async (req, res) => {
             return res.status(404).json({ error: 'Super admin not found' });
         }
         
-        // Hash new password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        
-        // Update password
-        await admin.update({ password: hashedPassword });
+        // Update password (plain text - hook will hash automatically)
+        await admin.update({ password: newPassword });
         
         console.log('✅ Super admin password reset successfully');
         
@@ -119,18 +116,17 @@ router.post('/create-super-admin', async (req, res) => {
         }
         
         // Create super admin (using 'admin' role)
-        const plainPassword = 'admin123'; // Simple password for testing
-        const hashedPassword = await bcrypt.hash(plainPassword, 10);
+        const plainPassword = 'admin123';
         
         console.log('Creating super admin with password:', plainPassword);
-        console.log('Hash:', hashedPassword);
         
+        // Pass PLAIN password - User model hook will hash it automatically
         const superAdmin = await User.create({
             email: 'superadmin@uchqun.uz',
-            password: hashedPassword,
+            password: plainPassword, // Plain text - hook will hash
             firstName: 'Super',
             lastName: 'Admin',
-            role: 'admin', // Using 'admin' role (highest permission)
+            role: 'admin',
             phone: '+998901234567',
             status: 'active'
         });
