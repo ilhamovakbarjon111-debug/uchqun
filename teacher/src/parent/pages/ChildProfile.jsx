@@ -38,26 +38,30 @@ const ChildProfile = () => {
   
   // Default avatars
   const avatars = [
-    '/avatars/avatar1.png',
-    '/avatars/avatar2.png',
+    '/avatars/avatar1.jfif',
+    '/avatars/avatar2.jfif',
     '/avatars/avatar3.png',
-    '/avatars/avatar4.png',
+    '/avatars/avatar4.jfif',
     '/avatars/avatar5.png',
-    '/avatars/avatar6.png',
+    '/avatars/avatar6.jfif',
   ];
   
   const selectAvatar = async (avatarPath) => {
     try {
       setUploading(true);
+      console.log('Sending avatar:', avatarPath);
       const res = await api.put(`/child/${child.id}`, {
         photo: avatarPath
       });
+      console.log('Avatar response:', res.data);
       setChild(res.data);
       setShowAvatarSelector(false);
       alert('Avatar tanlandi! ✅');
     } catch (err) {
       console.error('Avatar tanlashda xatolik:', err);
-      alert('Xatolik: ' + (err.response?.data?.message || err.message));
+      console.error('Error response:', err.response?.data);
+      const errorDetails = err.response?.data?.details || err.response?.data?.error || err.message;
+      alert('Xatolik: ' + JSON.stringify(errorDetails, null, 2));
     } finally {
       setUploading(false);
     }
