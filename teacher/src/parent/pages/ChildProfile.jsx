@@ -216,10 +216,10 @@ const ChildProfile = () => {
           <div className="relative">
             <div className="relative group cursor-pointer">
               <img
-                src={child.photo || '/avatar-placeholder.png'}
+                src={child.photo ? `${import.meta.env.VITE_API_URL}${child.photo}` : '/avatar-placeholder.png'}
                 alt={`${child.firstName} ${child.lastName}`}
-                className="w-40 h-40 rounded-3xl object-cover shadow-2xl border-4 border-white"
               />
+
 
               {/* Overlay */}
               <div className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
@@ -235,26 +235,22 @@ const ChildProfile = () => {
                 onChange={async (e) => {
                   const file = e.target.files[0];
                   if (!file) return;
-
                   const formData = new FormData();
                   formData.append('photo', file);
-
                   try {
                     setUploading(true);
-                    const res = await api.put(
-                      `/child/${child.id}`,
-                      formData,
-                      { headers: { 'Content-Type': 'multipart/form-data' } }
-                    );
-
+                    const res = await api.put(`/child/${child.id}`, formData, {
+                      headers: { 'Content-Type': 'multipart/form-data' },
+                    });
                     setChild(res.data); // 🔥 rasm darhol yangilanadi
-                  } catch (err) {
+                  } catch {
                     alert('Rasm yuklashda xatolik');
                   } finally {
                     setUploading(false);
                   }
                 }}
               />
+
             </div>
 
 
