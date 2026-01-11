@@ -3,7 +3,7 @@ import { getChildren, getChild, updateChild } from '../controllers/childControll
 import { authenticate } from '../middleware/auth.js';
 import { updateChildValidator, childIdValidator } from '../validators/childValidator.js';
 import { handleValidationErrors } from '../middleware/validation.js';
-import { uploadChildPhoto } from '../middlewares/uploadChildren.js'; // 🔥 import qilindi
+import { uploadChildPhoto } from '../middleware/uploadChildren.js'; // ✅ To'g'ri yo'l
 
 const router = express.Router();
 

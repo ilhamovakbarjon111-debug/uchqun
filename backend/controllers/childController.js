@@ -67,6 +67,12 @@ export const updateChild = async (req, res) => {
   try {
     const { id } = req.params;
 
+    console.log('=== UPDATE CHILD DEBUG ===');
+    console.log('Child ID:', id);
+    console.log('User ID:', req.user.id);
+    console.log('req.file:', req.file);
+    console.log('req.body:', req.body);
+
     const child = await Child.findOne({
       where: {
         id,
@@ -83,16 +89,25 @@ export const updateChild = async (req, res) => {
     // ✅ RASMNI ANIQ YOZISH
     if (req.file) {
       updateData.photo = `/uploads/children/${req.file.filename}`;
+      console.log('Photo path set to:', updateData.photo);
+    } else {
+      console.log('⚠️ No file received in request!');
     }
 
     await child.update(updateData);
 
+    // Refresh child data from database
+    await child.reload();
+
     const childData = child.toJSON();
     childData.age = child.getAge();
+
+    console.log('Updated child data:', childData);
+    console.log('Photo in response:', childData.photo);
 
     res.json(childData);
   } catch (error) {
     console.error('Update child error:', error);
-    res.status(500).json({ error: 'Failed to update child' });
+    res.status(500).json({ error: 'Failed to update child', message: error.message });
   }
 };

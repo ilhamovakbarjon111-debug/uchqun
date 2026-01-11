@@ -253,6 +253,10 @@ const ChildProfile = () => {
                   const file = e.target.files[0];
                   if (!file) return;
                   
+                  console.log('=== PHOTO UPLOAD START ===');
+                  console.log('File:', file.name, file.size, file.type);
+                  console.log('Child ID:', child.id);
+                  
                   // Rasm hajmini tekshirish (max 5MB)
                   if (file.size > 5 * 1024 * 1024) {
                     alert('Rasm hajmi 5MB dan oshmasligi kerak');
@@ -261,22 +265,31 @@ const ChildProfile = () => {
 
                   const formData = new FormData();
                   formData.append('photo', file);
+                  
+                  console.log('FormData created, sending to:', `/child/${child.id}`);
+                  
                   try {
                     setUploading(true);
                     const res = await api.put(`/child/${child.id}`, formData, {
                       headers: { 'Content-Type': 'multipart/form-data' },
                     });
-                    console.log('Backend response:', res.data); // Debug uchun
-                    console.log('Photo path:', res.data.photo); // Rasm yo'lini ko'rish
+                    
+                    console.log('✅ Backend response:', res.data);
+                    console.log('✅ Photo path:', res.data.photo);
                     
                     // Backend response'ni to'g'ri olish
                     const updatedChild = res.data;
                     setChild(updatedChild);
                     
-                    alert('Rasm muvaffaqiyatli yuklandi!');
+                    if (res.data.photo) {
+                      alert('Rasm muvaffaqiyatli yuklandi!');
+                    } else {
+                      alert('Rasm yuklandi, lekin photo path yo\'q. Backend log\'larini tekshiring.');
+                    }
                   } catch (err) {
-                    console.error('Photo upload error:', err);
-                    alert('Rasm yuklashda xatolik: ' + (err.response?.data?.message || 'Noma\'lum xato'));
+                    console.error('❌ Photo upload error:', err);
+                    console.error('Error response:', err.response?.data);
+                    alert('Rasm yuklashda xatolik: ' + (err.response?.data?.message || err.message || 'Noma\'lum xato'));
                   } finally {
                     setUploading(false);
                   }
