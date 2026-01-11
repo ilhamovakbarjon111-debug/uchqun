@@ -32,6 +32,7 @@ const ChildProfile = () => {
     meals: 0,
     media: 0,
   });
+  const [uploading, setUploading] = useState(false);
 
   const { t, i18n } = useTranslation();
 
@@ -213,20 +214,49 @@ const ChildProfile = () => {
 
         <div className="relative flex flex-col md:flex-row items-center gap-8">
           <div className="relative">
-            <div className="relative">
+            <div className="relative group cursor-pointer">
               <img
                 src={child.photo || '/avatar-placeholder.png'}
                 alt={`${child.firstName} ${child.lastName}`}
                 className="w-40 h-40 rounded-3xl object-cover shadow-2xl border-4 border-white"
-                onError={(e) => {
-                  e.currentTarget.src = '/avatar-placeholder.png';
+              />
+
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                <span className="text-white text-sm font-semibold">
+                  Rasmni o‘zgartirish
+                </span>
+              </div>
+
+              <input
+                type="file"
+                accept="image/*"
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+
+                  const formData = new FormData();
+                  formData.append('photo', file);
+
+                  try {
+                    setUploading(true);
+                    const res = await api.put(
+                      `/child/${child.id}`,
+                      formData,
+                      { headers: { 'Content-Type': 'multipart/form-data' } }
+                    );
+
+                    setChild(res.data); // 🔥 rasm darhol yangilanadi
+                  } catch (err) {
+                    alert('Rasm yuklashda xatolik');
+                  } finally {
+                    setUploading(false);
+                  }
                 }}
               />
-              <div
-                className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-white shadow-sm"
-                title="Active"
-              />
             </div>
+
 
             <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-white shadow-sm" title="Active" />
           </div>
