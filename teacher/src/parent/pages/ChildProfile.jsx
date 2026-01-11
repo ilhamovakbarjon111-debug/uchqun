@@ -18,7 +18,8 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import defaultAvatar from '../user.jfif';
+// Default avatar - use first avatar as fallback
+const defaultAvatar = '/avatars/avatar1.jfif';
 
 const ChildProfile = () => {
   const { children, selectedChild, selectedChildId, selectChild, loading: childrenLoading } = useChild();
