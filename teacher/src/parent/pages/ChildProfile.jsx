@@ -35,6 +35,9 @@ const ChildProfile = () => {
   const [uploading, setUploading] = useState(false);
 
   const { t, i18n } = useTranslation();
+  
+  // API base URL (rasmlar uchun)
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://uchqun-production.up.railway.app';
 
   const locale = {
     uz: 'uz-UZ',
@@ -216,9 +219,18 @@ const ChildProfile = () => {
           <div className="relative">
             <div className="relative group cursor-pointer">
               <img
-                src={child.photo ? `https://uchqun-production-4f83.up.railway.app/${child.photo}` : '../user.jfif'}
+                src={
+                  child.photo 
+                    ? `${API_BASE}${child.photo.startsWith('/') ? '' : '/'}${child.photo}?t=${Date.now()}`
+                    : '../user.jfif'
+                }
                 alt={`${child.firstName} ${child.lastName}`}
                 className="w-32 h-32 md:w-40 md:h-40 rounded-3xl object-cover shadow-2xl border-4 border-white"
+                onError={(e) => {
+                  console.error('Image load error:', e.target.src);
+                  console.error('Photo path from backend:', child.photo);
+                  e.target.src = '../user.jfif';
+                }}
               />
 
               {/* Overlay */}
@@ -254,7 +266,13 @@ const ChildProfile = () => {
                     const res = await api.put(`/child/${child.id}`, formData, {
                       headers: { 'Content-Type': 'multipart/form-data' },
                     });
-                    setChild(res.data); // 🔥 rasm darhol yangilanadi
+                    console.log('Backend response:', res.data); // Debug uchun
+                    console.log('Photo path:', res.data.photo); // Rasm yo'lini ko'rish
+                    
+                    // Backend response'ni to'g'ri olish
+                    const updatedChild = res.data;
+                    setChild(updatedChild);
+                    
                     alert('Rasm muvaffaqiyatli yuklandi!');
                   } catch (err) {
                     console.error('Photo upload error:', err);
