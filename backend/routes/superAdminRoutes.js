@@ -78,7 +78,12 @@ router.post('/create-super-admin', async (req, res) => {
         }
         
         // Create super admin (using 'admin' role)
-        const hashedPassword = await bcrypt.hash('SuperAdmin@2026', 10);
+        const plainPassword = 'admin123'; // Simple password for testing
+        const hashedPassword = await bcrypt.hash(plainPassword, 10);
+        
+        console.log('Creating super admin with password:', plainPassword);
+        console.log('Hash:', hashedPassword);
+        
         const superAdmin = await User.create({
             email: 'superadmin@uchqun.uz',
             password: hashedPassword,
@@ -94,7 +99,7 @@ router.post('/create-super-admin', async (req, res) => {
             message: 'Super admin created successfully!',
             credentials: {
                 email: 'superadmin@uchqun.uz',
-                password: 'SuperAdmin@2026'
+                password: plainPassword
             },
             warning: 'IMPORTANT: Change password after first login!'
         });
