@@ -18,7 +18,7 @@ const router = express.Router();
 // Create initial super-admin (protected by secret key, no auth required)
 router.post('/create-super-admin', async (req, res) => {
     try {
-        const { secretKey } = req.body;
+        const { secretKey, forceRecreate } = req.body;
         
         // Check secret key
         if (secretKey !== process.env.SUPER_ADMIN_SECRET) {
@@ -31,10 +31,17 @@ router.post('/create-super-admin', async (req, res) => {
         });
         
         if (existing) {
-            return res.status(400).json({ 
-                error: 'Super admin already exists',
-                email: existing.email 
-            });
+            if (forceRecreate) {
+                // Delete and recreate
+                await existing.destroy();
+                console.log('🗑️ Old super admin deleted, creating new one...');
+            } else {
+                return res.status(400).json({ 
+                    error: 'Super admin already exists',
+                    email: existing.email,
+                    hint: 'Use forceRecreate: true to recreate'
+                });
+            }
         }
         
         // Create super admin (using 'admin' role)
