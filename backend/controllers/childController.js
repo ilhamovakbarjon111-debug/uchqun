@@ -81,37 +81,62 @@ export const updateChild = async (req, res) => {
 
     const updateData = { ...req.body };
 
-    // Handle photo upload via Appwrite storage
+    // Handle photo upload - supports both multipart (req.file) and base64 (req.body.photoBase64)
     if (req.file) {
+      // Multipart upload (legacy)
       try {
-        console.log('📸 File received:', {
-          fieldname: req.file.fieldname,
+        console.log('📸 Multipart file received:', {
           originalname: req.file.originalname,
           mimetype: req.file.mimetype,
           size: req.file.size
         });
         
-        // Use buffer from memory storage
         const fileBuffer = req.file.buffer;
         const filename = `child-${id}-${Date.now()}${req.file.originalname.substring(req.file.originalname.lastIndexOf('.'))}`;
         
-        const uploadResult = await uploadFile(
-          fileBuffer, 
-          filename,
-          req.file.mimetype
-        );
+        const uploadResult = await uploadFile(fileBuffer, filename, req.file.mimetype);
         updateData.photo = uploadResult.url;
+        delete updateData.photoBase64; // Remove base64 from update data
         
-        console.log('✅ Photo uploaded to Appwrite:', uploadResult.url);
+        console.log('✅ Photo uploaded (multipart):', uploadResult.url);
       } catch (uploadError) {
-        console.error('❌ Photo upload error:', uploadError);
+        console.error('❌ Multipart upload error:', uploadError);
         return res.status(500).json({ 
           error: 'Failed to upload photo', 
           message: uploadError.message 
         });
       }
-    } else {
-      console.log('⚠️ No file in request');
+    } else if (req.body.photoBase64) {
+      // Base64 upload (new method)
+      try {
+        console.log('📸 Base64 photo received');
+        
+        // Extract data from base64 string (format: data:image/jpeg;base64,/9j/4AAQ...)
+        const matches = req.body.photoBase64.match(/^data:(.+);base64,(.+)$/);
+        if (!matches) {
+          throw new Error('Invalid base64 format');
+        }
+        
+        const mimetype = matches[1];
+        const base64Data = matches[2];
+        const fileBuffer = Buffer.from(base64Data, 'base64');
+        const extension = mimetype.split('/')[1] || 'jpg';
+        const filename = `child-${id}-${Date.now()}.${extension}`;
+        
+        console.log('📤 Uploading to Appwrite:', { filename, mimetype, size: fileBuffer.length });
+        
+        const uploadResult = await uploadFile(fileBuffer, filename, mimetype);
+        updateData.photo = uploadResult.url;
+        delete updateData.photoBase64; // Remove base64 from update data
+        
+        console.log('✅ Photo uploaded (base64):', uploadResult.url);
+      } catch (uploadError) {
+        console.error('❌ Base64 upload error:', uploadError);
+        return res.status(500).json({ 
+          error: 'Failed to upload photo', 
+          message: uploadError.message 
+        });
+      }
     }
 
     await child.update(updateData);

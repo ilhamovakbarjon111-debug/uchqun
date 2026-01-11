@@ -16,11 +16,20 @@ router.get('/', getChildren);
 router.get('/:id', childIdValidator, handleValidationErrors, getChild);
 
 // Update child + photo upload (parent tomonidan)
+// Two routes: one with multer (legacy), one with base64 (new)
 router.put(
     '/:id',
-    uploadChildPhoto.single('photo'), // 🔴 multer import qilindi
+    uploadChildPhoto.single('photo'), // multer for legacy support
     childIdValidator,
     updateChildValidator,
+    handleValidationErrors,
+    updateChild
+);
+
+// New base64 upload route (no multer needed)
+router.post(
+    '/:id/photo',
+    childIdValidator,
     handleValidationErrors,
     updateChild
 );

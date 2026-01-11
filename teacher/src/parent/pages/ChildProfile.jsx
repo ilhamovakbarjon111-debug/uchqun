@@ -294,34 +294,47 @@ const ChildProfile = () => {
                     return;
                   }
 
-                  const formData = new FormData();
-                  formData.append('photo', file);
+                  console.log('Converting to base64...');
                   
-                  console.log('FormData created, sending to:', `/child/${child.id}`);
-                  
-                  try {
-                    setUploading(true);
-                    const res = await api.put(`/child/${child.id}`, formData);
+                  // Convert file to base64
+                  const reader = new FileReader();
+                  reader.onload = async () => {
+                    const base64 = reader.result;
+                    console.log('Base64 created, sending to:', `/child/${child.id}/photo`);
                     
-                    console.log('✅ Backend response:', res.data);
-                    console.log('✅ Photo path:', res.data.photo);
-                    
-                    // Backend response'ni to'g'ri olish
-                    const updatedChild = res.data;
-                    setChild(updatedChild);
-                    
-                    if (res.data.photo) {
-                      alert('Rasm muvaffaqiyatli yuklandi!');
-                    } else {
-                      alert('Rasm yuklandi, lekin photo path yo\'q. Backend log\'larini tekshiring.');
+                    try {
+                      setUploading(true);
+                      const res = await api.post(`/child/${child.id}/photo`, {
+                        photoBase64: base64
+                      });
+                      
+                      console.log('✅ Backend response:', res.data);
+                      console.log('✅ Photo path:', res.data.photo);
+                      
+                      // Backend response'ni to'g'ri olish
+                      const updatedChild = res.data;
+                      setChild(updatedChild);
+                      
+                      if (res.data.photo) {
+                        alert('Rasm muvaffaqiyatli yuklandi! ✅');
+                      } else {
+                        alert('Rasm yuklandi, lekin photo path yo\'q. Backend log\'larini tekshiring.');
+                      }
+                    } catch (err) {
+                      console.error('❌ Photo upload error:', err);
+                      console.error('Error response:', err.response?.data);
+                      alert('Rasm yuklashda xatolik: ' + (err.response?.data?.message || err.message || 'Noma\'lum xato'));
+                    } finally {
+                      setUploading(false);
                     }
-                  } catch (err) {
-                    console.error('❌ Photo upload error:', err);
-                    console.error('Error response:', err.response?.data);
-                    alert('Rasm yuklashda xatolik: ' + (err.response?.data?.message || err.message || 'Noma\'lum xato'));
-                  } finally {
+                  };
+                  
+                  reader.onerror = () => {
+                    alert('Faylni o\'qishda xatolik');
                     setUploading(false);
-                  }
+                  };
+                  
+                  reader.readAsDataURL(file);
                 }}
               />
 
