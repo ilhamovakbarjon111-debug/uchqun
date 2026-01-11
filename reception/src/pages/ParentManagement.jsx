@@ -46,10 +46,8 @@ const ParentManagement = () => {
       disabilityType: '',
       specialNeeds: '',
       school: 'Uchqun School',
-      photo: null, // Changed to null for file upload
     },
   });
-  const [photoPreview, setPhotoPreview] = useState(null);
   const [childFormData, setChildFormData] = useState({
     firstName: '',
     lastName: '',
@@ -58,9 +56,7 @@ const ParentManagement = () => {
     disabilityType: '',
     specialNeeds: '',
     school: 'Uchqun School',
-    photo: null,
   });
-  const [childPhotoPreview, setChildPhotoPreview] = useState(null);
   const { success, error: showError } = useToast();
   const { t } = useTranslation();
 
@@ -123,7 +119,6 @@ const ParentManagement = () => {
         photo: null,
       },
     });
-    setPhotoPreview(null);
     setShowModal(true);
   };
 
@@ -156,37 +151,6 @@ const ParentManagement = () => {
     }
   };
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData({
-        ...formData,
-        child: { ...formData.child, photo: file }
-      });
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleChildPhotoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setChildFormData({
-        ...childFormData,
-        photo: file
-      });
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setChildPhotoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleAddChild = (parentId) => {
     setSelectedParentId(parentId);
@@ -200,7 +164,6 @@ const ParentManagement = () => {
       school: 'Uchqun School',
       photo: null,
     });
-    setChildPhotoPreview(null);
     setShowChildModal(true);
   };
 
@@ -250,7 +213,6 @@ const ParentManagement = () => {
       await api.post('/reception/children', formDataToSend);
       success('Child added successfully');
       setShowChildModal(false);
-      setChildPhotoPreview(null);
       loadParents();
     } catch (error) {
       console.error('Error adding child:', error);
@@ -314,7 +276,6 @@ const ParentManagement = () => {
       }
       
       setShowModal(false);
-      setPhotoPreview(null);
       loadParents();
     } catch (error) {
       console.error('Error saving parent:', error);
@@ -763,26 +724,6 @@ const ParentManagement = () => {
                         />
                       </div>
 
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
-                      <div className="space-y-3">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePhotoChange}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        />
-                        {photoPreview && (
-                          <div className="mt-2">
-                            <img 
-                              src={photoPreview} 
-                              alt="Preview" 
-                              className="w-32 h-32 object-cover rounded-lg border border-gray-200"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </>
               )}
@@ -817,7 +758,6 @@ const ParentManagement = () => {
               <button
                 onClick={() => {
                   setShowChildModal(false);
-                  setChildPhotoPreview(null);
                 }}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
@@ -919,26 +859,6 @@ const ParentManagement = () => {
                           />
                         </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
-                <div className="space-y-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleChildPhotoChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                  {childPhotoPreview && (
-                    <div className="mt-2">
-                      <img 
-                        src={childPhotoPreview} 
-                        alt="Preview" 
-                        className="w-32 h-32 object-cover rounded-lg border border-gray-200"
-                      />
-                      </div>
-                  )}
-                    </div>
-                  </div>
 
               <div className="flex gap-3 pt-4">
                 <button
