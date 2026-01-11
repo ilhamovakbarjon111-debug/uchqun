@@ -16,7 +16,9 @@ import {
   Save,
   Baby,
   UserCheck,
-  UsersRound
+  UsersRound,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -59,6 +61,8 @@ const ParentManagement = () => {
   });
   const { success, error: showError } = useToast();
   const { t } = useTranslation();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showChildPassword, setShowChildPassword] = useState(false);
 
   useEffect(() => {
     loadParents();
@@ -480,7 +484,7 @@ const ParentManagement = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                {editingParent ? 'Edit Parent' : 'Create Parent'}
+                {editingParent ? t('parentsPage.form.update') + ' ' + t('nav.parents') : t('parentsPage.add')}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -493,7 +497,7 @@ const ParentManagement = () => {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('parentsPage.form.firstName')}</label>
                   <input
                     type="text"
                     required
@@ -503,7 +507,7 @@ const ParentManagement = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('parentsPage.form.lastName')}</label>
                   <input
                     type="text"
                     required
@@ -515,7 +519,7 @@ const ParentManagement = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('parentsPage.form.email')}</label>
                 <input
                   type="email"
                   required
@@ -526,7 +530,7 @@ const ParentManagement = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('parentsPage.form.phone')}</label>
                 <input
                   type="tel"
                   value={formData.phone}
@@ -536,22 +540,29 @@ const ParentManagement = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {editingParent ? 'New Password (leave blank to keep current)' : 'Password'}
-                </label>
-                <input
-                  type="password"
-                  required={!editingParent}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('parentsPage.form.password')}</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required={!editingParent}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Teacher
+                    {t('parentsPage.form.teacher')}
                   </label>
                   <select
                     value={formData.teacherId}
@@ -565,7 +576,7 @@ const ParentManagement = () => {
                     }}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   >
-                    <option value="">Select Teacher</option>
+                    <option value="">{t('parentsPage.form.teacher')} tanlang</option>
                     {teachers.map((teacher) => (
                       <option key={teacher.id} value={teacher.id}>
                         {teacher.firstName} {teacher.lastName}
@@ -575,7 +586,7 @@ const ParentManagement = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Group
+                    {t('parentsPage.form.group')}
                   </label>
                   <select
                     value={formData.groupId}
@@ -591,7 +602,7 @@ const ParentManagement = () => {
                     }}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   >
-                    <option value="">Select Group</option>
+                    <option value="">{t('parentsPage.form.group')} tanlang</option>
                     {filteredGroups.length > 0 ? (
                       filteredGroups.map((group) => (
                         <option key={group.id} value={group.id}>
@@ -599,7 +610,7 @@ const ParentManagement = () => {
                         </option>
                       ))
                     ) : (
-                      <option value="" disabled>Select a teacher first</option>
+                      <option value="" disabled>Avval o'qituvchi tanlang</option>
                     )}
                   </select>
                 </div>
@@ -608,12 +619,12 @@ const ParentManagement = () => {
               {!editingParent && (
                 <>
                   <div className="pt-4 border-t border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Child Information</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">{t('parentsPage.form.child')}</h3>
                     
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Child First Name <span className="text-red-500">*</span>
+                          {t('parentsPage.form.childFirstName')} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -628,7 +639,7 @@ const ParentManagement = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Child Last Name <span className="text-red-500">*</span>
+                          {t('parentsPage.form.childLastName')} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -646,7 +657,7 @@ const ParentManagement = () => {
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Date of Birth <span className="text-red-500">*</span>
+                          {t('parentsPage.form.childDob')} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="date"
@@ -661,7 +672,7 @@ const ParentManagement = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Gender <span className="text-red-500">*</span>
+                          {t('parentsPage.form.childGender')} <span className="text-red-500">*</span>
                         </label>
                         <select
                           required
@@ -672,16 +683,16 @@ const ParentManagement = () => {
                           })}
                           className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         >
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
-                          <option value="Other">Other</option>
+                          <option value="Male">Erkak</option>
+                          <option value="Female">Ayol</option>
+                          <option value="Other">Boshqa</option>
                         </select>
                       </div>
                     </div>
 
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Disability Type <span className="text-red-500">*</span>
+                        {t('parentsPage.form.childDisability')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -696,7 +707,7 @@ const ParentManagement = () => {
                     </div>
 
                     <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Special Needs</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('parentsPage.form.childSpecialNeeds')}</label>
                       <textarea
                         value={formData.child.specialNeeds}
                         onChange={(e) => setFormData({ 
@@ -710,7 +721,7 @@ const ParentManagement = () => {
 
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          School <span className="text-red-500">*</span>
+                          {t('parentsPage.form.childSchool')} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -741,7 +752,7 @@ const ParentManagement = () => {
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
-                  {editingParent ? 'Update' : 'Create'}
+                  {editingParent ? t('parentsPage.form.update') : t('parentsPage.form.create')}
                 </button>
               </div>
             </form>
@@ -754,7 +765,7 @@ const ParentManagement = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Add Child</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Bola qo'shish</h2>
               <button
                 onClick={() => {
                   setShowChildModal(false);
@@ -769,7 +780,7 @@ const ParentManagement = () => {
               <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name <span className="text-red-500">*</span>
+                    {t('parentsPage.form.childFirstName')} <span className="text-red-500">*</span>
                         </label>
                   <input
                     type="text"
@@ -781,7 +792,7 @@ const ParentManagement = () => {
                       </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name <span className="text-red-500">*</span>
+                    {t('parentsPage.form.childLastName')} <span className="text-red-500">*</span>
                   </label>
                       <input
                     type="text"
@@ -796,7 +807,7 @@ const ParentManagement = () => {
               <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date of Birth <span className="text-red-500">*</span>
+                    {t('parentsPage.form.childDob')} <span className="text-red-500">*</span>
                           </label>
                           <input
                     type="date"
@@ -808,7 +819,7 @@ const ParentManagement = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Gender <span className="text-red-500">*</span>
+                    {t('parentsPage.form.childGender')} <span className="text-red-500">*</span>
                   </label>
                   <select
                     required
@@ -816,16 +827,16 @@ const ParentManagement = () => {
                     onChange={(e) => setChildFormData({ ...childFormData, gender: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
+                    <option value="Male">Erkak</option>
+                    <option value="Female">Ayol</option>
+                    <option value="Other">Boshqa</option>
                   </select>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Disability Type <span className="text-red-500">*</span>
+                  {t('parentsPage.form.childDisability')} <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -837,7 +848,7 @@ const ParentManagement = () => {
                         </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Special Needs</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('parentsPage.form.childSpecialNeeds')}</label>
                 <textarea
                   value={childFormData.specialNeeds}
                   onChange={(e) => setChildFormData({ ...childFormData, specialNeeds: e.target.value })}
@@ -848,7 +859,7 @@ const ParentManagement = () => {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                  School <span className="text-red-500">*</span>
+                  {t('parentsPage.form.childSchool')} <span className="text-red-500">*</span>
                           </label>
                           <input
                   type="text"
@@ -863,20 +874,17 @@ const ParentManagement = () => {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowChildModal(false);
-                    setChildPhotoPreview(null);
-                  }}
+                  onClick={() => setShowChildModal(false)}
                   className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
                 >
-                  Cancel
+                  {t('parentsPage.form.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
-                  Add Child
+                  Bola qo'shish
                 </button>
               </div>
             </form>
