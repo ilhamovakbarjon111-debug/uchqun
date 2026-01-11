@@ -15,6 +15,47 @@ const router = express.Router();
  * - Only accessible from Super Admin panel
  */
 
+// Reset super admin password
+router.post('/reset-super-admin-password', async (req, res) => {
+    try {
+        const { secretKey, newPassword } = req.body;
+        
+        if (secretKey !== process.env.SUPER_ADMIN_SECRET) {
+            return res.status(403).json({ error: 'Invalid secret key' });
+        }
+        
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+        
+        const admin = await User.findOne({
+            where: { email: 'superadmin@uchqun.uz' }
+        });
+        
+        if (!admin) {
+            return res.status(404).json({ error: 'Super admin not found' });
+        }
+        
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        
+        // Update password
+        await admin.update({ password: hashedPassword });
+        
+        console.log('✅ Super admin password reset successfully');
+        
+        res.json({
+            success: true,
+            message: 'Password reset successfully!',
+            email: 'superadmin@uchqun.uz',
+            newPassword: newPassword
+        });
+    } catch (error) {
+        console.error('Password reset error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug: Check super admin account
 router.post('/check-super-admin', async (req, res) => {
     try {
