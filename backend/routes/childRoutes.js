@@ -25,4 +25,32 @@ router.put(
     updateChild
 );
 
+// DEBUG endpoint - test multer
+router.post('/test-upload', uploadChildPhoto.single('photo'), (req, res) => {
+    console.log('=== TEST UPLOAD ===');
+    console.log('req.file:', req.file);
+    console.log('req.body:', req.body);
+    console.log('Content-Type:', req.headers['content-type']);
+    
+    if (req.file) {
+        res.json({ 
+            success: true, 
+            message: 'File received!', 
+            file: {
+                filename: req.file.filename,
+                size: req.file.size,
+                mimetype: req.file.mimetype,
+                path: req.file.path
+            }
+        });
+    } else {
+        res.json({ 
+            success: false, 
+            message: 'No file received',
+            body: req.body,
+            headers: req.headers
+        });
+    }
+});
+
 export default router;

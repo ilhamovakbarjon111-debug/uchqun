@@ -245,6 +245,36 @@ const ChildProfile = () => {
                 )}
               </div>
 
+              {/* TEST BUTTON */}
+              <button
+                onClick={async () => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    const formData = new FormData();
+                    formData.append('photo', file);
+                    
+                    console.log('🧪 TEST: Sending file to /child/test-upload');
+                    try {
+                      const res = await api.post('/child/test-upload', formData);
+                      console.log('🧪 TEST RESULT:', res.data);
+                      alert('TEST: ' + JSON.stringify(res.data, null, 2));
+                    } catch (err) {
+                      console.error('🧪 TEST ERROR:', err);
+                      alert('TEST ERROR: ' + err.message);
+                    }
+                  };
+                  input.click();
+                }}
+                className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-xs z-10"
+              >
+                TEST
+              </button>
+
               <input
                 type="file"
                 accept="image/*"
