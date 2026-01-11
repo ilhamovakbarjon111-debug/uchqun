@@ -218,23 +218,35 @@ const ChildProfile = () => {
               <img
                 src={child.photo ? `https://uchqun-production-4f83.up.railway.app/${child.photo}` : '../user.jfif'}
                 alt={`${child.firstName} ${child.lastName}`}
+                className="w-32 h-32 md:w-40 md:h-40 rounded-3xl object-cover shadow-2xl border-4 border-white"
               />
-
 
               {/* Overlay */}
               <div className="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-                <span className="text-white text-sm font-semibold">
-                  Rasmni o‘zgartirish
-                </span>
+                {uploading ? (
+                  <LoadingSpinner size="md" />
+                ) : (
+                  <span className="text-white text-sm font-semibold">
+                    Rasmni o'zgartirish
+                  </span>
+                )}
               </div>
 
               <input
                 type="file"
                 accept="image/*"
                 className="absolute inset-0 opacity-0 cursor-pointer"
+                disabled={uploading}
                 onChange={async (e) => {
                   const file = e.target.files[0];
                   if (!file) return;
+                  
+                  // Rasm hajmini tekshirish (max 5MB)
+                  if (file.size > 5 * 1024 * 1024) {
+                    alert('Rasm hajmi 5MB dan oshmasligi kerak');
+                    return;
+                  }
+
                   const formData = new FormData();
                   formData.append('photo', file);
                   try {
@@ -243,8 +255,10 @@ const ChildProfile = () => {
                       headers: { 'Content-Type': 'multipart/form-data' },
                     });
                     setChild(res.data); // 🔥 rasm darhol yangilanadi
-                  } catch {
-                    alert('Rasm yuklashda xatolik');
+                    alert('Rasm muvaffaqiyatli yuklandi!');
+                  } catch (err) {
+                    console.error('Photo upload error:', err);
+                    alert('Rasm yuklashda xatolik: ' + (err.response?.data?.message || 'Noma\'lum xato'));
                   } finally {
                     setUploading(false);
                   }
