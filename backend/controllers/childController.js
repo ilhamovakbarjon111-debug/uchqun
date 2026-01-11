@@ -72,6 +72,7 @@ export const updateChild = async (req, res) => {
     console.log('User ID:', req.user.id);
     console.log('req.file:', req.file);
     console.log('req.body:', req.body);
+    console.log('Content-Type:', req.headers['content-type']);
 
     const child = await Child.findOne({
       where: {
@@ -84,15 +85,26 @@ export const updateChild = async (req, res) => {
       return res.status(404).json({ error: 'Child not found' });
     }
 
+    console.log('Current child photo before update:', child.photo);
+
     const updateData = { ...req.body };
 
     // ✅ RASMNI ANIQ YOZISH
     if (req.file) {
       updateData.photo = `/uploads/children/${req.file.filename}`;
-      console.log('Photo path set to:', updateData.photo);
+      console.log('✅ Photo received! Setting path to:', updateData.photo);
+      console.log('File details:', {
+        filename: req.file.filename,
+        size: req.file.size,
+        mimetype: req.file.mimetype,
+        path: req.file.path
+      });
     } else {
       console.log('⚠️ No file received in request!');
+      console.log('req.file is:', req.file);
     }
+
+    console.log('Update data to be applied:', updateData);
 
     await child.update(updateData);
 
@@ -102,12 +114,14 @@ export const updateChild = async (req, res) => {
     const childData = child.toJSON();
     childData.age = child.getAge();
 
-    console.log('Updated child data:', childData);
-    console.log('Photo in response:', childData.photo);
+    console.log('=== UPDATE COMPLETE ===');
+    console.log('Updated child photo from DB:', childData.photo);
+    console.log('Full updated child:', JSON.stringify(childData, null, 2));
 
     res.json(childData);
   } catch (error) {
-    console.error('Update child error:', error);
+    console.error('❌ Update child error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({ error: 'Failed to update child', message: error.message });
   }
 };

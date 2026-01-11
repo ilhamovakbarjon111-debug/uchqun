@@ -18,6 +18,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import defaultAvatar from '../user.jfif';
 
 const ChildProfile = () => {
   const { children, selectedChild, selectedChildId, selectChild, loading: childrenLoading } = useChild();
@@ -222,14 +223,14 @@ const ChildProfile = () => {
                 src={
                   child.photo 
                     ? `${API_BASE}${child.photo.startsWith('/') ? '' : '/'}${child.photo}?t=${Date.now()}`
-                    : '../user.jfif'
+                    : defaultAvatar
                 }
                 alt={`${child.firstName} ${child.lastName}`}
                 className="w-32 h-32 md:w-40 md:h-40 rounded-3xl object-cover shadow-2xl border-4 border-white"
                 onError={(e) => {
                   console.error('Image load error:', e.target.src);
                   console.error('Photo path from backend:', child.photo);
-                  e.target.src = '../user.jfif';
+                  e.target.src = defaultAvatar;
                 }}
               />
 
@@ -270,9 +271,7 @@ const ChildProfile = () => {
                   
                   try {
                     setUploading(true);
-                    const res = await api.put(`/child/${child.id}`, formData, {
-                      headers: { 'Content-Type': 'multipart/form-data' },
-                    });
+                    const res = await api.put(`/child/${child.id}`, formData);
                     
                     console.log('✅ Backend response:', res.data);
                     console.log('✅ Photo path:', res.data.photo);
