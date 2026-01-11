@@ -570,7 +570,7 @@ Please provide helpful, practical advice about caring for children with special 
           openaiConfig.baseURL = process.env.OPENAI_BASE_URL;
           // OpenRouter requires HTTP headers
           openaiConfig.defaultHeaders = {
-            'HTTP-Referer': process.env.FRONTEND_URL?.split(',')[0] || 'https://uchqun-production.up.railway.app',
+            'HTTP-Referer': process.env.FRONTEND_URL?.split(',')[0] || 'https://uchqun-production-4f83.up.railway.app',
             'X-Title': 'Uchqun Parent Portal',
           };
         }
@@ -617,7 +617,7 @@ Please provide helpful, practical advice about caring for children with special 
             const response = await fetch('https://openrouter.ai/api/v1/models', {
               headers: {
                 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-                'HTTP-Referer': process.env.FRONTEND_URL?.split(',')[0] || 'https://uchqun-production.up.railway.app',
+                'HTTP-Referer': process.env.FRONTEND_URL?.split(',')[0] || 'https://uchqun-production-4f83.up.railway.app',
                 'X-Title': 'Uchqun Parent Portal',
               },
             });
@@ -640,7 +640,7 @@ Please provide helpful, practical advice about caring for children with special 
                     apiKey: process.env.OPENAI_API_KEY,
                     baseURL: process.env.OPENAI_BASE_URL,
                     defaultHeaders: {
-                      'HTTP-Referer': process.env.FRONTEND_URL?.split(',')[0] || 'https://uchqun-production.up.railway.app',
+                      'HTTP-Referer': process.env.FRONTEND_URL?.split(',')[0] || 'https://uchqun-production-4f83.up.railway.app',
                       'X-Title': 'Uchqun Parent Portal',
                     },
                   });

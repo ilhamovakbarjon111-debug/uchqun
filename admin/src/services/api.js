@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://uchqun-production.up.railway.app/api',
+  baseURL: 'https://uchqun-production-4f83.up.railway.app/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,7 +35,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
           const response = await axios.post(
-            `https://uchqun-production.up.railway.app/api/auth/refresh`,
+            `https://uchqun-production-4f83.up.railway.app/api/auth/refresh`,
             { refreshToken }
           );
 

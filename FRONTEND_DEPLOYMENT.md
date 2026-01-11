@@ -31,7 +31,7 @@ VITE_API_URL=https://your-backend-url.com/api
 `admin/` papkasida `.env` fayl yarating:
 
 ```env
-VITE_API_URL=https://uchqun-production.up.railway.app/api
+VITE_API_URL=https://uchqun-production-4f83.up.railway.app/api
 ```
 
 Yoki local development uchun:
@@ -44,7 +44,7 @@ VITE_API_URL=http://localhost:5000/api
 `reception/` papkasida `.env` fayl yarating:
 
 ```env
-VITE_API_URL=https://uchqun-production.up.railway.app/api
+VITE_API_URL=https://uchqun-production-4f83.up.railway.app/api
 ```
 
 ### 3. Teacher Frontend
@@ -52,7 +52,7 @@ VITE_API_URL=https://uchqun-production.up.railway.app/api
 `teacher/` papkasida `.env` fayl yarating:
 
 ```env
-VITE_API_URL=https://uchqun-production.up.railway.app/api
+VITE_API_URL=https://uchqun-production-4f83.up.railway.app/api
 ```
 
 ### 4. Super Admin Frontend
@@ -60,7 +60,7 @@ VITE_API_URL=https://uchqun-production.up.railway.app/api
 `super-admin/` papkasida `.env` fayl yarating:
 
 ```env
-VITE_API_URL=https://uchqun-production.up.railway.app/api
+VITE_API_URL=https://uchqun-production-4f83.up.railway.app/api
 ```
 
 ## Railway Deployment
@@ -82,7 +82,7 @@ Railway'da frontend deploy qilish uchun:
    - Service → **Variables** tab
    - **+ New Variable**
    - **Name:** `VITE_API_URL`
-   - **Value:** `https://uchqun-production.up.railway.app/api`
+   - **Value:** `https://uchqun-production-4f83.up.railway.app/api`
 
 3. **Build Settings (avtomatik, lekin tekshirib ko'ring):**
    - **Build Command:** `npm install && npm run build`
@@ -105,7 +105,7 @@ Agar Vercel yoki Netlify'da deploy qilsangiz:
 3. Quyidagi variable'ni qo'shing:
 
    - **Name:** `VITE_API_URL`
-   - **Value:** `https://uchqun-production.up.railway.app/api`
+   - **Value:** `https://uchqun-production-4f83.up.railway.app/api`
    - **Environment:** Production, Preview, Development (hamma uchun)
 
 4. **Redeploy** qiling
@@ -118,7 +118,7 @@ Agar Vercel yoki Netlify'da deploy qilsangiz:
 4. Quyidagi variable'ni qo'shing:
 
    - **Key:** `VITE_API_URL`
-   - **Value:** `https://uchqun-production.up.railway.app/api`
+   - **Value:** `https://uchqun-production-4f83.up.railway.app/api`
    - **Scopes:** All scopes (Production, Deploy previews, Branch deploys)
 
 5. **Deploy site** qiling

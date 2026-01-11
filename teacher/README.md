@@ -19,7 +19,7 @@ npm install
 
 2. Create a `.env` file (optional):
 ```env
-VITE_API_URL=https://uchqun-production.up.railway.app/api
+VITE_API_URL=https://uchqun-production-4f83.up.railway.app/api
 ```
 
 For local development:
@@ -67,7 +67,7 @@ teacher/
 
 ## Backend API
 
-This frontend connects to the backend API at `https://uchqun-production.up.railway.app/api` (production) or `http://localhost:5000/api` (local development). Make sure the backend is running before starting the frontend.
+This frontend connects to the backend API at `https://uchqun-production-4f83.up.railway.app/api` (production) or `http://localhost:5000/api` (local development). Make sure the backend is running before starting the frontend.
 
 ## Deploy (Vercel)
 
@@ -77,7 +77,7 @@ This project is a Vite SPA with client-side routing (e.g. `/teacher`). For Verce
 - **Build Command**: `npm run build`
 - **Output Directory**: `dist`
 - **Environment Variables**:
-  - `VITE_API_URL` = `https://uchqun-production.up.railway.app/api`
+  - `VITE_API_URL` = `https://uchqun-production-4f83.up.railway.app/api`
 
 ## Login
 

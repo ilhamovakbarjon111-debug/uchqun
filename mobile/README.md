@@ -17,7 +17,7 @@ Mobil ilova web panelni `WebView` orqali ochadi. Shuning uchun teacher web front
 `.env` fayl yarating (`mobile/.env`):
 
 ```env
-EXPO_PUBLIC_API_URL=https://uchqun-production.up.railway.app/api
+EXPO_PUBLIC_API_URL=https://uchqun-production-4f83.up.railway.app/api
 EXPO_PUBLIC_WEB_URL=https://uchqun-platform.vercel.app
 ```
 

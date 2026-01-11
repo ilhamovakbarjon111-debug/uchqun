@@ -38,7 +38,7 @@ Har bir frontend loyiha uchun alohida Railway service yarating:
 Har bir frontend service uchun quyidagi environment variable'ni qo'shing:
 
 **Variable Name:** `VITE_API_URL`  
-**Value:** `https://uchqun-production.up.railway.app/api`
+**Value:** `https://uchqun-production-4f83.up.railway.app/api`
 
 **Qanday qo'shish:**
 1. Service'ga kiring

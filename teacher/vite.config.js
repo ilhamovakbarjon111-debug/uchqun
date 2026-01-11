@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: 'https://uchqun-production.up.railway.app',
+        target: 'https://uchqun-production-4f83.up.railway.app',
         changeOrigin: true,
       },
     },

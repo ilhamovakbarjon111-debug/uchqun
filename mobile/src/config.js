@@ -1,5 +1,5 @@
 export const API_URL =
-  process.env.EXPO_PUBLIC_API_URL || 'https://uchqun-production.up.railway.app/api';
+  process.env.EXPO_PUBLIC_API_URL || 'https://uchqun-production-4f83.up.railway.app/api';
 
 // IMPORTANT:
 // - Android Emulator: host machine -> http://10.0.2.2:<port>
