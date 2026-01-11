@@ -19,7 +19,10 @@ api.interceptors.request.use(
     
     // If the request data is FormData, remove Content-Type to let browser set it with boundary
     if (config.data instanceof FormData) {
+      console.log('🔥 FormData detected! Removing Content-Type header');
+      console.log('Headers before:', config.headers);
       delete config.headers['Content-Type'];
+      console.log('Headers after:', config.headers);
     }
     
     return config;
