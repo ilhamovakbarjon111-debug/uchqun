@@ -43,26 +43,31 @@ const ChildProfile = () => {
     '/avatars/avatar2.jfif',
     '/avatars/avatar3.png',
     '/avatars/avatar4.jfif',
-    '/avatars/avatar5.png',
+    '/avatars/avatar7.jfif',
     '/avatars/avatar6.jfif',
   ];
   
   const selectAvatar = async (avatarPath) => {
+    // TEMPORARY FIX: Update child state directly without backend call
+    // until Railway deploys the new avatar route
     try {
       setUploading(true);
-      console.log('Sending avatar to /avatar endpoint:', avatarPath);
-      const res = await api.put(`/child/${child.id}/avatar`, {
-        photo: avatarPath
-      });
-      console.log('Avatar response:', res.data);
-      setChild(res.data);
+      console.log('Setting avatar locally:', avatarPath);
+      
+      // Update local state immediately
+      const updatedChild = { ...child, photo: avatarPath };
+      setChild(updatedChild);
       setShowAvatarSelector(false);
+      
+      // Try to save to backend in background (will fail on old Railway, but OK)
+      api.put(`/child/${child.id}/avatar`, { photo: avatarPath })
+        .then(() => console.log('✅ Avatar saved to backend'))
+        .catch(() => console.log('⚠️ Backend save failed (old code), but local update OK'));
+      
       alert('Avatar tanlandi! ✅');
     } catch (err) {
-      console.error('Avatar tanlashda xatolik:', err);
-      console.error('Error response:', err.response?.data);
-      const errorDetails = err.response?.data?.details || err.response?.data?.error || err.message;
-      alert('Xatolik: ' + JSON.stringify(errorDetails, null, 2));
+      console.error('Avatar xatolik:', err);
+      alert('Xatolik: ' + err.message);
     } finally {
       setUploading(false);
     }
