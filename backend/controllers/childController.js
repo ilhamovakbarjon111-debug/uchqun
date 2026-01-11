@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import Child from '../models/Child.js';
 import User from '../models/User.js';
+import logger from '../utils/logger.js';
 
 // Get all children for the logged-in parent
 export const getChildren = async (req, res) => {
@@ -25,7 +26,7 @@ export const getChildren = async (req, res) => {
 
     res.json(childrenData);
   } catch (error) {
-    console.error('Get children error:', error);
+    logger.error('Get children error:', { error: error.message });
     res.status(500).json({ error: 'Failed to get children' });
   }
 };
@@ -58,7 +59,7 @@ export const getChild = async (req, res) => {
 
     res.json(childData);
   } catch (error) {
-    console.error('Get child error:', error);
+    logger.error('Get child error:', { error: error.message });
     res.status(500).json({ error: 'Failed to get child' });
   }
 };
@@ -67,12 +68,12 @@ export const updateChild = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log('=== UPDATE CHILD DEBUG ===');
-    console.log('Child ID:', id);
-    console.log('User ID:', req.user.id);
-    console.log('req.file:', req.file);
-    console.log('req.body:', req.body);
-    console.log('Content-Type:', req.headers['content-type']);
+    logger.info('=== UPDATE CHILD DEBUG ===');
+    logger.info('Child ID:', { childId: id });
+    logger.info('User ID:', { userId: req.user.id });
+    logger.info('req.file:', { file: req.file });
+    logger.info('req.body:', { body: req.body });
+    logger.info('Content-Type:', { contentType: req.headers['content-type'] });
 
     const child = await Child.findOne({
       where: {
@@ -82,29 +83,30 @@ export const updateChild = async (req, res) => {
     });
 
     if (!child) {
+      logger.warn('Child not found', { childId: id, userId: req.user.id });
       return res.status(404).json({ error: 'Child not found' });
     }
 
-    console.log('Current child photo before update:', child.photo);
+    logger.info('Current child photo before update:', { photo: child.photo });
 
     const updateData = { ...req.body };
 
     // ✅ RASMNI ANIQ YOZISH
     if (req.file) {
       updateData.photo = `/uploads/children/${req.file.filename}`;
-      console.log('✅ Photo received! Setting path to:', updateData.photo);
-      console.log('File details:', {
+      logger.info('✅ Photo received! Setting path to:', { path: updateData.photo });
+      logger.info('File details:', {
         filename: req.file.filename,
         size: req.file.size,
         mimetype: req.file.mimetype,
         path: req.file.path
       });
     } else {
-      console.log('⚠️ No file received in request!');
-      console.log('req.file is:', req.file);
+      logger.warn('⚠️ No file received in request!');
+      logger.warn('req.file is undefined or null');
     }
 
-    console.log('Update data to be applied:', updateData);
+    logger.info('Update data to be applied:', { updateData });
 
     await child.update(updateData);
 
@@ -114,14 +116,12 @@ export const updateChild = async (req, res) => {
     const childData = child.toJSON();
     childData.age = child.getAge();
 
-    console.log('=== UPDATE COMPLETE ===');
-    console.log('Updated child photo from DB:', childData.photo);
-    console.log('Full updated child:', JSON.stringify(childData, null, 2));
+    logger.info('=== UPDATE COMPLETE ===');
+    logger.info('Updated child photo from DB:', { photo: childData.photo });
 
     res.json(childData);
   } catch (error) {
-    console.error('❌ Update child error:', error);
-    console.error('Error stack:', error.stack);
+    logger.error('❌ Update child error:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to update child', message: error.message });
   }
 };
