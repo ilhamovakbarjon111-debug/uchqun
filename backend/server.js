@@ -57,13 +57,13 @@ if (process.env.NODE_ENV === 'production') {
 app.set('trust proxy', 1);
 
 // CORS Configuration
-const allowedOrigins = process.env.FRONTEND_URL 
+const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
   : [
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'https://uchqun-platform.vercel.app',
-    ];
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://uchqun-platform.vercel.app',
+  ];
 
 // Default: allow all origins unless explicitly made strict
 const allowAllOrigins = process.env.CORS_STRICT === 'true' ? false : true;
@@ -83,7 +83,7 @@ app.use(cors({
     if (!origin) {
       return callback(null, true);
     }
-    
+
     // Check if origin is in allowed list
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -130,8 +130,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve local uploads (works for both fallback and misconfigured remote storage)
-app.use('/uploads', express.static(localUploadsRoot));
-app.use('/uploads', express.static('uploads'));
+
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Health check routes (before API routes, no rate limiting)
 app.use('/health', healthRoutes);

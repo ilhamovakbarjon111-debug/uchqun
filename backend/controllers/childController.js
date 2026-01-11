@@ -78,16 +78,17 @@ export const updateChild = async (req, res) => {
       return res.status(404).json({ error: 'Child not found' });
     }
 
-    // Agar rasm yuklangan bo‘lsa
+    const updateData = { ...req.body };
+
+    // ✅ RASMNI ANIQ YOZISH
     if (req.file) {
-      req.body.photo = `/uploads/children/${req.file.filename}`;
+      updateData.photo = `/uploads/children/${req.file.filename}`;
     }
 
-    await child.update(req.body);
+    await child.update(updateData);
 
-    const updatedChild = await Child.findByPk(child.id);
-    const childData = updatedChild.toJSON();
-    childData.age = updatedChild.getAge();
+    const childData = child.toJSON();
+    childData.age = child.getAge();
 
     res.json(childData);
   } catch (error) {
@@ -95,5 +96,3 @@ export const updateChild = async (req, res) => {
     res.status(500).json({ error: 'Failed to update child' });
   }
 };
-
-
