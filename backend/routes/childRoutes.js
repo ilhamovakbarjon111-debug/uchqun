@@ -34,6 +34,38 @@ router.get('/', getChildren);
 // Get one child
 router.get('/:id', childIdValidator, handleValidationErrors, getChild);
 
+// Update child avatar (NO validators - just photo path)
+router.put(
+    '/:id/avatar',
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { photo } = req.body;
+            
+            const Child = (await import('../models/Child.js')).default;
+            
+            const child = await Child.findOne({
+                where: { id, parentId: req.user.id }
+            });
+            
+            if (!child) {
+                return res.status(404).json({ error: 'Child not found' });
+            }
+            
+            await child.update({ photo });
+            await child.reload();
+            
+            const childData = child.toJSON();
+            childData.age = child.getAge();
+            
+            res.json(childData);
+        } catch (error) {
+            console.error('Update avatar error:', error);
+            res.status(500).json({ error: 'Failed to update avatar' });
+        }
+    }
+);
+
 // Update child + photo upload (supports both multipart and base64)
 // Multer middleware will be skipped if Content-Type is application/json
 router.put(

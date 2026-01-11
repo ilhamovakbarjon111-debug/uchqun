@@ -50,8 +50,8 @@ const ChildProfile = () => {
   const selectAvatar = async (avatarPath) => {
     try {
       setUploading(true);
-      console.log('Sending avatar:', avatarPath);
-      const res = await api.put(`/child/${child.id}`, {
+      console.log('Sending avatar to /avatar endpoint:', avatarPath);
+      const res = await api.put(`/child/${child.id}/avatar`, {
         photo: avatarPath
       });
       console.log('Avatar response:', res.data);
