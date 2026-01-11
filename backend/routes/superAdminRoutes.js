@@ -1,6 +1,8 @@
 import express from 'express';
+import bcrypt from 'bcrypt';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import { createAdmin, getAdmins, updateAdminBySuper, deleteAdminBySuper } from '../controllers/adminController.js';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -22,9 +24,6 @@ router.post('/create-super-admin', async (req, res) => {
         if (secretKey !== process.env.SUPER_ADMIN_SECRET) {
             return res.status(403).json({ error: 'Invalid secret key' });
         }
-        
-        const bcrypt = (await import('bcrypt')).default;
-        const User = (await import('../models/User.js')).default;
         
         // Check if super admin exists
         const existing = await User.findOne({
