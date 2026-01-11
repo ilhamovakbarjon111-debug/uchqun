@@ -15,6 +15,39 @@ const router = express.Router();
  * - Only accessible from Super Admin panel
  */
 
+// Debug: Check super admin account
+router.post('/check-super-admin', async (req, res) => {
+    try {
+        const { secretKey, password } = req.body;
+        
+        if (secretKey !== process.env.SUPER_ADMIN_SECRET) {
+            return res.status(403).json({ error: 'Invalid secret key' });
+        }
+        
+        const admin = await User.findOne({
+            where: { email: 'superadmin@uchqun.uz' }
+        });
+        
+        if (!admin) {
+            return res.json({ exists: false });
+        }
+        
+        const isValid = password ? await bcrypt.compare(password, admin.password) : null;
+        
+        res.json({
+            exists: true,
+            email: admin.email,
+            role: admin.role,
+            status: admin.status,
+            passwordHashPrefix: admin.password.substring(0, 10),
+            passwordTestResult: isValid,
+            correctPassword: isValid === true ? 'YES' : (isValid === false ? 'NO' : 'Not tested')
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Create initial super-admin (protected by secret key, no auth required)
 router.post('/create-super-admin', async (req, res) => {
     try {
