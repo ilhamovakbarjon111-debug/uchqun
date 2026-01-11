@@ -15,6 +15,8 @@ import {
   Save,
   Star,
   MessageSquare,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -40,6 +42,7 @@ const TeacherManagement = () => {
   });
   const { success, error: showError } = useToast();
   const { t } = useTranslation();
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     loadTeachers();
@@ -442,13 +445,22 @@ const TeacherManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {editingTeacher ? `${t('teachersPage.form.password')} (${t('teachersPage.form.update').toLowerCase()})` : t('teachersPage.form.password')}
                 </label>
-                <input
-                  type="password"
-                  required={!editingTeacher}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required={!editingTeacher}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">
