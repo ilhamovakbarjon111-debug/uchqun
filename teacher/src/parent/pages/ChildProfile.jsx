@@ -34,6 +34,34 @@ const ChildProfile = () => {
     media: 0,
   });
   const [uploading, setUploading] = useState(false);
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
+  
+  // Default avatars
+  const avatars = [
+    '/avatars/avatar1.png',
+    '/avatars/avatar2.png',
+    '/avatars/avatar3.png',
+    '/avatars/avatar4.png',
+    '/avatars/avatar5.png',
+    '/avatars/avatar6.png',
+  ];
+  
+  const selectAvatar = async (avatarPath) => {
+    try {
+      setUploading(true);
+      const res = await api.put(`/child/${child.id}`, {
+        photo: avatarPath
+      });
+      setChild(res.data);
+      setShowAvatarSelector(false);
+      alert('Avatar tanlandi! ✅');
+    } catch (err) {
+      console.error('Avatar tanlashda xatolik:', err);
+      alert('Xatolik: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const { t, i18n } = useTranslation();
   
@@ -275,67 +303,11 @@ const ChildProfile = () => {
                 TEST
               </button>
 
-              <input
-                type="file"
-                accept="image/*"
+              {/* Avatar selector modal */}
+              <button
+                onClick={() => setShowAvatarSelector(true)}
                 className="absolute inset-0 opacity-0 cursor-pointer"
                 disabled={uploading}
-                onChange={async (e) => {
-                  const file = e.target.files[0];
-                  if (!file) return;
-                  
-                  console.log('=== PHOTO UPLOAD START ===');
-                  console.log('File:', file.name, file.size, file.type);
-                  console.log('Child ID:', child.id);
-                  
-                  // Rasm hajmini tekshirish (max 5MB)
-                  if (file.size > 5 * 1024 * 1024) {
-                    alert('Rasm hajmi 5MB dan oshmasligi kerak');
-                    return;
-                  }
-
-                  console.log('Converting to base64...');
-                  
-                  // Convert file to base64
-                  const reader = new FileReader();
-                  reader.onload = async () => {
-                    const base64 = reader.result;
-                    console.log('Base64 created, sending to:', `/child/${child.id}`);
-                    
-                    try {
-                      setUploading(true);
-                      const res = await api.put(`/child/${child.id}`, {
-                        photoBase64: base64
-                      });
-                      
-                      console.log('✅ Backend response:', res.data);
-                      console.log('✅ Photo path:', res.data.photo);
-                      
-                      // Backend response'ni to'g'ri olish
-                      const updatedChild = res.data;
-                      setChild(updatedChild);
-                      
-                      if (res.data.photo) {
-                        alert('Rasm muvaffaqiyatli yuklandi! ✅');
-                      } else {
-                        alert('Rasm yuklandi, lekin photo path yo\'q. Backend log\'larini tekshiring.');
-                      }
-                    } catch (err) {
-                      console.error('❌ Photo upload error:', err);
-                      console.error('Error response:', err.response?.data);
-                      alert('Rasm yuklashda xatolik: ' + (err.response?.data?.message || err.message || 'Noma\'lum xato'));
-                    } finally {
-                      setUploading(false);
-                    }
-                  };
-                  
-                  reader.onerror = () => {
-                    alert('Faylni o\'qishda xatolik');
-                    setUploading(false);
-                  };
-                  
-                  reader.readAsDataURL(file);
-                }}
               />
 
             </div>
@@ -448,6 +420,39 @@ const ChildProfile = () => {
         </div>
 
       </div>
+
+      {/* Avatar Selector Modal */}
+      {showAvatarSelector && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAvatarSelector(false)}>
+          <div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-6 text-center">Avatar tanlang</h2>
+            <div className="grid grid-cols-3 gap-4">
+              {avatars.map((avatar, index) => (
+                <button
+                  key={index}
+                  onClick={() => selectAvatar(avatar)}
+                  disabled={uploading}
+                  className="relative group"
+                >
+                  <img
+                    src={avatar}
+                    alt={`Avatar ${index + 1}`}
+                    className="w-full aspect-square rounded-xl object-cover border-4 border-gray-200 group-hover:border-orange-500 transition"
+                    onError={(e) => e.target.src = defaultAvatar}
+                  />
+                  <div className="absolute inset-0 bg-orange-500/0 group-hover:bg-orange-500/20 rounded-xl transition" />
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowAvatarSelector(false)}
+              className="mt-6 w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-semibold transition"
+            >
+              Bekor qilish
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
