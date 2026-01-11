@@ -15,21 +15,13 @@ router.get('/', getChildren);
 // Get one child
 router.get('/:id', childIdValidator, handleValidationErrors, getChild);
 
-// Update child + photo upload (parent tomonidan)
-// Two routes: one with multer (legacy), one with base64 (new)
+// Update child + photo upload (supports both multipart and base64)
+// Multer middleware will be skipped if Content-Type is application/json
 router.put(
     '/:id',
-    uploadChildPhoto.single('photo'), // multer for legacy support
+    uploadChildPhoto.single('photo'), // multer (will skip if not multipart)
     childIdValidator,
     updateChildValidator,
-    handleValidationErrors,
-    updateChild
-);
-
-// New base64 upload route (no multer needed)
-router.post(
-    '/:id/photo',
-    childIdValidator,
     handleValidationErrors,
     updateChild
 );

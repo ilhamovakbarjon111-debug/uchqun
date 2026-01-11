@@ -300,11 +300,11 @@ const ChildProfile = () => {
                   const reader = new FileReader();
                   reader.onload = async () => {
                     const base64 = reader.result;
-                    console.log('Base64 created, sending to:', `/child/${child.id}/photo`);
+                    console.log('Base64 created, sending to:', `/child/${child.id}`);
                     
                     try {
                       setUploading(true);
-                      const res = await api.post(`/child/${child.id}/photo`, {
+                      const res = await api.put(`/child/${child.id}`, {
                         photoBase64: base64
                       });
                       
