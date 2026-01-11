@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import Child from '../models/Child.js';
 import User from '../models/User.js';
-import logger from '../utils/logger.js';
+import { uploadFile } from '../config/storage.js';
 
 // Get all children for the logged-in parent
 export const getChildren = async (req, res) => {
@@ -26,7 +26,7 @@ export const getChildren = async (req, res) => {
 
     res.json(childrenData);
   } catch (error) {
-    logger.error('Get children error:', { error: error.message });
+    console.error('Get children error:', error);
     res.status(500).json({ error: 'Failed to get children' });
   }
 };
@@ -59,7 +59,7 @@ export const getChild = async (req, res) => {
 
     res.json(childData);
   } catch (error) {
-    logger.error('Get child error:', { error: error.message });
+    console.error('Get child error:', error);
     res.status(500).json({ error: 'Failed to get child' });
   }
 };
@@ -67,13 +67,6 @@ export const getChild = async (req, res) => {
 export const updateChild = async (req, res) => {
   try {
     const { id } = req.params;
-
-    logger.info('=== UPDATE CHILD DEBUG ===');
-    logger.info('Child ID:', { childId: id });
-    logger.info('User ID:', { userId: req.user.id });
-    logger.info('req.file:', { file: req.file });
-    logger.info('req.body:', { body: req.body });
-    logger.info('Content-Type:', { contentType: req.headers['content-type'] });
 
     const child = await Child.findOne({
       where: {
@@ -83,45 +76,35 @@ export const updateChild = async (req, res) => {
     });
 
     if (!child) {
-      logger.warn('Child not found', { childId: id, userId: req.user.id });
       return res.status(404).json({ error: 'Child not found' });
     }
 
-    logger.info('Current child photo before update:', { photo: child.photo });
-
     const updateData = { ...req.body };
 
-    // ✅ RASMNI ANIQ YOZISH
+    // Handle photo upload via Appwrite storage
     if (req.file) {
-      updateData.photo = `/uploads/children/${req.file.filename}`;
-      logger.info('✅ Photo received! Setting path to:', { path: updateData.photo });
-      logger.info('File details:', {
-        filename: req.file.filename,
-        size: req.file.size,
-        mimetype: req.file.mimetype,
-        path: req.file.path
-      });
-    } else {
-      logger.warn('⚠️ No file received in request!');
-      logger.warn('req.file is undefined or null');
+      try {
+        const uploadResult = await uploadFile(req.file, `child-${id}`);
+        updateData.photo = uploadResult.url;
+        console.log('✅ Photo uploaded to Appwrite:', uploadResult.url);
+      } catch (uploadError) {
+        console.error('Photo upload error:', uploadError);
+        return res.status(500).json({ 
+          error: 'Failed to upload photo', 
+          message: uploadError.message 
+        });
+      }
     }
 
-    logger.info('Update data to be applied:', { updateData });
-
     await child.update(updateData);
-
-    // Refresh child data from database
     await child.reload();
 
     const childData = child.toJSON();
     childData.age = child.getAge();
 
-    logger.info('=== UPDATE COMPLETE ===');
-    logger.info('Updated child photo from DB:', { photo: childData.photo });
-
     res.json(childData);
   } catch (error) {
-    logger.error('❌ Update child error:', { error: error.message, stack: error.stack });
+    console.error('Update child error:', error);
     res.status(500).json({ error: 'Failed to update child', message: error.message });
   }
 };
