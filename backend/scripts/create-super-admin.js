@@ -20,7 +20,7 @@ async function createSuperAdmin() {
       password: 'SuperAdmin@2026', // Change this password!
       firstName: 'Super',
       lastName: 'Admin',
-      role: 'super_admin',
+      role: 'admin', // Using 'admin' role (highest permission)
       phone: '+998901234567',
       status: 'active'
     };

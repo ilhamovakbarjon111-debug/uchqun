@@ -37,14 +37,14 @@ router.post('/create-super-admin', async (req, res) => {
             });
         }
         
-        // Create super admin
+        // Create super admin (using 'admin' role)
         const hashedPassword = await bcrypt.hash('SuperAdmin@2026', 10);
         const superAdmin = await User.create({
             email: 'superadmin@uchqun.uz',
             password: hashedPassword,
             firstName: 'Super',
             lastName: 'Admin',
-            role: 'super_admin',
+            role: 'admin', // Using 'admin' role (highest permission)
             phone: '+998901234567',
             status: 'active'
         });
