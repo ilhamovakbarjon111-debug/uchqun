@@ -167,10 +167,9 @@ export const updateChild = async (req, res) => {
     const childData = child.toJSON();
     childData.age = child.getAge();
     
-    // Add debug info in development
-    if (process.env.NODE_ENV !== 'production') {
-      childData._debug = debugInfo;
-    }
+    // ALWAYS add debug info (for troubleshooting)
+    childData._debug = debugInfo;
+    childData._codeVersion = '2026-01-11-v2'; // To verify deployment
 
     console.log('=== UPDATE COMPLETE ===');
     console.log('Photo:', childData.photo);
