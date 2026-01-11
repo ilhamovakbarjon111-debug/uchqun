@@ -216,7 +216,7 @@ const ChildProfile = () => {
           <div className="relative">
             <div className="relative group cursor-pointer">
               <img
-                src={child.photo ? `${import.meta.env.VITE_API_URL}${child.photo}` : '/avatar-placeholder.png'}
+                src={child.photo ? `${import.meta.env.VITE_API_URL}${child.photo}` : '../user.jfif'}
                 alt={`${child.firstName} ${child.lastName}`}
               />
 
