@@ -1,53 +1,69 @@
 import dotenv from 'dotenv';
 import sequelize from '../config/database.js';
 import User from '../models/User.js';
+import bcrypt from 'bcrypt';
 
 dotenv.config();
 
-const createSuperAdmin = async () => {
-    try {
-        console.log('🔍 Connecting to database...');
-        await sequelize.authenticate();
-        console.log('✅ Connected to database');
+async function createSuperAdmin() {
+  try {
+    console.log('🔍 Connecting to database...');
+    await sequelize.authenticate();
+    console.log('✅ Database connected');
 
-        // Default super admin credentials
-        const email = 'superadmin@uchqun.com';
-        const password = 'SuperAdmin123!';
-        const firstName = 'Super';
-        const lastName = 'Admin';
+    // Sync models
+    await User.sync();
 
-        // Check if super admin already exists
-        const existingAdmin = await User.findOne({ where: { email } });
-        if (existingAdmin) {
-            console.log(`\n⚠️  Super admin account already exists:`);
-            console.log(`   Email: ${email}`);
-            console.log(`   Password: ${password}`);
-            console.log(`\n💡 To reset the password, delete the user first or update it manually.`);
-            process.exit(0);
-        }
+    // Super admin details
+    const superAdminData = {
+      email: 'superadmin@uchqun.uz',
+      password: 'SuperAdmin@2026', // Change this password!
+      firstName: 'Super',
+      lastName: 'Admin',
+      role: 'super_admin',
+      phone: '+998901234567',
+      status: 'active'
+    };
 
-        // Create super admin account
-        console.log('\n👑 Creating super admin account...');
-        const admin = await User.create({
-            email,
-            password,
-            firstName,
-            lastName,
-            role: 'super-admin',
-        });
+    // Check if super admin already exists
+    const existing = await User.findOne({
+      where: { email: superAdminData.email }
+    });
 
-        console.log('\n✅ Super admin account created successfully!');
-        console.log('\n📝 Login credentials:');
-        console.log(`   Email: ${email}`);
-        console.log(`   Password: ${password}`);
-        console.log('\n✨ You can now log in with these credentials.');
-        console.log('\n⚠️  Remember to change the password after first login!');
-
-        process.exit(0);
-    } catch (error) {
-        console.error('❌ Error creating super admin account:', error);
-        process.exit(1);
+    if (existing) {
+      console.log('⚠️  Super admin already exists!');
+      console.log('Email:', existing.email);
+      console.log('Role:', existing.role);
+      return;
     }
-};
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(superAdminData.password, 10);
+
+    // Create super admin
+    const superAdmin = await User.create({
+      ...superAdminData,
+      password: hashedPassword
+    });
+
+    console.log('\n✅ Super admin created successfully!');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📧 Email:', superAdminData.email);
+    console.log('🔑 Password:', superAdminData.password);
+    console.log('👤 Name:', `${superAdmin.firstName} ${superAdmin.lastName}`);
+    console.log('🎭 Role:', superAdmin.role);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log('⚠️  IMPORTANT: Change the password after first login!');
+
+  } catch (error) {
+    console.error('❌ Error creating super admin:', error.message);
+    if (error.stack) {
+      console.error(error.stack);
+    }
+  } finally {
+    await sequelize.close();
+    process.exit();
+  }
+}
 
 createSuperAdmin();
