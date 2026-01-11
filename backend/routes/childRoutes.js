@@ -7,6 +7,25 @@ import { uploadChildPhoto } from '../middleware/uploadChildren.js'; // ✅ To'g'
 
 const router = express.Router();
 
+// Public debug endpoint (no auth required) - MUST be before authenticate middleware
+router.get('/debug/appwrite', (req, res) => {
+    const appwriteConfigured = Boolean(
+        process.env.APPWRITE_ENDPOINT &&
+        process.env.APPWRITE_PROJECT_ID &&
+        process.env.APPWRITE_API_KEY &&
+        process.env.APPWRITE_BUCKET_ID
+    );
+    
+    res.json({
+        appwriteConfigured,
+        endpoint: process.env.APPWRITE_ENDPOINT ? 'Set' : 'Not set',
+        projectId: process.env.APPWRITE_PROJECT_ID ? 'Set' : 'Not set',
+        apiKey: process.env.APPWRITE_API_KEY ? 'Set' : 'Not set',
+        bucketId: process.env.APPWRITE_BUCKET_ID ? 'Set' : 'Not set',
+        nodeEnv: process.env.NODE_ENV || 'development'
+    });
+});
+
 router.use(authenticate);
 
 // Get all children
@@ -25,25 +44,6 @@ router.put(
     // SKIP updateChildValidator to allow photoBase64 through
     updateChild
 );
-
-// DEBUG endpoint - check Appwrite configuration
-router.get('/debug/appwrite', (req, res) => {
-    const appwriteConfigured = Boolean(
-        process.env.APPWRITE_ENDPOINT &&
-        process.env.APPWRITE_PROJECT_ID &&
-        process.env.APPWRITE_API_KEY &&
-        process.env.APPWRITE_BUCKET_ID
-    );
-    
-    res.json({
-        appwriteConfigured,
-        endpoint: process.env.APPWRITE_ENDPOINT ? 'Set' : 'Not set',
-        projectId: process.env.APPWRITE_PROJECT_ID ? 'Set' : 'Not set',
-        apiKey: process.env.APPWRITE_API_KEY ? 'Set' : 'Not set',
-        bucketId: process.env.APPWRITE_BUCKET_ID ? 'Set' : 'Not set',
-        nodeEnv: process.env.NODE_ENV || 'development'
-    });
-});
 
 // DEBUG endpoint - test multer
 router.post('/test-upload', uploadChildPhoto.single('photo'), (req, res) => {
