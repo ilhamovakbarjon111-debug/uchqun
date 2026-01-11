@@ -260,14 +260,18 @@ const ChildProfile = () => {
               <img
                 src={
                   child.photo 
-                    ? `${API_BASE}${child.photo.startsWith('/') ? '' : '/'}${child.photo}?t=${Date.now()}`
+                    ? (child.photo.startsWith('/avatars/') 
+                        // Local avatar - use as-is (frontend path)
+                        ? child.photo
+                        // Backend/Appwrite photo - use API_BASE
+                        : `${API_BASE}${child.photo.startsWith('/') ? '' : '/'}${child.photo}?t=${Date.now()}`)
                     : defaultAvatar
                 }
                 alt={`${child.firstName} ${child.lastName}`}
                 className="w-32 h-32 md:w-40 md:h-40 rounded-3xl object-cover shadow-2xl border-4 border-white"
                 onError={(e) => {
                   console.error('Image load error:', e.target.src);
-                  console.error('Photo path from backend:', child.photo);
+                  console.error('Photo path:', child.photo);
                   e.target.src = defaultAvatar;
                 }}
               />
