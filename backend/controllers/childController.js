@@ -67,6 +67,12 @@ export const getChild = async (req, res) => {
 export const updateChild = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Debug logging
+    console.log('=== UPDATE CHILD ===');
+    console.log('Has req.file?', !!req.file);
+    console.log('Has req.body.photoBase64?', !!req.body.photoBase64);
+    console.log('Body keys:', Object.keys(req.body));
 
     const child = await Child.findOne({
       where: {
@@ -80,9 +86,12 @@ export const updateChild = async (req, res) => {
     }
 
     const updateData = { ...req.body };
+    const debugInfo = { hasFile: false, hasBase64: false, uploadMethod: 'none' };
 
     // Handle photo upload - supports both multipart (req.file) and base64 (req.body.photoBase64)
     if (req.file) {
+      debugInfo.hasFile = true;
+      debugInfo.uploadMethod = 'multipart';
       // Multipart upload (legacy)
       try {
         console.log('📸 Multipart file received:', {
@@ -96,22 +105,26 @@ export const updateChild = async (req, res) => {
         
         const uploadResult = await uploadFile(fileBuffer, filename, req.file.mimetype);
         updateData.photo = uploadResult.url;
-        delete updateData.photoBase64; // Remove base64 from update data
+        delete updateData.photoBase64;
         
         console.log('✅ Photo uploaded (multipart):', uploadResult.url);
+        debugInfo.success = true;
       } catch (uploadError) {
         console.error('❌ Multipart upload error:', uploadError);
+        debugInfo.error = uploadError.message;
         return res.status(500).json({ 
           error: 'Failed to upload photo', 
-          message: uploadError.message 
+          message: uploadError.message,
+          debug: debugInfo
         });
       }
     } else if (req.body.photoBase64) {
+      debugInfo.hasBase64 = true;
+      debugInfo.uploadMethod = 'base64';
       // Base64 upload (new method)
       try {
-        console.log('📸 Base64 photo received');
+        console.log('📸 Base64 photo received, length:', req.body.photoBase64.length);
         
-        // Extract data from base64 string (format: data:image/jpeg;base64,/9j/4AAQ...)
         const matches = req.body.photoBase64.match(/^data:(.+);base64,(.+)$/);
         if (!matches) {
           throw new Error('Invalid base64 format');
@@ -127,16 +140,25 @@ export const updateChild = async (req, res) => {
         
         const uploadResult = await uploadFile(fileBuffer, filename, mimetype);
         updateData.photo = uploadResult.url;
-        delete updateData.photoBase64; // Remove base64 from update data
+        delete updateData.photoBase64;
         
         console.log('✅ Photo uploaded (base64):', uploadResult.url);
+        debugInfo.success = true;
+        debugInfo.photoUrl = uploadResult.url;
       } catch (uploadError) {
-        console.error('❌ Base64 upload error:', uploadError);
+        console.error('❌ Base64 upload error:', uploadError.message);
+        console.error('Stack:', uploadError.stack);
+        debugInfo.error = uploadError.message;
+        debugInfo.stack = uploadError.stack;
         return res.status(500).json({ 
           error: 'Failed to upload photo', 
-          message: uploadError.message 
+          message: uploadError.message,
+          debug: debugInfo
         });
       }
+    } else {
+      console.log('⚠️ No photo data in request');
+      debugInfo.warning = 'No photo data provided';
     }
 
     await child.update(updateData);
@@ -144,6 +166,15 @@ export const updateChild = async (req, res) => {
 
     const childData = child.toJSON();
     childData.age = child.getAge();
+    
+    // Add debug info in development
+    if (process.env.NODE_ENV !== 'production') {
+      childData._debug = debugInfo;
+    }
+
+    console.log('=== UPDATE COMPLETE ===');
+    console.log('Photo:', childData.photo);
+    console.log('Debug:', debugInfo);
 
     res.json(childData);
   } catch (error) {
