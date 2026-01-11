@@ -158,6 +158,11 @@ export const updateChildValidator = [
     .isLength({ max: 5000 })
     .withMessage('Special needs description must be 5000 characters or less'),
   // Photo validation removed - file uploads are handled by multer middleware
+  // Allow base64 photo uploads
+  body('photoBase64')
+    .optional()
+    .isString()
+    .withMessage('Photo base64 must be a string'),
   body('school')
     .optional()
     .trim()

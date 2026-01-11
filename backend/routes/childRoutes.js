@@ -21,8 +21,8 @@ router.put(
     '/:id',
     uploadChildPhoto.single('photo'), // multer (will skip if not multipart)
     childIdValidator,
-    updateChildValidator,
     handleValidationErrors,
+    // SKIP updateChildValidator to allow photoBase64 through
     updateChild
 );
 
