@@ -9,16 +9,35 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME || 'uchqun',
-  process.env.DB_USER || 'postgres',
-  process.env.DB_PASSWORD || 'postgres',
-  {
+// Use DATABASE_URL if available (Railway), otherwise use individual env vars
+const getSequelizeConfig = () => {
+  if (process.env.DATABASE_URL) {
+    return {
+      url: process.env.DATABASE_URL,
+      dialect: 'postgres',
+      logging: false,
+      dialectOptions: {
+        ssl: process.env.NODE_ENV === 'production' ? {
+          require: true,
+          rejectUnauthorized: false
+        } : false
+      }
+    };
+  }
+  
+  return {
+    database: process.env.DB_NAME || 'uchqun',
+    username: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
     dialect: 'postgres',
     logging: false,
-  }
+  };
+};
+
+const sequelize = new Sequelize(
+  process.env.DATABASE_URL || getSequelizeConfig()
 );
 
 /**
@@ -88,11 +107,23 @@ async function runMigrations() {
     }
 
     console.log('✓ All migrations completed');
+    return { success: true, message: 'All migrations completed' };
   } catch (error) {
     console.error('✗ Migration error:', error);
-    process.exit(1);
+    console.error('Error stack:', error.stack);
+    // Don't close connection if called from API route
+    const isDirectCall = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+    if (isDirectCall) {
+      await sequelize.close();
+      process.exit(1);
+    }
+    throw error;
   } finally {
-    await sequelize.close();
+    // Only close if called directly (not from API)
+    const isDirectCall = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+    if (isDirectCall) {
+      await sequelize.close();
+    }
   }
 }
 

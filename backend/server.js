@@ -150,6 +150,10 @@ app.use('/api/parent', parentRoutes);       // Parent routes (view own activitie
 app.use('/api/teacher', teacherRoutes);     // Teacher routes (responsibilities, tasks, work history)
 app.use('/api/child', childRoutes);         // Child routes (child management for parents)
 
+// Migration routes (public for Railway deployment)
+import migrationRoutes from './routes/migrationRoutes.js';
+app.use('/api/migrations', migrationRoutes);
+
 // Activity, meal, and media routes
 app.use('/api/activities', activityRoutes);
 app.use('/api/media', mediaRoutes);
