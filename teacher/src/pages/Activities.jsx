@@ -3,7 +3,6 @@ import {
   Calendar, 
   CheckCircle2,
   ChevronDown,
-  ChevronUp,
   Edit2,
   FileX,
   Plus,
