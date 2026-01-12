@@ -75,7 +75,6 @@ const Activities = () => {
       {filteredActivities.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredActivities.map((activity) => {
-            const isExpanded = expandedRows.has(activity.id);
             return (
               <div
                 key={activity.id}
