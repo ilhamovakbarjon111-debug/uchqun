@@ -225,15 +225,48 @@ export const createActivity = async (req, res) => {
 
     const activity = await Activity.create(activityData);
 
-    const createdActivity = await Activity.findByPk(activity.id, {
-      include: [
-        {
-          model: Child,
-          as: 'child',
-          attributes: ['id', 'firstName', 'lastName'],
-        },
-      ],
-    });
+    // Get created activity with child info
+    // Use raw query to avoid Sequelize serialization issues with new columns
+    try {
+      const createdActivity = await Activity.findByPk(activity.id, {
+        include: [
+          {
+            model: Child,
+            as: 'child',
+            attributes: ['id', 'firstName', 'lastName'],
+          },
+        ],
+        raw: false, // Keep as Sequelize instance to handle JSONB properly
+      });
+      
+      // Convert to plain object, handling JSONB fields
+      const activityJson = createdActivity.toJSON();
+      
+      // Ensure tasks is always an array
+      if (activityJson.tasks && typeof activityJson.tasks === 'string') {
+        try {
+          activityJson.tasks = JSON.parse(activityJson.tasks);
+        } catch {
+          activityJson.tasks = [];
+        }
+      } else if (!activityJson.tasks) {
+        activityJson.tasks = [];
+      }
+      
+      res.status(201).json(activityJson);
+    } catch (fetchError) {
+      console.error('Error fetching created activity:', fetchError);
+      // If fetch fails, return the activity we just created
+      const activityJson = activity.toJSON();
+      if (activityJson.tasks && typeof activityJson.tasks === 'string') {
+        try {
+          activityJson.tasks = JSON.parse(activityJson.tasks);
+        } catch {
+          activityJson.tasks = [];
+        }
+      }
+      res.status(201).json(activityJson);
+    }
 
     // Create notification for parent
     if (child.parentId) {
@@ -248,7 +281,7 @@ export const createActivity = async (req, res) => {
       );
     }
 
-    res.status(201).json(createdActivity);
+    // Response already sent in try-catch above
   } catch (error) {
     console.error('Create activity error:', error);
     console.error('Error details:', {
