@@ -200,7 +200,8 @@ export const createActivity = async (req, res) => {
     // Ensure tasks is an array
     const tasksArray = Array.isArray(tasks) ? tasks : (tasks ? [tasks] : []);
 
-    const activity = await Activity.create({
+    // Prepare activity data with all fields
+    const activityData = {
       childId,
       // Use skill as title for backward compatibility
       title: skill || 'Individual Plan',
@@ -220,7 +221,9 @@ export const createActivity = async (req, res) => {
       methods: methods || null,
       progress: progress || null,
       observation: observation || null,
-    });
+    };
+
+    const activity = await Activity.create(activityData);
 
     const createdActivity = await Activity.findByPk(activity.id, {
       include: [

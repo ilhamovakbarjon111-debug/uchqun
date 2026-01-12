@@ -168,12 +168,21 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
-    // In production, run migrations instead of sync
-    if (process.env.NODE_ENV === 'production') {
-      console.log('Running database migrations...');
+    // Always run migrations (both production and development)
+    // This ensures database schema is up to date
+    console.log('Running database migrations...');
+    try {
       const { runMigrations } = await import('./config/migrate.js');
       await runMigrations();
-    } else {
+      console.log('✓ Migrations completed successfully');
+    } catch (migrationError) {
+      console.error('⚠ Migration error (continuing anyway):', migrationError.message);
+      // Don't exit - allow server to start even if migrations fail
+      // This allows manual migration fixes
+    }
+    
+    // In development, also allow sync for convenience
+    if (process.env.NODE_ENV !== 'production') {
       // In development, still allow sync for convenience (but warn)
       const forceSync = process.env.FORCE_SYNC === 'true';
       if (forceSync) {
