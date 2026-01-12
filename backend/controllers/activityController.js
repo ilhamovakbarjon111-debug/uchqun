@@ -225,26 +225,8 @@ export const createActivity = async (req, res) => {
 
     const activity = await Activity.create(activityData);
 
-    // Get created activity with child info
-    let createdActivity;
-    try {
-      createdActivity = await Activity.findByPk(activity.id, {
-        include: [
-          {
-            model: Child,
-            as: 'child',
-            attributes: ['id', 'firstName', 'lastName'],
-          },
-        ],
-      });
-    } catch (fetchError) {
-      console.error('Error fetching created activity:', fetchError);
-      // If fetch fails, use the activity we just created
-      createdActivity = activity;
-    }
-    
     // Convert to plain object, handling JSONB fields
-    const activityJson = createdActivity.toJSON ? createdActivity.toJSON() : createdActivity;
+    const activityJson = activity.toJSON ? activity.toJSON() : activity;
     
     // Ensure tasks is always an array
     if (activityJson.tasks && typeof activityJson.tasks === 'string') {
@@ -256,23 +238,25 @@ export const createActivity = async (req, res) => {
     } else if (!activityJson.tasks) {
       activityJson.tasks = [];
     }
+    
+    // Add child info manually to avoid include issues
+    activityJson.child = {
+      id: child.id,
+      firstName: child.firstName,
+      lastName: child.lastName,
+    };
 
-    // Create notification for parent
+    // Create notification for parent (async, don't wait)
     if (child.parentId) {
-      try {
-        await createNotification(
-          child.parentId,
-          childId,
-          'activity',
-          'Yangi individual reja qo\'shildi',
-          `${child.firstName} uchun "${skill || 'Individual reja'}" qo'shildi`,
-          activity.id,
-          'activity'
-        );
-      } catch (notifError) {
-        console.error('Error creating notification:', notifError);
-        // Don't fail the request if notification fails
-      }
+      createNotification(
+        child.parentId,
+        childId,
+        'activity',
+        'Yangi individual reja qo\'shildi',
+        `${child.firstName} uchun "${skill || 'Individual reja'}" qo'shildi`,
+        activity.id,
+        'activity'
+      ).catch(err => console.error('Error creating notification:', err));
     }
 
     res.status(201).json(activityJson);
