@@ -47,6 +47,15 @@ const Activities = () => {
     scheduleDay: 'Monday',
     scheduleStart: '09:00',
     scheduleEnd: '10:00',
+    // Individual Plan fields
+    skill: '',
+    goal: '',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: '',
+    tasks: [''],
+    methods: '',
+    progress: '',
+    observation: '',
   });
   const [parents, setParents] = useState([]);
   const [children, setChildren] = useState([]);
@@ -134,6 +143,11 @@ const Activities = () => {
     const firstChild = firstParent && firstParent.children && firstParent.children.length > 0 
       ? firstParent.children[0].id : '';
     
+    const today = new Date().toISOString().split('T')[0];
+    const threeMonthsLater = new Date();
+    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+    const endDateDefault = threeMonthsLater.toISOString().split('T')[0];
+    
     setFormData({
       parentId: firstParent ? firstParent.id : '',
       childId: firstChild,
@@ -141,7 +155,7 @@ const Activities = () => {
       description: '',
       type: 'Learning',
       duration: 30,
-      date: new Date().toISOString().split('T')[0],
+      date: today,
       studentEngagement: 'Medium',
       notes: '',
       teacher: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher',
@@ -149,6 +163,15 @@ const Activities = () => {
       scheduleDay: 'Monday',
       scheduleStart: '09:00',
       scheduleEnd: '10:00',
+      // Individual Plan fields
+      skill: '',
+      goal: '',
+      startDate: today,
+      endDate: endDateDefault,
+      tasks: [''],
+      methods: '',
+      progress: '',
+      observation: '',
     });
     
     if (firstParent) {
@@ -188,6 +211,15 @@ const Activities = () => {
       scheduleDay: 'Monday',
       scheduleStart: '09:00',
       scheduleEnd: '10:00',
+      // Individual Plan fields
+      skill: activity.skill || '',
+      goal: activity.goal || '',
+      startDate: activity.startDate ? activity.startDate.split('T')[0] : new Date().toISOString().split('T')[0],
+      endDate: activity.endDate ? activity.endDate.split('T')[0] : '',
+      tasks: Array.isArray(activity.tasks) && activity.tasks.length > 0 ? activity.tasks : [''],
+      methods: activity.methods || '',
+      progress: activity.progress || '',
+      observation: activity.observation || '',
     });
     setShowModal(true);
   };
@@ -656,6 +688,141 @@ const Activities = () => {
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
+              </div>
+
+              {/* Individual Plan Fields */}
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">{t('activitiesPage.individualPlan') || 'Individual reja'}</h3>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('activitiesPage.formSkill') || 'Ko\'nikma'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.skill}
+                    onChange={(e) => setFormData({ ...formData, skill: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder={t('activitiesPage.formSkillPlaceholder') || 'Masalan: O\'z-o\'ziga xizmat ko\'rsatish ko\'nikmalari'}
+                  />
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('activitiesPage.formGoal') || 'Maqsad'}
+                  </label>
+                  <textarea
+                    value={formData.goal}
+                    onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder={t('activitiesPage.formGoalPlaceholder') || 'Maqsadni batafsil yozing'}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('activitiesPage.formStartDate') || 'Vazifalar tuzilgan sana'}
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('activitiesPage.formEndDate') || 'Maqsadlarga erishish muddati'}
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('activitiesPage.formTasks') || 'Vazifalar'}
+                  </label>
+                  {formData.tasks.map((task, index) => (
+                    <div key={index} className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={task}
+                        onChange={(e) => {
+                          const newTasks = [...formData.tasks];
+                          newTasks[index] = e.target.value;
+                          setFormData({ ...formData, tasks: newTasks });
+                        }}
+                        className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        placeholder={`${t('activitiesPage.formTask') || 'Vazifa'} ${index + 1}`}
+                      />
+                      {formData.tasks.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newTasks = formData.tasks.filter((_, i) => i !== index);
+                            setFormData({ ...formData, tasks: newTasks });
+                          }}
+                          className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, tasks: [...formData.tasks, ''] })}
+                    className="mt-2 text-sm text-orange-600 hover:text-orange-700 font-medium"
+                  >
+                    + {t('activitiesPage.addTask') || 'Vazifa qo\'shish'}
+                  </button>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('activitiesPage.formMethods') || 'Usullar'}
+                  </label>
+                  <textarea
+                    value={formData.methods}
+                    onChange={(e) => setFormData({ ...formData, methods: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder={t('activitiesPage.formMethodsPlaceholder') || 'Qo\'llaniladigan usullarni yozing'}
+                  />
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('activitiesPage.formProgress') || 'Jarayon/Taraqqiyot'}
+                  </label>
+                  <textarea
+                    value={formData.progress}
+                    onChange={(e) => setFormData({ ...formData, progress: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder={t('activitiesPage.formProgressPlaceholder') || 'Jarayon va taraqqiyotni yozing'}
+                  />
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('activitiesPage.formObservation') || 'Kuzatish'}
+                  </label>
+                  <textarea
+                    value={formData.observation}
+                    onChange={(e) => setFormData({ ...formData, observation: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder={t('activitiesPage.formObservationPlaceholder') || 'Kuzatuvlarni yozing'}
+                  />
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">

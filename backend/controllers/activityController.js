@@ -182,7 +182,10 @@ export const createActivity = async (req, res) => {
       return res.status(403).json({ error: 'Only teachers can create activities' });
     }
 
-    const { childId, title, description, type, duration, date, teacher, studentEngagement, notes } = req.body;
+    const { 
+      childId, title, description, type, duration, date, teacher, studentEngagement, notes,
+      skill, goal, startDate, endDate, tasks, methods, progress, observation
+    } = req.body;
 
     if (!childId || !title || !description || !type || !date) {
       return res.status(400).json({ error: 'childId, title, description, type, and date are required' });
@@ -194,6 +197,9 @@ export const createActivity = async (req, res) => {
       return res.status(404).json({ error: 'Child not found' });
     }
 
+    // Ensure tasks is an array
+    const tasksArray = Array.isArray(tasks) ? tasks : (tasks ? [tasks] : []);
+
     const activity = await Activity.create({
       childId,
       title,
@@ -204,6 +210,15 @@ export const createActivity = async (req, res) => {
       teacher: teacher || `${req.user.firstName} ${req.user.lastName}`,
       studentEngagement: studentEngagement || 'Medium',
       notes: notes || '',
+      // Individual Plan fields
+      skill: skill || null,
+      goal: goal || null,
+      startDate: startDate || null,
+      endDate: endDate || null,
+      tasks: tasksArray,
+      methods: methods || null,
+      progress: progress || null,
+      observation: observation || null,
     });
 
     const createdActivity = await Activity.findByPk(activity.id, {

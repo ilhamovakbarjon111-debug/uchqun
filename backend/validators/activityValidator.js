@@ -69,6 +69,59 @@ export const createActivityValidator = [
     .trim()
     .isLength({ max: 5000 })
     .withMessage('Notes must be 5000 characters or less'),
+  // Individual Plan fields
+  body('skill')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Skill must be 500 characters or less'),
+  body('goal')
+    .optional()
+    .trim()
+    .isLength({ max: 5000 })
+    .withMessage('Goal must be 5000 characters or less'),
+  body('startDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Start date must be a valid date (YYYY-MM-DD)'),
+  body('endDate')
+    .optional()
+    .isISO8601()
+    .withMessage('End date must be a valid date (YYYY-MM-DD)')
+    .custom((value, { req }) => {
+      if (value && req.body.startDate) {
+        const start = new Date(req.body.startDate);
+        const end = new Date(value);
+        if (end < start) {
+          throw new Error('End date must be after start date');
+        }
+      }
+      return true;
+    }),
+  body('tasks')
+    .optional()
+    .isArray()
+    .withMessage('Tasks must be an array'),
+  body('tasks.*')
+    .optional()
+    .trim()
+    .isLength({ max: 1000 })
+    .withMessage('Each task must be 1000 characters or less'),
+  body('methods')
+    .optional()
+    .trim()
+    .isLength({ max: 5000 })
+    .withMessage('Methods must be 5000 characters or less'),
+  body('progress')
+    .optional()
+    .trim()
+    .isLength({ max: 5000 })
+    .withMessage('Progress must be 5000 characters or less'),
+  body('observation')
+    .optional()
+    .trim()
+    .isLength({ max: 5000 })
+    .withMessage('Observation must be 5000 characters or less'),
 ];
 
 export const updateActivityValidator = [

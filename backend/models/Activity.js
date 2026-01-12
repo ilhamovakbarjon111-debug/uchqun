@@ -52,6 +52,48 @@ const Activity = sequelize.define('Activity', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  // Individual Plan fields
+  skill: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: 'Ko\'nikma (Skill)',
+  },
+  goal: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Maqsad (Goal)',
+  },
+  startDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    comment: 'Vazifalar tuzilgan sana',
+  },
+  endDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    comment: 'Maqsadlarga erishish muddati',
+  },
+  tasks: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: [],
+    comment: 'Vazifalar ro\'yxati (array)',
+  },
+  methods: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Usullar (Methods)',
+  },
+  progress: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Jarayon/Taraqqiyot (Progress)',
+  },
+  observation: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Kuzatish (Observation)',
+  },
 }, {
   tableName: 'activities',
   timestamps: true,
