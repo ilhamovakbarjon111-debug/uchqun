@@ -126,30 +126,76 @@ const Activities = () => {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
-                  {activity.title}
-                </h3>
+                {activity.skill && (
+                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
+                    {activity.skill}
+                  </h3>
+                )}
                 
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  {activity.description}
-                </p>
+                {activity.goal && (
+                  <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                    {activity.goal}
+                  </p>
+                )}
 
                 {/* Tags & Meta */}
                 <div className="flex flex-wrap gap-3 mb-4">
-                  <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[11px] font-bold uppercase tracking-tight ${getEngagementStyles(activity.studentEngagement)}`}>
-                    {t('activities.engagement')}: {activity.studentEngagement}
-                  </div>
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-50 border border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-tight">
                     <User className="w-3 h-3" /> {activity.teacher}
                   </div>
+                  {activity.startDate && activity.endDate && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 border border-blue-100 text-[11px] font-bold text-blue-600 uppercase tracking-tight">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(activity.startDate).toLocaleDateString(locale)} - {new Date(activity.endDate).toLocaleDateString(locale)}
+                    </div>
+                  )}
                 </div>
 
-                {activity.notes && (
-                  <div className="relative p-4 bg-orange-50/50 rounded-2xl border-l-4 border-orange-400">
-                    <MessageCircle className="w-4 h-4 text-orange-400 absolute top-2 right-2 opacity-50" />
-                    <p className="text-xs text-orange-800 leading-relaxed italic">
-                      "{activity.notes}"
-                    </p>
+                {activity.tasks && Array.isArray(activity.tasks) && activity.tasks.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">{t('activities.tasks') || 'Vazifalar'}:</p>
+                    <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
+                      {activity.tasks.map((task, idx) => task && (
+                        <li key={idx}>{task}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {activity.methods && (
+                  <div className="mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">{t('activities.methods') || 'Usullar'}:</p>
+                    <p className="text-sm text-gray-600">{activity.methods}</p>
+                  </div>
+                )}
+
+                {activity.progress && (
+                  <div className="mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">{t('activities.progress') || 'Jarayon/Taraqqiyot'}:</p>
+                    <p className="text-sm text-gray-600">{activity.progress}</p>
+                  </div>
+                )}
+
+                {activity.observation && (
+                  <div className="mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">{t('activities.observation') || 'Kuzatish'}:</p>
+                    <p className="text-sm text-gray-600">{activity.observation}</p>
+                  </div>
+                )}
+
+                {activity.services && Array.isArray(activity.services) && activity.services.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">{t('activities.services') || 'Xizmatlar'}:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {activity.services.map((service, idx) => (
+                        <span 
+                          key={idx}
+                          className="px-2 py-1 bg-orange-50 text-orange-700 rounded-md text-xs font-medium"
+                        >
+                          {t(`activities.service.${service.replace(/\s+/g, '')}`) || service}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
                 

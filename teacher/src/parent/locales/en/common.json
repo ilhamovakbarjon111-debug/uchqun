@@ -56,7 +56,29 @@
     "physical": "Physical",
     "durationMinutes": "{{count}} min",
     "engagement": "Engagement",
-    "empty": "No activities of this type yet"
+    "empty": "No activities of this type yet",
+    "tasks": "Tasks",
+    "methods": "Methods",
+    "progress": "Process/Progress",
+    "observation": "Observation",
+    "services": "Services",
+    "service": {
+      "Logoped": "Logoped",
+      "Defektolog": "Defektolog",
+      "SurdoPedagok": "SurdoPedagok",
+      "AbAteropiya": "AbA Therapy",
+      "Ergoteropiya": "Ergotherapy",
+      "Izo": "Izo",
+      "SBO": "SBO",
+      "Musiqa": "Music",
+      "Ipoteropiya": "Hippotherapy",
+      "UmumiyMassaj": "General Massage",
+      "GidroVanna": "Hydro Bath",
+      "LogoMassaj": "Logo Massage",
+      "CME": "CME",
+      "Issiqovqat": "Hot Meal",
+      "Transportxizmati": "Transport Service"
+    }
   },
   "meals": {
     "title": "Meals & Nutrition",

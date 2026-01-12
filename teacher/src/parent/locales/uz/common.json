@@ -56,7 +56,29 @@
     "physical": "Jismoniy",
     "durationMinutes": "{{count}} daqiqa",
     "engagement": "Ishtirok",
-    "empty": "Hozircha ushbu turdagi mashg'ulotlar yo'q"
+    "empty": "Hozircha ushbu turdagi mashg'ulotlar yo'q",
+    "tasks": "Vazifalar",
+    "methods": "Usullar",
+    "progress": "Jarayon/Taraqqiyot",
+    "observation": "Kuzatish",
+    "services": "Xizmatlar",
+    "service": {
+      "Logoped": "Logoped",
+      "Defektolog": "Defektolog",
+      "SurdoPedagok": "SurdoPedagok",
+      "AbAteropiya": "AbA teropiya",
+      "Ergoteropiya": "Ergoteropiya",
+      "Izo": "Izo",
+      "SBO": "SBO",
+      "Musiqa": "Musiqa",
+      "Ipoteropiya": "Ipoteropiya",
+      "UmumiyMassaj": "Umumiy Massaj",
+      "GidroVanna": "GidroVanna",
+      "LogoMassaj": "LogoMassaj",
+      "CME": "CME",
+      "Issiqovqat": "Issiq ovqat",
+      "Transportxizmati": "Transport xizmati"
+    }
   },
   "meals": {
     "title": "Taomlar va ovqatlanish",
