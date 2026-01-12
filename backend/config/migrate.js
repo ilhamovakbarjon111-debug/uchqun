@@ -70,14 +70,20 @@ async function runMigrations() {
       }
 
       console.log(`🔄 Running ${file}...`);
-      const migration = await import(`file://${path.join(migrationsDir, file)}`);
-      
-      if (typeof migration.up === 'function') {
-        await migration.up(sequelize.getQueryInterface(), Sequelize);
-        await sequelize.query(`INSERT INTO "SequelizeMeta" (name) VALUES ('${file}')`);
-        console.log(`✓ Completed ${file}`);
-      } else {
-        console.warn(`⚠ ${file} does not export an 'up' function`);
+      try {
+        const migration = await import(`file://${path.join(migrationsDir, file)}`);
+        
+        if (typeof migration.up === 'function') {
+          await migration.up(sequelize.getQueryInterface(), Sequelize);
+          await sequelize.query(`INSERT INTO "SequelizeMeta" (name) VALUES ('${file}')`);
+          console.log(`✓ Completed ${file}`);
+        } else {
+          console.warn(`⚠ ${file} does not export an 'up' function`);
+        }
+      } catch (error) {
+        console.error(`✗ Error running ${file}:`, error.message);
+        console.error('Stack:', error.stack);
+        throw error;
       }
     }
 
