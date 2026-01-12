@@ -10,35 +10,33 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 // Use DATABASE_URL if available (Railway), otherwise use individual env vars
-const getSequelizeConfig = () => {
-  if (process.env.DATABASE_URL) {
-    return {
-      url: process.env.DATABASE_URL,
-      dialect: 'postgres',
-      logging: false,
-      dialectOptions: {
-        ssl: process.env.NODE_ENV === 'production' ? {
-          require: true,
-          rejectUnauthorized: false
-        } : false
-      }
-    };
-  }
-  
-  return {
-    database: process.env.DB_NAME || 'uchqun',
-    username: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
+let sequelize;
+
+if (process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL) {
+  const dbUrl = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL;
+  sequelize = new Sequelize(dbUrl, {
     dialect: 'postgres',
     logging: false,
-  };
-};
-
-const sequelize = new Sequelize(
-  process.env.DATABASE_URL || getSequelizeConfig()
-);
+    dialectOptions: {
+      ssl: process.env.NODE_ENV === 'production' ? {
+        require: true,
+        rejectUnauthorized: false
+      } : false
+    }
+  });
+} else {
+  sequelize = new Sequelize(
+    process.env.DB_NAME || 'uchqun',
+    process.env.DB_USER || 'postgres',
+    process.env.DB_PASSWORD || 'postgres',
+    {
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 5432,
+      dialect: 'postgres',
+      logging: false,
+    }
+  );
+}
 
 /**
  * Get all migration files and run them in order
