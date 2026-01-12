@@ -3,6 +3,7 @@ import {
   Calendar, 
   CheckCircle2,
   Edit2,
+  FileX,
   Plus,
   Save,
   Trash2,
@@ -365,7 +366,7 @@ const Activities = () => {
           ))
         ) : (
           <div className="text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-gray-200">
-            <Filter className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+            <FileX className="w-12 h-12 text-gray-200 mx-auto mb-4" />
             <p className="text-gray-400 font-medium text-lg">{t('activitiesPage.empty')}</p>
           </div>
         )}
