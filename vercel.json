@@ -1,12 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "teacher/package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
-    }
-  ],
+  "buildCommand": "cd teacher && npm install && npm run build",
+  "outputDirectory": "teacher/dist",
+  "installCommand": "cd teacher && npm install",
   "routes": [
     { "src": "/favicon.ico", "dest": "/favicon.svg" },
     { "src": "/favicon.png", "dest": "/favicon.svg" },
