@@ -67,6 +67,8 @@
     "progress": "Jarayon/Taraqqiyot",
     "observation": "Kuzatish",
     "services": "Xizmatlar",
+    "showDetails": "Batafsil",
+    "hideDetails": "Yashirish",
     "service": {
       "Logoped": "Logoped",
       "Defektolog": "Defektolog",

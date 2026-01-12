@@ -67,6 +67,8 @@
     "progress": "Process/Progress",
     "observation": "Observation",
     "services": "Services",
+    "showDetails": "Show Details",
+    "hideDetails": "Hide Details",
     "service": {
       "Logoped": "Logoped",
       "Defektolog": "Defektolog",

@@ -269,223 +269,204 @@ const Activities = () => {
       </div>
 
 
-      {/* Activities Table */}
+      {/* Activities Cards Grid */}
       {filteredActivities.length > 0 ? (
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden backdrop-blur-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500">
-                  <th className="px-6 py-5 text-left text-xs font-extrabold text-white uppercase tracking-widest shadow-sm">
-                    {t('activitiesPage.formSkill') || 'Ko\'nikma'}
-                  </th>
-                  <th className="px-6 py-5 text-left text-xs font-extrabold text-white uppercase tracking-widest shadow-sm">
-                    {t('activitiesPage.formGoal') || 'Maqsad'}
-                  </th>
-                  <th className="px-6 py-5 text-left text-xs font-extrabold text-white uppercase tracking-widest shadow-sm">
-                    {t('activitiesPage.formStartDate') || 'Boshlanish'}
-                  </th>
-                  <th className="px-6 py-5 text-left text-xs font-extrabold text-white uppercase tracking-widest shadow-sm">
-                    {t('activitiesPage.formEndDate') || 'Tugash'}
-                  </th>
-                  <th className="px-6 py-5 text-left text-xs font-extrabold text-white uppercase tracking-widest shadow-sm">
-                    {t('activitiesPage.formServices') || 'Xizmatlar'}
-                  </th>
-                  <th className="px-6 py-5 text-left text-xs font-extrabold text-white uppercase tracking-widest shadow-sm">
-                    {t('activitiesPage.teacher') || 'O\'qituvchi'}
-                  </th>
-                  {isTeacher && (
-                    <th className="px-6 py-5 text-center text-xs font-extrabold text-white uppercase tracking-widest shadow-sm">
-                      {t('activitiesPage.actions') || 'Harakatlar'}
-                    </th>
-                  )}
-                  <th className="px-6 py-5 text-center text-xs font-extrabold text-white uppercase tracking-widest shadow-sm w-16">
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {filteredActivities.map((activity, index) => {
-                  const isExpanded = expandedRows.has(activity.id);
-                  return (
-                    <>
-                      <tr 
-                        key={activity.id} 
-                        className="group hover:bg-gradient-to-r hover:from-orange-50 hover:via-orange-50/50 hover:to-transparent transition-all duration-300 cursor-pointer border-l-4 border-transparent hover:border-orange-400"
-                      >
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <div className="flex-shrink-0 w-2 h-2 rounded-full bg-orange-400 group-hover:bg-orange-500 transition-colors"></div>
-                            <div className="text-sm font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
-                              {activity.skill || '-'}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5">
-                          <div className="text-sm text-gray-700 line-clamp-2 max-w-xs group-hover:text-gray-900 transition-colors">
-                            {activity.goal ? (activity.goal.length > 100 ? `${activity.goal.substring(0, 100)}...` : activity.goal) : '-'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-orange-400" />
-                            <span className="text-sm font-medium text-gray-700">
-                              {activity.startDate ? new Date(activity.startDate).toLocaleDateString(locale) : '-'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-orange-400" />
-                            <span className="text-sm font-medium text-gray-700">
-                              {activity.endDate ? new Date(activity.endDate).toLocaleDateString(locale) : '-'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5">
-                          <div className="flex flex-wrap gap-1.5">
-                            {activity.services && Array.isArray(activity.services) && activity.services.length > 0 ? (
-                              <>
-                                {activity.services.slice(0, 2).map((service, idx) => (
-                                  <span 
-                                    key={idx}
-                                    className="px-2.5 py-1 bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 rounded-lg text-xs font-semibold shadow-sm border border-orange-200/50 hover:shadow-md transition-shadow"
-                                  >
-                                    {t(`activitiesPage.services.${service.replace(/\s+/g, '')}`) || service}
-                                  </span>
-                                ))}
-                                {activity.services.length > 2 && (
-                                  <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold border border-gray-200">
-                                    +{activity.services.length - 2}
-                                  </span>
-                                )}
-                              </>
-                            ) : (
-                              <span className="text-xs text-gray-400 italic">-</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="flex items-center gap-2.5">
-                            <div className="p-1.5 bg-gradient-to-br from-orange-100 to-orange-50 rounded-lg border border-orange-200/50">
-                              <User className="w-4 h-4 text-orange-600" />
-                            </div>
-                            <span className="text-sm font-medium text-gray-700">{activity.teacher || '-'}</span>
-                          </div>
-                        </td>
-                        {isTeacher && (
-                          <td className="px-6 py-5 whitespace-nowrap">
-                            <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEdit(activity);
-                                }}
-                                className="p-2 bg-blue-50 hover:bg-blue-100 rounded-xl text-blue-600 hover:text-blue-700 transition-all duration-200 shadow-sm hover:shadow-md border border-blue-200/50"
-                                title={t('activitiesPage.edit') || 'Tahrirlash'}
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDelete(activity.id);
-                                }}
-                                className="p-2 bg-red-50 hover:bg-red-100 rounded-xl text-red-600 hover:text-red-700 transition-all duration-200 shadow-sm hover:shadow-md border border-red-200/50"
-                                title={t('activitiesPage.delete') || 'O\'chirish'}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        )}
-                        <td className="px-6 py-5 whitespace-nowrap text-center">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleRow(activity.id);
-                            }}
-                            className="p-2 bg-gray-100 hover:bg-orange-100 rounded-xl text-gray-600 hover:text-orange-600 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 hover:border-orange-200"
-                          >
-                            {isExpanded ? (
-                              <ChevronUp className="w-4 h-4" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4" />
-                            )}
-                          </button>
-                        </td>
-                      </tr>
-                      {isExpanded && (
-                        <tr className="bg-gradient-to-br from-gray-50 via-orange-50/20 to-gray-50 border-l-4 border-orange-400 animate-in fade-in duration-300">
-                          <td colSpan={isTeacher ? 8 : 7} className="px-8 py-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              {activity.tasks && Array.isArray(activity.tasks) && activity.tasks.length > 0 && (
-                                <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
-                                  <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-orange-500" />
-                                    {t('activitiesPage.formTasks') || 'Vazifalar'}
-                                  </p>
-                                  <ul className="list-disc list-inside space-y-2 text-sm text-gray-700">
-                                    {activity.tasks.map((task, idx) => task && (
-                                      <li key={idx} className="leading-relaxed">{task}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                              {activity.methods && (
-                                <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
-                                  <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-orange-500" />
-                                    {t('activitiesPage.formMethods') || 'Usullar'}
-                                  </p>
-                                  <p className="text-sm text-gray-700 leading-relaxed">{activity.methods}</p>
-                                </div>
-                              )}
-                              {activity.progress && (
-                                <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
-                                  <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-orange-500" />
-                                    {t('activitiesPage.formProgress') || 'Jarayon/Taraqqiyot'}
-                                  </p>
-                                  <p className="text-sm text-gray-700 leading-relaxed">{activity.progress}</p>
-                                </div>
-                              )}
-                              {activity.observation && (
-                                <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
-                                  <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-orange-500" />
-                                    {t('activitiesPage.formObservation') || 'Kuzatish'}
-                                  </p>
-                                  <p className="text-sm text-gray-700 leading-relaxed">{activity.observation}</p>
-                                </div>
-                              )}
-                              {activity.services && Array.isArray(activity.services) && activity.services.length > 0 && (
-                                <div className="md:col-span-2 bg-white rounded-xl p-5 shadow-md border border-gray-200">
-                                  <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-orange-500" />
-                                    {t('activitiesPage.formServices') || 'Xizmatlar'}
-                                  </p>
-                                  <div className="flex flex-wrap gap-2">
-                                    {activity.services.map((service, idx) => (
-                                      <span 
-                                        key={idx}
-                                        className="px-3 py-1.5 bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 rounded-lg text-xs font-semibold shadow-sm border border-orange-200/50"
-                                      >
-                                        {t(`activitiesPage.services.${service.replace(/\s+/g, '')}`) || service}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredActivities.map((activity) => {
+            const isExpanded = expandedRows.has(activity.id);
+            return (
+              <div
+                key={activity.id}
+                className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-2xl transition-all duration-300 overflow-hidden group"
+              >
+                {/* Card Header */}
+                <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">
+                        {activity.skill || t('activitiesPage.formSkill') || 'Ko\'nikma'}
+                      </h3>
+                      {activity.goal && (
+                        <p className="text-sm text-orange-50 line-clamp-2">
+                          {activity.goal.length > 80 ? `${activity.goal.substring(0, 80)}...` : activity.goal}
+                        </p>
                       )}
-                    </>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                    {isTeacher && (
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(activity);
+                          }}
+                          className="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors backdrop-blur-sm"
+                          title={t('activitiesPage.edit') || 'Tahrirlash'}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(activity.id);
+                          }}
+                          className="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors backdrop-blur-sm"
+                          title={t('activitiesPage.delete') || 'O\'chirish'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-5 space-y-4">
+                  {/* Dates */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {activity.startDate && (
+                      <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                        <Calendar className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-blue-600 font-semibold mb-0.5">{t('activitiesPage.formStartDate') || 'Boshlanish'}</p>
+                          <p className="text-sm font-bold text-gray-900 truncate">
+                            {new Date(activity.startDate).toLocaleDateString(locale)}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {activity.endDate && (
+                      <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-xl border border-purple-100">
+                        <Calendar className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-purple-600 font-semibold mb-0.5">{t('activitiesPage.formEndDate') || 'Tugash'}</p>
+                          <p className="text-sm font-bold text-gray-900 truncate">
+                            {new Date(activity.endDate).toLocaleDateString(locale)}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Teacher */}
+                  {activity.teacher && (
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="p-2 bg-gradient-to-br from-orange-100 to-orange-50 rounded-lg border border-orange-200">
+                        <User className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">{t('activitiesPage.teacher') || 'O\'qituvchi'}</p>
+                        <p className="text-sm font-bold text-gray-900 truncate">{activity.teacher}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Services */}
+                  {activity.services && Array.isArray(activity.services) && activity.services.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 mb-2">{t('activitiesPage.formServices') || 'Xizmatlar'}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {activity.services.slice(0, 3).map((service, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2.5 py-1 bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 rounded-lg text-xs font-semibold border border-orange-200/50"
+                          >
+                            {t(`activitiesPage.services.${service.replace(/\s+/g, '')}`) || service}
+                          </span>
+                        ))}
+                        {activity.services.length > 3 && (
+                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold border border-gray-200">
+                            +{activity.services.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Expand Button */}
+                  <button
+                    onClick={() => toggleRow(activity.id)}
+                    className="w-full flex items-center justify-center gap-2 p-3 bg-gray-100 hover:bg-orange-100 rounded-xl text-gray-700 hover:text-orange-600 transition-all duration-200 font-semibold text-sm"
+                  >
+                    {isExpanded ? (
+                      <>
+                        <ChevronUp className="w-4 h-4" />
+                        {t('activitiesPage.hideDetails') || 'Yashirish'}
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-4 h-4" />
+                        {t('activitiesPage.showDetails') || 'Batafsil'}
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                  <div className="border-t border-gray-200 bg-gradient-to-br from-gray-50 to-orange-50/30 p-5 space-y-4 animate-in fade-in duration-300">
+                    {activity.tasks && Array.isArray(activity.tasks) && activity.tasks.length > 0 && (
+                      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                        <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-orange-500" />
+                          {t('activitiesPage.formTasks') || 'Vazifalar'}
+                        </p>
+                        <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700">
+                          {activity.tasks.map((task, idx) => task && (
+                            <li key={idx} className="leading-relaxed">{task}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {activity.methods && (
+                      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                        <p className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-orange-500" />
+                          {t('activitiesPage.formMethods') || 'Usullar'}
+                        </p>
+                        <p className="text-sm text-gray-700 leading-relaxed">{activity.methods}</p>
+                      </div>
+                    )}
+                    {activity.progress && (
+                      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                        <p className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-orange-500" />
+                          {t('activitiesPage.formProgress') || 'Jarayon/Taraqqiyot'}
+                        </p>
+                        <p className="text-sm text-gray-700 leading-relaxed">{activity.progress}</p>
+                      </div>
+                    )}
+                    {activity.observation && (
+                      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                        <p className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-orange-500" />
+                          {t('activitiesPage.formObservation') || 'Kuzatish'}
+                        </p>
+                        <p className="text-sm text-gray-700 leading-relaxed">{activity.observation}</p>
+                      </div>
+                    )}
+                    {activity.services && Array.isArray(activity.services) && activity.services.length > 0 && (
+                      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                        <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-orange-500" />
+                          {t('activitiesPage.formServices') || 'Barcha xizmatlar'}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {activity.services.map((service, idx) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1.5 bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 rounded-lg text-xs font-semibold border border-orange-200/50"
+                            >
+                              {t(`activitiesPage.services.${service.replace(/\s+/g, '')}`) || service}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-gray-200">

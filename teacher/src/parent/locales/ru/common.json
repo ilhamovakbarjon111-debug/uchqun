@@ -67,6 +67,8 @@
     "progress": "Процесс/Прогресс",
     "observation": "Наблюдение",
     "services": "Услуги",
+    "showDetails": "Подробнее",
+    "hideDetails": "Скрыть",
     "service": {
       "Logoped": "Логопед",
       "Defektolog": "Дефектолог",

@@ -106,6 +106,8 @@
     "formProgressPlaceholder": "Опишите процесс и прогресс",
     "formObservation": "Наблюдение",
     "formObservationPlaceholder": "Запишите ваши наблюдения",
+    "showDetails": "Подробнее",
+    "hideDetails": "Скрыть",
     "formServices": "Услуги",
     "services": {
       "Logoped": "Логопед",

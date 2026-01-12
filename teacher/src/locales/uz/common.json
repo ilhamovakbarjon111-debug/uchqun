@@ -106,6 +106,8 @@
     "formProgressPlaceholder": "Jarayon va taraqqiyotni yozing",
     "formObservation": "Kuzatish",
     "formObservationPlaceholder": "Kuzatuvlarni yozing",
+    "showDetails": "Batafsil",
+    "hideDetails": "Yashirish",
     "formServices": "Xizmatlar",
     "services": {
       "Logoped": "Logoped",
