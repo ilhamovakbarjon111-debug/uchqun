@@ -69,6 +69,7 @@
     "services": "Services",
     "showDetails": "Show Details",
     "hideDetails": "Hide Details",
+    "close": "Close",
     "service": {
       "Logoped": "Logoped",
       "Defektolog": "Defektolog",

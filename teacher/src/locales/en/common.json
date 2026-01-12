@@ -108,6 +108,7 @@
     "formObservationPlaceholder": "Write your observations",
     "showDetails": "Show Details",
     "hideDetails": "Hide Details",
+    "close": "Close",
     "formServices": "Services",
     "services": {
       "Logoped": "Logoped",

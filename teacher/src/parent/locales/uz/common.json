@@ -69,6 +69,7 @@
     "services": "Xizmatlar",
     "showDetails": "Batafsil",
     "hideDetails": "Yashirish",
+    "close": "Yopish",
     "service": {
       "Logoped": "Logoped",
       "Defektolog": "Defektolog",

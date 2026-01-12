@@ -69,6 +69,7 @@
     "services": "Услуги",
     "showDetails": "Подробнее",
     "hideDetails": "Скрыть",
+    "close": "Закрыть",
     "service": {
       "Logoped": "Логопед",
       "Defektolog": "Дефектолог",
