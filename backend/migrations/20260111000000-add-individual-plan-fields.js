@@ -74,10 +74,24 @@ export const up = async (queryInterface, Sequelize) => {
     type: DataTypes.TEXT,
     allowNull: true,
   });
+
+  // For PostgreSQL, use JSONB for services array
+  await queryInterface.sequelize.query(`
+    DO $$ 
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'activities' AND column_name = 'services'
+      ) THEN
+        ALTER TABLE "activities" ADD COLUMN "services" JSONB DEFAULT '[]'::jsonb;
+      END IF;
+    END $$;
+  `);
 };
 
 export const down = async (queryInterface, Sequelize) => {
   // Remove columns in reverse order
+  await queryInterface.removeColumn('activities', 'services');
   await queryInterface.removeColumn('activities', 'observation');
   await queryInterface.removeColumn('activities', 'progress');
   await queryInterface.removeColumn('activities', 'methods');

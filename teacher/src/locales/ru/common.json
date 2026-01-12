@@ -104,7 +104,25 @@
     "formProgress": "Процесс/Прогресс",
     "formProgressPlaceholder": "Опишите процесс и прогресс",
     "formObservation": "Наблюдение",
-    "formObservationPlaceholder": "Запишите ваши наблюдения"
+    "formObservationPlaceholder": "Запишите ваши наблюдения",
+    "formServices": "Услуги",
+    "services": {
+      "Logoped": "Логопед",
+      "Defektolog": "Дефектолог",
+      "SurdoPedagok": "Сурдопедагог",
+      "AbAteropiya": "АбА терапия",
+      "Ergoteropiya": "Эрготерапия",
+      "Izo": "ИЗО",
+      "SBO": "СБО",
+      "Musiqa": "Музыка",
+      "Ipoteropiya": "Иппотерапия",
+      "UmumiyMassaj": "Общий массаж",
+      "GidroVanna": "Гидрованна",
+      "LogoMassaj": "Логомассаж",
+      "CME": "СМЕ",
+      "Issiqovqat": "Горячее питание",
+      "Transportxizmati": "Транспортная услуга"
+    }
   },
   "mealsPage": {
     "title": "Питание и рацион",

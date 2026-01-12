@@ -104,7 +104,25 @@
     "formProgress": "Jarayon/Taraqqiyot",
     "formProgressPlaceholder": "Jarayon va taraqqiyotni yozing",
     "formObservation": "Kuzatish",
-    "formObservationPlaceholder": "Kuzatuvlarni yozing"
+    "formObservationPlaceholder": "Kuzatuvlarni yozing",
+    "formServices": "Xizmatlar",
+    "services": {
+      "Logoped": "Logoped",
+      "Defektolog": "Defektolog",
+      "SurdoPedagok": "SurdoPedagok",
+      "AbAteropiya": "AbA teropiya",
+      "Ergoteropiya": "Ergoteropiya",
+      "Izo": "Izo",
+      "SBO": "SBO",
+      "Musiqa": "Musiqa",
+      "Ipoteropiya": "Ipoteropiya",
+      "UmumiyMassaj": "Umumiy Massaj",
+      "GidroVanna": "GidroVanna",
+      "LogoMassaj": "LogoMassaj",
+      "CME": "CME",
+      "Issiqovqat": "Issiq ovqat",
+      "Transportxizmati": "Transport xizmati"
+    }
   },
   "mealsPage": {
     "title": "Taomlar va ovqatlanish",

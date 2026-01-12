@@ -104,7 +104,25 @@
     "formProgress": "Process/Progress",
     "formProgressPlaceholder": "Describe the process and progress",
     "formObservation": "Observation",
-    "formObservationPlaceholder": "Write your observations"
+    "formObservationPlaceholder": "Write your observations",
+    "formServices": "Services",
+    "services": {
+      "Logoped": "Logoped",
+      "Defektolog": "Defektolog",
+      "SurdoPedagok": "SurdoPedagok",
+      "AbAteropiya": "AbA Therapy",
+      "Ergoteropiya": "Ergotherapy",
+      "Izo": "Izo",
+      "SBO": "SBO",
+      "Musiqa": "Music",
+      "Ipoteropiya": "Hippotherapy",
+      "UmumiyMassaj": "General Massage",
+      "GidroVanna": "Hydro Bath",
+      "LogoMassaj": "Logo Massage",
+      "CME": "CME",
+      "Issiqovqat": "Hot Meal",
+      "Transportxizmati": "Transport Service"
+    }
   },
   "mealsPage": {
     "title": "Meals & Nutrition",

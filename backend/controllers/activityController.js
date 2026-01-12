@@ -101,7 +101,36 @@ export const getActivities = async (req, res) => {
       ],
     });
 
-    res.json(Array.isArray(activities) ? activities : []);
+    // Convert to plain objects and handle JSONB fields
+    const activitiesJson = activities.map(activity => {
+      const activityJson = activity.toJSON ? activity.toJSON() : activity;
+      
+      // Ensure tasks is always an array
+      if (activityJson.tasks && typeof activityJson.tasks === 'string') {
+        try {
+          activityJson.tasks = JSON.parse(activityJson.tasks);
+        } catch {
+          activityJson.tasks = [];
+        }
+      } else if (!activityJson.tasks) {
+        activityJson.tasks = [];
+      }
+      
+      // Ensure services is always an array
+      if (activityJson.services && typeof activityJson.services === 'string') {
+        try {
+          activityJson.services = JSON.parse(activityJson.services);
+        } catch {
+          activityJson.services = [];
+        }
+      } else if (!activityJson.services) {
+        activityJson.services = [];
+      }
+      
+      return activityJson;
+    });
+
+    res.json(Array.isArray(activitiesJson) ? activitiesJson : []);
   } catch (error) {
     console.error('Get activities error:', error);
     res.status(500).json({ error: 'Failed to get activities' });
@@ -182,9 +211,9 @@ export const createActivity = async (req, res) => {
       return res.status(403).json({ error: 'Only teachers can create activities' });
     }
 
-    const { 
+    const {
       childId, teacher,
-      skill, goal, startDate, endDate, tasks, methods, progress, observation
+      skill, goal, startDate, endDate, tasks, methods, progress, observation, services
     } = req.body;
 
     if (!childId || !skill || !goal || !startDate || !endDate) {
@@ -199,6 +228,9 @@ export const createActivity = async (req, res) => {
 
     // Ensure tasks is an array
     const tasksArray = Array.isArray(tasks) ? tasks : (tasks ? [tasks] : []);
+    
+    // Ensure services is an array
+    const servicesArray = Array.isArray(services) ? services : (services ? [services] : []);
 
     // Prepare activity data with all fields
     const activityData = {
@@ -221,6 +253,7 @@ export const createActivity = async (req, res) => {
       methods: methods || null,
       progress: progress || null,
       observation: observation || null,
+      services: servicesArray,
     };
 
     const activity = await Activity.create(activityData);
@@ -237,6 +270,17 @@ export const createActivity = async (req, res) => {
       }
     } else if (!activityJson.tasks) {
       activityJson.tasks = [];
+    }
+    
+    // Ensure services is always an array
+    if (activityJson.services && typeof activityJson.services === 'string') {
+      try {
+        activityJson.services = JSON.parse(activityJson.services);
+      } catch {
+        activityJson.services = [];
+      }
+    } else if (!activityJson.services) {
+      activityJson.services = [];
     }
     
     // Add child info manually to avoid include issues
@@ -304,19 +348,44 @@ export const updateActivity = async (req, res) => {
       return res.status(404).json({ error: 'Activity not found' });
     }
 
-    await activity.update(req.body);
+    // Handle services array
+    const updateData = { ...req.body };
+    if (updateData.services !== undefined) {
+      updateData.services = Array.isArray(updateData.services) 
+        ? updateData.services 
+        : (updateData.services ? [updateData.services] : []);
+    }
 
-    const updatedActivity = await Activity.findByPk(id, {
-      include: [
-        {
-          model: Child,
-          as: 'child',
-          attributes: ['id', 'firstName', 'lastName'],
-        },
-      ],
-    });
+    await activity.update(updateData);
 
-    res.json(updatedActivity);
+    const updatedActivity = await Activity.findByPk(id);
+
+    // Convert to plain object, handling JSONB fields
+    const activityJson = updatedActivity.toJSON ? updatedActivity.toJSON() : updatedActivity;
+    
+    // Ensure tasks is always an array
+    if (activityJson.tasks && typeof activityJson.tasks === 'string') {
+      try {
+        activityJson.tasks = JSON.parse(activityJson.tasks);
+      } catch {
+        activityJson.tasks = [];
+      }
+    } else if (!activityJson.tasks) {
+      activityJson.tasks = [];
+    }
+    
+    // Ensure services is always an array
+    if (activityJson.services && typeof activityJson.services === 'string') {
+      try {
+        activityJson.services = JSON.parse(activityJson.services);
+      } catch {
+        activityJson.services = [];
+      }
+    } else if (!activityJson.services) {
+      activityJson.services = [];
+    }
+
+    res.json(activityJson);
   } catch (error) {
     console.error('Update activity error:', error);
     res.status(500).json({ error: 'Failed to update activity' });

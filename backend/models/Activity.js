@@ -94,6 +94,12 @@ const Activity = sequelize.define('Activity', {
     allowNull: true,
     comment: 'Kuzatish (Observation)',
   },
+  services: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: [],
+    comment: 'Tanlangan xizmatlar ro\'yxati (array)',
+  },
 }, {
   tableName: 'activities',
   timestamps: true,

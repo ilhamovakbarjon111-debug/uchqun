@@ -45,6 +45,7 @@ const Activities = () => {
     methods: '',
     progress: '',
     observation: '',
+    services: [],
   });
   const [parents, setParents] = useState([]);
   const [children, setChildren] = useState([]);
@@ -149,6 +150,7 @@ const Activities = () => {
       methods: '',
       progress: '',
       observation: '',
+      services: [],
     });
     
     if (firstParent) {
@@ -186,6 +188,7 @@ const Activities = () => {
       methods: activity.methods || '',
       progress: activity.progress || '',
       observation: activity.observation || '',
+      services: Array.isArray(activity.services) ? activity.services : [],
     });
     setShowModal(true);
   };
@@ -372,6 +375,21 @@ const Activities = () => {
                   <div className="mt-4 pt-4 border-t border-gray-50">
                     <p className="text-xs font-semibold text-gray-700 mb-2">{t('activitiesPage.formObservation') || 'Kuzatish'}:</p>
                     <p className="text-sm text-gray-600">{activity.observation}</p>
+                  </div>
+                )}
+                {activity.services && Array.isArray(activity.services) && activity.services.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">{t('activitiesPage.formServices') || 'Xizmatlar'}:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {activity.services.map((service, idx) => (
+                        <span 
+                          key={idx}
+                          className="px-2 py-1 bg-orange-50 text-orange-700 rounded-md text-xs font-medium"
+                        >
+                          {t(`activitiesPage.services.${service.replace(/\s+/g, '')}`) || service}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -587,6 +605,55 @@ const Activities = () => {
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder={t('activitiesPage.formObservationPlaceholder') || 'Kuzatuvlarni yozing'}
                   />
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('activitiesPage.formServices') || 'Xizmatlar'}
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      'Logoped',
+                      'Defektolog',
+                      'SurdoPedagok',
+                      'AbA teropiya',
+                      'Ergoteropiya',
+                      'Izo',
+                      'SBO',
+                      'Musiqa',
+                      'Ipoteropiya',
+                      'Umumiy Massaj',
+                      'GidroVanna',
+                      'LogoMassaj',
+                      'CME',
+                      'Issiq ovqat',
+                      'Transport xizmati',
+                    ].map((service) => (
+                      <label key={service} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.services.includes(service)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                services: [...formData.services, service],
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                services: formData.services.filter((s) => s !== service),
+                              });
+                            }
+                          }}
+                          className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                        />
+                        <span className="text-sm text-gray-700">
+                          {t(`activitiesPage.services.${service.replace(/\s+/g, '')}`) || service}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
 
