@@ -116,7 +116,12 @@
       "save": "Сохранить",
       "cancel": "Отмена",
       "create": "Создать",
-      "update": "Обновить"
+      "update": "Обновить",
+      "delete": "Удалить"
+    },
+    "buttons": {
+      "edit": "Обновить",
+      "delete": "Удалить"
     }
   },
   "groupsPage": {
@@ -144,7 +149,12 @@
       "cancel": "Отмена",
       "create": "Создать",
       "update": "Обновить",
-      "selectTeacher": "Выберите учителя"
+      "selectTeacher": "Выберите учителя",
+      "delete": "Удалить"
+    },
+    "buttons": {
+      "edit": "Обновить",
+      "delete": "Удалить"
     },
     "labels": {
       "capacity": "Вместимость:",

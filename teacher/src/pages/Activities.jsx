@@ -33,6 +33,7 @@ const Activities = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
   const [formData, setFormData] = useState({
+    parentId: '',
     childId: '',
     title: '',
     description: '',
@@ -47,6 +48,7 @@ const Activities = () => {
     scheduleStart: '09:00',
     scheduleEnd: '10:00',
   });
+  const [parents, setParents] = useState([]);
   const [children, setChildren] = useState([]);
   const [schedule, setSchedule] = useState([]);
 
@@ -59,25 +61,50 @@ const Activities = () => {
   useEffect(() => {
     loadActivities();
     if (isTeacher) {
-      loadChildren();
+      loadParents();
     }
   }, [isTeacher]);
 
-  const loadChildren = async () => {
+  const loadParents = async () => {
     try {
       const parentsRes = await api.get('/teacher/parents');
-      const allChildren = [];
-      parentsRes.data.parents.forEach(parent => {
-        if (parent.children && Array.isArray(parent.children)) {
-          allChildren.push(...parent.children);
-        }
-      });
-      setChildren(allChildren);
-      if (allChildren.length > 0 && !formData.childId) {
-        setFormData(prev => ({ ...prev, childId: allChildren[0].id }));
+      const parentsList = Array.isArray(parentsRes.data.parents) ? parentsRes.data.parents : [];
+      setParents(parentsList);
+      
+      // If only one parent, auto-select them
+      if (parentsList.length === 1 && !formData.parentId) {
+        const parentId = parentsList[0].id;
+        setFormData(prev => ({ ...prev, parentId }));
+        await loadChildrenForParent(parentId);
       }
     } catch (error) {
-      console.error('Error loading children:', error);
+      console.error('Error loading parents:', error);
+    }
+  };
+
+  const loadChildrenForParent = async (parentId) => {
+    try {
+      // Reload parents to ensure we have latest data
+      const parentsRes = await api.get('/teacher/parents');
+      const parentsList = Array.isArray(parentsRes.data.parents) ? parentsRes.data.parents : [];
+      setParents(parentsList);
+      
+      const selectedParent = parentsList.find(p => p.id === parentId);
+      if (selectedParent && selectedParent.children && Array.isArray(selectedParent.children)) {
+        setChildren(selectedParent.children);
+        if (selectedParent.children.length > 0) {
+          setFormData(prev => ({ ...prev, childId: prev.childId || selectedParent.children[0].id }));
+        } else {
+          setFormData(prev => ({ ...prev, childId: '' }));
+        }
+      } else {
+        setChildren([]);
+        setFormData(prev => ({ ...prev, childId: '' }));
+      }
+    } catch (error) {
+      console.error('Error loading children for parent:', error);
+      setChildren([]);
+      setFormData(prev => ({ ...prev, childId: '' }));
     }
   };
 
@@ -95,10 +122,21 @@ const Activities = () => {
     }
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     setEditingActivity(null);
+    
+    // Ensure parents are loaded
+    if (parents.length === 0) {
+      await loadParents();
+    }
+    
+    const firstParent = parents.length > 0 ? parents[0] : null;
+    const firstChild = firstParent && firstParent.children && firstParent.children.length > 0 
+      ? firstParent.children[0].id : '';
+    
     setFormData({
-      childId: children.length > 0 ? children[0].id : '',
+      parentId: firstParent ? firstParent.id : '',
+      childId: firstChild,
       title: '',
       description: '',
       type: 'Learning',
@@ -112,12 +150,31 @@ const Activities = () => {
       scheduleStart: '09:00',
       scheduleEnd: '10:00',
     });
+    
+    if (firstParent) {
+      await loadChildrenForParent(firstParent.id);
+    }
+    
     setShowModal(true);
   };
 
-  const handleEdit = (activity) => {
+  const handleEdit = async (activity) => {
     setEditingActivity(activity);
+    
+    // Find parent for this child
+    let parentId = '';
+    if (activity.child && activity.child.id) {
+      const parent = parents.find(p => 
+        p.children && p.children.some(c => c.id === activity.child.id)
+      );
+      if (parent) {
+        parentId = parent.id;
+        loadChildrenForParent(parent.id);
+      }
+    }
+    
     setFormData({
+      parentId: parentId,
       childId: activity.childId || '',
       title: activity.title || '',
       description: activity.description || '',
@@ -401,24 +458,56 @@ const Activities = () => {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {isTeacher && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('activitiesPage.child')}
-                  </label>
-                  <select
-                    required
-                    value={formData.childId}
-                    onChange={(e) => setFormData({ ...formData, childId: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  >
-                    <option value="">{t('activitiesPage.selectChild')}</option>
-                    {children.map(child => (
-                      <option key={child.id} value={child.id}>
-                        {child.firstName} {child.lastName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('activitiesPage.parent') || 'Ota-ona'}
+                    </label>
+                    <select
+                      required
+                      value={formData.parentId}
+                      onChange={(e) => {
+                        const selectedParentId = e.target.value;
+                        setFormData(prev => ({ ...prev, parentId: selectedParentId, childId: '' }));
+                        if (selectedParentId) {
+                          loadChildrenForParent(selectedParentId);
+                        } else {
+                          setChildren([]);
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    >
+                      <option value="">{t('activitiesPage.selectParent') || 'Ota-onani tanlang'}</option>
+                      {parents.map(parent => (
+                        <option key={parent.id} value={parent.id}>
+                          {parent.firstName} {parent.lastName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('activitiesPage.child')}
+                    </label>
+                    <select
+                      required
+                      value={formData.childId}
+                      onChange={(e) => setFormData({ ...formData, childId: e.target.value })}
+                      disabled={!formData.parentId || children.length === 0}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">{t('activitiesPage.selectChild')}</option>
+                      {children.map(child => (
+                        <option key={child.id} value={child.id}>
+                          {child.firstName} {child.lastName}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.parentId && children.length === 0 && (
+                      <p className="text-sm text-gray-500 mt-2">{t('activitiesPage.noChildren') || 'Bu ota-onada bolalar yo\'q'}</p>
+                    )}
+                  </div>
+                </>
               )}
 
               <div>

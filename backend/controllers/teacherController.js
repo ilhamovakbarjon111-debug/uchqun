@@ -421,6 +421,12 @@ export const getParents = async (req, res) => {
 
     const where = { role: 'parent' };
     
+    // If user is a teacher, only show parents assigned to them
+    if (req.user.role === 'teacher') {
+      where.teacherId = req.user.id;
+    }
+    // Admin can see all parents
+    
     if (search) {
       where[Op.or] = [
         { firstName: { [Op.iLike]: `%${search}%` } },

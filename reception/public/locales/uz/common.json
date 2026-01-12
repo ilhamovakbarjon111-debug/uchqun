@@ -116,7 +116,12 @@
       "save": "Saqlash",
       "cancel": "Bekor qilish",
       "create": "Yaratish",
-      "update": "Yangilash"
+      "update": "Yangilash",
+      "delete": "O'chirish"
+    },
+    "buttons": {
+      "edit": "Yangilash",
+      "delete": "O'chirish"
     }
   },
   "groupsPage": {
@@ -144,7 +149,12 @@
       "cancel": "Bekor qilish",
       "create": "Yaratish",
       "update": "Yangilash",
-      "selectTeacher": "O'qituvchi tanlang"
+      "selectTeacher": "O'qituvchi tanlang",
+      "delete": "O'chirish"
+    },
+    "buttons": {
+      "edit": "Yangilash",
+      "delete": "O'chirish"
     },
     "labels": {
       "capacity": "Sig'im:",

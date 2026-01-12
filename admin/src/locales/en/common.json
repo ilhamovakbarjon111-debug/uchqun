@@ -2,7 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "receptions": "Reception Management",
-    "parents": "Parents",
+    "pnts": "Pnts",
     "teachers": "Teachers",
     "groups": "Groups"
   },
@@ -32,7 +32,7 @@
     "overview": "System Overview",
     "pending": "Pending Assignments",
     "receptionCard": "Reception Management",
-    "parentsCard": "Parents",
+    "pntsCard": "Pnts",
     "teachersCard": "Teachers",
     "groupsCard": "Groups",
     "pendingDocuments": "Pending Document Reviews",
@@ -46,13 +46,13 @@
     "systemStats": "System Statistics",
     "totalUsers": "Total users: {{count}} | Active receptions: {{active}} | Groups: {{groups}}"
   },
-  "parentsPage": {
-    "title": "Parent Management",
-    "subtitle": "View parent accounts (read-only)",
-    "search": "Search parents...",
-    "listTitle": "Parents",
-    "emptySearch": "No parents found",
-    "empty": "No parents yet",
+  "pntsPage": {
+    "title": "Pnt Management",
+    "subtitle": "View pnt accounts (read-only)",
+    "search": "Search pnts...",
+    "listTitle": "Pnts",
+    "emptySearch": "No pnts found",
+    "empty": "No pnts yet",
     "children": "Children ({{count}})",
     "noChildren": "No children registered",
     "activities": "Activities ({{count}})",
@@ -61,8 +61,8 @@
     "noMeals": "No meals",
     "media": "Media ({{count}})",
     "noMedia": "No media",
-    "loadError": "Failed to fetch parents",
-    "dataError": "Failed to fetch parent data"
+    "loadError": "Failed to fetch pnts",
+    "dataError": "Failed to fetch pnt data"
   },
   "teachersPage": {
     "title": "Teacher Management",
@@ -130,7 +130,7 @@
     "createSubmitting": "Creating...",
     "updateSubmit": "Update Reception",
     "updateSubmitting": "Updating...",
-    "deleteConfirm": "Are you sure you want to delete this Reception account? This action cannot be undone.",
+    "deleteConfirm": " you sure you want to delete this Reception account? This action cannot be undone.",
     "rejectionPrompt": "Enter rejection reason:",
     "docStatus": {
       "approved": "Approved",

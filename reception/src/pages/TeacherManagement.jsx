@@ -260,20 +260,20 @@ const TeacherManagement = () => {
                     e.stopPropagation();
                     handleEdit(teacher);
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-2 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm min-w-0"
                 >
-                  <Edit2 className="w-4 h-4" />
-                  {t('teachersPage.form.update')}
+                  <Edit2 className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{t('teachersPage.buttons.edit')}</span>
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDelete(teacher.id);
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-2 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors text-sm min-w-0"
                 >
-                  <Trash2 className="w-4 h-4" />
-                  {t('teachersPage.confirmDelete').split(' ')[0]}
+                  <Trash2 className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{t('teachersPage.buttons.delete')}</span>
                 </button>
               </div>
             </Card>

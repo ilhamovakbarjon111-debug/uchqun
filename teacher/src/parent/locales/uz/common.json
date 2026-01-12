@@ -2,7 +2,7 @@
   "language": "Til",
   "nav": {
     "home": "Bosh sahifa",
-    "activities": "Faoliyatlar",
+    "activities": "Individual reja",
     "media": "Media",
     "meals": "Ovqatlar",
     "profile": "Profil",
@@ -34,7 +34,7 @@
     "specialNeeds": "Maxsus ehtiyojlar va allergiyalar",
     "emergency": "Favqulodda bog'lanish",
     "weeklyResults": "Haftalik natijalar",
-    "activities": "Mashg'ulotlar",
+    "activities": "Individual reja",
     "meals": "Ovqatlanish",
     "media": "Media"
   },
@@ -42,13 +42,13 @@
     "role": "Mening rolim: Ota-ona",
     "welcome": "Xush kelibsiz",
     "overview": "Umumiy ko‘rinish",
-    "activities": "Faoliyatlar",
+    "activities": "Individual reja",
     "mealsTracked": "Ovqatlar",
     "photos": "Rasmlar"
   },
   "activities": {
-    "title": "Kunlik mashg'ulotlar",
-    "subtitle": "Farzandingizning kunlik o'sishi va o'rganishini kuzating",
+    "title": "Individual reja",
+    "subtitle": "Farzandingiz uchun individual rejalarni ko'ring",
     "all": "Hammasi",
     "learning": "Ta'lim",
     "therapy": "Terapiya",

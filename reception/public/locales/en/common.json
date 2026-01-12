@@ -144,7 +144,12 @@
       "cancel": "Cancel",
       "create": "Create",
       "update": "Update",
-      "selectTeacher": "Please select a teacher"
+      "selectTeacher": "Please select a teacher",
+      "delete": "Delete"
+    },
+    "buttons": {
+      "edit": "Update",
+      "delete": "Delete"
     },
     "labels": {
       "capacity": "Capacity:",

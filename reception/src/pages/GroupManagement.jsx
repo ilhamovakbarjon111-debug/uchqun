@@ -197,17 +197,17 @@ const GroupManagement = () => {
                 <div className="flex gap-2 pt-4 border-t border-gray-100">
                   <button
                     onClick={() => handleEdit(group)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 px-2 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm min-w-0"
                   >
-                    <Edit2 className="w-4 h-4" />
-                    {t('groupsPage.form.update')}
+                    <Edit2 className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{t('groupsPage.buttons.edit')}</span>
                   </button>
                   <button
                     onClick={() => handleDelete(group.id)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 px-2 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors text-sm min-w-0"
                   >
-                    <Trash2 className="w-4 h-4" />
-                    {t('groupsPage.confirmDelete').split(' ')[0]}
+                    <Trash2 className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{t('groupsPage.buttons.delete')}</span>
                   </button>
                 </div>
               </Card>

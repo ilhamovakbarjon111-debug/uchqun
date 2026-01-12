@@ -2,7 +2,7 @@
   "language": "Language",
   "nav": {
     "home": "Home",
-    "activities": "Activities",
+    "activities": "Individual Plan",
     "media": "Media",
     "meals": "Meals",
     "profile": "Profile",
@@ -34,7 +34,7 @@
     "specialNeeds": "Special needs and allergies",
     "emergency": "Emergency contact",
     "weeklyResults": "Weekly results",
-    "activities": "Activities",
+    "activities": "Individual Plan",
     "meals": "Meals",
     "media": "Media"
   },
@@ -42,13 +42,13 @@
     "role": "My Role: Parent",
     "welcome": "Welcome back",
     "overview": "Overview",
-    "activities": "Activities",
+    "activities": "Individual Plan",
     "mealsTracked": "Meals Tracked",
     "photos": "Photos"
   },
   "activities": {
-    "title": "Daily Activities",
-    "subtitle": "Track your child's daily growth and learning",
+    "title": "Individual Plan",
+    "subtitle": "View individual plans for your child",
     "all": "All",
     "learning": "Learning",
     "therapy": "Therapy",
