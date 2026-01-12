@@ -183,12 +183,12 @@ export const createActivity = async (req, res) => {
     }
 
     const { 
-      childId, title, description, type, duration, date, teacher, studentEngagement, notes,
+      childId, teacher,
       skill, goal, startDate, endDate, tasks, methods, progress, observation
     } = req.body;
 
-    if (!childId || !title || !description || !type || !date) {
-      return res.status(400).json({ error: 'childId, title, description, type, and date are required' });
+    if (!childId || !skill || !goal || !startDate || !endDate) {
+      return res.status(400).json({ error: 'childId, skill, goal, startDate, and endDate are required' });
     }
 
     // Verify child exists
@@ -202,14 +202,15 @@ export const createActivity = async (req, res) => {
 
     const activity = await Activity.create({
       childId,
-      title,
-      description,
-      type,
-      duration: duration || 30,
-      date,
+      // Use skill as title for backward compatibility
+      title: skill || 'Individual Plan',
+      description: goal || '',
+      type: 'Learning',
+      duration: 30,
+      date: startDate || new Date().toISOString().split('T')[0],
       teacher: teacher || `${req.user.firstName} ${req.user.lastName}`,
-      studentEngagement: studentEngagement || 'Medium',
-      notes: notes || '',
+      studentEngagement: 'Medium',
+      notes: '',
       // Individual Plan fields
       skill: skill || null,
       goal: goal || null,

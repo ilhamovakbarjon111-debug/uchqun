@@ -35,12 +35,6 @@ const Activities = () => {
   const [formData, setFormData] = useState({
     parentId: '',
     childId: '',
-    title: '',
-    description: '',
-    type: 'Learning',
-    duration: 30,
-    date: new Date().toISOString().split('T')[0],
-    studentEngagement: 'Medium',
     teacher: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher',
     // Individual Plan fields
     skill: '',
@@ -145,12 +139,6 @@ const Activities = () => {
     setFormData({
       parentId: firstParent ? firstParent.id : '',
       childId: firstChild,
-      title: '',
-      description: '',
-      type: 'Learning',
-      duration: 30,
-      date: today,
-      studentEngagement: 'Medium',
       teacher: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher',
       // Individual Plan fields
       skill: '',
@@ -188,13 +176,6 @@ const Activities = () => {
     setFormData({
       parentId: parentId,
       childId: activity.childId || '',
-      title: activity.title || '',
-      description: activity.description || '',
-      type: activity.type || 'Learning',
-      duration: activity.duration || 30,
-      date: activity.date ? activity.date.split('T')[0] : new Date().toISOString().split('T')[0],
-      studentEngagement: activity.studentEngagement || 'Medium',
-      notes: activity.notes || '',
       teacher: activity.teacher || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher'),
       // Individual Plan fields
       skill: activity.skill || '',
@@ -236,6 +217,10 @@ const Activities = () => {
           showError(t('activitiesPage.selectChildError'));
           return;
         }
+        if (!formData.skill || !formData.goal || !formData.startDate || !formData.endDate) {
+          showError(t('activitiesPage.requiredFieldsError') || 'Ko\'nikma, maqsad, boshlanish va tugash sanalari to\'ldirilishi shart');
+          return;
+        }
         await api.post('/activities', formData);
         success(t('activitiesPage.toastCreate'));
 
@@ -249,10 +234,7 @@ const Activities = () => {
     }
   };
 
-  const filteredActivities =
-    filter === 'all'
-      ? activities
-      : activities.filter((activity) => activity.type.toLowerCase() === filter.toLowerCase());
+  const filteredActivities = activities; // Remove type filter for individual plans
 
   const activityTypes = [
     { id: 'all', label: t('activitiesPage.filterAll'), icon: Filter },
@@ -293,25 +275,6 @@ const Activities = () => {
         )}
       </div>
 
-      {/* Modern Filter Chips */}
-      <div className="mb-10">
-        <div className="flex flex-wrap items-center gap-3 p-2 bg-gray-100/50 rounded-2xl w-fit">
-          {activityTypes.map((type) => (
-            <button
-              key={type.id}
-              onClick={() => setFilter(type.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-                filter === type.id
-                  ? 'bg-white text-orange-600 shadow-sm scale-105'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
-              }`}
-            >
-              <type.icon className="w-4 h-4" />
-              {type.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Activities Timeline */}
       <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
@@ -358,30 +321,59 @@ const Activities = () => {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
-                  {activity.title}
-                </h3>
+                {activity.skill && (
+                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
+                    {activity.skill}
+                  </h3>
+                )}
                 
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  {activity.description}
-                </p>
+                {activity.goal && (
+                  <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                    {activity.goal}
+                  </p>
+                )}
 
                 {/* Tags & Meta */}
                 <div className="flex flex-wrap gap-3 mb-4">
-                  <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[11px] font-bold uppercase tracking-tight ${getEngagementStyles(activity.studentEngagement)}`}>
-                    {t('activitiesPage.engagement')}: {activity.studentEngagement}
-                  </div>
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-50 border border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-tight">
                     <User className="w-3 h-3" /> {activity.teacher}
                   </div>
+                  {activity.startDate && activity.endDate && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 border border-blue-100 text-[11px] font-bold text-blue-600 uppercase tracking-tight">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(activity.startDate).toLocaleDateString(locale)} - {new Date(activity.endDate).toLocaleDateString(locale)}
+                    </div>
+                  )}
                 </div>
                 
-                <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {new Date(activity.date).toLocaleDateString(locale)}
+                {activity.tasks && Array.isArray(activity.tasks) && activity.tasks.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">{t('activitiesPage.formTasks') || 'Vazifalar'}:</p>
+                    <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
+                      {activity.tasks.map((task, idx) => task && (
+                        <li key={idx}>{task}</li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
+                )}
+                {activity.methods && (
+                  <div className="mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">{t('activitiesPage.formMethods') || 'Usullar'}:</p>
+                    <p className="text-sm text-gray-600">{activity.methods}</p>
+                  </div>
+                )}
+                {activity.progress && (
+                  <div className="mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">{t('activitiesPage.formProgress') || 'Jarayon/Taraqqiyot'}:</p>
+                    <p className="text-sm text-gray-600">{activity.progress}</p>
+                  </div>
+                )}
+                {activity.observation && (
+                  <div className="mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">{t('activitiesPage.formObservation') || 'Kuzatish'}:</p>
+                    <p className="text-sm text-gray-600">{activity.observation}</p>
+                  </div>
+                )}
               </div>
             </div>
           ))
@@ -464,97 +456,8 @@ const Activities = () => {
                 </>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('activitiesPage.formTitle')}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('activitiesPage.formDescription')}
-                </label>
-                <textarea
-                  required
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('activitiesPage.formType')}
-                  </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  >
-                    <option value="Learning">{t('activitiesPage.filterLearning')}</option>
-                    <option value="Therapy">{t('activitiesPage.filterTherapy')}</option>
-                    <option value="Social">{t('activitiesPage.filterSocial')}</option>
-                    <option value="Physical">{t('activitiesPage.filterPhysical')}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('activitiesPage.formDuration')}
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('activitiesPage.formDate')}
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('activitiesPage.formEngagement')}
-                  </label>
-                  <select
-                    value={formData.studentEngagement}
-                    onChange={(e) => setFormData({ ...formData, studentEngagement: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  >
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                  </select>
-                </div>
-              </div>
-
               {/* Individual Plan Fields */}
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">{t('activitiesPage.individualPlan') || 'Individual reja'}</h3>
+              <div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
