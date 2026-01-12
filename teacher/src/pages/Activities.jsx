@@ -151,7 +151,6 @@ const Activities = () => {
       duration: 30,
       date: today,
       studentEngagement: 'Medium',
-      notes: '',
       teacher: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher',
       // Individual Plan fields
       skill: '',
@@ -376,14 +375,6 @@ const Activities = () => {
                     <User className="w-3 h-3" /> {activity.teacher}
                   </div>
                 </div>
-                {activity.notes && (
-                  <div className="relative p-4 bg-orange-50/50 rounded-2xl border-l-4 border-orange-400">
-                    <MessageCircle className="w-4 h-4 text-orange-400 absolute top-2 right-2 opacity-50" />
-                    <p className="text-xs text-orange-800 leading-relaxed italic">
-                      "{activity.notes}"
-                    </p>
-                  </div>
-                )}
                 
                 <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                   <div className="flex items-center gap-1">
