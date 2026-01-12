@@ -17,49 +17,35 @@ export const createActivityValidator = [
       }
       return true;
     }),
-  body('date')
-    .optional()
-    .isISO8601()
-    .withMessage('Date must be a valid date (YYYY-MM-DD)')
-    .custom((value) => {
-      if (value) {
-        const activityDate = new Date(value);
-        const today = new Date();
-        today.setHours(23, 59, 59, 999); // End of today
-        if (activityDate > today) {
-          throw new Error('Activity date cannot be in the future');
-        }
-      }
-      return true;
-    }),
-  body('title')
-    .trim()
-    .notEmpty()
-    .withMessage('Title is required')
-    .isLength({ min: 1, max: 500 })
-    .withMessage('Title must be between 1 and 500 characters'),
-  body('description')
-    .trim()
-    .notEmpty()
-    .withMessage('Description is required')
-    .isLength({ max: 5000 })
-    .withMessage('Description must be 5000 characters or less'),
-  body('type')
-    .notEmpty()
-    .withMessage('Activity type is required')
-    .isIn(['Learning', 'Therapy', 'Social', 'Physical', 'Other'])
-    .withMessage('Activity type must be Learning, Therapy, Social, Physical, or Other'),
-  body('duration')
-    .notEmpty()
-    .withMessage('Duration is required')
-    .isInt({ min: 0, max: 1440 })
-    .withMessage('Duration must be a number between 0 and 1440 minutes (24 hours)'),
   body('teacher')
     .trim()
     .notEmpty()
     .withMessage('Teacher name is required')
     .isLength({ max: 255 })
     .withMessage('Teacher name must be 255 characters or less'),
+  // Old Activity fields (optional for backward compatibility)
+  body('date')
+    .optional()
+    .isISO8601()
+    .withMessage('Date must be a valid date (YYYY-MM-DD)'),
+  body('title')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 500 })
+    .withMessage('Title must be between 1 and 500 characters'),
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ max: 5000 })
+    .withMessage('Description must be 5000 characters or less'),
+  body('type')
+    .optional()
+    .isIn(['Learning', 'Therapy', 'Social', 'Physical', 'Other'])
+    .withMessage('Activity type must be Learning, Therapy, Social, Physical, or Other'),
+  body('duration')
+    .optional()
+    .isInt({ min: 0, max: 1440 })
+    .withMessage('Duration must be a number between 0 and 1440 minutes (24 hours)'),
   body('studentEngagement')
     .optional()
     .isIn(['High', 'Medium', 'Low'])
@@ -69,23 +55,27 @@ export const createActivityValidator = [
     .trim()
     .isLength({ max: 5000 })
     .withMessage('Notes must be 5000 characters or less'),
-  // Individual Plan fields
+  // Individual Plan fields (required)
   body('skill')
-    .optional()
     .trim()
+    .notEmpty()
+    .withMessage('Skill is required')
     .isLength({ max: 500 })
     .withMessage('Skill must be 500 characters or less'),
   body('goal')
-    .optional()
     .trim()
+    .notEmpty()
+    .withMessage('Goal is required')
     .isLength({ max: 5000 })
     .withMessage('Goal must be 5000 characters or less'),
   body('startDate')
-    .optional()
+    .notEmpty()
+    .withMessage('Start date is required')
     .isISO8601()
     .withMessage('Start date must be a valid date (YYYY-MM-DD)'),
   body('endDate')
-    .optional()
+    .notEmpty()
+    .withMessage('End date is required')
     .isISO8601()
     .withMessage('End date must be a valid date (YYYY-MM-DD)')
     .custom((value, { req }) => {
