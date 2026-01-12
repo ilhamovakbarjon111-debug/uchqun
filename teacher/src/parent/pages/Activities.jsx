@@ -7,7 +7,7 @@ import {
   Calendar,
   User,
   CheckCircle2,
-  Filter,
+  FileX,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -55,26 +55,6 @@ const Activities = () => {
       <div className="mb-10 text-center md:text-left">
         <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">{t('activities.title')}</h1>
         <p className="text-gray-500 text-lg">{t('activities.subtitle')}</p>
-      </div>
-
-      {/* Modern Filter Chips */}
-      <div className="mb-10">
-        <div className="flex flex-wrap items-center gap-3 p-2 bg-gray-100/50 rounded-2xl w-fit">
-          {activityTypes.map((type) => (
-            <button
-              key={type.id}
-              onClick={() => setFilter(type.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-                filter === type.id
-                  ? 'bg-white text-orange-600 shadow-sm scale-105'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
-              }`}
-            >
-              <type.icon className="w-4 h-4" />
-              {type.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Activities Timeline */}
