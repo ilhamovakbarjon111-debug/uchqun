@@ -5,6 +5,7 @@ import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Calendar,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
   User,
