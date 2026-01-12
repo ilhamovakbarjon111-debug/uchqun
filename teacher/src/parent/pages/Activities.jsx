@@ -47,15 +47,6 @@ const Activities = () => {
   // For Individual Plans, we don't filter by type anymore
   const filteredActivities = activities;
 
-
-  const getEngagementStyles = (level) => {
-    switch (level) {
-      case 'High': return 'bg-green-100 text-green-700 border-green-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
-  };
-
   if (loading) return <div className="flex justify-center items-center h-96"><LoadingSpinner size="lg" /></div>;
 
   return (
