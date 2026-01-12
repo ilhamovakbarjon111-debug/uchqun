@@ -441,21 +441,21 @@ const ParentManagement = () => {
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-lg font-medium hover:bg-orange-100 transition-colors"
                 >
                   <Baby className="w-4 h-4" />
-                  Bola qo'shish
+                  {t('parentsPage.buttons.addChild')}
                 </button>
                 <button
                   onClick={() => handleEdit(parent)}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
                 >
                   <Edit2 className="w-4 h-4" />
-                  Tahrirlash
+                  {t('parentsPage.buttons.edit')}
                 </button>
                 <button
                   onClick={() => handleDelete(parent.id)}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
-                  O'chirish
+                  {t('parentsPage.buttons.delete')}
                 </button>
               </div>
             </Card>
@@ -827,9 +827,9 @@ const ParentManagement = () => {
                     onChange={(e) => setChildFormData({ ...childFormData, gender: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   >
-                    <option value="Male">Erkak</option>
-                    <option value="Female">Ayol</option>
-                    <option value="Other">Boshqa</option>
+                    <option value="Male">{t('gender.male', 'Erkak')}</option>
+                    <option value="Female">{t('gender.female', 'Ayol')}</option>
+                    <option value="Other">{t('gender.other', 'Boshqa')}</option>
                   </select>
                 </div>
               </div>
@@ -884,7 +884,7 @@ const ParentManagement = () => {
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
-                  Bola qo'shish
+                  {t('parentsPage.buttons.addChild')}
                 </button>
               </div>
             </form>

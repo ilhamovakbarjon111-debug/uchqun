@@ -71,7 +71,15 @@
       "save": "Save",
       "cancel": "Cancel",
       "create": "Create",
-      "update": "Update"
+      "update": "Update",
+      "edit": "Edit",
+      "delete": "Delete",
+      "addChild": "Add Child"
+    },
+    "buttons": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "addChild": "Add Child"
     }
   },
   "teachersPage": {

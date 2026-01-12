@@ -71,7 +71,15 @@
       "save": "Saqlash",
       "cancel": "Bekor qilish",
       "create": "Yaratish",
-      "update": "Yangilash"
+      "update": "Yangilash",
+      "edit": "Tahrirlash",
+      "delete": "O'chirish",
+      "addChild": "Bola qo'shish"
+    },
+    "buttons": {
+      "edit": "Tahrirlash",
+      "delete": "O'chirish",
+      "addChild": "Bola qo'shish"
     }
   },
   "teachersPage": {
