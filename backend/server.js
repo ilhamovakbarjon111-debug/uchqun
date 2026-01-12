@@ -176,9 +176,16 @@ const startServer = async () => {
       await runMigrations();
       console.log('✓ Migrations completed successfully');
     } catch (migrationError) {
-      console.error('⚠ Migration error (continuing anyway):', migrationError.message);
-      // Don't exit - allow server to start even if migrations fail
-      // This allows manual migration fixes
+      console.error('⚠ Migration error:', migrationError.message);
+      console.error('Migration error stack:', migrationError.stack);
+      // In production, we should exit if migrations fail
+      // In development, continue to allow manual fixes
+      if (process.env.NODE_ENV === 'production') {
+        console.error('✗ Fatal: Migrations failed in production. Server will not start.');
+        process.exit(1);
+      } else {
+        console.warn('⚠ Continuing despite migration errors (development mode)');
+      }
     }
     
     // In development, also allow sync for convenience

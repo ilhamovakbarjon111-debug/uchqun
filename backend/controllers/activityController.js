@@ -255,7 +255,23 @@ export const createActivity = async (req, res) => {
       message: error.message,
       stack: error.stack,
       name: error.name,
+      code: error.original?.code,
+      constraint: error.original?.constraint,
     });
+    
+    // Check if it's a database column error
+    if (error.message && (
+      error.message.includes('column') || 
+      error.message.includes('does not exist') ||
+      error.original?.code === '42703' // PostgreSQL undefined column error
+    )) {
+      return res.status(500).json({ 
+        error: 'Database migration required. Please ensure migrations have run successfully.',
+        hint: 'The Individual Plan fields may not exist in the database. Check migration logs.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+    
     res.status(500).json({ 
       error: 'Failed to create activity',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
