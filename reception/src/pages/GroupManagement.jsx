@@ -99,7 +99,7 @@ const GroupManagement = () => {
     e.preventDefault();
     
     if (!formData.teacherId) {
-      showError('Please select a teacher');
+      showError(t('groupsPage.form.selectTeacher'));
       return;
     }
     
@@ -186,6 +186,7 @@ const GroupManagement = () => {
                 <div className="space-y-2 mb-4">
                   <div className="text-sm text-gray-600">
                     <strong>{t('groupsPage.labels.capacity')}</strong> {group.capacity} {t('parentsPage.children', {count: group.capacity})}
+                  </div>
                   {groupTeacher && (
                     <div className="text-sm text-gray-600">
                       <strong>{t('groupsPage.labels.teacher')}</strong> {groupTeacher.firstName} {groupTeacher.lastName}
@@ -289,7 +290,7 @@ const GroupManagement = () => {
                     type="text"
                     value={formData.ageRange}
                     onChange={(e) => setFormData({ ...formData, ageRange: e.target.value })}
-                    placeholder="e.g., 3-5 years"
+                    placeholder={t('groupsPage.form.ageRange')}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
