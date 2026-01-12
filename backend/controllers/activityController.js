@@ -248,7 +248,15 @@ export const createActivity = async (req, res) => {
     res.status(201).json(createdActivity);
   } catch (error) {
     console.error('Create activity error:', error);
-    res.status(500).json({ error: 'Failed to create activity' });
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
+    res.status(500).json({ 
+      error: 'Failed to create activity',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 

@@ -15,53 +15,64 @@
 export const up = async (queryInterface, Sequelize) => {
   const { DataTypes } = Sequelize;
 
-  // Add new columns to activities table
-  await queryInterface.addColumn('activities', 'skill', {
+  // Helper function to safely add column if it doesn't exist
+  const addColumnIfNotExists = async (tableName, columnName, columnDefinition) => {
+    const tableDescription = await queryInterface.describeTable(tableName);
+    if (!tableDescription[columnName]) {
+      await queryInterface.addColumn(tableName, columnName, columnDefinition);
+      console.log(`✓ Added column ${columnName} to ${tableName}`);
+    } else {
+      console.log(`⏭ Column ${columnName} already exists in ${tableName}, skipping`);
+    }
+  };
+
+  // Add new columns to activities table (safely)
+  await addColumnIfNotExists('activities', 'skill', {
     type: DataTypes.STRING(500),
     allowNull: true,
-    comment: 'Ko\'nikma (Skill)',
   });
 
-  await queryInterface.addColumn('activities', 'goal', {
+  await addColumnIfNotExists('activities', 'goal', {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Maqsad (Goal)',
   });
 
-  await queryInterface.addColumn('activities', 'startDate', {
+  await addColumnIfNotExists('activities', 'startDate', {
     type: DataTypes.DATEONLY,
     allowNull: true,
-    comment: 'Vazifalar tuzilgan sana',
   });
 
-  await queryInterface.addColumn('activities', 'endDate', {
+  await addColumnIfNotExists('activities', 'endDate', {
     type: DataTypes.DATEONLY,
     allowNull: true,
-    comment: 'Maqsadlarga erishish muddati',
   });
 
   // For PostgreSQL, use JSONB for tasks array
   await queryInterface.sequelize.query(`
-    ALTER TABLE "activities" 
-    ADD COLUMN IF NOT EXISTS "tasks" JSONB DEFAULT '[]'::jsonb;
+    DO $$ 
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'activities' AND column_name = 'tasks'
+      ) THEN
+        ALTER TABLE "activities" ADD COLUMN "tasks" JSONB DEFAULT '[]'::jsonb;
+      END IF;
+    END $$;
   `);
 
-  await queryInterface.addColumn('activities', 'methods', {
+  await addColumnIfNotExists('activities', 'methods', {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Usullar (Methods)',
   });
 
-  await queryInterface.addColumn('activities', 'progress', {
+  await addColumnIfNotExists('activities', 'progress', {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Jarayon/Taraqqiyot (Progress)',
   });
 
-  await queryInterface.addColumn('activities', 'observation', {
+  await addColumnIfNotExists('activities', 'observation', {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Kuzatish (Observation)',
   });
 };
 
