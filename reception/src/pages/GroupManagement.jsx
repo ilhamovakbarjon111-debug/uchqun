@@ -174,7 +174,7 @@ const GroupManagement = () => {
                   <div>
                     <h3 className="text-lg font-bold text-gray-900">{group.name}</h3>
                     {group.ageRange && (
-                      <p className="text-sm text-gray-500">Age: {group.ageRange}</p>
+                      <p className="text-sm text-gray-500">Yosh: {group.ageRange}</p>
                     )}
                   </div>
                 </div>
@@ -185,11 +185,11 @@ const GroupManagement = () => {
 
                 <div className="space-y-2 mb-4">
                   <div className="text-sm text-gray-600">
-                    <strong>Capacity:</strong> {group.capacity} children
+                    <strong>{t('groupsPage.labels.capacity')}</strong> {group.capacity} bola
                   </div>
                   {groupTeacher && (
                     <div className="text-sm text-gray-600">
-                      <strong>Teacher:</strong> {groupTeacher.firstName} {groupTeacher.lastName}
+                      <strong>{t('groupsPage.labels.teacher')}</strong> {groupTeacher.firstName} {groupTeacher.lastName}
                     </div>
                   )}
                 </div>
@@ -200,14 +200,14 @@ const GroupManagement = () => {
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
                   >
                     <Edit2 className="w-4 h-4" />
-                    Edit
+                    Tahrirlash
                   </button>
                   <button
                     onClick={() => handleDelete(group.id)}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete
+                    O'chirish
                   </button>
                 </div>
               </Card>
