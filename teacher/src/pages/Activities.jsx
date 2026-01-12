@@ -41,7 +41,6 @@ const Activities = () => {
     duration: 30,
     date: new Date().toISOString().split('T')[0],
     studentEngagement: 'Medium',
-    notes: '',
     teacher: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher',
     // Individual Plan fields
     skill: '',
@@ -560,18 +559,6 @@ const Activities = () => {
                     <option value="Low">Low</option>
                   </select>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('activitiesPage.formNotes')}
-                </label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={2}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
               </div>
 
               {/* Individual Plan Fields */}
