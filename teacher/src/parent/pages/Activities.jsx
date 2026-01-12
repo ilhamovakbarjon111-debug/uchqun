@@ -5,13 +5,7 @@ import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Calendar,
-  Clock,
   User,
-  BookOpen,
-  Brain,
-  Users,
-  Dumbbell,
-  MessageCircle,
   CheckCircle2,
   Filter,
 } from 'lucide-react';
@@ -21,7 +15,6 @@ const Activities = () => {
   const { selectedChildId } = useChild();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
   const { t, i18n } = useTranslation();
 
   const locale = {
@@ -51,18 +44,9 @@ const Activities = () => {
     loadActivities();
   }, [selectedChildId]);
 
-  const filteredActivities =
-    filter === 'all'
-      ? activities
-      : activities.filter((activity) => activity.type.toLowerCase() === filter.toLowerCase());
+  // For Individual Plans, we don't filter by type anymore
+  const filteredActivities = activities;
 
-  const activityTypes = [
-    { id: 'all', label: t('activities.all'), icon: Filter },
-    { id: 'learning', label: t('activities.learning'), icon: BookOpen },
-    { id: 'therapy', label: t('activities.therapy'), icon: Brain },
-    { id: 'social', label: t('activities.social'), icon: Users },
-    { id: 'physical', label: t('activities.physical'), icon: Dumbbell },
-  ];
 
   const getEngagementStyles = (level) => {
     switch (level) {
@@ -116,15 +100,6 @@ const Activities = () => {
 
               {/* Activity Card */}
               <div className="w-[calc(100%-4rem)] md:w-[45%] bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ml-auto md:ml-0">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-black uppercase tracking-widest text-orange-500 bg-orange-50 px-3 py-1 rounded-full">
-                    {activity.type}
-                  </span>
-                <div className="flex items-center gap-1 text-gray-400 text-xs font-medium">
-                    <Clock className="w-3.5 h-3.5" />
-                  {t('activities.durationMinutes', { count: activity.duration })}
-                  </div>
-                </div>
 
                 {activity.skill && (
                   <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">

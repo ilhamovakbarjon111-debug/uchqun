@@ -1,19 +1,12 @@
 import { useEffect, useState } from 'react';
 import { 
-  BookOpen, 
-  Brain, 
   Calendar, 
   CheckCircle2,
-  Clock, 
-  Dumbbell, 
   Edit2,
-  Filter,
-  MessageCircle,
   Plus,
   Save,
   Trash2,
-  User, 
-  Users,
+  User,
   X
 } from 'lucide-react';
 import Card from '../shared/components/Card';
@@ -29,7 +22,6 @@ const Activities = () => {
   const { t, i18n } = useTranslation();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
   const [formData, setFormData] = useState({
@@ -237,15 +229,7 @@ const Activities = () => {
     }
   };
 
-  const filteredActivities = activities; // Remove type filter for individual plans
-
-  const activityTypes = [
-    { id: 'all', label: t('activitiesPage.filterAll'), icon: Filter },
-    { id: 'learning', label: t('activitiesPage.filterLearning'), icon: BookOpen },
-    { id: 'therapy', label: t('activitiesPage.filterTherapy'), icon: Brain },
-    { id: 'social', label: t('activitiesPage.filterSocial'), icon: Users },
-    { id: 'physical', label: t('activitiesPage.filterPhysical'), icon: Dumbbell },
-  ];
+  const filteredActivities = activities; // Individual plans don't use type filter
 
   const getEngagementStyles = (level) => {
     switch (level) {
@@ -293,18 +277,10 @@ const Activities = () => {
 
               {/* Activity Card */}
               <div className="w-[calc(100%-4rem)] md:w-[45%] bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ml-auto md:ml-0">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-black uppercase tracking-widest text-orange-500 bg-orange-50 px-3 py-1 rounded-full">
-                    {activity.type}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 text-gray-400 text-xs font-medium">
-                      <Clock className="w-3.5 h-3.5" />
-                      {t('activitiesPage.duration', { count: activity.duration })}
-                    </div>
-                    {/* Action Buttons (Teachers only) */}
-                    {isTeacher && (
-                      <div className="flex gap-1">
+                <div className="flex items-center justify-end mb-4">
+                  {/* Action Buttons (Teachers only) */}
+                  {isTeacher && (
+                    <div className="flex gap-1">
                         <button
                           onClick={() => handleEdit(activity)}
                           className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-blue-600 transition-colors"
