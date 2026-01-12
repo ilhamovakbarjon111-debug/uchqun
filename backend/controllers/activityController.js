@@ -226,9 +226,9 @@ export const createActivity = async (req, res) => {
     const activity = await Activity.create(activityData);
 
     // Get created activity with child info
-    // Use raw query to avoid Sequelize serialization issues with new columns
+    let createdActivity;
     try {
-      const createdActivity = await Activity.findByPk(activity.id, {
+      createdActivity = await Activity.findByPk(activity.id, {
         include: [
           {
             model: Child,
@@ -236,52 +236,46 @@ export const createActivity = async (req, res) => {
             attributes: ['id', 'firstName', 'lastName'],
           },
         ],
-        raw: false, // Keep as Sequelize instance to handle JSONB properly
       });
-      
-      // Convert to plain object, handling JSONB fields
-      const activityJson = createdActivity.toJSON();
-      
-      // Ensure tasks is always an array
-      if (activityJson.tasks && typeof activityJson.tasks === 'string') {
-        try {
-          activityJson.tasks = JSON.parse(activityJson.tasks);
-        } catch {
-          activityJson.tasks = [];
-        }
-      } else if (!activityJson.tasks) {
-        activityJson.tasks = [];
-      }
-      
-      res.status(201).json(activityJson);
     } catch (fetchError) {
       console.error('Error fetching created activity:', fetchError);
-      // If fetch fails, return the activity we just created
-      const activityJson = activity.toJSON();
-      if (activityJson.tasks && typeof activityJson.tasks === 'string') {
-        try {
-          activityJson.tasks = JSON.parse(activityJson.tasks);
-        } catch {
-          activityJson.tasks = [];
-        }
+      // If fetch fails, use the activity we just created
+      createdActivity = activity;
+    }
+    
+    // Convert to plain object, handling JSONB fields
+    const activityJson = createdActivity.toJSON ? createdActivity.toJSON() : createdActivity;
+    
+    // Ensure tasks is always an array
+    if (activityJson.tasks && typeof activityJson.tasks === 'string') {
+      try {
+        activityJson.tasks = JSON.parse(activityJson.tasks);
+      } catch {
+        activityJson.tasks = [];
       }
-      res.status(201).json(activityJson);
+    } else if (!activityJson.tasks) {
+      activityJson.tasks = [];
     }
 
     // Create notification for parent
     if (child.parentId) {
-      await createNotification(
-        child.parentId,
-        childId,
-        'activity',
-        'Yangi aktivlik qo\'shildi',
-        `${child.firstName} uchun "${title}" aktivligi qo'shildi`,
-        activity.id,
-        'activity'
-      );
+      try {
+        await createNotification(
+          child.parentId,
+          childId,
+          'activity',
+          'Yangi individual reja qo\'shildi',
+          `${child.firstName} uchun "${skill || 'Individual reja'}" qo'shildi`,
+          activity.id,
+          'activity'
+        );
+      } catch (notifError) {
+        console.error('Error creating notification:', notifError);
+        // Don't fail the request if notification fails
+      }
     }
 
-    // Response already sent in try-catch above
+    res.status(201).json(activityJson);
   } catch (error) {
     console.error('Create activity error:', error);
     console.error('Error details:', {
