@@ -138,7 +138,7 @@ const Meals = () => {
             <Utensils className="w-4 h-4" />
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* --- Meals List --- */}
       <div className="grid grid-cols-1 gap-6">
