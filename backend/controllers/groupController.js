@@ -19,7 +19,7 @@ export const getGroups = async (req, res) => {
     }
 
     // If user is reception, only show groups for teachers they created
-    // If user is admin, only show groups whose teacher was created by this admin
+    // Admin can see groups for teachers created by receptions they created
     const includeTeacher = {
       model: User,
       as: 'teacher',
@@ -30,7 +30,26 @@ export const getGroups = async (req, res) => {
     if (req.user.role === 'reception') {
       includeTeacher.where = { createdBy: req.user.id };
     } else if (req.user.role === 'admin') {
-      includeTeacher.where = { createdBy: req.user.id };
+      // Get all receptions created by this admin
+      const receptions = await User.findAll({
+        where: { role: 'reception', createdBy: req.user.id },
+        attributes: ['id'],
+      });
+
+      const receptionIds = receptions.map(r => r.id);
+
+      // If admin has no receptions, return empty array
+      if (receptionIds.length === 0) {
+        return res.json({
+          groups: [],
+          total: 0,
+          limit: limitNum,
+          offset: offsetNum,
+        });
+      }
+
+      // Filter teachers created by these receptions
+      includeTeacher.where = { createdBy: { [Op.in]: receptionIds } };
     }
 
     const groups = await Group.findAndCountAll({
@@ -71,9 +90,20 @@ export const getGroup = async (req, res) => {
       return res.status(404).json({ error: 'Group not found' });
     }
 
-    // Admins can only view groups whose teacher was created by them
-    if (req.user.role === 'admin' && group.teacher?.createdBy !== req.user.id) {
-      return res.status(403).json({ error: 'Access denied to this group' });
+    // Admins can only view groups whose teacher was created by receptions they created
+    if (req.user.role === 'admin') {
+      // Get all receptions created by this admin
+      const receptions = await User.findAll({
+        where: { role: 'reception', createdBy: req.user.id },
+        attributes: ['id'],
+      });
+
+      const receptionIds = receptions.map(r => r.id);
+
+      // Check if teacher was created by one of these receptions
+      if (!receptionIds.includes(group.teacher?.createdBy)) {
+        return res.status(403).json({ error: 'Access denied to this group' });
+      }
     }
 
     res.json(group);

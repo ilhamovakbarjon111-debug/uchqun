@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import User from '../models/User.js';
 import Document from '../models/Document.js';
 import ParentActivity from '../models/ParentActivity.js';
@@ -530,11 +531,32 @@ export const deleteReception = async (req, res) => {
  * 
  * Business Logic:
  * - Admin can only view teachers, cannot create/edit/delete
+ * - Admin can view teachers created by receptions they created
  */
 export const getTeachers = async (req, res) => {
   try {
+    // First, get all receptions created by this admin
+    const receptions = await User.findAll({
+      where: { role: 'reception', createdBy: req.user.id },
+      attributes: ['id'],
+    });
+
+    const receptionIds = receptions.map(r => r.id);
+
+    // If admin has no receptions, return empty array
+    if (receptionIds.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+      });
+    }
+
+    // Get teachers created by these receptions
     const teachers = await User.findAll({
-      where: { role: 'teacher', createdBy: req.user.id },
+      where: { 
+        role: 'teacher',
+        createdBy: { [Op.in]: receptionIds }
+      },
       attributes: { exclude: ['password'] },
       order: [['createdAt', 'DESC']],
     });
@@ -555,12 +577,32 @@ export const getTeachers = async (req, res) => {
  * 
  * Business Logic:
  * - Admin can only view parents, cannot create/edit/delete
- * - Admin can view ALL parents (not just ones they created)
+ * - Admin can view parents created by receptions they created
  */
 export const getParents = async (req, res) => {
   try {
+    // First, get all receptions created by this admin
+    const receptions = await User.findAll({
+      where: { role: 'reception', createdBy: req.user.id },
+      attributes: ['id'],
+    });
+
+    const receptionIds = receptions.map(r => r.id);
+
+    // If admin has no receptions, return empty array
+    if (receptionIds.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+      });
+    }
+
+    // Get parents created by these receptions
     const parents = await User.findAll({
-      where: { role: 'parent' }, // Admin can see all parents, not just ones they created
+      where: { 
+        role: 'parent',
+        createdBy: { [Op.in]: receptionIds }
+      },
       attributes: { exclude: ['password'] },
       order: [['createdAt', 'DESC']],
     });
@@ -681,8 +723,20 @@ export const getParentById = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // First, get all receptions created by this admin
+    const receptions = await User.findAll({
+      where: { role: 'reception', createdBy: req.user.id },
+      attributes: ['id'],
+    });
+
+    const receptionIds = receptions.map(r => r.id);
+
     const parent = await User.findOne({
-      where: { id, role: 'parent' }, // Admin can view any parent, not just ones they created
+      where: { 
+        id, 
+        role: 'parent',
+        createdBy: { [Op.in]: receptionIds }
+      },
       attributes: { exclude: ['password'] },
       include: [
         {
