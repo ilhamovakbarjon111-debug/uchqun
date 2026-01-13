@@ -91,7 +91,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Header Card */}
-      <Card className="bg-gradient-to-r from-orange-500 to-orange-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
+      <Card className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
         <div className="flex items-center gap-3 mb-2">
           <Users className="w-6 h-6 text-white" />
           <p className="text-white/90 text-sm font-medium">{t('dashboard.role')}</p>
@@ -109,8 +109,8 @@ const Dashboard = () => {
           {overviewCards.map((card) => (
             <Card key={card.title} className="p-4 hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm">
               <a href={card.href} className="flex items-center gap-4">
-                <div className="p-3 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-sm">
-                  <card.icon className="w-6 h-6 text-orange-600" />
+                <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm">
+                  <card.icon className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">{card.value}</p>

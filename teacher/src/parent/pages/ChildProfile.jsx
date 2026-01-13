@@ -191,7 +191,7 @@ const ChildProfile = () => {
               className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
             >
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold text-xl">
+                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">
                   {c.firstName?.charAt(0)}{c.lastName?.charAt(0)}
                 </div>
                 <div>
@@ -212,8 +212,8 @@ const ChildProfile = () => {
     return (
       <div className="max-w-2xl mx-auto py-20">
         <Card className="text-center p-12">
-          <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <User className="w-12 h-12 text-orange-600" />
+          <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <User className="w-12 h-12 text-blue-600" />
           </div>
           <h2 className="text-2xl font-black text-gray-900 mb-4">{t('child.notFoundTitle')}</h2>
           <p className="text-gray-600 font-medium mb-6">
@@ -239,7 +239,7 @@ const ChildProfile = () => {
           <select
             value={selectedChildId || ''}
             onChange={(e) => selectChild(e.target.value)}
-            className="w-full md:w-auto px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full md:w-auto px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {children.map((c) => (
               <option key={c.id} value={c.id}>
@@ -252,7 +252,7 @@ const ChildProfile = () => {
 
       {/* --- Top Profile Hero --- */}
       <div className="relative overflow-hidden bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8 md:p-10">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full -mr-32 -mt-32 opacity-50" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full -mr-32 -mt-32 opacity-50" />
 
         <div className="relative flex flex-col md:flex-row items-center gap-8">
           <div className="relative">
@@ -336,12 +336,12 @@ const ChildProfile = () => {
                 <h1 className="text-4xl font-black text-white leading-tight drop-shadow-sm">
                   {child.firstName} {child.lastName}
                 </h1>
-                <span className="px-4 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold uppercase tracking-wider">
+                <span className="px-4 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase tracking-wider">
                   {child.gender}
                 </span>
               </div>
               <p className="text-lg text-white/90 font-medium flex items-center justify-center md:justify-start gap-2 drop-shadow-sm">
-                <Baby className="w-5 h-5 text-orange-300" />
+                <Baby className="w-5 h-5 text-blue-300" />
                 {t('child.ageYears', { count: calculateAge(child.dateOfBirth) })} • {new Date(child.dateOfBirth).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
@@ -364,7 +364,7 @@ const ChildProfile = () => {
           {/* Detailed Info Grid */}
           <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
             <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <User className="w-6 h-6 text-orange-600" /> {t('child.basicInfo')}
+              <User className="w-6 h-6 text-blue-600" /> {t('child.basicInfo')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <InfoItem label={t('child.fullName')} value={`${child.firstName} ${child.lastName}`} icon={User} />
@@ -375,7 +375,7 @@ const ChildProfile = () => {
           </section>
 
           {/* Special Needs Section */}
-          <section className="bg-gradient-to-br from-red-50 to-orange-50 rounded-[2rem] p-8 border border-red-100 shadow-inner">
+          <section className="bg-gradient-to-br from-red-50 to-blue-50 rounded-[2rem] p-8 border border-red-100 shadow-inner">
             <h3 className="text-xl font-bold text-red-900 mb-4 flex items-center gap-2">
               <Heart className="w-6 h-6 text-red-600 animate-pulse" /> {t('child.specialNeeds')}
             </h3>
@@ -422,7 +422,7 @@ const ChildProfile = () => {
               <StatRow
                 label={t('child.meals')}
                 value={weeklyStats.meals}
-                color="bg-orange-500"
+                color="bg-blue-500"
               />
               <StatRow
                 label={t('child.media')}
@@ -451,10 +451,10 @@ const ChildProfile = () => {
                   <img
                     src={avatar}
                     alt={`Avatar ${index + 1}`}
-                    className="w-full aspect-square rounded-xl object-cover border-4 border-gray-200 group-hover:border-orange-500 transition"
+                    className="w-full aspect-square rounded-xl object-cover border-4 border-gray-200 group-hover:border-blue-500 transition"
                     onError={(e) => e.target.src = defaultAvatar}
                   />
-                  <div className="absolute inset-0 bg-orange-500/0 group-hover:bg-orange-500/20 rounded-xl transition" />
+                  <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/20 rounded-xl transition" />
                 </button>
               ))}
             </div>
@@ -473,7 +473,7 @@ const ChildProfile = () => {
 
 // --- Yordamchi Komponentlar (Reusable Components) ---
 
-const InfoItem = ({ label, value, icon: Icon, color = "text-orange-500" }) => (
+const InfoItem = ({ label, value, icon: Icon, color = "text-blue-500" }) => (
   <div className="group">
     <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">{label}</label>
     <div className="flex items-center gap-3">

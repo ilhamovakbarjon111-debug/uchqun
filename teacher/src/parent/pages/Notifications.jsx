@@ -86,7 +86,7 @@ const Notifications = () => {
         {count > 0 && (
           <button
             onClick={markAllAsRead}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors"
           >
             <CheckCheck className="w-4 h-4" />
             Barchasini o'qilgan deb belgilash
@@ -100,7 +100,7 @@ const Notifications = () => {
           onClick={() => setFilter('all')}
           className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
             filter === 'all'
-              ? 'bg-orange-500 text-white'
+              ? 'bg-blue-500 text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
@@ -110,7 +110,7 @@ const Notifications = () => {
           onClick={() => setFilter('unread')}
           className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
             filter === 'unread'
-              ? 'bg-orange-500 text-white'
+              ? 'bg-blue-500 text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
@@ -120,7 +120,7 @@ const Notifications = () => {
           onClick={() => setFilter('read')}
           className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
             filter === 'read'
-              ? 'bg-orange-500 text-white'
+              ? 'bg-blue-500 text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
@@ -139,7 +139,7 @@ const Notifications = () => {
               <Card
                 key={notification.id}
                 className={`p-6 transition-all ${
-                  !notification.isRead ? 'bg-orange-50 border-orange-200' : 'bg-white'
+                  !notification.isRead ? 'bg-blue-50 border-blue-200' : 'bg-white'
                 }`}
               >
                 <div className="flex items-start gap-4">
@@ -174,7 +174,7 @@ const Notifications = () => {
                       </div>
                       
                       {!notification.isRead && (
-                        <span className="px-2 py-1 bg-orange-500 text-white text-xs font-bold rounded-full">
+                        <span className="px-2 py-1 bg-blue-500 text-white text-xs font-bold rounded-full">
                           Yangi
                         </span>
                       )}

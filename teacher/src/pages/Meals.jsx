@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import { 
-  Apple, 
-  CalendarDays, 
-  CheckCircle2, 
-  Clock, 
-  Coffee, 
+import {
+  Apple,
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  Coffee,
   Edit2,
-  Info, 
+  Info,
   Moon,
   Plus,
   Save,
-  Sun, 
+  Sun,
   Trash2,
-  Utensils, 
+  Utensils,
   X,
   XCircle
 } from 'lucide-react';
@@ -154,7 +154,7 @@ const Meals = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       if (editingMeal) {
         await api.put(`/meals/${editingMeal.id}`, formData);
@@ -167,7 +167,7 @@ const Meals = () => {
         await api.post('/meals', formData);
         success(t('mealsPage.form.toastCreate'));
       }
-      
+
       setShowModal(false);
       loadMeals();
     } catch (error) {
@@ -197,14 +197,14 @@ const Meals = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
-      
+
       {/* --- Header & Date Picker --- */}
       <Card className="flex flex-col md:flex-row md:items-end justify-between gap-6 p-8 bg-white/95 backdrop-blur-sm">
         <div className="space-y-1">
           <h1 className="text-3xl font-black text-white tracking-tight drop-shadow-sm">{t('mealsPage.title')}</h1>
           <p className="text-white/90 font-medium drop-shadow-sm">{t('mealsPage.subtitle')}</p>
         </div>
-        
+
         <div className="flex items-end gap-3">
           {isTeacher && (
             <button
@@ -215,26 +215,26 @@ const Meals = () => {
               <span className="hidden sm:inline">{t('mealsPage.add')}</span>
             </button>
           )}
-          
+
           <div className="relative">
-          <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
-            <CalendarDays className="w-3.5 h-3.5" /> {t('mealsPage.selectDay')}
-          </label>
-          <select
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="appearance-none bg-gray-50 border-none text-gray-900 font-bold rounded-2xl px-6 py-3 pr-12 focus:ring-2 focus:ring-orange-500 shadow-inner cursor-pointer"
-          >
-            {dates.map((date) => (
-              <option key={date} value={date}>
-                {formatDate(date, { weekday: 'short', day: 'numeric', month: 'long' })}
-              </option>
-            ))}
-          </select>
-          <div className="absolute bottom-3.5 right-4 pointer-events-none text-gray-400">
-            <Utensils className="w-4 h-4" />
+            <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
+              <CalendarDays className="w-3.5 h-3.5" /> {t('mealsPage.selectDay')}
+            </label>
+            <select
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="appearance-none bg-gray-50 border-none text-gray-900 font-bold rounded-2xl px-6 py-3 pr-12 focus:ring-2 focus:ring-orange-500 shadow-inner cursor-pointer"
+            >
+              {dates.map((date) => (
+                <option key={date} value={date}>
+                  {formatDate(date, { weekday: 'short', day: 'numeric', month: 'long' })}
+                </option>
+              ))}
+            </select>
+            <div className="absolute bottom-3.5 right-4 pointer-events-none text-gray-400">
+              <Utensils className="w-4 h-4" />
+            </div>
           </div>
-        </div>
         </div>
       </Card>
 
@@ -268,13 +268,13 @@ const Meals = () => {
                     </p>
 
                     <div className="flex items-center gap-6 pt-2">
-                       <div className="text-xs font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1.5">
-                         {t('mealsPage.quantity')}: <span className="text-gray-900">{meal.quantity}</span>
-                       </div>
-                       <div className={`flex items-center gap-1.5 text-sm font-bold ${meal.eaten ? 'text-green-600' : 'text-red-500'}`}>
-                         {meal.eaten ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                         {meal.eaten ? t('mealsPage.eaten') : t('mealsPage.notEaten')}
-                       </div>
+                      <div className="text-xs font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1.5">
+                        {t('mealsPage.quantity')}: <span className="text-gray-900">{meal.quantity}</span>
+                      </div>
+                      <div className={`flex items-center gap-1.5 text-sm font-bold ${meal.eaten ? 'text-green-600' : 'text-red-500'}`}>
+                        {meal.eaten ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                        {meal.eaten ? t('mealsPage.eaten') : t('mealsPage.notEaten')}
+                      </div>
                     </div>
 
                     {meal.specialNotes && (
@@ -322,7 +322,7 @@ const Meals = () => {
       {filteredMeals.length > 0 && (
         <div className="bg-gray-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full -mr-32 -mt-32 blur-3xl" />
-          
+
           <div className="relative z-10 space-y-8">
             <div className="flex items-center justify-between border-b border-white/10 pb-6">
               <h3 className="text-xl font-bold">{t('mealsPage.dailySummary')}</h3>
@@ -333,15 +333,15 @@ const Meals = () => {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center md:text-left">
               <SummaryStat label={t('mealsPage.totalMeals')} value={filteredMeals.length} />
-              <SummaryStat 
-                label={t('mealsPage.eaten')} 
-                value={filteredMeals.filter(m => m.eaten).length} 
-                color="text-green-400" 
+              <SummaryStat
+                label={t('mealsPage.eaten')}
+                value={filteredMeals.filter(m => m.eaten).length}
+                color="text-green-400"
               />
-              <SummaryStat 
-                label={t('mealsPage.skipped')} 
-                value={filteredMeals.filter(m => !m.eaten).length} 
-                color="text-red-400" 
+              <SummaryStat
+                label={t('mealsPage.skipped')}
+                value={filteredMeals.filter(m => !m.eaten).length}
+                color="text-red-400"
               />
               <div className="space-y-1">
                 <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">{t('mealsPage.quality')}</p>

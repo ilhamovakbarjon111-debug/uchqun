@@ -81,14 +81,14 @@ const Activities = () => {
                 className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-2xl transition-all duration-300 overflow-hidden group"
               >
                 {/* Card Header */}
-                <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-5">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-400 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">
                         {activity.skill || t('activities.skill') || 'Ko\'nikma'}
                       </h3>
                       {activity.goal && (
-                        <p className="text-sm text-orange-50 line-clamp-2">
+                        <p className="text-sm text-blue-50 line-clamp-2">
                           {activity.goal.length > 80 ? `${activity.goal.substring(0, 80)}...` : activity.goal}
                         </p>
                       )}
@@ -127,8 +127,8 @@ const Activities = () => {
                   {/* Teacher */}
                   {activity.teacher && (
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                      <div className="p-2 bg-gradient-to-br from-orange-100 to-orange-50 rounded-lg border border-orange-200">
-                        <User className="w-5 h-5 text-orange-600" />
+                      <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg border border-blue-200">
+                        <User className="w-5 h-5 text-blue-600" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs text-gray-500 font-semibold mb-0.5">{t('activities.teacher') || 'O\'qituvchi'}</p>
@@ -145,7 +145,7 @@ const Activities = () => {
                         {activity.services.slice(0, 3).map((service, idx) => (
                           <span
                             key={idx}
-                            className="px-2.5 py-1 bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 rounded-lg text-xs font-semibold border border-orange-200/50"
+                            className="px-2.5 py-1 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 rounded-lg text-xs font-semibold border border-blue-200/50"
                           >
                             {t(`activities.service.${service.replace(/\s+/g, '')}`) || service}
                           </span>
@@ -162,7 +162,7 @@ const Activities = () => {
                   {/* Details Button */}
                   <button
                     onClick={() => openDetailsModal(activity)}
-                    className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 rounded-xl text-white transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
+                    className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 rounded-xl text-white transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
                   >
                     <ChevronDown className="w-4 h-4" />
                     {t('activities.showDetails') || 'Batafsil'}
@@ -183,7 +183,7 @@ const Activities = () => {
       {showDetailsModal && selectedActivity && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
-            <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-orange-400 p-6 flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-400 p-6 flex items-center justify-between z-10">
               <h2 className="text-2xl font-bold text-white">
                 {selectedActivity.skill || t('activities.skill') || 'Ko\'nikma'}
               </h2>
@@ -198,8 +198,8 @@ const Activities = () => {
             <div className="p-6 space-y-6">
               {/* Goal */}
               {selectedActivity.goal && (
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-xl p-5 border border-orange-200">
-                  <p className="text-sm font-bold text-orange-700 mb-2">{t('activities.goal') || 'Maqsad'}</p>
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-5 border border-blue-200">
+                  <p className="text-sm font-bold text-blue-700 mb-2">{t('activities.goal') || 'Maqsad'}</p>
                   <p className="text-base text-gray-800 leading-relaxed">{selectedActivity.goal}</p>
                 </div>
               )}
@@ -230,8 +230,8 @@ const Activities = () => {
                 )}
                 {selectedActivity.teacher && (
                   <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                    <div className="p-2 bg-gradient-to-br from-orange-100 to-orange-50 rounded-lg border border-orange-200">
-                      <User className="w-5 h-5 text-orange-600" />
+                    <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg border border-blue-200">
+                      <User className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-gray-500 font-semibold mb-1">{t('activities.teacher') || 'O\'qituvchi'}</p>
@@ -245,7 +245,7 @@ const Activities = () => {
               {selectedActivity.tasks && Array.isArray(selectedActivity.tasks) && selectedActivity.tasks.length > 0 && (
                 <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
                   <p className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                    <CheckCircle2 className="w-5 h-5 text-blue-500" />
                     {t('activities.tasks') || 'Vazifalar'}
                   </p>
                   <ul className="list-disc list-inside space-y-2 text-sm text-gray-700">
@@ -260,7 +260,7 @@ const Activities = () => {
               {selectedActivity.methods && (
                 <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
                   <p className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                    <CheckCircle2 className="w-5 h-5 text-blue-500" />
                     {t('activities.methods') || 'Usullar'}
                   </p>
                   <p className="text-sm text-gray-700 leading-relaxed">{selectedActivity.methods}</p>
@@ -271,7 +271,7 @@ const Activities = () => {
               {selectedActivity.progress && (
                 <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
                   <p className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                    <CheckCircle2 className="w-5 h-5 text-blue-500" />
                     {t('activities.progress') || 'Jarayon/Taraqqiyot'}
                   </p>
                   <p className="text-sm text-gray-700 leading-relaxed">{selectedActivity.progress}</p>
@@ -282,7 +282,7 @@ const Activities = () => {
               {selectedActivity.observation && (
                 <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
                   <p className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                    <CheckCircle2 className="w-5 h-5 text-blue-500" />
                     {t('activities.observation') || 'Kuzatish'}
                   </p>
                   <p className="text-sm text-gray-700 leading-relaxed">{selectedActivity.observation}</p>
@@ -293,14 +293,14 @@ const Activities = () => {
               {selectedActivity.services && Array.isArray(selectedActivity.services) && selectedActivity.services.length > 0 && (
                 <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
                   <p className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                    <CheckCircle2 className="w-5 h-5 text-blue-500" />
                     {t('activities.services') || 'Xizmatlar'}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {selectedActivity.services.map((service, idx) => (
                       <span
                         key={idx}
-                        className="px-3 py-1.5 bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 rounded-lg text-xs font-semibold border border-orange-200/50"
+                        className="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 rounded-lg text-xs font-semibold border border-blue-200/50"
                       >
                         {t(`activities.service.${service.replace(/\s+/g, '')}`) || service}
                       </span>
@@ -313,7 +313,7 @@ const Activities = () => {
               <div className="flex justify-end pt-4 border-t border-gray-200">
                 <button
                   onClick={closeDetailsModal}
-                  className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors shadow-md"
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors shadow-md"
                 >
                   {t('activities.close') || 'Yopish'}
                 </button>

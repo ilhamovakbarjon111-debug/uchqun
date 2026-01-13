@@ -13,7 +13,7 @@ const LanguageSwitcher = () => {
     <select
       value={current}
       onChange={handleChange}
-      className="px-2 py-1 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+      className="px-2 py-1 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
       aria-label="Language"
     >
       <option value="en">EN</option>

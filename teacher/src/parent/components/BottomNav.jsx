@@ -33,21 +33,21 @@ const BottomNav = () => {
               key={item.name}
               to={item.href}
               className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-                active ? 'text-orange-600' : 'text-gray-500'
+                active ? 'text-blue-600' : 'text-gray-500'
               }`}
               onClick={() => {
                 if (item.href === '/notifications') refreshNotifications();
               }}
             >
               <div className="relative">
-                <item.icon className={`w-5 h-5 mb-1 ${active ? 'text-orange-600' : 'text-gray-500'}`} />
+                <item.icon className={`w-5 h-5 mb-1 ${active ? 'text-blue-600' : 'text-gray-500'}`} />
                 {item.badge > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] leading-none font-extrabold rounded-full px-1.5 py-1 border-2 border-white shadow-sm">
+                  <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] leading-none font-extrabold rounded-full px-1.5 py-1 border-2 border-white shadow-sm">
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 )}
               </div>
-              <span className={`text-xs font-medium max-w-[72px] truncate ${active ? 'text-orange-600' : 'text-gray-500'}`}>
+              <span className={`text-xs font-medium max-w-[72px] truncate ${active ? 'text-blue-600' : 'text-gray-500'}`}>
                 {item.name}
               </span>
             </Link>

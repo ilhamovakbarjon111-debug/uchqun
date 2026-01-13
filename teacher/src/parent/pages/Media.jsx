@@ -139,7 +139,7 @@ const VideoPlayer = ({ url }) => {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 inline-block px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded-lg font-bold transition-colors"
+          className="mt-4 inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold transition-colors"
         >
           {t('media.video.openNewTab')}
         </a>
@@ -214,7 +214,7 @@ const Media = () => {
               onClick={() => setFilter(option.id)}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 filter === option.id 
-                ? 'bg-white text-orange-600 shadow-md scale-105' 
+                ? 'bg-white text-blue-600 shadow-md scale-105' 
                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
               }`}
             >
@@ -244,7 +244,7 @@ const Media = () => {
                 
                 {/* Overlay on Hover */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 text-white">
-                    <p className="text-xs font-bold uppercase tracking-widest text-orange-400 mb-1">
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-1">
                         {typeLabels[item.type] || item.type}
                     </p>
                     <h3 className="text-lg font-bold leading-tight">{item.title}</h3>
@@ -318,14 +318,14 @@ const Media = () => {
             <div className="flex-1 p-8 lg:p-12 overflow-y-auto bg-white">
               <button 
                 onClick={() => setSelectedMedia(null)}
-                className="hidden lg:flex items-center gap-2 text-gray-400 hover:text-orange-600 font-bold text-sm mb-10 transition-colors"
+                className="hidden lg:flex items-center gap-2 text-gray-400 hover:text-blue-600 font-bold text-sm mb-10 transition-colors"
               >
                 <ChevronLeft className="w-5 h-5" /> {t('media.back')}
               </button>
 
               <div className="space-y-6">
                 <div>
-                  <span className="px-4 py-1.5 bg-orange-50 text-orange-600 rounded-full text-[10px] font-black uppercase tracking-widest">
+                  <span className="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">
                     {selectedMedia.type === 'video' ? t('media.videoLabel') : t('media.photoLabel')}
                   </span>
                   <h3 className="text-3xl font-black text-gray-900 mt-4 leading-tight">

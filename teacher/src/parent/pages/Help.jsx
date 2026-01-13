@@ -31,13 +31,13 @@ const Help = () => {
       {/* Contact Information */}
       <Card className="p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <MessageCircle className="w-5 h-5 text-orange-600" />
+          <MessageCircle className="w-5 h-5 text-blue-600" />
           Contact Us
         </h2>
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-50 rounded-lg">
-              <Mail className="w-5 h-5 text-orange-600" />
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Mail className="w-5 h-5 text-blue-600" />
             </div>
             <div>
               <p className="text-sm text-gray-600">Email</p>
@@ -45,8 +45,8 @@ const Help = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-50 rounded-lg">
-              <Phone className="w-5 h-5 text-orange-600" />
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Phone className="w-5 h-5 text-blue-600" />
             </div>
             <div>
               <p className="text-sm text-gray-600">Phone</p>
@@ -59,7 +59,7 @@ const Help = () => {
       {/* FAQ Section */}
       <div>
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-orange-600" />
+          <BookOpen className="w-5 h-5 text-blue-600" />
           Frequently Asked Questions
         </h2>
         <div className="space-y-4">
@@ -73,19 +73,19 @@ const Help = () => {
       </div>
 
       {/* Quick Links */}
-      <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-200 shadow-lg">
+      <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 shadow-lg">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <a href="/activities" className="text-orange-600 hover:text-orange-700 font-medium text-sm">
+          <a href="/activities" className="text-blue-600 hover:text-blue-700 font-medium text-sm">
             View Activities →
           </a>
-          <a href="/media" className="text-orange-600 hover:text-orange-700 font-medium text-sm">
+          <a href="/media" className="text-blue-600 hover:text-blue-700 font-medium text-sm">
             Browse Media →
           </a>
-          <a href="/meals" className="text-orange-600 hover:text-orange-700 font-medium text-sm">
+          <a href="/meals" className="text-blue-600 hover:text-blue-700 font-medium text-sm">
             Check Meals →
           </a>
-          <a href="/settings" className="text-orange-600 hover:text-orange-700 font-medium text-sm">
+          <a href="/settings" className="text-blue-600 hover:text-blue-700 font-medium text-sm">
             Account Settings →
           </a>
         </div>
