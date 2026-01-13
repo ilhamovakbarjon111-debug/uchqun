@@ -259,7 +259,7 @@ const Chat = () => {
             <Send className="w-5 h-5" />
           </button>
         </div>
-      </div>
+      </Card>
 
       {confirmDeleteId && (
         <div className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center p-4">
