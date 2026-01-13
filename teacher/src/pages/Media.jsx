@@ -339,7 +339,7 @@ const Media = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-sm">{t('mediaPage.title')}</h1>
-          <p className="text-gray-500 font-medium mt-1">{t('mediaPage.subtitle')}</p>
+          <p className="text-white/90 font-medium mt-1 drop-shadow-sm">{t('mediaPage.subtitle')}</p>
         </div>
 
         <div className="flex items-center gap-3">
