@@ -1,21 +1,34 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Star, Mail, Phone, MessageSquare, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Star, Mail, Phone, MessageSquare, AlertCircle, CheckCircle2, Building2 } from 'lucide-react';
 import api from '../services/api';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useChild } from '../context/ChildContext';
 
 const TeacherRating = () => {
   const { t, i18n } = useTranslation();
+  const { selectedChild } = useChild();
   const [teacher, setTeacher] = useState(null);
   const [rating, setRating] = useState(null);
   const [summary, setSummary] = useState({ average: 0, count: 0 });
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState('');
+  
+  // School rating states
+  const [school, setSchool] = useState(null);
+  const [schoolRating, setSchoolRating] = useState(null);
+  const [schoolSummary, setSchoolSummary] = useState({ average: 0, count: 0 });
+  const [schoolStars, setSchoolStars] = useState(0);
+  const [schoolComment, setSchoolComment] = useState('');
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingSchool, setSavingSchool] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [schoolError, setSchoolError] = useState('');
+  const [schoolSuccess, setSchoolSuccess] = useState('');
 
   const locale = useMemo(() => {
     return (
@@ -30,13 +43,19 @@ const TeacherRating = () => {
   const loadData = async () => {
     setLoading(true);
     setError('');
+    setSchoolError('');
     try {
-      const [profileRes, ratingRes] = await Promise.all([
+      const [profileRes, ratingRes, schoolRatingRes] = await Promise.all([
         api.get('/parent/profile'),
         api.get('/parent/ratings').catch((err) => {
-          // Treat 400/404 as “no rating yet” to stay resilient with older APIs
           if (err.response?.status === 400 || err.response?.status === 404) {
             return { data: { data: { rating: null, summary: { average: 0, count: 0 } } } };
+          }
+          throw err;
+        }),
+        api.get('/parent/school-rating').catch((err) => {
+          if (err.response?.status === 400 || err.response?.status === 404) {
+            return { data: { data: { rating: null, school: null, summary: { average: 0, count: 0 } } } };
           }
           throw err;
         }),
@@ -50,6 +69,14 @@ const TeacherRating = () => {
       setStars(ratingData.rating?.stars || 0);
       setComment(ratingData.rating?.comment || '');
       setSummary(ratingData.summary || { average: 0, count: 0 });
+
+      // School rating data
+      const schoolRatingData = schoolRatingRes?.data?.data || { rating: null, school: null, summary: { average: 0, count: 0 } };
+      setSchool(schoolRatingData.school);
+      setSchoolRating(schoolRatingData.rating);
+      setSchoolStars(schoolRatingData.rating?.stars || 0);
+      setSchoolComment(schoolRatingData.rating?.comment || '');
+      setSchoolSummary(schoolRatingData.summary || { average: 0, count: 0 });
     } catch (err) {
       console.error('Error loading rating data:', err);
       setError(t('ratingPage.errorLoad'));
@@ -100,6 +127,47 @@ const TeacherRating = () => {
       setError(err.response?.data?.error || t('ratingPage.errorSave'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSchoolSubmit = async () => {
+    setSchoolError('');
+    setSchoolSuccess('');
+
+    if (!school) {
+      setSchoolError(t('schoolRatingPage.noSchool'));
+      return;
+    }
+
+    if (!schoolStars) {
+      setSchoolError(t('schoolRatingPage.errorRequired'));
+      return;
+    }
+
+    setSavingSchool(true);
+    try {
+      await api.post('/parent/school-rating', { schoolId: school.id, stars: schoolStars, comment: schoolComment });
+      setSchoolRating({
+        stars: schoolStars,
+        comment: schoolComment,
+        updatedAt: new Date().toISOString(),
+      });
+      setSchoolSuccess(t('schoolRatingPage.success'));
+
+      // Refresh summary after saving
+      const refreshRes = await api.get('/parent/school-rating').catch((err) => {
+        if (err.response?.status === 400 || err.response?.status === 404) {
+          return { data: { data: { summary: { average: 0, count: 0 } } } };
+        }
+        throw err;
+      });
+      const ratingData = refreshRes?.data?.data || {};
+      setSchoolSummary(ratingData.summary || { average: 0, count: 0 });
+    } catch (err) {
+      console.error('Error saving school rating:', err);
+      setSchoolError(err.response?.data?.error || t('schoolRatingPage.errorSave'));
+    } finally {
+      setSavingSchool(false);
     }
   };
 
@@ -304,6 +372,171 @@ const TeacherRating = () => {
           </Card>
         </div>
       </div>
+
+      {/* School Rating Section */}
+      {school && (
+        <>
+          <Card className="bg-gradient-to-r from-green-500 to-green-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">{t('schoolRatingPage.title')}</h2>
+            <p className="text-white/90 text-sm md:text-base">{t('schoolRatingPage.subtitle')}</p>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-green-100 text-green-700 font-black flex items-center justify-center text-xl">
+                    <Building2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">
+                      {t('schoolRatingPage.yourSchool')}
+                    </p>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {school.name}
+                    </h2>
+                    {school.address && (
+                      <p className="text-sm text-gray-500">{school.address}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end text-right">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    {t('schoolRatingPage.average')}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-green-600 font-bold text-xl">
+                      <Star className="w-5 h-5 fill-green-500 text-green-500" />
+                      {schoolSummary.average?.toFixed(1) || '0.0'}
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {t('schoolRatingPage.ratingsCount', { count: schoolSummary.count || 0 })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">{t('schoolRatingPage.starsLabel')}</p>
+                  <div className="flex items-center gap-2">
+                    {starButtons.map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setSchoolStars(value)}
+                        className={`p-3 rounded-2xl border transition-colors ${
+                          schoolStars >= value
+                            ? 'bg-green-50 border-green-200 text-green-600'
+                            : 'bg-white border-gray-200 text-gray-400 hover:border-green-200 hover:text-green-500'
+                        }`}
+                      >
+                        <Star
+                          className="w-6 h-6"
+                          fill={schoolStars >= value ? '#22c55e' : 'none'}
+                          stroke={schoolStars >= value ? '#16a34a' : 'currentColor'}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-semibold text-gray-700">{t('schoolRatingPage.commentLabel')}</p>
+                    <span className="text-xs text-gray-400">{t('schoolRatingPage.optional')}</span>
+                  </div>
+                  <textarea
+                    value={schoolComment}
+                    onChange={(e) => setSchoolComment(e.target.value)}
+                    rows={4}
+                    placeholder={t('schoolRatingPage.commentPlaceholder')}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                {schoolError && (
+                  <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <AlertCircle className="w-4 h-4 mt-0.5" />
+                    <p>{schoolError}</p>
+                  </div>
+                )}
+
+                {schoolSuccess && (
+                  <div className="flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                    <CheckCircle2 className="w-4 h-4 mt-0.5" />
+                    <p>{schoolSuccess}</p>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-gray-500">
+                    {schoolRating?.updatedAt && t('schoolRatingPage.lastUpdated', { 
+                      date: new Date(schoolRating.updatedAt).toLocaleString(locale) 
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSchoolSubmit}
+                    disabled={savingSchool}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {savingSchool && <LoadingSpinner size="sm" />}
+                    {schoolRating ? t('schoolRatingPage.update') : t('schoolRatingPage.submit')}
+                  </button>
+                </div>
+              </div>
+            </Card>
+
+            <div className="space-y-4">
+              <Card className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-green-50 text-green-600">
+                    <Star className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{t('schoolRatingPage.yourRating')}</p>
+                    <p className="text-xs text-gray-500">{t('schoolRatingPage.rateCta')}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {starButtons.map((value) => (
+                    <Star
+                      key={value}
+                      className="w-5 h-5"
+                      fill={(schoolRating?.stars || schoolStars) >= value ? '#22c55e' : 'none'}
+                      stroke={(schoolRating?.stars || schoolStars) >= value ? '#16a34a' : '#9ca3af'}
+                    />
+                  ))}
+                </div>
+
+                <div className="text-sm text-gray-600">
+                  {schoolRating?.comment ? `"${schoolRating.comment}"` : t('schoolRatingPage.noComment')}
+                </div>
+              </Card>
+
+              <Card className="space-y-3">
+                <p className="text-sm font-semibold text-gray-900">{t('schoolRatingPage.summaryTitle')}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-5 h-5 text-green-500 fill-green-500" />
+                    <div>
+                      <p className="text-xl font-bold text-gray-900">{schoolSummary.average?.toFixed(1) || '0.0'}</p>
+                      <p className="text-xs text-gray-500">{t('schoolRatingPage.average')}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-gray-900">{schoolSummary.count || 0}</p>
+                    <p className="text-xs text-gray-500">{t('schoolRatingPage.ratingsCount', { count: schoolSummary.count || 0 })}</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

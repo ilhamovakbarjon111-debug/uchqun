@@ -55,7 +55,6 @@ function App() {
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="help" element={<Help />} />
                 <Route path="rating" element={<TeacherRating />} />
-                <Route path="school-rating" element={<SchoolRating />} />
               </Route>
 
               {/* Teacher routes */}
