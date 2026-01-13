@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { loadMessages, addMessage, markRead, updateMessage, deleteMessage } from '../../shared/services/chatStore';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import Card from '../components/Card';
 
 const Chat = () => {
   const { t } = useTranslation();

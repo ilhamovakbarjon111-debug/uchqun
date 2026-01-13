@@ -14,7 +14,8 @@
     "menu": "Главное меню"
   },
   "profile": {
-    "account": "Аккаунт"
+    "account": "Аккаунт",
+    "logoutSuccess": "Успешно вышли"
   },
   "child": {
     "title": "Профиль ребенка",
@@ -36,7 +37,13 @@
     "weeklyResults": "Итоги недели",
     "activities": "Занятия",
     "meals": "Питание",
-    "media": "Медиа"
+    "media": "Медиа",
+    "gender": {
+      "male": "Мужской",
+      "female": "Женский",
+      "MALE": "Мужской",
+      "FEMALE": "Женский"
+    }
   },
   "dashboard": {
     "role": "Моя роль: Родитель",

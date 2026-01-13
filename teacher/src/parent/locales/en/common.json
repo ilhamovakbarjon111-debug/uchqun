@@ -14,7 +14,8 @@
     "menu": "Main menu"
   },
   "profile": {
-    "account": "Account"
+    "account": "Account",
+    "logoutSuccess": "Successfully logged out"
   },
   "child": {
     "title": "Child Profile",
@@ -36,7 +37,13 @@
     "weeklyResults": "Weekly results",
     "activities": "Individual Plan",
     "meals": "Meals",
-    "media": "Media"
+    "media": "Media",
+    "gender": {
+      "male": "Male",
+      "female": "Female",
+      "MALE": "Male",
+      "FEMALE": "Female"
+    }
   },
   "dashboard": {
     "role": "My Role: Parent",

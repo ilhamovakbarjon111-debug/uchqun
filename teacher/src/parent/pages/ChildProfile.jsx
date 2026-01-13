@@ -24,6 +24,7 @@ const defaultAvatar = '/avatars/avatar1.jfif';
 const ChildProfile = () => {
   const { children, selectedChild, selectedChildId, selectChild, loading: childrenLoading } = useChild();
   const { logout } = useAuth();
+  const { success: toastSuccess } = useToast();
   const navigate = useNavigate();
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -85,8 +86,11 @@ const ChildProfile = () => {
   }[i18n.language] || 'en-US';
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    toastSuccess(t('profile.logoutSuccess', { defaultValue: 'Muvaffaqiyatli chiqildi' }));
+    setTimeout(() => {
+      logout();
+      navigate('/login');
+    }, 500);
   };
 
   useEffect(() => {
@@ -287,36 +291,6 @@ const ChildProfile = () => {
                 )}
               </div>
 
-              {/* TEST BUTTON */}
-              <button
-                onClick={async () => {
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.accept = 'image/*';
-                  input.onchange = async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    
-                    const formData = new FormData();
-                    formData.append('photo', file);
-                    
-                    console.log('🧪 TEST: Sending file to /child/test-upload');
-                    try {
-                      const res = await api.post('/child/test-upload', formData);
-                      console.log('🧪 TEST RESULT:', res.data);
-                      alert('TEST: ' + JSON.stringify(res.data, null, 2));
-                    } catch (err) {
-                      console.error('🧪 TEST ERROR:', err);
-                      alert('TEST ERROR: ' + err.message);
-                    }
-                  };
-                  input.click();
-                }}
-                className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-xs z-10"
-              >
-                TEST
-              </button>
-
               {/* Avatar selector modal */}
               <button
                 onClick={() => setShowAvatarSelector(true)}
@@ -333,15 +307,15 @@ const ChildProfile = () => {
           <div className="flex-1 text-center md:text-left space-y-4">
             <div>
               <div className="flex flex-wrap justify-center md:justify-start items-center gap-3 mb-2">
-                <h1 className="text-4xl font-black text-white leading-tight drop-shadow-sm">
+                <h1 className="text-4xl font-black text-gray-900 leading-tight">
                   {child.firstName} {child.lastName}
                 </h1>
                 <span className="px-4 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase tracking-wider">
-                  {child.gender}
+                  {t(`child.gender.${child.gender?.toLowerCase()}`) || child.gender}
                 </span>
               </div>
-              <p className="text-lg text-white/90 font-medium flex items-center justify-center md:justify-start gap-2 drop-shadow-sm">
-                <Baby className="w-5 h-5 text-blue-300" />
+              <p className="text-lg text-gray-700 font-medium flex items-center justify-center md:justify-start gap-2">
+                <Baby className="w-5 h-5 text-blue-600" />
                 {t('child.ageYears', { count: calculateAge(child.dateOfBirth) })} • {new Date(child.dateOfBirth).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>

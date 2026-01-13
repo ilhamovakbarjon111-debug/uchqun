@@ -14,7 +14,8 @@
     "menu": "Asosiy menyu"
   },
   "profile": {
-    "account": "Hisob"
+    "account": "Hisob",
+    "logoutSuccess": "Muvaffaqiyatli chiqildi"
   },
   "child": {
     "title": "Farzand profili",
@@ -36,7 +37,13 @@
     "weeklyResults": "Haftalik natijalar",
     "activities": "Individual reja",
     "meals": "Ovqatlanish",
-    "media": "Media"
+    "media": "Media",
+    "gender": {
+      "male": "Erkak",
+      "female": "Ayol",
+      "MALE": "Erkak",
+      "FEMALE": "Ayol"
+    }
   },
   "dashboard": {
     "role": "Mening rolim: Ota-ona",
