@@ -27,7 +27,14 @@ const Notifications = () => {
     loadAllNotifications 
   } = useNotification();
   const { selectedChildId } = useChild();
+  const { t, i18n } = useTranslation();
   const [filter, setFilter] = useState('all'); // all, unread, read
+
+  const locale = {
+    uz: 'uz-UZ',
+    ru: 'ru-RU',
+    en: 'en-US',
+  }[i18n.language] || 'en-US';
 
   useEffect(() => {
     loadAllNotifications();
@@ -109,7 +116,7 @@ const Notifications = () => {
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          Hammasi ({notifications.length})
+          {t('notifications.filterAll', { defaultValue: 'Hammasi' })} ({notifications.length})
         </button>
         <button
           onClick={() => setFilter('unread')}
@@ -119,7 +126,7 @@ const Notifications = () => {
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          O'qilmagan ({count})
+          {t('notifications.filterUnread', { defaultValue: 'O\'qilmagan' })} ({count})
         </button>
         <button
           onClick={() => setFilter('read')}
@@ -129,7 +136,7 @@ const Notifications = () => {
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          O'qilgan ({notifications.length - count})
+          {t('notifications.filterRead', { defaultValue: 'O\'qilgan' })} ({notifications.length - count})
         </button>
       </div>
 
@@ -192,7 +199,7 @@ const Notifications = () => {
                           className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                           <CheckCircle2 className="w-4 h-4" />
-                          O'qilgan deb belgilash
+                          {t('notifications.markAsRead', { defaultValue: 'O\'qilgan deb belgilash' })}
                         </button>
                       )}
                       <button
@@ -200,7 +207,7 @@ const Notifications = () => {
                         className="flex items-center gap-2 px-3 py-1.5 bg-white border border-red-200 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
-                        O'chirish
+                        {t('notifications.delete', { defaultValue: 'O\'chirish' })}
                       </button>
                     </div>
                   </div>
