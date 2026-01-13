@@ -19,10 +19,14 @@ if (process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL) {
       idle: 10000,
     },
     dialectOptions: {
-      ssl: process.env.NODE_ENV === 'production' ? {
+      // Railway public URLs require SSL
+      ssl: (process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL) ? {
         require: true,
         rejectUnauthorized: false
-      } : false
+      } : (process.env.NODE_ENV === 'production' ? {
+        require: true,
+        rejectUnauthorized: false
+      } : false)
     }
   });
 } else {

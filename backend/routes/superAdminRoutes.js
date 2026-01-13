@@ -91,9 +91,18 @@ router.post('/create-super-admin', async (req, res) => {
     try {
         const { secretKey, forceRecreate } = req.body;
         
-        // Check secret key
-        if (secretKey !== process.env.SUPER_ADMIN_SECRET) {
+        // Check secret key (optional in development, required in production)
+        const requiredSecret = process.env.SUPER_ADMIN_SECRET || process.env.SUPER_ADMIN_SECRET_KEY;
+        const isDevelopment = process.env.NODE_ENV !== 'production';
+        
+        // In production, require secret key. In development, allow without key if not set
+        if (requiredSecret && secretKey !== requiredSecret) {
             return res.status(403).json({ error: 'Invalid secret key' });
+        }
+        
+        // In production, secret key must be provided
+        if (!isDevelopment && !secretKey) {
+            return res.status(403).json({ error: 'Secret key required in production' });
         }
         
         // Check if super admin exists

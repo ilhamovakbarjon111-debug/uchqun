@@ -1,13 +1,15 @@
 import dotenv from 'dotenv';
 import sequelize from '../config/database.js';
 import User from '../models/User.js';
-import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
 async function createSuperAdmin() {
+  let hasError = false;
   try {
     console.log('🔍 Connecting to database...');
+    console.log('Database URL:', process.env.DATABASE_PUBLIC_URL ? 'Using DATABASE_PUBLIC_URL' : 'Using individual variables');
+    console.log('DB Host:', process.env.DB_HOST || 'localhost');
     await sequelize.authenticate();
     console.log('✅ Database connected');
 
@@ -37,13 +39,9 @@ async function createSuperAdmin() {
       return;
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(superAdminData.password, 10);
-
-    // Create super admin
+    // Create super admin (password will be hashed automatically by User model hook)
     const superAdmin = await User.create({
-      ...superAdminData,
-      password: hashedPassword
+      ...superAdminData
     });
 
     console.log('\n✅ Super admin created successfully!');
@@ -56,13 +54,34 @@ async function createSuperAdmin() {
     console.log('⚠️  IMPORTANT: Change the password after first login!');
 
   } catch (error) {
+    hasError = true;
     console.error('❌ Error creating super admin:', error.message);
+    
+    // Provide helpful error messages
+    if (error.name === 'SequelizeConnectionError' || error.message.includes('ETIMEDOUT') || error.message.includes('ECONNREFUSED')) {
+      console.error('\n💡 Database connection error!');
+      console.error('Please check:');
+      console.error('  1. PostgreSQL is running');
+      console.error('  2. Database credentials in .env file are correct');
+      console.error('  3. Database "uchqun" exists');
+      console.error('  4. Network connection to database server');
+      console.error('\nCurrent database config:');
+      console.error(`  Host: ${process.env.DB_HOST || 'localhost'}`);
+      console.error(`  Port: ${process.env.DB_PORT || 5432}`);
+      console.error(`  Database: ${process.env.DB_NAME || 'uchqun'}`);
+      console.error(`  User: ${process.env.DB_USER || 'postgres'}`);
+    }
+    
     if (error.stack) {
-      console.error(error.stack);
+      console.error('\nStack trace:', error.stack);
     }
   } finally {
-    await sequelize.close();
-    process.exit();
+    try {
+      await sequelize.close();
+    } catch (closeError) {
+      // Ignore close errors
+    }
+    process.exit(hasError ? 1 : 0);
   }
 }
 

@@ -555,11 +555,12 @@ export const getTeachers = async (req, res) => {
  * 
  * Business Logic:
  * - Admin can only view parents, cannot create/edit/delete
+ * - Admin can view ALL parents (not just ones they created)
  */
 export const getParents = async (req, res) => {
   try {
     const parents = await User.findAll({
-      where: { role: 'parent', createdBy: req.user.id },
+      where: { role: 'parent' }, // Admin can see all parents, not just ones they created
       attributes: { exclude: ['password'] },
       order: [['createdAt', 'DESC']],
     });
@@ -681,7 +682,7 @@ export const getParentById = async (req, res) => {
     const { id } = req.params;
 
     const parent = await User.findOne({
-      where: { id, role: 'parent', createdBy: req.user.id },
+      where: { id, role: 'parent' }, // Admin can view any parent, not just ones they created
       attributes: { exclude: ['password'] },
       include: [
         {

@@ -44,7 +44,9 @@ const ParentManagement = () => {
     try {
       setLoading(true);
       const response = await api.get('/admin/parents');
-      setParents(response.data.data || []);
+      // Filter to ensure only parent role users are shown
+      const parentsData = (response.data.data || []).filter(user => user.role === 'parent');
+      setParents(parentsData);
     } catch (error) {
       showToast(t('parentsPage.loadError') || 'Error', 'error');
       console.error('Error fetching parents:', error);
