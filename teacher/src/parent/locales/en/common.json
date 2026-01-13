@@ -15,8 +15,11 @@
   },
   "profile": {
     "account": "Account",
+    "logoutTitle": "Logout",
     "confirmLogout": "Do you want to logout?",
-    "logoutSuccess": "Successfully logged out"
+    "logoutSuccess": "Successfully logged out",
+    "cancel": "No",
+    "yes": "Yes"
   },
   "child": {
     "title": "Child Profile",

@@ -15,8 +15,11 @@
   },
   "profile": {
     "account": "Hisob",
+    "logoutTitle": "Chiqish",
     "confirmLogout": "Chiqishni xohlaysizmi?",
-    "logoutSuccess": "Muvaffaqiyatli chiqildi"
+    "logoutSuccess": "Muvaffaqiyatli chiqildi",
+    "cancel": "Yo'q",
+    "yes": "Ha"
   },
   "child": {
     "title": "Farzand profili",
