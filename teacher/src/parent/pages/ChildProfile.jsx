@@ -40,6 +40,7 @@ const ChildProfile = () => {
   });
   const [uploading, setUploading] = useState(false);
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   
   // Default avatars
   const avatars = [
