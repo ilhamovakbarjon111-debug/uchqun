@@ -180,7 +180,7 @@ const ChildProfile = () => {
     return (
       <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
         <div className="mb-10">
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">{t('child.title')}</h1>
+          <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-sm">{t('child.title')}</h1>
           <p className="text-gray-500 font-medium">{t('child.selectPrompt')}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
