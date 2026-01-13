@@ -10,6 +10,7 @@ import {
   User,
   FileX,
   X,
+  ClipboardList,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -66,10 +67,14 @@ const Activities = () => {
   return (
     <div className="max-w-5xl mx-auto pb-20 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="mb-10 text-center md:text-left">
-        <h1 className="text-4xl font-black text-white mb-2 tracking-tight drop-shadow-sm">{t('activities.title')}</h1>
-        <p className="text-white/90 text-lg drop-shadow-sm">{t('activities.subtitle')}</p>
-      </div>
+      <Card className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0 mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+          {t('activities.title') || 'Individual reja'}
+        </h1>
+        <p className="text-white/90 text-sm md:text-base">
+          {t('activities.subtitle') || 'Farzandingiz uchun individual rejalarni ko\'ring'}
+        </p>
+      </Card>
 
       {/* Activities Cards Grid */}
       {filteredActivities.length > 0 ? (

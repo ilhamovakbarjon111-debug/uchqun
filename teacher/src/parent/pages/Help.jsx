@@ -23,10 +23,10 @@ const Help = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-sm">Help & Support</h1>
-        <p className="text-white/90 drop-shadow-sm">Find answers to common questions and get support</p>
-      </div>
+      <Card className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Help & Support</h1>
+        <p className="text-white/90 text-sm md:text-base">Find answers to common questions and get support</p>
+      </Card>
 
       {/* Contact Information */}
       <Card className="p-6">

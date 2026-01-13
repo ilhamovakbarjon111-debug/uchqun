@@ -112,15 +112,13 @@ const Chat = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 -mb-16 lg:mb-0">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-3 rounded-2xl bg-white/90 backdrop-blur-sm text-blue-600 shadow-lg">
-          <MessageCircle className="w-6 h-6" />
+      <Card className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0 mb-4">
+        <div className="flex items-center gap-3 mb-2">
+          <MessageCircle className="w-6 h-6 text-white" />
+          <h1 className="text-2xl md:text-3xl font-bold text-white">{t('chat.title')}</h1>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white drop-shadow-sm">{t('chat.title')}</h1>
-          <p className="text-white/90 text-sm drop-shadow-sm">{t('chat.subtitle')}</p>
-        </div>
-      </div>
+        <p className="text-white/90 text-sm md:text-base">{t('chat.subtitle')}</p>
+      </Card>
 
       <Card className="bg-white/95 backdrop-blur-sm h-[calc(100vh-220px)] min-h-[420px] lg:h-[60vh] flex flex-col relative shadow-xl">
         <div

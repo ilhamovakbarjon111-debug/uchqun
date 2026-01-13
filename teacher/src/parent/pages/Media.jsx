@@ -196,14 +196,15 @@ const Media = () => {
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 pb-24">
       
       {/* --- Dynamic Header --- */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-sm">{t('media.title')}</h1>
-          <p className="text-white/90 font-medium mt-1 drop-shadow-sm">{t('media.subtitle')}</p>
-        </div>
+      <Card className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{t('media.title')}</h1>
+            <p className="text-white/90 text-sm md:text-base">{t('media.subtitle')}</p>
+          </div>
 
-        {/* --- Glassmorphism Filters --- */}
-        <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl border border-gray-200">
+          {/* --- Glassmorphism Filters --- */}
+          <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm p-1.5 rounded-2xl border border-white/30">
           {[
             { id: 'all', label: t('media.filterAll'), icon: LayoutGrid },
             { id: 'photo', label: t('media.filterPhoto'), icon: ImageIcon },
@@ -215,7 +216,7 @@ const Media = () => {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 filter === option.id 
                 ? 'bg-white text-blue-600 shadow-md scale-105' 
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
+                : 'text-white/80 hover:text-white hover:bg-white/20'
               }`}
             >
               <option.icon className="w-4 h-4" />
@@ -223,7 +224,8 @@ const Media = () => {
             </button>
           ))}
         </div>
-      </div>
+        </div>
+      </Card>
 
       {/* --- Media Grid --- */}
       {filteredMedia.length > 0 ? (

@@ -113,10 +113,10 @@ const Meals = () => {
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
       
       {/* --- Header & Date Picker --- */}
-      <Card className="flex flex-col md:flex-row md:items-end justify-between gap-6 p-8 bg-white/95 backdrop-blur-sm">
+      <Card className="flex flex-col md:flex-row md:items-end justify-between gap-6 p-6 md:p-8 bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl shadow-xl border-0">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-white tracking-tight drop-shadow-sm">{t('meals.title')}</h1>
-          <p className="text-white/90 font-medium drop-shadow-sm">{t('meals.subtitle')}</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{t('meals.title')}</h1>
+          <p className="text-white/90 text-sm md:text-base">{t('meals.subtitle')}</p>
         </div>
         
         <div className="relative">
