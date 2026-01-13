@@ -200,8 +200,11 @@
     "rateCta": "Bu bahoni o‘qituvchi ko‘radi",
     "noComment": "Hozircha izoh qoldirmadingiz.",
     "summaryTitle": "Boshqa ota-onalar fikri",
-    "lastUpdated": "So‘nggi yangilanish: {{date}}",
-    "noPhone": "Telefon ko‘rsatilmagan"
+    "lastUpdated": "So'nggi yangilanish: {{date}}",
+    "noPhone": "Telefon ko'rsatilmagan",
+    "allRatings": "Barcha fikrlar",
+    "noRatings": "Hozircha fikr bildirilmagan",
+    "anonymous": "Anonim"
   },
   "language": "Til"
 }

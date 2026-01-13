@@ -201,7 +201,10 @@
     "noComment": "You have not added a comment yet.",
     "summaryTitle": "Community feedback",
     "lastUpdated": "Last updated {{date}}",
-    "noPhone": "Phone not provided"
+    "noPhone": "Phone not provided",
+    "allRatings": "All Ratings",
+    "noRatings": "No ratings yet",
+    "anonymous": "Anonymous"
   },
   "language": "Language"
 }
