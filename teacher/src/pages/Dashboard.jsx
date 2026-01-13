@@ -101,7 +101,7 @@ const Dashboard = () => {
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.overview')}</h2>
+        <h2 className="text-lg font-semibold text-white mb-4 drop-shadow-sm">{t('dashboard.overview')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {overviewCards.map((card) => (
             <Card key={card.title} className="p-4 hover:shadow-lg transition">

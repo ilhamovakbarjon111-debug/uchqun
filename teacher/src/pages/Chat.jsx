@@ -143,8 +143,8 @@ const Chat = () => {
           <MessageCircle className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('chat.title')}</h1>
-          <p className="text-gray-500 text-sm">{t('chat.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-white drop-shadow-sm">{t('chat.title')}</h1>
+          <p className="text-white/90 text-sm drop-shadow-sm">{t('chat.subtitle')}</p>
         </div>
       </div>
 
@@ -169,7 +169,7 @@ const Chat = () => {
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 h-[60vh] flex flex-col relative">
+      <Card className="bg-white/95 backdrop-blur-sm h-[60vh] flex flex-col relative shadow-xl">
         <div
           ref={messagesWrapRef}
           className="flex-1 overflow-y-auto p-4 space-y-3"

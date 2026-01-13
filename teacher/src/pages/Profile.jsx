@@ -19,7 +19,7 @@ const Profile = () => {
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-gray-900">Profile</h1>
+          <h1 className="text-3xl font-black text-white drop-shadow-sm">Profile</h1>
           <p className="text-gray-500 text-sm">Manage your account</p>
         </div>
         <div className="flex items-center gap-3">

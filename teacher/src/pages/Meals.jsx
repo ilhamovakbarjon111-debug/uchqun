@@ -199,10 +199,10 @@ const Meals = () => {
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
       
       {/* --- Header & Date Picker --- */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+      <Card className="flex flex-col md:flex-row md:items-end justify-between gap-6 p-8 bg-white/95 backdrop-blur-sm">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('mealsPage.title')}</h1>
-          <p className="text-gray-500 font-medium">{t('mealsPage.subtitle')}</p>
+          <h1 className="text-3xl font-black text-white tracking-tight drop-shadow-sm">{t('mealsPage.title')}</h1>
+          <p className="text-white/90 font-medium drop-shadow-sm">{t('mealsPage.subtitle')}</p>
         </div>
         
         <div className="flex items-end gap-3">
