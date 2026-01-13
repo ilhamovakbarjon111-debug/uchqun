@@ -51,7 +51,9 @@ const TeacherRating = () => {
       setStars(ratingData.rating?.stars || 0);
       setComment(ratingData.rating?.comment || '');
       setSummary(ratingData.summary || { average: 0, count: 0 });
-      setAllRatings(ratingData.allRatings || []);
+      // Ensure allRatings is always an array
+      const ratingsArray = Array.isArray(ratingData.allRatings) ? ratingData.allRatings : [];
+      setAllRatings(ratingsArray);
     } catch (err) {
       console.error('Error loading rating data:', err);
       setError(t('ratingPage.errorLoad'));
@@ -97,7 +99,9 @@ const TeacherRating = () => {
       });
       const ratingData = refreshRes?.data?.data || {};
       setSummary(ratingData.summary || { average: 0, count: 0 });
-      setAllRatings(ratingData.allRatings || []);
+      // Ensure allRatings is always an array
+      const ratingsArray = Array.isArray(ratingData.allRatings) ? ratingData.allRatings : [];
+      setAllRatings(ratingsArray);
     } catch (err) {
       console.error('Error saving rating:', err);
       setError(err.response?.data?.error || t('ratingPage.errorSave'));
@@ -314,7 +318,7 @@ const TeacherRating = () => {
                 {t('ratingPage.allRatings')}
               </p>
             </div>
-            {allRatings.length > 0 ? (
+            {Array.isArray(allRatings) && allRatings.length > 0 ? (
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {allRatings.map((r) => (
                   <div key={r.id} className="border border-gray-200 rounded-xl p-3 space-y-2">

@@ -460,6 +460,14 @@ export const getMyRating = async (req, res) => {
       parentEmail: r.ratingParent?.email || null,
     }));
 
+    logger.info('Get my rating response', {
+      parentId: req.user.id,
+      teacherId: parent.teacherId,
+      ratingsCount: allRatings.length,
+      formattedRatingsCount: formattedRatings.length,
+      summary: { average, count },
+    });
+
     res.json({
       success: true,
       data: {
