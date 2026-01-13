@@ -53,7 +53,7 @@
     "listTitle": "Ota-onalar",
     "emptySearch": "Ota-onalar topilmadi",
     "empty": "Hozircha ota-onalar yo‘q",
-    "children": "Bolalar ({{count}})",
+    "children": "Bolalar ",
     "noChildren": "Bola qo‘shilmagan",
     "activities": "Faoliyatlar ({{count}})",
     "noActivities": "Faoliyatlar yo‘q",
