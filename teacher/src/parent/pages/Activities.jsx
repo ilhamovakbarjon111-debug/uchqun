@@ -112,10 +112,10 @@ const Activities = () => {
                       </div>
                     )}
                     {activity.endDate && (
-                      <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-xl border border-purple-100">
-                        <Calendar className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                      <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                        <Calendar className="w-4 h-4 text-blue-600 flex-shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs text-purple-600 font-semibold mb-0.5">{t('activities.endDate') || 'Tugash'}</p>
+                          <p className="text-xs text-blue-600 font-semibold mb-0.5">{t('activities.endDate') || 'Tugash'}</p>
                           <p className="text-sm font-bold text-gray-900 truncate">
                             {new Date(activity.endDate).toLocaleDateString(locale)}
                           </p>
@@ -218,10 +218,10 @@ const Activities = () => {
                   </div>
                 )}
                 {selectedActivity.endDate && (
-                  <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
-                    <Calendar className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                  <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <Calendar className="w-5 h-5 text-blue-600 flex-shrink-0" />
                     <div>
-                      <p className="text-xs text-purple-600 font-semibold mb-1">{t('activities.endDate') || 'Tugash'}</p>
+                      <p className="text-xs text-blue-600 font-semibold mb-1">{t('activities.endDate') || 'Tugash'}</p>
                       <p className="text-sm font-bold text-gray-900">
                         {new Date(selectedActivity.endDate).toLocaleDateString(locale)}
                       </p>

@@ -183,7 +183,7 @@ const Meals = () => {
     Breakfast: { color: 'text-amber-600', bg: 'bg-amber-50', icon: Coffee, border: 'border-amber-100' },
     Lunch: { color: 'text-blue-600', bg: 'bg-blue-50', icon: Sun, border: 'border-blue-100' },
     Snack: { color: 'text-green-600', bg: 'bg-green-50', icon: Apple, border: 'border-green-100' },
-    Dinner: { color: 'text-indigo-600', bg: 'bg-indigo-50', icon: Moon, border: 'border-indigo-100' },
+    Dinner: { color: 'text-blue-600', bg: 'bg-blue-50', icon: Moon, border: 'border-blue-100' },
   };
 
   const mealTypeLabels = {

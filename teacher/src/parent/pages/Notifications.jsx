@@ -58,7 +58,7 @@ const Notifications = () => {
       case 'meal':
         return 'bg-green-50 text-green-600';
       case 'media':
-        return 'bg-purple-50 text-purple-600';
+        return 'bg-blue-50 text-blue-600';
       default:
         return 'bg-gray-50 text-gray-600';
     }

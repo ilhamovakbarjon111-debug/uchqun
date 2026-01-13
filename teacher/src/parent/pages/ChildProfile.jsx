@@ -427,7 +427,7 @@ const ChildProfile = () => {
               <StatRow
                 label={t('child.media')}
                 value={weeklyStats.media}
-                color="bg-purple-500"
+                color="bg-blue-500"
               />
             </div>
           </section>
