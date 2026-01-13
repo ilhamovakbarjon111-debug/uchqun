@@ -236,7 +236,7 @@ const Meals = () => {
           </div>
         </div>
         </div>
-      </div>
+      </Card>
 
       {/* --- Meals List --- */}
       <div className="grid grid-cols-1 gap-6">
