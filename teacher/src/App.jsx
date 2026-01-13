@@ -24,7 +24,6 @@ import Notifications from './parent/pages/Notifications';
 import Help from './parent/pages/Help';
 import AIChat from './parent/pages/AIChat';
 import TeacherRating from './parent/pages/TeacherRating';
-import SchoolRating from './parent/pages/SchoolRating';
 
 function App() {
   return (
