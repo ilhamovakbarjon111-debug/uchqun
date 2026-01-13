@@ -9,7 +9,9 @@ import {
   Lock,
   Plus,
   User,
-  LogOut
+  LogOut,
+  Building2,
+  Star
 } from 'lucide-react';
 import Card from '../components/Card';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +32,8 @@ const SuperAdmin = () => {
   const [editPhone, setEditPhone] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [editSaving, setEditSaving] = useState(false);
+  const [schools, setSchools] = useState([]);
+  const [loadingSchools, setLoadingSchools] = useState(true);
   const { success, error: showError } = useToast();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +57,24 @@ const SuperAdmin = () => {
 
     loadAdmins();
   }, [showError]);
+
+  // Load schools
+  useEffect(() => {
+    const loadSchools = async () => {
+      try {
+        setLoadingSchools(true);
+        const res = await api.get('/super-admin/schools');
+        setSchools(res.data?.data || []);
+      } catch (error) {
+        console.error('Failed to load schools', error);
+        setSchools([]);
+      } finally {
+        setLoadingSchools(false);
+      }
+    };
+
+    loadSchools();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -318,6 +340,55 @@ const SuperAdmin = () => {
                       >
                         {t('superAdmin.toastDelete')}
                       </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* Schools with ratings */}
+          <Card className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900">{t('superAdmin.schoolsTitle')}</h3>
+              {loadingSchools && <div className="text-sm text-gray-500">{t('superAdmin.status.loadingSchools')}</div>}
+            </div>
+            {loadingSchools ? (
+              <div className="flex items-center justify-center min-h-[120px]">
+                <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : schools.length === 0 ? (
+              <p className="text-sm text-gray-600">{t('superAdmin.schoolsEmpty')}</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {schools.map((school) => (
+                  <div key={school.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
+                        <Building2 className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-semibold text-gray-900">{school.name}</p>
+                        {school.address && (
+                          <p className="text-xs text-gray-600">{school.address}</p>
+                        )}
+                        {school.type && (
+                          <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded bg-green-100 text-green-700">
+                            {school.type === 'school' ? t('superAdmin.schoolTypeSchool') :
+                             school.type === 'kindergarten' ? t('superAdmin.schoolTypeKindergarten') :
+                             t('superAdmin.schoolTypeBoth')}
+                          </span>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Star className="w-4 h-4 fill-green-500 text-green-500" />
+                          <span className="text-sm font-bold text-gray-900">
+                            {school.summary?.average?.toFixed(1) || '0.0'}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            ({school.summary?.count || 0} {t('superAdmin.ratings')})
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

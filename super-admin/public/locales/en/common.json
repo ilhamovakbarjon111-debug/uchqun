@@ -45,8 +45,15 @@
       "required": "Please fill in all required fields"
     },
     "status": {
-      "loadingAdmins": "Loading admins..."
+      "loadingAdmins": "Loading admins...",
+      "loadingSchools": "Loading schools..."
     },
+    "schoolsTitle": "All Schools & Kindergartens",
+    "schoolsEmpty": "No schools found",
+    "schoolTypeSchool": "School",
+    "schoolTypeKindergarten": "Kindergarten",
+    "schoolTypeBoth": "School & Kindergarten",
+    "ratings": "ratings",
     "profile": {
       "name": "Name",
       "email": "Email"

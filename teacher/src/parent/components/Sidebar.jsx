@@ -10,6 +10,7 @@ import {
   Star,
   MessageCircle,
   Bell,
+  Building2,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../context/NotificationContext';
@@ -27,6 +28,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.meals'), href: '/meals', icon: Utensils },
     { name: t('nav.media'), href: '/media', icon: ImageIcon },
     { name: t('nav.rating'), href: '/rating', icon: Star },
+    { name: t('nav.schoolRating'), href: '/school-rating', icon: Building2 },
     { name: t('nav.aiChat'), href: '/ai-chat', icon: Bot },
     { name: t('nav.chat'), href: '/chat', icon: MessageCircle },
     { name: t('nav.notifications', { defaultValue: 'Notifications' }), href: '/notifications', icon: Bell, badge: count },

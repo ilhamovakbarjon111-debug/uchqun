@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, fn, col } from 'sequelize';
 import User from '../models/User.js';
 import Document from '../models/Document.js';
 import ParentActivity from '../models/ParentActivity.js';
@@ -6,6 +6,8 @@ import ParentMeal from '../models/ParentMeal.js';
 import ParentMedia from '../models/ParentMedia.js';
 import Child from '../models/Child.js';
 import Group from '../models/Group.js';
+import School from '../models/School.js';
+import SchoolRating from '../models/SchoolRating.js';
 import logger from '../utils/logger.js';
 
 /**
@@ -970,6 +972,146 @@ export const getStatistics = async (req, res) => {
  * - Only email and password are required
  * - firstName and lastName are set to default values
  */
+/**
+ * Get school ratings (only for schools where parents created by admin's receptions are enrolled)
+ * GET /api/admin/school-ratings
+ */
+export const getSchoolRatings = async (req, res) => {
+  try {
+    // Get receptions created by this admin
+    const receptions = await User.findAll({
+      where: { role: 'reception', createdBy: req.user.id },
+      attributes: ['id'],
+    });
+
+    const receptionIds = receptions.map(r => r.id);
+    if (receptionIds.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    // Get parents created by these receptions
+    const parents = await User.findAll({
+      where: { role: 'parent', createdBy: { [Op.in]: receptionIds } },
+      attributes: ['id'],
+    });
+
+    const parentIds = parents.map(p => p.id);
+    if (parentIds.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    // Get school ratings from these parents
+    const ratings = await SchoolRating.findAll({
+      where: { parentId: { [Op.in]: parentIds } },
+      include: [
+        {
+          model: School,
+          as: 'school',
+          attributes: ['id', 'name', 'type', 'address'],
+          required: true,
+        },
+        {
+          model: User,
+          as: 'ratingParent',
+          attributes: ['id', 'firstName', 'lastName', 'email'],
+          required: false,
+        },
+      ],
+      order: [['updatedAt', 'DESC']],
+    });
+
+    // Group by school and calculate averages
+    const schoolMap = new Map();
+    ratings.forEach((rating) => {
+      const schoolId = rating.schoolId;
+      if (!schoolMap.has(schoolId)) {
+        schoolMap.set(schoolId, {
+          school: rating.school.toJSON(),
+          ratings: [],
+          average: 0,
+          count: 0,
+        });
+      }
+      const schoolData = schoolMap.get(schoolId);
+      schoolData.ratings.push({
+        ...rating.toJSON(),
+        parentName: rating.ratingParent
+          ? `${rating.ratingParent.firstName || ''} ${rating.ratingParent.lastName || ''}`.trim()
+          : null,
+        parentEmail: rating.ratingParent?.email || null,
+      });
+    });
+
+    // Calculate averages
+    const result = Array.from(schoolMap.values()).map((schoolData) => {
+      const stars = schoolData.ratings.map(r => r.stars);
+      const average = stars.length > 0
+        ? (stars.reduce((sum, s) => sum + s, 0) / stars.length).toFixed(1)
+        : 0;
+      return {
+        ...schoolData,
+        average: parseFloat(average),
+        count: stars.length,
+      };
+    });
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    logger.error('Get school ratings error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch school ratings' });
+  }
+};
+
+/**
+ * Get all schools with average ratings (Super Admin view)
+ * GET /api/super-admin/schools
+ */
+export const getAllSchools = async (req, res) => {
+  try {
+    const schools = await School.findAll({
+      where: { isActive: true },
+      include: [
+        {
+          model: SchoolRating,
+          as: 'ratings',
+          attributes: ['stars'],
+          required: false,
+        },
+      ],
+      order: [['name', 'ASC']],
+    });
+
+    // Calculate average ratings for each school
+    const schoolsWithRatings = schools.map((school) => {
+      const ratings = school.ratings || [];
+      const stars = ratings.map(r => r.stars);
+      const average = stars.length > 0
+        ? (stars.reduce((sum, s) => sum + s, 0) / stars.length).toFixed(1)
+        : 0;
+      const count = stars.length;
+
+      return {
+        ...school.toJSON(),
+        summary: {
+          average: parseFloat(average),
+          count,
+        },
+      };
+    });
+
+    res.json({
+      success: true,
+      data: schoolsWithRatings,
+    });
+  } catch (error) {
+    logger.error('Get all schools error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch schools' });
+  }
+};
+
 export const createAdmin = async (req, res) => {
   try {
     const { firstName, lastName, email, password, role } = req.body;

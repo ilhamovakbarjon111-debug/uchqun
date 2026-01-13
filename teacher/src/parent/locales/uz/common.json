@@ -9,6 +9,7 @@
     "aiChat": "AI Yordamchi",
     "chat": "Chat",
     "rating": "Fikr bildirish",
+    "schoolRating": "Maktab bahosi",
     "notifications": "Bildirishnomalar",
     "exit": "Chiqish",
     "menu": "Asosiy menyu"
@@ -205,6 +206,29 @@
     "allRatings": "Barcha fikrlar",
     "noRatings": "Hozircha fikr bildirilmagan",
     "anonymous": "Anonim"
+  },
+  "schoolRatingPage": {
+    "title": "Maktab bahosi",
+    "subtitle": "Farzandingiz o'qiyotgan maktab yoki bog'chani baholang",
+    "yourSchool": "Farzandingiz maktabi",
+    "average": "O'rtacha baho",
+    "ratingsCount": "{{count}} ta baho",
+    "noSchool": "Maktab topilmadi. Iltimos, administrator bilan bog'laning.",
+    "starsLabel": "Baho tanlang",
+    "commentLabel": "Izoh",
+    "commentPlaceholder": "Maktab haqida fikringizni yozing...",
+    "optional": "Ixtiyoriy",
+    "submit": "Bahoni yuborish",
+    "update": "Bahoni yangilash",
+    "success": "Rahmat! Bahoingiz saqlandi.",
+    "errorLoad": "Baholash ma'lumotlarini yuklab bo'lmadi. Qayta urinib ko'ring.",
+    "errorSave": "Bahoni saqlashda xatolik. Qayta urinib ko'ring.",
+    "errorRequired": "Iltimos, yulduzcha bahosini tanlang.",
+    "yourRating": "Sizning bahoingiz",
+    "rateCta": "Bu bahoni maktab ko'radi",
+    "noComment": "Hozircha izoh qoldirmadingiz.",
+    "summaryTitle": "Boshqa ota-onalar fikri",
+    "lastUpdated": "So'nggi yangilanish: {{date}}"
   },
   "language": "Til"
 }

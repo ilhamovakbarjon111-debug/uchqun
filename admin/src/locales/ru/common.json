@@ -4,7 +4,8 @@
     "receptions": "Приемы",
     "parents": "Родители",
     "teachers": "Учителя",
-    "groups": "Группы"
+    "groups": "Группы",
+    "schoolRatings": "Оценки школ"
   },
   "role.admin": "Администратор",
   "logout": "Выход",
@@ -142,6 +143,19 @@
       "pending": "Ожидает утверждения",
       "inactive": "Неактивен"
     }
+  },
+  "schoolRatings": {
+    "title": "Оценки школ",
+    "subtitle": "Просмотр оценок от родителей для школ и детских садов",
+    "errorLoad": "Не удалось загрузить оценки школ",
+    "error": "Ошибка",
+    "empty": "Пока нет оценок школ",
+    "ratingsCount": "{{count}} оценок",
+    "recentRatings": "Последние оценки",
+    "by": "От",
+    "typeSchool": "Школа",
+    "typeKindergarten": "Детский сад",
+    "typeBoth": "Школа и Детский сад"
   }
 }
 

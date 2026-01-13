@@ -1,6 +1,6 @@
 {
   "language": "Language",
-  "nav": {
+    "nav": {
     "home": "Home",
     "activities": "Individual Plan",
     "media": "Media",
@@ -9,6 +9,7 @@
     "aiChat": "AI Assistant",
     "chat": "Chat",
     "rating": "Feedback",
+    "schoolRating": "School Rating",
     "notifications": "Notifications",
     "exit": "Exit",
     "menu": "Main menu"
@@ -205,6 +206,29 @@
     "allRatings": "All Ratings",
     "noRatings": "No ratings yet",
     "anonymous": "Anonymous"
+  },
+  "schoolRatingPage": {
+    "title": "School Rating",
+    "subtitle": "Rate your child's school or kindergarten",
+    "yourSchool": "Your child's school",
+    "average": "Average rating",
+    "ratingsCount": "{{count}} ratings",
+    "noSchool": "School not found. Please contact the administrator.",
+    "starsLabel": "Select a rating",
+    "commentLabel": "Comment",
+    "commentPlaceholder": "Share your thoughts about the school...",
+    "optional": "Optional",
+    "submit": "Send rating",
+    "update": "Update rating",
+    "success": "Thank you! Your rating has been saved.",
+    "errorLoad": "Could not load rating data. Please try again.",
+    "errorSave": "Could not save your rating. Please try again.",
+    "errorRequired": "Please choose a star rating.",
+    "yourRating": "Your rating",
+    "rateCta": "Your school will see this rating",
+    "noComment": "You have not added a comment yet.",
+    "summaryTitle": "Community rating",
+    "lastUpdated": "Last updated {{date}}"
   },
   "language": "Language"
 }

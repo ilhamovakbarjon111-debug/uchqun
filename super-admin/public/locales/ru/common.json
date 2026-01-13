@@ -45,8 +45,15 @@
       "required": "Пожалуйста, заполните все обязательные поля"
     },
     "status": {
-      "loadingAdmins": "Загрузка админов..."
+      "loadingAdmins": "Загрузка админов...",
+      "loadingSchools": "Загрузка школ..."
     },
+    "schoolsTitle": "Все школы и детские сады",
+    "schoolsEmpty": "Школы не найдены",
+    "schoolTypeSchool": "Школа",
+    "schoolTypeKindergarten": "Детский сад",
+    "schoolTypeBoth": "Школа и Детский сад",
+    "ratings": "оценок",
     "profile": {
       "name": "Имя",
       "email": "Email"

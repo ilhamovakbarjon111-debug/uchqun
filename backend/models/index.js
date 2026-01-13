@@ -16,6 +16,8 @@ import Meal from './Meal.js';
 import Notification from './Notification.js';
 import TeacherRating from './TeacherRating.js';
 import ChatMessage from './ChatMessage.js';
+import School from './School.js';
+import SchoolRating from './SchoolRating.js';
 
 // Initialize all models
 const models = {
@@ -36,6 +38,8 @@ const models = {
   Notification,
   TeacherRating,
   ChatMessage,
+  School,
+  SchoolRating,
   sequelize,
 };
 
@@ -101,6 +105,16 @@ TeacherRating.belongsTo(User, { foreignKey: 'parentId', as: 'ratingParent' });
 // Chat messages
 User.hasMany(ChatMessage, { foreignKey: 'senderId', as: 'sentMessages' });
 ChatMessage.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
+
+// School ratings
+School.hasMany(SchoolRating, { foreignKey: 'schoolId', as: 'ratings' });
+SchoolRating.belongsTo(School, { foreignKey: 'schoolId', as: 'school' });
+User.hasMany(SchoolRating, { foreignKey: 'parentId', as: 'schoolRatings' });
+SchoolRating.belongsTo(User, { foreignKey: 'parentId', as: 'ratingParent' });
+
+// Child -> School (child belongs to a school)
+Child.belongsTo(School, { foreignKey: 'schoolId', as: 'childSchool' });
+School.hasMany(Child, { foreignKey: 'schoolId', as: 'schoolChildren' });
 
 // Child -> Group (child belongs to a group)
 Child.belongsTo(Group, { foreignKey: 'groupId', as: 'childGroup' });

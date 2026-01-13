@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
-import { createAdmin, getAdmins, updateAdminBySuper, deleteAdminBySuper } from '../controllers/adminController.js';
+import { createAdmin, getAdmins, updateAdminBySuper, deleteAdminBySuper, getAllSchools } from '../controllers/adminController.js';
 import User from '../models/User.js';
 
 const router = express.Router();
@@ -182,6 +182,9 @@ router.get('/admins', getAdmins);
 router.put('/admins/:id', updateAdminBySuper);
 // Delete admin account
 router.delete('/admins/:id', deleteAdminBySuper);
+
+// Get all schools with average ratings
+router.get('/schools', getAllSchools);
 
 export default router;
 

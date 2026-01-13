@@ -4,7 +4,9 @@
     "receptions": "Reception Management",
     "pnts": "Pnts",
     "teachers": "Teachers",
-    "groups": "Groups"
+    "groups": "Groups",
+    "schoolRatings": "School Ratings",
+    "parents": "Parents"
   },
   "role.admin": "Administrator",
   "logout": "Logout",
@@ -142,6 +144,19 @@
       "pending": "Pending Approval",
       "inactive": "Inactive"
     }
+  },
+  "schoolRatings": {
+    "title": "School Ratings",
+    "subtitle": "View ratings from parents for schools and kindergartens",
+    "errorLoad": "Failed to load school ratings",
+    "error": "Error",
+    "empty": "No school ratings yet",
+    "ratingsCount": "{{count}} ratings",
+    "recentRatings": "Recent Ratings",
+    "by": "By",
+    "typeSchool": "School",
+    "typeKindergarten": "Kindergarten",
+    "typeBoth": "School & Kindergarten"
   }
 }
 

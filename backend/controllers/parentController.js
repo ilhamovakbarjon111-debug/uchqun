@@ -5,6 +5,8 @@ import ParentMeal from '../models/ParentMeal.js';
 import ParentMedia from '../models/ParentMedia.js';
 import Child from '../models/Child.js';
 import TeacherRating from '../models/TeacherRating.js';
+import School from '../models/School.js';
+import SchoolRating from '../models/SchoolRating.js';
 import logger from '../utils/logger.js';
 import { Op, fn, col } from 'sequelize';
 
@@ -494,6 +496,226 @@ export const getMyRating = async (req, res) => {
  * - AI provides advice about caring for children with disabilities
  * - Uses OpenAI API or fallback to rule-based responses
  */
+/**
+ * Rate a school (maktab yoki bog'cha)
+ * POST /api/parent/school-rating
+ */
+export const rateSchool = async (req, res) => {
+  try {
+    const { schoolId, stars, comment } = req.body;
+    const parentId = req.user.id;
+
+    if (!schoolId || !stars) {
+      return res.status(400).json({ error: 'School ID and stars are required' });
+    }
+
+    if (stars < 1 || stars > 5) {
+      return res.status(400).json({ error: 'Stars must be between 1 and 5' });
+    }
+
+    // Check if school exists
+    const school = await School.findByPk(schoolId);
+    if (!school) {
+      return res.status(404).json({ error: 'School not found' });
+    }
+
+    // Check if parent has a child in this school
+    const child = await Child.findOne({
+      where: {
+        parentId,
+        schoolId,
+      },
+    });
+
+    if (!child) {
+      // If no schoolId, check by school name
+      const childByName = await Child.findOne({
+        where: {
+          parentId,
+          school: school.name,
+        },
+      });
+
+      if (!childByName) {
+        return res.status(403).json({ error: 'You can only rate schools where your child is enrolled' });
+      }
+    }
+
+    // Create or update rating
+    const [rating, created] = await SchoolRating.findOrCreate({
+      where: {
+        schoolId,
+        parentId,
+      },
+      defaults: {
+        schoolId,
+        parentId,
+        stars,
+        comment: comment || null,
+      },
+    });
+
+    if (!created) {
+      rating.stars = stars;
+      rating.comment = comment || null;
+      await rating.save();
+    }
+
+    logger.info('School rating saved', {
+      schoolId,
+      parentId,
+      stars,
+      created,
+    });
+
+    res.json({
+      success: true,
+      message: created ? 'School rating created successfully' : 'School rating updated successfully',
+      data: rating.toJSON(),
+    });
+  } catch (error) {
+    logger.error('Rate school error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to rate school' });
+  }
+};
+
+/**
+ * Get my school rating
+ * GET /api/parent/school-rating
+ */
+export const getMySchoolRating = async (req, res) => {
+  try {
+    const parentId = req.user.id;
+
+    // Get parent's children to find their schools
+    const children = await Child.findAll({
+      where: { parentId },
+      include: [
+        {
+          model: School,
+          as: 'childSchool',
+          required: false,
+        },
+      ],
+    });
+
+    if (children.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          rating: null,
+          school: null,
+          summary: { average: 0, count: 0 },
+        },
+      });
+    }
+
+    // Get school from first child (assuming one child per parent for now)
+    const child = children[0];
+    let school = null;
+    let schoolId = null;
+
+    if (child.schoolId) {
+      schoolId = child.schoolId;
+      school = child.childSchool;
+    } else if (child.school) {
+      // Find school by name
+      school = await School.findOne({
+        where: { name: child.school },
+      });
+      if (school) {
+        schoolId = school.id;
+      }
+    }
+
+    if (!schoolId) {
+      return res.json({
+        success: true,
+        data: {
+          rating: null,
+          school: null,
+          summary: { average: 0, count: 0 },
+        },
+      });
+    }
+
+    // Get parent's rating for this school
+    const rating = await SchoolRating.findOne({
+      where: {
+        schoolId,
+        parentId,
+      },
+    });
+
+    // Get all ratings for this school with parent info
+    const allRatings = await SchoolRating.findAll({
+      where: { schoolId },
+      include: [
+        {
+          model: User,
+          as: 'ratingParent',
+          attributes: ['id', 'firstName', 'lastName', 'email'],
+          required: false,
+        },
+      ],
+      order: [['updatedAt', 'DESC']],
+    });
+
+    // Calculate average rating
+    const ratings = allRatings.map(r => r.stars);
+    const average = ratings.length > 0
+      ? (ratings.reduce((sum, s) => sum + s, 0) / ratings.length).toFixed(1)
+      : 0;
+    const count = ratings.length;
+
+    // Format ratings with parent names
+    const formattedRatings = allRatings.map((r) => ({
+      ...r.toJSON(),
+      parentName: r.ratingParent
+        ? `${r.ratingParent.firstName || ''} ${r.ratingParent.lastName || ''}`.trim()
+        : null,
+      parentEmail: r.ratingParent?.email || null,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        rating: rating ? rating.toJSON() : null,
+        school: school ? school.toJSON() : null,
+        summary: {
+          average: parseFloat(average),
+          count,
+        },
+        allRatings: formattedRatings,
+      },
+    });
+  } catch (error) {
+    logger.error('Get school rating error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch school rating' });
+  }
+};
+
+/**
+ * Get all schools (for parent to select)
+ * GET /api/parent/schools
+ */
+export const getSchools = async (req, res) => {
+  try {
+    const schools = await School.findAll({
+      where: { isActive: true },
+      order: [['name', 'ASC']],
+    });
+
+    res.json({
+      success: true,
+      data: schools.map(s => s.toJSON()),
+    });
+  } catch (error) {
+    logger.error('Get schools error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch schools' });
+  }
+};
+
 export const getAIAdvice = async (req, res) => {
   try {
     const { message, childInfo } = req.body;

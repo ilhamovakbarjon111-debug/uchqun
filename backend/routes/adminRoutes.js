@@ -17,6 +17,7 @@ import {
   getParentById,
   getStatistics,
   createAdmin,
+  getSchoolRatings,
 } from '../controllers/adminController.js';
 import { getGroups, getGroup } from '../controllers/groupController.js';
 
@@ -62,6 +63,9 @@ router.get('/groups/:id', getGroup); // View only
 
 // Statistics
 router.get('/statistics', getStatistics); // Admin can view all statistics
+
+// School ratings
+router.get('/school-ratings', getSchoolRatings); // View school ratings from parents created by admin's receptions
 
 // Admin management (Super admin can create Admin accounts)
 router.post('/admins', createAdmin); // Create admin account with email and password

@@ -4,7 +4,8 @@
     "receptions": "Qabul boshqaruvi",
     "parents": "Ota-onalar",
     "teachers": "O‘qituvchilar",
-    "groups": "Guruhlar"
+    "groups": "Guruhlar",
+    "schoolRatings": "Maktab baholari"
   },
   "role.admin": "Administrator",
   "logout": "Chiqish",
@@ -142,6 +143,19 @@
       "pending": "Tasdiqlash kutilmoqda",
       "inactive": "Faol emas"
     }
+  },
+  "schoolRatings": {
+    "title": "Maktab baholari",
+    "subtitle": "Ota-onalar tomonidan maktab va bog'chalarga berilgan baholarni ko'ring",
+    "errorLoad": "Maktab baholarini yuklab bo'lmadi",
+    "error": "Xatolik",
+    "empty": "Hozircha maktab baholari yo'q",
+    "ratingsCount": "{{count}} ta baho",
+    "recentRatings": "So'nggi baholar",
+    "by": "Muallif",
+    "typeSchool": "Maktab",
+    "typeKindergarten": "Bog'cha",
+    "typeBoth": "Maktab va Bog'cha"
   }
 }
 

@@ -45,8 +45,15 @@
       "required": "Iltimos, barcha kerakli maydonlarni to‘ldiring"
     },
     "status": {
-      "loadingAdmins": "Adminlar yuklanmoqda..."
+      "loadingAdmins": "Adminlar yuklanmoqda...",
+      "loadingSchools": "Maktablar yuklanmoqda..."
     },
+    "schoolsTitle": "Barcha maktablar va bog'chalar",
+    "schoolsEmpty": "Maktablar topilmadi",
+    "schoolTypeSchool": "Maktab",
+    "schoolTypeKindergarten": "Bog'cha",
+    "schoolTypeBoth": "Maktab va Bog'cha",
+    "ratings": "ta baho",
     "profile": {
       "name": "Ism",
       "email": "Email"

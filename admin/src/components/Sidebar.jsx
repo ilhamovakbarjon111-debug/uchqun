@@ -8,7 +8,8 @@ import {
   Shield,
   UsersRound,
   LogOut,
-  Crown
+  Crown,
+  Building2
 } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -24,6 +25,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.parents'), href: '/admin/parents', icon: Users },
     { name: t('nav.teachers'), href: '/admin/teachers', icon: UserCheck },
     { name: t('nav.groups'), href: '/admin/groups', icon: UsersRound },
+    { name: t('nav.schoolRatings'), href: '/admin/school-ratings', icon: Building2 },
   ];
 
   const isActive = (path) => location.pathname === path;
