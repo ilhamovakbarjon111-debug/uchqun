@@ -15,6 +15,7 @@
   },
   "profile": {
     "account": "Account",
+    "confirmLogout": "Do you want to logout?",
     "logoutSuccess": "Successfully logged out"
   },
   "child": {

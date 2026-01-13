@@ -15,6 +15,7 @@
   },
   "profile": {
     "account": "Аккаунт",
+    "confirmLogout": "Вы хотите выйти?",
     "logoutSuccess": "Успешно вышли"
   },
   "child": {

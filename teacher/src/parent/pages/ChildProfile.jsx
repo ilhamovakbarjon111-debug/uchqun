@@ -87,11 +87,13 @@ const ChildProfile = () => {
   }[i18n.language] || 'en-US';
 
   const handleLogout = () => {
-    toastSuccess(t('profile.logoutSuccess', { defaultValue: 'Muvaffaqiyatli chiqildi' }));
-    setTimeout(() => {
-      logout();
-      navigate('/login');
-    }, 500);
+    if (window.confirm(t('profile.confirmLogout', { defaultValue: 'Chiqishni xohlaysizmi?' }))) {
+      toastSuccess(t('profile.logoutSuccess', { defaultValue: 'Muvaffaqiyatli chiqildi' }));
+      setTimeout(() => {
+        logout();
+        navigate('/login');
+      }, 500);
+    }
   };
 
   useEffect(() => {
