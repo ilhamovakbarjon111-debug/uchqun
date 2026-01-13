@@ -81,7 +81,7 @@ const ChildProfile = () => {
   const { t, i18n } = useTranslation();
   
   // API base URL (rasmlar uchun)
-  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://uchqun-production-4f83.up.railway.app';
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://uchqun-production.up.railway.app';
 
   const locale = {
     uz: 'uz-UZ',
