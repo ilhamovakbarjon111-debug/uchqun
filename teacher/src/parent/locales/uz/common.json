@@ -164,6 +164,21 @@
   },
   "cancel": "Bekor qilish",
   "save": "Saqlash",
+  "notifications": {
+    "title": "Bildirishnomalar",
+    "unreadCount": "{{count}} ta o'qilmagan bildirishnoma",
+    "allRead": "Barcha bildirishnomalar o'qilgan",
+    "markAllRead": "Barchasini o'qilgan deb belgilash",
+    "filterAll": "Hammasi ({{count}})",
+    "filterUnread": "O'qilmagan ({{count}})",
+    "filterRead": "O'qilgan ({{count}})",
+    "new": "Yangi",
+    "markAsRead": "O'qilgan deb belgilash",
+    "delete": "O'chirish",
+    "empty": "Hozircha bildirishnomalar yo'q",
+    "emptyUnread": "O'qilmagan bildirishnomalar yo'q",
+    "emptyRead": "O'qilgan bildirishnomalar yo'q"
+  },
   "ratingPage": {
     "title": "O‘qituvchini baholash",
     "subtitle": "Farzandingiz o‘qituvchisiga baho bering va fikr qoldiring",

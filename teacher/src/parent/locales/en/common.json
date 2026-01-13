@@ -164,6 +164,21 @@
   },
   "cancel": "Cancel",
   "save": "Save",
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{{count}} unread notifications",
+    "allRead": "All notifications read",
+    "markAllRead": "Mark all as read",
+    "filterAll": "All ({{count}})",
+    "filterUnread": "Unread ({{count}})",
+    "filterRead": "Read ({{count}})",
+    "new": "New",
+    "markAsRead": "Mark as read",
+    "delete": "Delete",
+    "empty": "No notifications yet",
+    "emptyUnread": "No unread notifications",
+    "emptyRead": "No read notifications"
+  },
   "ratingPage": {
     "title": "Teacher feedback",
     "subtitle": "Rate your child's teacher and share suggestions",

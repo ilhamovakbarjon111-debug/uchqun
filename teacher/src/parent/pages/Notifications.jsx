@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNotification } from '../context/NotificationContext';
 import { useChild } from '../context/ChildContext';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
@@ -78,9 +79,11 @@ const Notifications = () => {
       <Card className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Bildirishnomalar</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{t('notifications.title', { defaultValue: 'Bildirishnomalar' })}</h1>
             <p className="text-white/90 text-sm md:text-base">
-              {count > 0 ? `${count} ta o'qilmagan bildirishnoma` : 'Barcha bildirishnomalar o\'qilgan'}
+              {count > 0 
+                ? t('notifications.unreadCount', { count, defaultValue: `${count} ta o'qilmagan bildirishnoma` })
+                : t('notifications.allRead', { defaultValue: 'Barcha bildirishnomalar o\'qilgan' })}
             </p>
           </div>
           
@@ -90,7 +93,7 @@ const Notifications = () => {
               className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-xl font-bold transition-colors border border-white/30"
             >
               <CheckCheck className="w-4 h-4" />
-              Barchasini o'qilgan deb belgilash
+              {t('notifications.markAllRead', { defaultValue: 'Barchasini o\'qilgan deb belgilash' })}
             </button>
           )}
         </div>
@@ -165,7 +168,7 @@ const Notifications = () => {
                         )}
                         <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
                           <Calendar className="w-3 h-3" />
-                          {new Date(notification.createdAt).toLocaleString('uz-UZ', {
+                          {new Date(notification.createdAt).toLocaleString(locale, {
                             day: 'numeric',
                             month: 'long',
                             year: 'numeric',
@@ -177,7 +180,7 @@ const Notifications = () => {
                       
                       {!notification.isRead && (
                         <span className="px-2 py-1 bg-blue-500 text-white text-xs font-bold rounded-full">
-                          Yangi
+                          {t('notifications.new', { defaultValue: 'Yangi' })}
                         </span>
                       )}
                     </div>
@@ -211,10 +214,10 @@ const Notifications = () => {
           <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500 font-bold text-lg">
             {filter === 'all' 
-              ? 'Hozircha bildirishnomalar yo\'q' 
+              ? t('notifications.empty', { defaultValue: 'Hozircha bildirishnomalar yo\'q' })
               : filter === 'unread'
-              ? 'O\'qilmagan bildirishnomalar yo\'q'
-              : 'O\'qilgan bildirishnomalar yo\'q'}
+              ? t('notifications.emptyUnread', { defaultValue: 'O\'qilmagan bildirishnomalar yo\'q' })
+              : t('notifications.emptyRead', { defaultValue: 'O\'qilgan bildirishnomalar yo\'q' })}
           </p>
         </Card>
       )}
