@@ -112,17 +112,17 @@ const Chat = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 -mb-16 lg:mb-0">
-      <div className="flex items-center gap-3">
-        <div className="p-3 rounded-2xl bg-orange-100 text-orange-600">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="p-3 rounded-2xl bg-white/90 backdrop-blur-sm text-orange-600 shadow-lg">
           <MessageCircle className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('chat.title')}</h1>
-          <p className="text-gray-500 text-sm">{t('chat.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-white drop-shadow-sm">{t('chat.title')}</h1>
+          <p className="text-white/90 text-sm drop-shadow-sm">{t('chat.subtitle')}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 h-[calc(100vh-220px)] min-h-[420px] lg:h-[60vh] flex flex-col relative">
+      <Card className="bg-white/95 backdrop-blur-sm h-[calc(100vh-220px)] min-h-[420px] lg:h-[60vh] flex flex-col relative shadow-xl">
         <div
           ref={messagesWrapRef}
           className="flex-1 overflow-y-auto p-4 space-y-3"

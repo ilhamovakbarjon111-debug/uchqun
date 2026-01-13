@@ -67,8 +67,8 @@ const Activities = () => {
     <div className="max-w-5xl mx-auto pb-20 animate-in fade-in duration-500">
       {/* Header */}
       <div className="mb-10 text-center md:text-left">
-        <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">{t('activities.title')}</h1>
-        <p className="text-gray-500 text-lg">{t('activities.subtitle')}</p>
+        <h1 className="text-4xl font-black text-white mb-2 tracking-tight drop-shadow-sm">{t('activities.title')}</h1>
+        <p className="text-white/90 text-lg drop-shadow-sm">{t('activities.subtitle')}</p>
       </div>
 
       {/* Activities Cards Grid */}
@@ -173,10 +173,10 @@ const Activities = () => {
           })}
         </div>
       ) : (
-        <div className="text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-gray-200">
-          <FileX className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-          <p className="text-gray-400 font-medium text-lg">{t('activities.empty')}</p>
-        </div>
+        <Card className="text-center py-20 bg-white/95 backdrop-blur-sm">
+          <FileX className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 font-medium text-lg">{t('activities.empty')}</p>
+        </Card>
       )}
 
       {/* Details Modal */}

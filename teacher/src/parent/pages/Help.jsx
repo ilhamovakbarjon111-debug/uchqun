@@ -24,8 +24,8 @@ const Help = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Help & Support</h1>
-        <p className="text-gray-600">Find answers to common questions and get support</p>
+        <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-sm">Help & Support</h1>
+        <p className="text-white/90 drop-shadow-sm">Find answers to common questions and get support</p>
       </div>
 
       {/* Contact Information */}
@@ -73,7 +73,7 @@ const Help = () => {
       </div>
 
       {/* Quick Links */}
-      <Card className="p-6 bg-orange-50 border-orange-200">
+      <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-200 shadow-lg">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <a href="/activities" className="text-orange-600 hover:text-orange-700 font-medium text-sm">

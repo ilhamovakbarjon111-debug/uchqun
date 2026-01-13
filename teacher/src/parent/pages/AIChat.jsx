@@ -113,7 +113,7 @@ const AIChat = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-orange-500 rounded-2xl p-6 md:p-8 -mx-4 md:mx-0">
+      <Card className="bg-gradient-to-r from-orange-500 to-orange-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
         <div className="flex items-center gap-3 mb-2">
           <Bot className="w-6 h-6 text-white" />
           <h1 className="text-2xl md:text-3xl font-bold text-white">
@@ -123,12 +123,12 @@ const AIChat = () => {
         <p className="text-white/90 text-sm md:text-base">
           {t('aiChat.subtitle') || 'Get advice on caring for your child at home'}
         </p>
-      </div>
+      </Card>
 
       {/* Chat Container */}
-      <Card className="p-0 overflow-hidden flex flex-col h-[calc(100vh-200px)] min-h-[420px] md:h-auto md:min-h-[500px] -mb-16 lg:mb-0">
+      <Card className="p-0 overflow-hidden flex flex-col h-[calc(100vh-200px)] min-h-[420px] md:h-auto md:min-h-[500px] -mb-16 lg:mb-0 bg-white/95 backdrop-blur-sm shadow-xl">
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-gray-50">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-white/50">
           {messages.map((message, index) => (
             <div
               key={index}

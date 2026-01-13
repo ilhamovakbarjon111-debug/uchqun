@@ -90,8 +90,8 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Orange Header Section */}
-      <div className="bg-orange-500 rounded-2xl p-6 md:p-8 -mx-4 md:mx-0">
+      {/* Welcome Header Card */}
+      <Card className="bg-gradient-to-r from-orange-500 to-orange-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
         <div className="flex items-center gap-3 mb-2">
           <Users className="w-6 h-6 text-white" />
           <p className="text-white/90 text-sm font-medium">{t('dashboard.role')}</p>
@@ -100,16 +100,16 @@ const Dashboard = () => {
         <h1 className="text-3xl md:text-4xl font-bold text-white">
           {user?.firstName || ''} {user?.lastName || ''}
         </h1>
-      </div>
+      </Card>
 
       {/* Overview Cards */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.overview')}</h2>
+        <h2 className="text-lg font-semibold text-white mb-4 drop-shadow-sm">{t('dashboard.overview')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {overviewCards.map((card) => (
-            <Card key={card.title} className="p-4 hover:shadow-lg transition">
+            <Card key={card.title} className="p-4 hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm">
               <a href={card.href} className="flex items-center gap-4">
-                <div className="p-3 bg-orange-50 rounded-xl">
+                <div className="p-3 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-sm">
                   <card.icon className="w-6 h-6 text-orange-600" />
                 </div>
                 <div>

@@ -77,8 +77,8 @@ const Notifications = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">Bildirishnomalar</h1>
-          <p className="text-gray-500 font-medium">
+          <h1 className="text-4xl font-black text-white mb-2 tracking-tight drop-shadow-sm">Bildirishnomalar</h1>
+          <p className="text-white/90 font-medium drop-shadow-sm">
             {count > 0 ? `${count} ta o'qilmagan bildirishnoma` : 'Barcha bildirishnomalar o\'qilgan'}
           </p>
         </div>
@@ -205,16 +205,16 @@ const Notifications = () => {
           })}
         </div>
       ) : (
-        <div className="text-center py-32 bg-white rounded-[3rem] border-2 border-dashed border-gray-200">
-          <Bell className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-          <p className="text-gray-400 font-bold text-lg">
+        <Card className="text-center py-32 bg-white/95 backdrop-blur-sm">
+          <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 font-bold text-lg">
             {filter === 'all' 
               ? 'Hozircha bildirishnomalar yo\'q' 
               : filter === 'unread'
               ? 'O\'qilmagan bildirishnomalar yo\'q'
               : 'O\'qilgan bildirishnomalar yo\'q'}
           </p>
-        </div>
+        </Card>
       )}
     </div>
   );

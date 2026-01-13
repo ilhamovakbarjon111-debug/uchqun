@@ -113,10 +113,10 @@ const Meals = () => {
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
       
       {/* --- Header & Date Picker --- */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+      <Card className="flex flex-col md:flex-row md:items-end justify-between gap-6 p-8 bg-white/95 backdrop-blur-sm">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('meals.title')}</h1>
-          <p className="text-gray-500 font-medium">{t('meals.subtitle')}</p>
+          <h1 className="text-3xl font-black text-white tracking-tight drop-shadow-sm">{t('meals.title')}</h1>
+          <p className="text-white/90 font-medium drop-shadow-sm">{t('meals.subtitle')}</p>
         </div>
         
         <div className="relative">
@@ -193,10 +193,10 @@ const Meals = () => {
             );
           })
         ) : (
-          <div className="text-center py-24 bg-white rounded-[3rem] border-2 border-dashed border-gray-200">
-            <Utensils className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-            <p className="text-gray-400 font-bold text-lg">{t('meals.empty')}</p>
-          </div>
+          <Card className="text-center py-24 bg-white/95 backdrop-blur-sm">
+            <Utensils className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 font-bold text-lg">{t('meals.empty')}</p>
+          </Card>
         )}
       </div>
 

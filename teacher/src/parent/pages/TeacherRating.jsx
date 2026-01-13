@@ -138,8 +138,8 @@ const TeacherRating = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="space-y-2">
-        <h1 className="text-3xl font-black text-gray-900">{t('ratingPage.title')}</h1>
-        <p className="text-gray-600">{t('ratingPage.subtitle')}</p>
+        <h1 className="text-3xl font-black text-white drop-shadow-sm">{t('ratingPage.title')}</h1>
+        <p className="text-white/90 drop-shadow-sm">{t('ratingPage.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

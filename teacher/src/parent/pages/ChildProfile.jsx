@@ -333,23 +333,23 @@ const ChildProfile = () => {
           <div className="flex-1 text-center md:text-left space-y-4">
             <div>
               <div className="flex flex-wrap justify-center md:justify-start items-center gap-3 mb-2">
-                <h1 className="text-4xl font-black text-gray-900 leading-tight">
+                <h1 className="text-4xl font-black text-white leading-tight drop-shadow-sm">
                   {child.firstName} {child.lastName}
                 </h1>
                 <span className="px-4 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold uppercase tracking-wider">
                   {child.gender}
                 </span>
               </div>
-              <p className="text-lg text-gray-500 font-medium flex items-center justify-center md:justify-start gap-2">
-                <Baby className="w-5 h-5 text-orange-400" />
+              <p className="text-lg text-white/90 font-medium flex items-center justify-center md:justify-start gap-2 drop-shadow-sm">
+                <Baby className="w-5 h-5 text-orange-300" />
                 {t('child.ageYears', { count: calculateAge(child.dateOfBirth) })} • {new Date(child.dateOfBirth).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
 
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
-              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
-                <School className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-bold text-gray-700">{child.school}</span>
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl border border-white/20 shadow-lg">
+                <School className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-bold text-gray-800">{child.school}</span>
               </div>
             </div>
           </div>
@@ -388,7 +388,7 @@ const ChildProfile = () => {
         {/* --- Right Column: Sidebar --- */}
         <div className="space-y-8">
           {/* Account controls (Language + Exit) */}
-          <section className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100">
+          <section className="bg-white/95 backdrop-blur-sm rounded-[2rem] p-6 shadow-xl border border-white/20">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
               {t('profile.account', { defaultValue: 'Account' })}
             </h3>

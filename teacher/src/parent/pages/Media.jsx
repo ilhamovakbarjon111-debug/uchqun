@@ -198,8 +198,8 @@ const Media = () => {
       {/* --- Dynamic Header --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">{t('media.title')}</h1>
-          <p className="text-gray-500 font-medium mt-1">{t('media.subtitle')}</p>
+          <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-sm">{t('media.title')}</h1>
+          <p className="text-white/90 font-medium mt-1 drop-shadow-sm">{t('media.subtitle')}</p>
         </div>
 
         {/* --- Glassmorphism Filters --- */}
@@ -276,10 +276,10 @@ const Media = () => {
           ))}
         </div>
       ) : (
-        <div className="text-center py-32 bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-200">
-          <ImageIcon className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-          <p className="text-gray-400 font-bold text-lg">{t('media.empty')}</p>
-        </div>
+        <Card className="text-center py-32 bg-white/95 backdrop-blur-sm">
+          <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 font-bold text-lg">{t('media.empty')}</p>
+        </Card>
       )}
 
       {/* --- Premium Media Modal --- */}
