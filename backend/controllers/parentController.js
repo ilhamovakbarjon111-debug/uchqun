@@ -407,6 +407,7 @@ export const rateMyTeacher = async (req, res) => {
 /**
  * Get parent's current rating and teacher average
  * GET /api/parent/ratings
+ * Also returns all ratings from other parents for the same teacher
  */
 export const getMyRating = async (req, res) => {
   try {
@@ -416,10 +417,12 @@ export const getMyRating = async (req, res) => {
       return res.status(400).json({ error: 'Assigned teacher not found' });
     }
 
+    // Get parent's own rating
     const rating = await TeacherRating.findOne({
       where: { teacherId: parent.teacherId, parentId: req.user.id },
     });
 
+    // Get summary (average and count)
     const summaryRaw = await TeacherRating.findOne({
       where: { teacherId: parent.teacherId },
       attributes: [
@@ -434,6 +437,29 @@ export const getMyRating = async (req, res) => {
       : 0;
     const count = summaryRaw?.totalRatings ? Number(summaryRaw.totalRatings) : 0;
 
+    // Get all ratings for this teacher with parent information
+    const allRatings = await TeacherRating.findAll({
+      where: { teacherId: parent.teacherId },
+      include: [
+        {
+          model: User,
+          as: 'ratingParent',
+          attributes: ['id', 'firstName', 'lastName', 'email'],
+          required: false,
+        },
+      ],
+      order: [['updatedAt', 'DESC']],
+    });
+
+    // Format ratings with parent names
+    const formattedRatings = allRatings.map((r) => ({
+      ...r.toJSON(),
+      parentName: r.ratingParent
+        ? `${r.ratingParent.firstName || ''} ${r.ratingParent.lastName || ''}`.trim()
+        : null,
+      parentEmail: r.ratingParent?.email || null,
+    }));
+
     res.json({
       success: true,
       data: {
@@ -442,6 +468,7 @@ export const getMyRating = async (req, res) => {
           average,
           count,
         },
+        allRatings: formattedRatings, // All ratings from all parents
       },
     });
   } catch (error) {
