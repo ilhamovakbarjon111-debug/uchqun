@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Star, Mail, Phone, MessageSquare, AlertCircle, CheckCircle2, Users } from 'lucide-react';
+import { Star, Mail, Phone, MessageSquare, AlertCircle, CheckCircle2 } from 'lucide-react';
 import api from '../services/api';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -10,7 +10,6 @@ const TeacherRating = () => {
   const [teacher, setTeacher] = useState(null);
   const [rating, setRating] = useState(null);
   const [summary, setSummary] = useState({ average: 0, count: 0 });
-  const [allRatings, setAllRatings] = useState([]);
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(true);
@@ -46,14 +45,11 @@ const TeacherRating = () => {
       const teacherData = profileRes.data?.data?.user?.assignedTeacher || null;
       setTeacher(teacherData);
 
-      const ratingData = ratingRes?.data?.data || { rating: null, summary: { average: 0, count: 0 }, allRatings: [] };
+      const ratingData = ratingRes?.data?.data || { rating: null, summary: { average: 0, count: 0 } };
       setRating(ratingData.rating);
       setStars(ratingData.rating?.stars || 0);
       setComment(ratingData.rating?.comment || '');
       setSummary(ratingData.summary || { average: 0, count: 0 });
-      // Ensure allRatings is always an array
-      const ratingsArray = Array.isArray(ratingData.allRatings) ? ratingData.allRatings : [];
-      setAllRatings(ratingsArray);
     } catch (err) {
       console.error('Error loading rating data:', err);
       setError(t('ratingPage.errorLoad'));
@@ -90,18 +86,15 @@ const TeacherRating = () => {
       });
       setSuccess(t('ratingPage.success'));
 
-      // Refresh summary and all ratings after saving
+      // Refresh summary after saving
       const refreshRes = await api.get('/parent/ratings').catch((err) => {
         if (err.response?.status === 400 || err.response?.status === 404) {
-          return { data: { data: { summary: { average: 0, count: 0 }, allRatings: [] } } };
+          return { data: { data: { summary: { average: 0, count: 0 } } } };
         }
         throw err;
       });
       const ratingData = refreshRes?.data?.data || {};
       setSummary(ratingData.summary || { average: 0, count: 0 });
-      // Ensure allRatings is always an array
-      const ratingsArray = Array.isArray(ratingData.allRatings) ? ratingData.allRatings : [];
-      setAllRatings(ratingsArray);
     } catch (err) {
       console.error('Error saving rating:', err);
       setError(err.response?.data?.error || t('ratingPage.errorSave'));
@@ -308,54 +301,6 @@ const TeacherRating = () => {
                 <p className="text-xs text-gray-500">{t('ratingPage.ratingsCount', { count: summary.count || 0 })}</p>
               </div>
             </div>
-          </Card>
-
-          {/* All Parents Ratings */}
-          <Card className="space-y-3">
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="w-5 h-5 text-blue-600" />
-              <p className="text-sm font-semibold text-gray-900">
-                {t('ratingPage.allRatings')}
-              </p>
-            </div>
-            {Array.isArray(allRatings) && allRatings.length > 0 ? (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {allRatings.map((r) => (
-                  <div key={r.id} className="border border-gray-200 rounded-xl p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star
-                            key={s}
-                            className="w-4 h-4"
-                            fill={s <= r.stars ? '#f97316' : 'none'}
-                            stroke={s <= r.stars ? '#ea580c' : '#d1d5db'}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-xs text-gray-400">
-                        {new Date(r.updatedAt || r.createdAt).toLocaleDateString(locale)}
-                      </span>
-                    </div>
-                    {r.comment && (
-                      <div className="flex items-start gap-2 text-gray-700">
-                        <MessageSquare className="w-4 h-4 text-gray-400 mt-0.5" />
-                        <p className="text-sm leading-relaxed">{r.comment}</p>
-                      </div>
-                    )}
-                    <p className="text-xs text-gray-500">
-                      {r.parentName || r.parentEmail || t('ratingPage.anonymous')}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl">
-                <p className="text-sm text-gray-500">
-                  {t('ratingPage.noRatings')}
-                </p>
-              </div>
-            )}
           </Card>
         </div>
       </div>
