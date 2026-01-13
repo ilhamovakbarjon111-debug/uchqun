@@ -543,8 +543,15 @@ export const getTeachers = async (req, res) => {
 
     const receptionIds = receptions.map(r => r.id);
 
+    logger.info('Admin getTeachers', {
+      adminId: req.user.id,
+      receptionsFound: receptions.length,
+      receptionIds: receptionIds,
+    });
+
     // If admin has no receptions, return empty array
     if (receptionIds.length === 0) {
+      logger.info('Admin has no receptions, returning empty teachers list');
       return res.json({
         success: true,
         data: [],
@@ -559,6 +566,11 @@ export const getTeachers = async (req, res) => {
       },
       attributes: { exclude: ['password'] },
       order: [['createdAt', 'DESC']],
+    });
+
+    logger.info('Teachers found', {
+      count: teachers.length,
+      teacherIds: teachers.map(t => t.id),
     });
 
     res.json({
@@ -589,8 +601,15 @@ export const getParents = async (req, res) => {
 
     const receptionIds = receptions.map(r => r.id);
 
+    logger.info('Admin getParents', {
+      adminId: req.user.id,
+      receptionsFound: receptions.length,
+      receptionIds: receptionIds,
+    });
+
     // If admin has no receptions, return empty array
     if (receptionIds.length === 0) {
+      logger.info('Admin has no receptions, returning empty parents list');
       return res.json({
         success: true,
         data: [],
@@ -607,9 +626,17 @@ export const getParents = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
+    logger.info('Parents found', {
+      count: parents.length,
+      parentRoles: parents.map(p => ({ id: p.id, role: p.role, email: p.email })),
+    });
+
+    // Double-check: filter out any non-parent roles (safety check)
+    const filteredParents = parents.filter(p => p.role === 'parent');
+
     res.json({
       success: true,
-      data: parents,
+      data: filteredParents,
     });
   } catch (error) {
     logger.error('Get parents error', { error: error.message, stack: error.stack });

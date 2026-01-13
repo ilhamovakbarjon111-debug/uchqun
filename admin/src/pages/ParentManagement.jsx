@@ -44,8 +44,12 @@ const ParentManagement = () => {
     try {
       setLoading(true);
       const response = await api.get('/admin/parents');
-      // Filter to ensure only parent role users are shown
-      const parentsData = (response.data.data || []).filter(user => user.role === 'parent');
+      // Filter to ensure only parent role users are shown (strict check)
+      const parentsData = (response.data.data || []).filter(user => {
+        // Strict check: must be exactly 'parent' role
+        return user && user.role === 'parent' && user.role !== 'reception' && user.role !== 'admin' && user.role !== 'teacher';
+      });
+      console.log('Fetched parents:', parentsData.length, 'Filtered from:', (response.data.data || []).length);
       setParents(parentsData);
     } catch (error) {
       showToast(t('parentsPage.loadError') || 'Error', 'error');
