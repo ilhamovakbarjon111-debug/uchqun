@@ -21,6 +21,12 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ error: 'Subject and message cannot be empty' });
     }
 
+    logger.info('Attempting to create super-admin message', {
+      senderId,
+      senderRole: req.user.role,
+      subject: subject.substring(0, 50),
+    });
+
     const superAdminMessage = await SuperAdminMessage.create({
       senderId,
       subject: subject.trim(),
@@ -40,8 +46,26 @@ export const sendMessage = async (req, res) => {
       data: superAdminMessage.toJSON(),
     });
   } catch (error) {
-    logger.error('Send message error', { error: error.message, stack: error.stack });
-    res.status(500).json({ error: 'Failed to send message' });
+    logger.error('Send message error', { 
+      error: error.message, 
+      stack: error.stack,
+      senderId: req.user?.id,
+      senderRole: req.user?.role
+    });
+    console.error('Send message error details:', error);
+    
+    // Check if it's a table not found error
+    if (error.message && error.message.includes('does not exist')) {
+      return res.status(500).json({ 
+        error: 'Database table not found. Please run migrations.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to send message',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 

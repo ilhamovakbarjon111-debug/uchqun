@@ -824,6 +824,7 @@ export const getParentById = async (req, res) => {
  */
 export const getStatistics = async (req, res) => {
   try {
+    logger.info('Getting statistics for admin', { adminId: req.user.id });
 
     // Get counts for all roles
     // First get reception IDs created by this admin
@@ -972,8 +973,16 @@ export const getStatistics = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Get statistics error', { error: error.message, stack: error.stack });
-    res.status(500).json({ error: 'Failed to fetch statistics' });
+    logger.error('Get statistics error', { 
+      error: error.message, 
+      stack: error.stack,
+      adminId: req.user?.id 
+    });
+    console.error('Statistics error details:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch statistics',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
