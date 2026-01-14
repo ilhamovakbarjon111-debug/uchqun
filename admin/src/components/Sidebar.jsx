@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
-const Sidebar = ({ onClose, onMessageClick }) => {
+const Sidebar = ({ onClose, onMessageClick, onMessagesClick, messagesCount = 0 }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -103,6 +103,20 @@ const Sidebar = ({ onClose, onMessageClick }) => {
           <MessageSquare className="h-4 w-4" />
           {t('nav.contactSuperAdmin', { defaultValue: 'Super-adminga xabar' })}
         </button>
+        {messagesCount > 0 && (
+          <button
+            onClick={() => {
+              if (onMessagesClick) onMessagesClick();
+            }}
+            className="flex items-center justify-center w-full gap-2 px-4 py-2.5 text-sm font-medium text-green-600 bg-white border border-green-100 rounded-xl hover:bg-green-50 hover:border-green-200 transition-all duration-200 shadow-sm active:scale-95 mb-2 relative"
+          >
+            <MessageSquare className="h-4 w-4" />
+            Mening xabarlarim
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              {messagesCount}
+            </span>
+          </button>
+        )}
         <button
           onClick={handleLogout}
           className="flex items-center justify-center w-full gap-2 px-4 py-2.5 text-sm font-medium text-red-600 bg-white border border-red-100 rounded-xl hover:bg-red-50 hover:border-red-200 transition-all duration-200 shadow-sm active:scale-95"

@@ -18,6 +18,7 @@ import {
   getStatistics,
   createAdmin,
   getSchoolRatings,
+  getMyMessages,
 } from '../controllers/adminController.js';
 import { getGroups, getGroup } from '../controllers/groupController.js';
 import { sendMessage } from '../controllers/superAdminController.js';
@@ -42,6 +43,8 @@ router.use(requireAdmin);
 
 // Send message to super-admin
 router.post('/message-to-super-admin', sendMessage);
+// Get my messages to super-admin (with replies)
+router.get('/messages', getMyMessages);
 
 // Reception management (Admin can CREATE, EDIT, DELETE and MANAGE)
 router.post('/receptions', createReception); // Admin can create Reception

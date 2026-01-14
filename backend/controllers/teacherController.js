@@ -3,6 +3,7 @@ import Child from '../models/Child.js';
 import TeacherResponsibility from '../models/TeacherResponsibility.js';
 import TeacherTask from '../models/TeacherTask.js';
 import TeacherWorkHistory from '../models/TeacherWorkHistory.js';
+import SuperAdminMessage from '../models/SuperAdminMessage.js';
 import logger from '../utils/logger.js';
 import { Op } from 'sequelize';
 
@@ -496,6 +497,31 @@ export const getParentById = async (req, res) => {
   } catch (error) {
     logger.error('Get parent by id error', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to fetch parent' });
+  }
+};
+
+/**
+ * Get teacher's messages to super-admin
+ * GET /api/teacher/messages
+ * 
+ * Business Logic:
+ * - Teacher can view their own messages sent to super-admin
+ * - Includes replies from super-admin
+ */
+export const getMyMessages = async (req, res) => {
+  try {
+    const messages = await SuperAdminMessage.findAll({
+      where: { senderId: req.user.id },
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json({
+      success: true,
+      data: messages.map(m => m.toJSON()),
+    });
+  } catch (error) {
+    logger.error('Get my messages error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch messages' });
   }
 };
 

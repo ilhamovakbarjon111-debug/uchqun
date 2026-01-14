@@ -13,6 +13,7 @@ import {
   getDashboard,
   getParents,
   getParentById,
+  getMyMessages,
 } from '../controllers/teacherController.js';
 import { sendMessage } from '../controllers/superAdminController.js';
 
@@ -57,5 +58,7 @@ router.get('/parents/:id', getParentById);
 
 // Send message to super-admin
 router.post('/message-to-super-admin', sendMessage);
+// Get my messages to super-admin (with replies)
+router.get('/messages', getMyMessages);
 
 export default router;

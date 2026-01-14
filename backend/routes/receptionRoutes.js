@@ -15,6 +15,7 @@ import {
   deleteParent,
   createChildForParent,
   getTeacherRatings,
+  getMyMessages,
 } from '../controllers/receptionController.js';
 import { getGroups } from '../controllers/groupController.js';
 import { sendMessage } from '../controllers/superAdminController.js';
@@ -60,6 +61,8 @@ router.get('/groups', getGroups);
 
 // Send message to super-admin
 router.post('/message-to-super-admin', sendMessage);
+// Get my messages to super-admin (with replies)
+router.get('/messages', getMyMessages);
 
 export default router;
 

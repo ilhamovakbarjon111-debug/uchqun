@@ -3,6 +3,7 @@ import Child from '../models/Child.js';
 import Group from '../models/Group.js';
 import Document from '../models/Document.js';
 import TeacherRating from '../models/TeacherRating.js';
+import SuperAdminMessage from '../models/SuperAdminMessage.js';
 import logger from '../utils/logger.js';
 import bcrypt from 'bcryptjs';
 import { Op, fn, col } from 'sequelize';
@@ -849,6 +850,31 @@ export const createChildForParent = async (req, res) => {
   } catch (error) {
     logger.error('Create child error', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to create child' });
+  }
+};
+
+/**
+ * Get reception's messages to super-admin
+ * GET /api/reception/messages
+ * 
+ * Business Logic:
+ * - Reception can view their own messages sent to super-admin
+ * - Includes replies from super-admin
+ */
+export const getMyMessages = async (req, res) => {
+  try {
+    const messages = await SuperAdminMessage.findAll({
+      where: { senderId: req.user.id },
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json({
+      success: true,
+      data: messages.map(m => m.toJSON()),
+    });
+  } catch (error) {
+    logger.error('Get my messages error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch messages' });
   }
 };
 
