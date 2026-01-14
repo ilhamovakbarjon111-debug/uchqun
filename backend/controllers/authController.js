@@ -20,6 +20,10 @@ const generateTokens = (userId) => {
 
 export const login = async (req, res) => {
   try {
+    console.log('=== LOGIN REQUEST ===');
+    console.log('Body:', { email: req.body?.email, hasPassword: !!req.body?.password });
+    console.log('Headers:', { 'content-type': req.headers['content-type'] });
+    
     const { email, password } = req.body;
 
     logger.info('Login attempt', { 
@@ -134,8 +138,19 @@ export const login = async (req, res) => {
       user: user.toJSON(),
     });
   } catch (error) {
-    logger.error('Login error', { error: error.message, stack: error.stack });
-    res.status(500).json({ error: 'Login failed' });
+    console.error('Login error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      email: req.body?.email ? req.body.email.substring(0, 3) + '***' : 'missing'
+    });
+    logger.error('Login error', { 
+      error: error.message, 
+      stack: error.stack,
+      name: error.name,
+      email: req.body?.email ? req.body.email.substring(0, 3) + '***' : 'missing'
+    });
+    res.status(500).json({ error: 'Login failed', details: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
