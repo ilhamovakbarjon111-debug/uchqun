@@ -569,51 +569,56 @@ export const rateSchool = async (req, res) => {
     }
 
     // Check if parent has a child in this school
-    // Build where clause for finding child
-    const childWhereConditions = [];
+    // First, try to find child by schoolId if available
+    let child = null;
     
     if (finalSchoolId) {
-      childWhereConditions.push({ schoolId: finalSchoolId });
-    }
-    
-    // Also check by school name (in case schoolId is not set yet)
-    // Use school.name if available, otherwise use schoolName
-    const schoolNameToCheck = (school && school.name) ? school.name : schoolName;
-    if (schoolNameToCheck) {
-      childWhereConditions.push({ school: schoolNameToCheck });
-    }
-    
-    // If no conditions, just check by parentId (shouldn't happen, but safety check)
-    if (childWhereConditions.length === 0) {
-      logger.error('No school identification available for rating', {
-        schoolId,
-        schoolName,
-        finalSchoolId,
-        hasSchool: !!school,
+      child = await Child.findOne({
+        where: {
+          parentId,
+          schoolId: finalSchoolId,
+        },
       });
-      return res.status(400).json({ error: 'Unable to identify school for rating' });
+    }
+    
+    // If not found by schoolId, try to find by school name
+    if (!child) {
+      const schoolNameToCheck = (school && school.name) ? school.name : schoolName;
+      if (schoolNameToCheck) {
+        // Try exact match first
+        child = await Child.findOne({
+          where: {
+            parentId,
+            school: schoolNameToCheck,
+          },
+        });
+        
+        // If not found, try case-insensitive match
+        if (!child) {
+          child = await Child.findOne({
+            where: {
+              parentId,
+              school: {
+                [Op.iLike]: schoolNameToCheck,
+              },
+            },
+          });
+        }
+      }
     }
     
     logger.info('Finding child for school rating', {
       parentId,
       finalSchoolId,
-      schoolNameToCheck,
-      conditionsCount: childWhereConditions.length,
-    });
-    
-    const child = await Child.findOne({
-      where: {
-        parentId,
-        [Op.or]: childWhereConditions,
-      },
+      schoolName: (school && school.name) ? school.name : schoolName,
+      childFound: !!child,
     });
 
     if (!child) {
       logger.warn('Child not found for school rating', {
         parentId,
         finalSchoolId,
-        schoolNameToCheck,
-        conditions: childWhereConditions,
+        schoolName: (school && school.name) ? school.name : schoolName,
       });
       return res.status(403).json({ error: 'You can only rate schools where your child is enrolled' });
     }
