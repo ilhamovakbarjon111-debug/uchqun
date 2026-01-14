@@ -36,13 +36,12 @@ const router = express.Router();
  * - Only after Admin approval, Reception receives login credentials and can log in
  */
 
-// Send message to super-admin (must be before middleware to avoid conflicts)
-// But still needs authentication, so we add it manually
-router.post('/message-to-super-admin', authenticate, requireAdmin, sendMessage);
-
 // All routes require Admin authentication
 router.use(authenticate);
 router.use(requireAdmin);
+
+// Send message to super-admin
+router.post('/message-to-super-admin', sendMessage);
 
 // Reception management (Admin can CREATE, EDIT, DELETE and MANAGE)
 router.post('/receptions', createReception); // Admin can create Reception

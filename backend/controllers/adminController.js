@@ -833,10 +833,16 @@ export const getStatistics = async (req, res) => {
 
     // Get counts for all roles
     // First get reception IDs created by this admin
-    const adminReceptions = await User.findAll({
-      where: { role: 'reception', createdBy: req.user.id },
-      attributes: ['id'],
-    });
+    let adminReceptions = [];
+    try {
+      adminReceptions = await User.findAll({
+        where: { role: 'reception', createdBy: req.user.id },
+        attributes: ['id'],
+      });
+    } catch (error) {
+      logger.error('Error fetching admin receptions', { error: error.message, adminId: req.user.id });
+      adminReceptions = [];
+    }
     const receptionIds = adminReceptions.map(r => r.id);
     
     logger.info('Admin receptions found', { count: receptionIds.length, adminId: req.user.id });
@@ -844,26 +850,31 @@ export const getStatistics = async (req, res) => {
     // Get teachers created by these receptions
     let teacherIds = [];
     if (receptionIds.length > 0) {
-      const adminTeachers = await User.findAll({
-        where: { 
-          role: 'teacher', 
-          createdBy: { [Op.in]: receptionIds },
-        },
-        attributes: ['id'],
-      });
-      teacherIds = adminTeachers.map(t => t.id);
+      try {
+        const adminTeachers = await User.findAll({
+          where: { 
+            role: 'teacher', 
+            createdBy: { [Op.in]: receptionIds },
+          },
+          attributes: ['id'],
+        });
+        teacherIds = adminTeachers.map(t => t.id);
+      } catch (error) {
+        logger.error('Error fetching admin teachers', { error: error.message, adminId: req.user.id });
+        teacherIds = [];
+      }
     }
 
     const [receptions, teachers, parents, groups] = await Promise.all([
-      User.count({ where: { role: 'reception', createdBy: req.user.id } }),
+      User.count({ where: { role: 'reception', createdBy: req.user.id } }).catch(() => 0),
       receptionIds.length > 0 
-        ? User.count({ where: { role: 'teacher', createdBy: { [Op.in]: receptionIds } } })
+        ? User.count({ where: { role: 'teacher', createdBy: { [Op.in]: receptionIds } } }).catch(() => 0)
         : Promise.resolve(0),
       receptionIds.length > 0
-        ? User.count({ where: { role: 'parent', createdBy: { [Op.in]: receptionIds } } })
+        ? User.count({ where: { role: 'parent', createdBy: { [Op.in]: receptionIds } } }).catch(() => 0)
         : Promise.resolve(0),
       teacherIds.length > 0
-        ? Group.count({ where: { teacherId: { [Op.in]: teacherIds } } })
+        ? Group.count({ where: { teacherId: { [Op.in]: teacherIds } } }).catch(() => 0)
         : Promise.resolve(0),
     ]);
 
@@ -876,34 +887,33 @@ export const getStatistics = async (req, res) => {
           isActive: true,
           documentsApproved: true,
         } 
-      }),
+      }).catch(() => 0),
       User.count({ 
         where: { 
           role: 'reception',
           createdBy: req.user.id,
           isActive: false,
         } 
-      }),
+      }).catch(() => 0),
       User.count({ 
         where: { 
           role: 'reception',
           createdBy: req.user.id,
           documentsApproved: false,
         } 
-      }),
+      }).catch(() => 0),
     ]);
 
     // Get document statistics
-
     const [pendingDocuments, approvedDocuments, rejectedDocuments] = await Promise.all([
       receptionIds.length > 0
-        ? Document.count({ where: { status: 'pending', userId: { [Op.in]: receptionIds } } })
+        ? Document.count({ where: { status: 'pending', userId: { [Op.in]: receptionIds } } }).catch(() => 0)
         : Promise.resolve(0),
       receptionIds.length > 0
-        ? Document.count({ where: { status: 'approved', userId: { [Op.in]: receptionIds } } })
+        ? Document.count({ where: { status: 'approved', userId: { [Op.in]: receptionIds } } }).catch(() => 0)
         : Promise.resolve(0),
       receptionIds.length > 0
-        ? Document.count({ where: { status: 'rejected', userId: { [Op.in]: receptionIds } } })
+        ? Document.count({ where: { status: 'rejected', userId: { [Op.in]: receptionIds } } }).catch(() => 0)
         : Promise.resolve(0),
     ]);
 
@@ -911,25 +921,30 @@ export const getStatistics = async (req, res) => {
     // Get parent IDs created by admin's receptions
     let parentIds = [];
     if (receptionIds.length > 0) {
-      const adminParents = await User.findAll({
-        where: { 
-          role: 'parent', 
-          createdBy: { [Op.in]: receptionIds },
-        },
-        attributes: ['id'],
-      });
-      parentIds = adminParents.map(p => p.id);
+      try {
+        const adminParents = await User.findAll({
+          where: { 
+            role: 'parent', 
+            createdBy: { [Op.in]: receptionIds },
+          },
+          attributes: ['id'],
+        });
+        parentIds = adminParents.map(p => p.id);
+      } catch (error) {
+        logger.error('Error fetching admin parents', { error: error.message, adminId: req.user.id });
+        parentIds = [];
+      }
     }
 
     const [totalActivities, totalMeals, totalMedia] = await Promise.all([
       parentIds.length > 0
-        ? ParentActivity.count({ where: { parentId: { [Op.in]: parentIds } } })
+        ? ParentActivity.count({ where: { parentId: { [Op.in]: parentIds } } }).catch(() => 0)
         : Promise.resolve(0),
       parentIds.length > 0
-        ? ParentMeal.count({ where: { parentId: { [Op.in]: parentIds } } })
+        ? ParentMeal.count({ where: { parentId: { [Op.in]: parentIds } } }).catch(() => 0)
         : Promise.resolve(0),
       parentIds.length > 0
-        ? ParentMedia.count({ where: { parentId: { [Op.in]: parentIds } } })
+        ? ParentMedia.count({ where: { parentId: { [Op.in]: parentIds } } }).catch(() => 0)
         : Promise.resolve(0),
     ]);
 
@@ -944,7 +959,7 @@ export const getStatistics = async (req, res) => {
           createdBy: req.user.id,
           createdAt: { [Op.gte]: thirtyDaysAgo },
         },
-      }),
+      }).catch(() => 0),
       receptionIds.length > 0
         ? User.count({
             where: {
@@ -952,7 +967,7 @@ export const getStatistics = async (req, res) => {
               createdBy: { [Op.in]: receptionIds },
               createdAt: { [Op.gte]: thirtyDaysAgo },
             },
-          })
+          }).catch(() => 0)
         : Promise.resolve(0),
       receptionIds.length > 0
         ? User.count({
@@ -961,7 +976,7 @@ export const getStatistics = async (req, res) => {
               createdBy: { [Op.in]: receptionIds },
               createdAt: { [Op.gte]: thirtyDaysAgo },
             },
-          })
+          }).catch(() => 0)
         : Promise.resolve(0),
     ]);
 
