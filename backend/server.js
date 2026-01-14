@@ -56,6 +56,16 @@ if (process.env.NODE_ENV === 'production') {
 // Trust proxy (needed for HTTPS behind reverse proxy)
 app.set('trust proxy', 1);
 
+// Simple health check endpoint (must be FIRST - before CORS and other middleware)
+// This allows Railway to check health even during server startup
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'uchqun-backend',
+  });
+});
+
 // CORS Configuration
 const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
@@ -134,6 +144,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Health check routes (before API routes, no rate limiting)
+// Must be registered early so Railway can check health during deployment
 app.use('/health', healthRoutes);
 
 // API Routes
