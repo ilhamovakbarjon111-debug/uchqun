@@ -10,6 +10,13 @@ import { Op } from 'sequelize';
  */
 export const sendMessage = async (req, res) => {
   try {
+    console.log('sendMessage called', { 
+      hasUser: !!req.user, 
+      userId: req.user?.id, 
+      role: req.user?.role,
+      body: req.body 
+    });
+    
     const { subject, message } = req.body;
     const senderId = req.user.id;
 

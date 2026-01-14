@@ -68,10 +68,14 @@ app.get('/health', (req, res) => {
 
 // CORS Configuration
 const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim()).filter(url => {
+      // Remove old Railway URLs (uchqun-production-4f83)
+      return !url.includes('uchqun-production-4f83');
+    })
   : [
     'http://localhost:5173',
     'http://localhost:5174',
+    'http://localhost:5175',
     'https://uchqun-platform.vercel.app',
   ];
 
