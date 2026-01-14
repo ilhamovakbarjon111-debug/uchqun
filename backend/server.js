@@ -185,54 +185,53 @@ app.use('/api/groups', groupRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server
-const startServer = async () => {
-  try {
-    // Always run migrations (both production and development)
-    // This ensures database schema is up to date
-    console.log('Running database migrations...');
+// Start server immediately so healthcheck can respond
+// Run migrations in background after server starts
+app.listen(PORT, '0.0.0.0', () => {
+  logger.info(`Server started`, {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    apiUrl: `http://localhost:${PORT}/api`,
+  });
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 API available at http://localhost:${PORT}/api`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✅ Health check available at /health`);
+  
+  // Run migrations in background after server starts
+  // This allows healthcheck to respond immediately
+  (async () => {
     try {
-      const { runMigrations } = await import('./config/migrate.js');
-      await runMigrations();
-      console.log('✓ Migrations completed successfully');
-    } catch (migrationError) {
-      console.error('⚠ Migration error:', migrationError.message);
-      console.error('Migration error stack:', migrationError.stack);
-      // Don't exit on migration errors - allow server to start
-      // Migrations can be run manually if needed
-      console.warn('⚠ Continuing despite migration errors - server will start anyway');
-      logger.warn('Migration failed but server continuing', { error: migrationError.message });
-    }
-    
-    // In development, also allow sync for convenience
-    if (process.env.NODE_ENV !== 'production') {
-      // In development, still allow sync for convenience (but warn)
-      const forceSync = process.env.FORCE_SYNC === 'true';
-      if (forceSync) {
-        console.warn('⚠ WARNING: FORCE_SYNC is enabled. This will drop all tables!');
+      console.log('Running database migrations in background...');
+      try {
+        const { runMigrations } = await import('./config/migrate.js');
+        await runMigrations();
+        console.log('✓ Migrations completed successfully');
+      } catch (migrationError) {
+        console.error('⚠ Migration error:', migrationError.message);
+        console.error('Migration error stack:', migrationError.stack);
+        // Don't exit on migration errors - allow server to continue
+        // Migrations can be run manually if needed
+        console.warn('⚠ Continuing despite migration errors - server will continue running');
+        logger.warn('Migration failed but server continuing', { error: migrationError.message });
       }
-      await syncDatabase(forceSync);
+      
+      // In development, also allow sync for convenience
+      if (process.env.NODE_ENV !== 'production') {
+        // In development, still allow sync for convenience (but warn)
+        const forceSync = process.env.FORCE_SYNC === 'true';
+        if (forceSync) {
+          console.warn('⚠ WARNING: FORCE_SYNC is enabled. This will drop all tables!');
+        }
+        await syncDatabase(forceSync);
+      }
+    } catch (error) {
+      console.error('Background migration task error:', error);
+      logger.error('Background migration task failed', { error: error.message });
+      // Don't exit - server should continue running
     }
-
-    // Start server immediately - don't wait for migrations
-    app.listen(PORT, '0.0.0.0', () => {
-      logger.info(`Server started`, {
-        port: PORT,
-        environment: process.env.NODE_ENV || 'development',
-        apiUrl: `http://localhost:${PORT}/api`,
-      });
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📡 API available at http://localhost:${PORT}/api`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`✅ Health check available at /health`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-};
-
-startServer();
+  })();
+});
 
 export default app;
 
