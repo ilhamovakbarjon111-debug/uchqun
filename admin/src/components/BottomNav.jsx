@@ -7,7 +7,8 @@ import {
   UserCheck,
   Shield,
   UsersRound,
-  LogOut
+  LogOut,
+  User
 } from 'lucide-react';
 
 const BottomNav = () => {
@@ -22,6 +23,7 @@ const BottomNav = () => {
     { name: t('nav.parents'), href: '/admin/parents', icon: Users },
     { name: t('nav.teachers'), href: '/admin/teachers', icon: UserCheck },
     { name: t('nav.groups'), href: '/admin/groups', icon: UsersRound },
+    { name: t('nav.profile', { defaultValue: 'Profile' }), href: '/admin/profile', icon: User },
   ];
 
   const isActive = (path) => {

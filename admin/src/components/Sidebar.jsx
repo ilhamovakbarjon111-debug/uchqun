@@ -10,7 +10,8 @@ import {
   LogOut,
   Crown,
   Building2,
-  MessageSquare
+  MessageSquare,
+  User
 } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -27,6 +28,7 @@ const Sidebar = ({ onClose, onMessageClick, onMessagesClick, messagesCount = 0 }
     { name: t('nav.teachers'), href: '/admin/teachers', icon: UserCheck },
     { name: t('nav.groups'), href: '/admin/groups', icon: UsersRound },
     { name: t('nav.schoolRatings'), href: '/admin/school-ratings', icon: Building2 },
+    { name: t('nav.profile', { defaultValue: 'Profile' }), href: '/admin/profile', icon: User },
   ];
 
   const isActive = (path) => location.pathname === path;
