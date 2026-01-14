@@ -84,17 +84,29 @@ export const login = async (req, res) => {
     }
 
     logger.info('Comparing password', { userId: user.id });
-    const isPasswordValid = await user.comparePassword(password);
+    
+    // Direct bcrypt comparison for debugging
+    const bcrypt = await import('bcryptjs');
+    const directCompare = await bcrypt.default.compare(password, user.password);
+    const methodCompare = await user.comparePassword(password);
+    
     logger.info('Password comparison result', { 
       userId: user.id,
-      isValid: isPasswordValid 
+      directCompare,
+      methodCompare,
+      passwordLength: password?.length,
+      hashLength: user.password?.length
     });
+    
+    const isPasswordValid = methodCompare || directCompare;
     
     if (!isPasswordValid) {
       logger.warn('Login attempt with invalid password', { 
         email: normalizedEmail, 
         userId: user.id,
-        passwordHashPrefix: user.password.substring(0, 7) // First 7 chars of hash for debugging
+        passwordHashPrefix: user.password.substring(0, 7), // First 7 chars of hash for debugging
+        directCompare,
+        methodCompare
       });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
