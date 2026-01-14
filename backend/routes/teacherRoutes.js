@@ -14,6 +14,7 @@ import {
   getParents,
   getParentById,
 } from '../controllers/teacherController.js';
+import { sendMessage } from '../controllers/superAdminController.js';
 
 const router = express.Router();
 
@@ -53,5 +54,8 @@ router.put('/work-history/:id/status', updateWorkHistoryStatus);
 // Parent view (read-only)
 router.get('/parents', getParents);
 router.get('/parents/:id', getParentById);
+
+// Send message to super-admin
+router.post('/message-to-super-admin', sendMessage);
 
 export default router;

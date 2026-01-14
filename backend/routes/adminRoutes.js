@@ -20,6 +20,7 @@ import {
   getSchoolRatings,
 } from '../controllers/adminController.js';
 import { getGroups, getGroup } from '../controllers/groupController.js';
+import { sendMessage } from '../controllers/superAdminController.js';
 
 const router = express.Router();
 
@@ -66,6 +67,9 @@ router.get('/statistics', getStatistics); // Admin can view all statistics
 
 // School ratings
 router.get('/school-ratings', getSchoolRatings); // View school ratings from parents created by admin's receptions
+
+// Send message to super-admin
+router.post('/message-to-super-admin', sendMessage);
 
 // Admin management (Super admin can create Admin accounts)
 router.post('/admins', createAdmin); // Create admin account with email and password

@@ -2,15 +2,17 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
+import MessageModal from './MessageModal';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Desktop Sidebar - Only visible on large screens */}
       <div className="hidden lg:block fixed inset-y-0 left-0 w-64 bg-white shadow-lg z-40">
-        <Sidebar />
+        <Sidebar onMessageClick={() => setShowMessageModal(true)} />
       </div>
 
       {/* Mobile Sidebar Overlay - Only visible on small screens */}
@@ -27,7 +29,10 @@ const Layout = () => {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <Sidebar onClose={() => setSidebarOpen(false)} />
+        <Sidebar onClose={() => setSidebarOpen(false)} onMessageClick={() => {
+          setShowMessageModal(true);
+          setSidebarOpen(false);
+        }} />
       </div>
 
       {/* Main Content */}
@@ -41,6 +46,9 @@ const Layout = () => {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
         <BottomNav />
       </div>
+
+      {/* Message Modal */}
+      {showMessageModal && <MessageModal onClose={() => setShowMessageModal(false)} />}
     </div>
   );
 };

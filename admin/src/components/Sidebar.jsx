@@ -9,11 +9,12 @@ import {
   UsersRound,
   LogOut,
   Crown,
-  Building2
+  Building2,
+  MessageSquare
 } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
-const Sidebar = ({ onClose }) => {
+const Sidebar = ({ onClose, onMessageClick }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -93,6 +94,15 @@ const Sidebar = ({ onClose }) => {
         <div className="flex items-center justify-between gap-2 px-2 mb-3">
           <LanguageSwitcher />
         </div>
+        <button
+          onClick={() => {
+            if (onMessageClick) onMessageClick();
+          }}
+          className="flex items-center justify-center w-full gap-2 px-4 py-2.5 text-sm font-medium text-blue-600 bg-white border border-blue-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm active:scale-95 mb-2"
+        >
+          <MessageSquare className="h-4 w-4" />
+          {t('nav.contactSuperAdmin', { defaultValue: 'Super-adminga xabar' })}
+        </button>
         <button
           onClick={handleLogout}
           className="flex items-center justify-center w-full gap-2 px-4 py-2.5 text-sm font-medium text-red-600 bg-white border border-red-100 rounded-xl hover:bg-red-50 hover:border-red-200 transition-all duration-200 shadow-sm active:scale-95"

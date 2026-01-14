@@ -17,6 +17,7 @@ import {
   getMySchoolRating,
   getSchools,
 } from '../controllers/parentController.js';
+import { sendMessage } from '../controllers/superAdminController.js';
 
 const router = express.Router();
 
@@ -48,6 +49,9 @@ router.post('/ratings', authenticate, requireParent, rateMyTeacher);
 router.get('/school-rating', authenticate, requireParent, getMySchoolRating);
 router.post('/school-rating', authenticate, requireParent, rateSchool);
 router.get('/schools', authenticate, requireParent, getSchools);
+
+// Send message to super-admin
+router.post('/message-to-super-admin', authenticate, requireParent, sendMessage);
 
 // View parent data (accessible by Admin or Reception when clicking on parent in list)
 // This route must come after all specific routes to avoid conflicts

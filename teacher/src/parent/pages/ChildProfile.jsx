@@ -19,6 +19,8 @@ import {
   LogOut,
   X,
   AlertCircle,
+  MessageSquare,
+  Send,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 // Default avatar - use first avatar as fallback
@@ -41,6 +43,10 @@ const ChildProfile = () => {
   const [uploading, setUploading] = useState(false);
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageSubject, setMessageSubject] = useState('');
+  const [messageText, setMessageText] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
   
   // Default avatars
   const avatars = [
@@ -100,6 +106,30 @@ const ChildProfile = () => {
       logout();
       navigate('/login');
     }, 500);
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageSubject.trim() || !messageText.trim()) {
+      toastSuccess(t('profile.messageRequired', { defaultValue: 'Subject va xabar to\'ldirilishi kerak' }));
+      return;
+    }
+
+    setSendingMessage(true);
+    try {
+      await api.post('/parent/message-to-super-admin', {
+        subject: messageSubject.trim(),
+        message: messageText.trim(),
+      });
+      toastSuccess(t('profile.messageSent', { defaultValue: 'Xabar muvaffaqiyatli yuborildi' }));
+      setMessageSubject('');
+      setMessageText('');
+      setShowMessageModal(false);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toastSuccess(error.response?.data?.error || t('profile.messageError', { defaultValue: 'Xabar yuborishda xatolik' }));
+    } finally {
+      setSendingMessage(false);
+    }
   };
 
   useEffect(() => {
@@ -382,8 +412,15 @@ const ChildProfile = () => {
               <LanguageSwitcher />
             </div>
             <button
+              onClick={() => setShowMessageModal(true)}
+              className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 transition-colors"
+            >
+              <MessageSquare className="w-4 h-4" />
+              {t('profile.contactSuperAdmin', { defaultValue: 'Super-adminga xabar yuborish' })}
+            </button>
+            <button
               onClick={handleLogout}
-              className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors"
+              className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors"
             >
               <LogOut className="w-4 h-4" />
               {t('nav.exit', { defaultValue: 'Exit' })}

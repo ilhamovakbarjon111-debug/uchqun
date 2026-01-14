@@ -17,6 +17,7 @@ import {
   getTeacherRatings,
 } from '../controllers/receptionController.js';
 import { getGroups } from '../controllers/groupController.js';
+import { sendMessage } from '../controllers/superAdminController.js';
 
 const router = express.Router();
 
@@ -56,6 +57,9 @@ router.post('/children', upload.fields([{ name: 'child[photo]', maxCount: 1 }]),
 
 // Groups (for parent assignment)
 router.get('/groups', getGroups);
+
+// Send message to super-admin
+router.post('/message-to-super-admin', sendMessage);
 
 export default router;
 

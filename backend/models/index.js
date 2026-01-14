@@ -18,6 +18,7 @@ import TeacherRating from './TeacherRating.js';
 import ChatMessage from './ChatMessage.js';
 import School from './School.js';
 import SchoolRating from './SchoolRating.js';
+import SuperAdminMessage from './SuperAdminMessage.js';
 
 // Initialize all models
 const models = {
@@ -40,6 +41,7 @@ const models = {
   ChatMessage,
   School,
   SchoolRating,
+  SuperAdminMessage,
   sequelize,
 };
 
@@ -119,6 +121,10 @@ School.hasMany(Child, { foreignKey: 'schoolId', as: 'schoolChildren' });
 // Child -> Group (child belongs to a group)
 Child.belongsTo(Group, { foreignKey: 'groupId', as: 'childGroup' });
 Group.hasMany(Child, { foreignKey: 'groupId', as: 'groupChildren' });
+
+// Super Admin Messages
+User.hasMany(SuperAdminMessage, { foreignKey: 'senderId', as: 'superAdminMessages' });
+SuperAdminMessage.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
 
 // Sync database (use with caution in production)
 export const syncDatabase = async (force = false) => {
