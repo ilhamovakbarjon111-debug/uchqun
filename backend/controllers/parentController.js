@@ -569,23 +569,43 @@ export const rateSchool = async (req, res) => {
     }
 
     // Check if parent has a child in this school
-    const childWhere = {
-      parentId,
-    };
+    // Build where clause for finding child
+    const childWhereConditions = [];
     
     if (finalSchoolId) {
-      childWhere[Op.or] = [
-        { schoolId: finalSchoolId },
-      ];
-      if (school && school.name) {
-        childWhere[Op.or].push({ school: school.name });
-      }
-    } else if (school && school.name) {
-      childWhere.school = school.name;
+      childWhereConditions.push({ schoolId: finalSchoolId });
     }
     
+    // Also check by school name (in case schoolId is not set yet)
+    // Use school.name if available, otherwise use schoolName
+    const schoolNameToCheck = (school && school.name) ? school.name : schoolName;
+    if (schoolNameToCheck) {
+      childWhereConditions.push({ school: schoolNameToCheck });
+    }
+    
+    // If no conditions, just check by parentId (shouldn't happen, but safety check)
+    if (childWhereConditions.length === 0) {
+      logger.error('No school identification available for rating', {
+        schoolId,
+        schoolName,
+        finalSchoolId,
+        hasSchool: !!school,
+      });
+      return res.status(400).json({ error: 'Unable to identify school for rating' });
+    }
+    
+    logger.info('Finding child for school rating', {
+      parentId,
+      finalSchoolId,
+      schoolNameToCheck,
+      conditionsCount: childWhereConditions.length,
+    });
+    
     const child = await Child.findOne({
-      where: childWhere,
+      where: {
+        parentId,
+        [Op.or]: childWhereConditions,
+      },
     });
 
     if (!child) {
