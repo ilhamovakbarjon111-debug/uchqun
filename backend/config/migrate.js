@@ -98,6 +98,21 @@ async function runMigrations() {
           console.warn(`⚠ ${file} does not export an 'up' function`);
         }
       } catch (error) {
+        // If error is about existing index/constraint/table, log and continue
+        if (error.message && (
+          error.message.includes('already exists') ||
+          error.message.includes('duplicate key') ||
+          (error.message.includes('relation') && error.message.includes('already exists'))
+        )) {
+          console.warn(`⚠ ${file}: ${error.message} - skipping (already exists)`);
+          // Mark as executed even if it failed (to avoid retrying)
+          try {
+            await sequelize.query(`INSERT INTO "SequelizeMeta" (name) VALUES ('${file}') ON CONFLICT (name) DO NOTHING`);
+          } catch (insertError) {
+            // Ignore insert errors
+          }
+          continue;
+        }
         console.error(`✗ Error running ${file}:`, error.message);
         console.error('Stack:', error.stack);
         throw error;

@@ -38,12 +38,32 @@ export async function up(queryInterface, Sequelize) {
     },
   });
 
-  await queryInterface.addIndex('teacher_ratings', ['teacherId']);
-  await queryInterface.addConstraint('teacher_ratings', {
-    fields: ['teacherId', 'parentId'],
-    type: 'unique',
-    name: 'teacher_ratings_teacher_parent_unique',
-  });
+  // Add index if it doesn't exist
+  try {
+    await queryInterface.addIndex('teacher_ratings', ['teacherId'], {
+      name: 'teacher_ratings_teacher_id',
+      ifNotExists: true
+    });
+  } catch (error) {
+    // Index might already exist, ignore error
+    if (!error.message.includes('already exists')) {
+      throw error;
+    }
+  }
+  
+  // Add constraint if it doesn't exist
+  try {
+    await queryInterface.addConstraint('teacher_ratings', {
+      fields: ['teacherId', 'parentId'],
+      type: 'unique',
+      name: 'teacher_ratings_teacher_parent_unique',
+    });
+  } catch (error) {
+    // Constraint might already exist, ignore error
+    if (!error.message.includes('already exists')) {
+      throw error;
+    }
+  }
 }
 
 export async function down(queryInterface) {

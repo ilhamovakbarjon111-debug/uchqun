@@ -53,9 +53,39 @@ export async function up(queryInterface, Sequelize) {
     },
   });
 
-  await queryInterface.addIndex('super_admin_messages', ['senderId']);
-  await queryInterface.addIndex('super_admin_messages', ['isRead']);
-  await queryInterface.addIndex('super_admin_messages', ['createdAt']);
+  // Add indexes if they don't exist
+  try {
+    await queryInterface.addIndex('super_admin_messages', ['senderId'], {
+      name: 'super_admin_messages_sender_id',
+      ifNotExists: true
+    });
+  } catch (error) {
+    if (!error.message.includes('already exists')) {
+      throw error;
+    }
+  }
+  
+  try {
+    await queryInterface.addIndex('super_admin_messages', ['isRead'], {
+      name: 'super_admin_messages_is_read',
+      ifNotExists: true
+    });
+  } catch (error) {
+    if (!error.message.includes('already exists')) {
+      throw error;
+    }
+  }
+  
+  try {
+    await queryInterface.addIndex('super_admin_messages', ['createdAt'], {
+      name: 'super_admin_messages_created_at',
+      ifNotExists: true
+    });
+  } catch (error) {
+    if (!error.message.includes('already exists')) {
+      throw error;
+    }
+  }
 }
 
 export async function down(queryInterface, Sequelize) {
