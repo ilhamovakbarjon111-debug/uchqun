@@ -22,17 +22,32 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    logger.info('Login attempt', { 
+      email: email ? email.substring(0, 3) + '***' : 'missing',
+      hasPassword: !!password,
+      bodyKeys: Object.keys(req.body)
+    });
+
     if (!email || !password) {
       logger.warn('Login attempt with missing credentials', { email: email ? 'provided' : 'missing' });
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const normalizedEmail = email.toLowerCase();
+    const normalizedEmail = email.toLowerCase().trim();
+    logger.info('Searching for user', { normalizedEmail });
+    
     const user = await User.findOne({ where: { email: normalizedEmail } });
     if (!user) {
       logger.warn('Login attempt with non-existent email', { email: normalizedEmail });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
+    logger.info('User found', { 
+      userId: user.id, 
+      role: user.role,
+      hasPassword: !!user.password,
+      passwordStartsWith: user.password ? user.password.substring(0, 7) : 'none'
+    });
 
     // Debug: Check if password field exists and is a valid hash
     if (!user.password) {
@@ -50,7 +65,13 @@ export const login = async (req, res) => {
       return res.status(500).json({ error: 'User account error. Password needs to be reset.' });
     }
 
+    logger.info('Comparing password', { userId: user.id });
     const isPasswordValid = await user.comparePassword(password);
+    logger.info('Password comparison result', { 
+      userId: user.id,
+      isValid: isPasswordValid 
+    });
+    
     if (!isPasswordValid) {
       logger.warn('Login attempt with invalid password', { 
         email: normalizedEmail, 
