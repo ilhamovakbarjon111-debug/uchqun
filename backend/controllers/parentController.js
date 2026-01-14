@@ -552,10 +552,7 @@ export const rateSchool = async (req, res) => {
         // Create new school if not found
         school = await School.create({
           name: schoolName,
-          address: null,
-          phone: null,
-          email: null,
-          type: null,
+          type: 'both', // Default value for new schools
         });
         finalSchoolId = school.id;
         logger.info('School created during rating', {
@@ -659,8 +656,13 @@ export const rateSchool = async (req, res) => {
       stack: error.stack,
       body: req.body,
       parentId: req.user?.id,
+      errorName: error.name,
+      errorCode: error.code,
     });
-    res.status(500).json({ error: 'Failed to rate school' });
+    res.status(500).json({ 
+      error: 'Failed to rate school',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 };
 
