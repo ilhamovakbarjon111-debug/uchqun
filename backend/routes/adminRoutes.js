@@ -38,10 +38,7 @@ const router = express.Router();
 
 // Send message to super-admin (must be before middleware to avoid conflicts)
 // But still needs authentication, so we add it manually
-router.post('/message-to-super-admin', authenticate, requireAdmin, (req, res, next) => {
-  console.log('Message route hit!', { method: req.method, path: req.path, user: req.user?.id });
-  sendMessage(req, res, next);
-});
+router.post('/message-to-super-admin', authenticate, requireAdmin, sendMessage);
 
 // All routes require Admin authentication
 router.use(authenticate);

@@ -940,20 +940,24 @@ export const getStatistics = async (req, res) => {
           createdAt: { [Op.gte]: thirtyDaysAgo },
         },
       }),
-      User.count({
-        where: {
-          role: 'parent',
-          createdBy: receptionIds.length > 0 ? { [Op.in]: receptionIds } : null,
-          createdAt: { [Op.gte]: thirtyDaysAgo },
-        },
-      }),
-      User.count({
-        where: {
-          role: 'teacher',
-          createdBy: receptionIds.length > 0 ? { [Op.in]: receptionIds } : null,
-          createdAt: { [Op.gte]: thirtyDaysAgo },
-        },
-      }),
+      receptionIds.length > 0
+        ? User.count({
+            where: {
+              role: 'parent',
+              createdBy: { [Op.in]: receptionIds },
+              createdAt: { [Op.gte]: thirtyDaysAgo },
+            },
+          })
+        : Promise.resolve(0),
+      receptionIds.length > 0
+        ? User.count({
+            where: {
+              role: 'teacher',
+              createdBy: { [Op.in]: receptionIds },
+              createdAt: { [Op.gte]: thirtyDaysAgo },
+            },
+          })
+        : Promise.resolve(0),
     ]);
 
     res.json({
