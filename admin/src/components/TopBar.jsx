@@ -3,7 +3,7 @@ import { Menu, Crown } from 'lucide-react';
 
 const TopBar = ({ onMenuClick }) => {
   return (
-    <div className="fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-orange-600 to-orange-500 z-50 flex items-center justify-between px-4 shadow-md">
+    <div className="fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-primary-600 to-primary-500 z-50 flex items-center justify-between px-4 shadow-md">
       <button
         onClick={onMenuClick}
         className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"

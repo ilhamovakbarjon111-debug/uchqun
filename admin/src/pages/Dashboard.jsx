@@ -116,14 +116,14 @@ const Dashboard = () => {
       title: t('dashboard.groupsCard'), 
       value: stats?.groups || 0, 
       icon: UsersRound, 
-      color: 'bg-orange-50 text-orange-600', 
+      color: 'bg-primary-50 text-primary-600', 
       link: '/admin/groups' 
     },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-orange-600 to-orange-500 rounded-2xl p-6 md:p-8 -mx-4 md:mx-0">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl p-6 md:p-8 -mx-4 md:mx-0">
         <div className="flex items-center gap-3 mb-2">
           <Crown className="w-8 h-8 text-yellow-300" />
           <p className="text-white/90 text-sm font-medium">{t('dashboard.role')}</p>
@@ -148,7 +148,7 @@ const Dashboard = () => {
                     <p className="text-2xl font-bold text-gray-900">{card.value}</p>
                     <p className="text-sm text-gray-600">{card.title}</p>
                     {card.subtitle && (
-                      <p className="text-xs text-orange-600 mt-1">{card.subtitle}</p>
+                      <p className="text-xs text-primary-600 mt-1">{card.subtitle}</p>
                     )}
                   </div>
                 </div>
@@ -184,7 +184,7 @@ const Dashboard = () => {
             </Card>
           )}
           {stats?.pendingReceptions > 0 && (
-            <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6">
+            <Card className="bg-gradient-to-r from-primary-500 to-primary-600 text-white p-6">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-white/20 rounded-xl">
                   <Shield className="w-8 h-8 text-white" />
@@ -196,7 +196,7 @@ const Dashboard = () => {
                   </p>
                   <Link 
                     to="/admin/receptions"
-                    className="inline-block px-4 py-2 bg-white text-orange-600 rounded-lg font-semibold hover:bg-orange-50 transition-colors"
+                    className="inline-block px-4 py-2 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors"
                   >
                     {t('dashboard.reviewReceptions')}
                   </Link>
@@ -218,7 +218,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6">
+      <Card className="bg-gradient-to-r from-primary-500 to-primary-600 text-white p-6">
         <div className="flex items-start gap-4">
           <div className="p-3 bg-white/20 rounded-xl">
             <Trophy className="w-8 h-8 text-white" />

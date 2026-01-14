@@ -40,11 +40,11 @@ const BottomNav = () => {
               key={item.name}
               to={item.href}
               className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-                active ? 'text-orange-600' : 'text-gray-500'
+                active ? 'text-primary-600' : 'text-gray-500'
               }`}
             >
-              <item.icon className={`w-5 h-5 mb-1 ${active ? 'text-orange-600' : 'text-gray-500'}`} />
-              <span className={`text-xs font-medium ${active ? 'text-orange-600' : 'text-gray-500'}`}>
+              <item.icon className={`w-5 h-5 mb-1 ${active ? 'text-primary-600' : 'text-gray-500'}`} />
+              <span className={`text-xs font-medium ${active ? 'text-primary-600' : 'text-gray-500'}`}>
                 {item.name}
               </span>
             </Link>
