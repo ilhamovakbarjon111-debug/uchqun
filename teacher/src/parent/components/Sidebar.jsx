@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
@@ -11,15 +11,33 @@ import {
   MessageCircle,
   Bell,
   Building2,
+  LogOut,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../context/NotificationContext';
+import { useEffect, useState } from 'react';
 
 const Sidebar = ({ onClose }) => {
   const location = useLocation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const { t } = useTranslation();
   const { count, refreshNotifications } = useNotification();
+  const [showLogout, setShowLogout] = useState(true);
+
+  useEffect(() => {
+    // Bir minutdan keyin logout tugmasini olib tashlash
+    const timer = setTimeout(() => {
+      setShowLogout(false);
+    }, 60000); // 60 sekund = 1 minut
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const navigation = [
     { name: t('nav.home'), href: '/', icon: LayoutDashboard },
@@ -102,6 +120,15 @@ const Sidebar = ({ onClose }) => {
             <p className="text-xs text-gray-500 truncate">{user?.email}</p>
           </div>
         </div>
+        {showLogout && (
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 bg-white border border-red-100 rounded-xl hover:bg-red-50 hover:border-red-200 transition-all duration-200 shadow-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            {t('nav.exit', { defaultValue: 'Chiqish' })}
+          </button>
+        )}
       </div>
     </div>
   );
