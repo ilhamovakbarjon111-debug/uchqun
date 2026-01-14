@@ -900,11 +900,27 @@ export const getStatistics = async (req, res) => {
         : Promise.resolve(0),
     ]);
 
-    // Get parent data statistics
+    // Get parent data statistics (only for parents created by admin's receptions)
+    // Get parent IDs created by admin's receptions
+    const adminParents = await User.findAll({
+      where: { 
+        role: 'parent', 
+        createdBy: receptionIds.length > 0 ? { [Op.in]: receptionIds } : null,
+      },
+      attributes: ['id'],
+    });
+    const parentIds = adminParents.map(p => p.id);
+
     const [totalActivities, totalMeals, totalMedia] = await Promise.all([
-      ParentActivity.count(),
-      ParentMeal.count(),
-      ParentMedia.count(),
+      parentIds.length > 0
+        ? ParentActivity.count({ where: { parentId: { [Op.in]: parentIds } } })
+        : Promise.resolve(0),
+      parentIds.length > 0
+        ? ParentMeal.count({ where: { parentId: { [Op.in]: parentIds } } })
+        : Promise.resolve(0),
+      parentIds.length > 0
+        ? ParentMedia.count({ where: { parentId: { [Op.in]: parentIds } } })
+        : Promise.resolve(0),
     ]);
 
     // Get recent activity (last 30 days)
@@ -922,14 +938,14 @@ export const getStatistics = async (req, res) => {
       User.count({
         where: {
           role: 'parent',
-          createdBy: req.user.id,
+          createdBy: receptionIds.length > 0 ? { [Op.in]: receptionIds } : null,
           createdAt: { [Op.gte]: thirtyDaysAgo },
         },
       }),
       User.count({
         where: {
           role: 'teacher',
-          createdBy: req.user.id,
+          createdBy: receptionIds.length > 0 ? { [Op.in]: receptionIds } : null,
           createdAt: { [Op.gte]: thirtyDaysAgo },
         },
       }),
