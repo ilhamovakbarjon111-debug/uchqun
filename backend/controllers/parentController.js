@@ -7,6 +7,7 @@ import Child from '../models/Child.js';
 import TeacherRating from '../models/TeacherRating.js';
 import School from '../models/School.js';
 import SchoolRating from '../models/SchoolRating.js';
+import SuperAdminMessage from '../models/SuperAdminMessage.js';
 import logger from '../utils/logger.js';
 import { Op, fn, col } from 'sequelize';
 
@@ -1036,4 +1037,29 @@ Agar ovqatlanish bilan bog'liq muammolaringiz bo'lsa, dietolog yoki pediatr bila
 
 Agar aniq savollaringiz bo'lsa, iltimos, batafsilroq yozing va men sizga yanada aniq maslahat beraman.`;
 }
+
+/**
+ * Get parent's messages to super-admin
+ * GET /api/parent/messages
+ * 
+ * Business Logic:
+ * - Parents can view their own messages sent to super-admin
+ * - Includes replies from super-admin
+ */
+export const getMyMessages = async (req, res) => {
+  try {
+    const messages = await SuperAdminMessage.findAll({
+      where: { senderId: req.user.id },
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json({
+      success: true,
+      data: messages.map(m => m.toJSON()),
+    });
+  } catch (error) {
+    logger.error('Get my messages error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+};
 

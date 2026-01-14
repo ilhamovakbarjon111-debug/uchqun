@@ -16,6 +16,7 @@ import {
   rateSchool,
   getMySchoolRating,
   getSchools,
+  getMyMessages,
 } from '../controllers/parentController.js';
 import { sendMessage } from '../controllers/superAdminController.js';
 
@@ -52,6 +53,8 @@ router.get('/schools', authenticate, requireParent, getSchools);
 
 // Send message to super-admin
 router.post('/message-to-super-admin', authenticate, requireParent, sendMessage);
+// Get my messages to super-admin (with replies)
+router.get('/messages', authenticate, requireParent, getMyMessages);
 
 // View parent data (accessible by Admin or Reception when clicking on parent in list)
 // This route must come after all specific routes to avoid conflicts
