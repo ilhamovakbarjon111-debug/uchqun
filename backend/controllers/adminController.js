@@ -824,22 +824,39 @@ export const getParentById = async (req, res) => {
  */
 export const getStatistics = async (req, res) => {
   try {
-    const { Op } = require('sequelize');
 
     // Get counts for all roles
+    // First get reception IDs created by this admin
+    const adminReceptions = await User.findAll({
+      where: { role: 'reception', createdBy: req.user.id },
+      attributes: ['id'],
+    });
+    const receptionIds = adminReceptions.map(r => r.id);
+
+    // Get teachers created by these receptions
+    let teacherIds = [];
+    if (receptionIds.length > 0) {
+      const adminTeachers = await User.findAll({
+        where: { 
+          role: 'teacher', 
+          createdBy: { [Op.in]: receptionIds },
+        },
+        attributes: ['id'],
+      });
+      teacherIds = adminTeachers.map(t => t.id);
+    }
+
     const [receptions, teachers, parents, groups] = await Promise.all([
       User.count({ where: { role: 'reception', createdBy: req.user.id } }),
-      User.count({ where: { role: 'teacher', createdBy: req.user.id } }),
-      User.count({ where: { role: 'parent', createdBy: req.user.id } }),
-      Group.count({
-        include: [
-          {
-            model: User,
-            as: 'teacher',
-            where: { createdBy: req.user.id },
-          },
-        ],
-      }),
+      receptionIds.length > 0 
+        ? User.count({ where: { role: 'teacher', createdBy: { [Op.in]: receptionIds } } })
+        : Promise.resolve(0),
+      receptionIds.length > 0
+        ? User.count({ where: { role: 'parent', createdBy: { [Op.in]: receptionIds } } })
+        : Promise.resolve(0),
+      teacherIds.length > 0
+        ? Group.count({ where: { teacherId: { [Op.in]: teacherIds } } })
+        : Promise.resolve(0),
     ]);
 
     // Get active vs inactive receptions
@@ -869,19 +886,17 @@ export const getStatistics = async (req, res) => {
     ]);
 
     // Get document statistics
+
     const [pendingDocuments, approvedDocuments, rejectedDocuments] = await Promise.all([
-      Document.count({ 
-        where: { status: 'pending' },
-        include: [{ model: User, as: 'user', where: { createdBy: req.user.id } }],
-      }),
-      Document.count({ 
-        where: { status: 'approved' },
-        include: [{ model: User, as: 'user', where: { createdBy: req.user.id } }],
-      }),
-      Document.count({ 
-        where: { status: 'rejected' },
-        include: [{ model: User, as: 'user', where: { createdBy: req.user.id } }],
-      }),
+      receptionIds.length > 0
+        ? Document.count({ where: { status: 'pending', userId: { [Op.in]: receptionIds } } })
+        : Promise.resolve(0),
+      receptionIds.length > 0
+        ? Document.count({ where: { status: 'approved', userId: { [Op.in]: receptionIds } } })
+        : Promise.resolve(0),
+      receptionIds.length > 0
+        ? Document.count({ where: { status: 'rejected', userId: { [Op.in]: receptionIds } } })
+        : Promise.resolve(0),
     ]);
 
     // Get parent data statistics
