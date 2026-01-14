@@ -9,7 +9,8 @@ const router = express.Router();
 router.post('/run', async (req, res) => {
   try {
     // Optional: protect with secret key
-    const secret = req.headers['x-migration-secret'] || req.body.secret;
+    // Accept secret from body or query parameter to avoid CORS issues
+    const secret = req.body.secret || req.query.secret || req.headers['x-migration-secret'];
     const expectedSecret = process.env.MIGRATION_SECRET || 'UchqunMigration2026';
     
     if (secret !== expectedSecret) {
