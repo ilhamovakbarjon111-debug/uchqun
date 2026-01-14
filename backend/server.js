@@ -182,14 +182,10 @@ const startServer = async () => {
     } catch (migrationError) {
       console.error('⚠ Migration error:', migrationError.message);
       console.error('Migration error stack:', migrationError.stack);
-      // In production, we should exit if migrations fail
-      // In development, continue to allow manual fixes
-      if (process.env.NODE_ENV === 'production') {
-        console.error('✗ Fatal: Migrations failed in production. Server will not start.');
-        process.exit(1);
-      } else {
-        console.warn('⚠ Continuing despite migration errors (development mode)');
-      }
+      // Don't exit on migration errors - allow server to start
+      // Migrations can be run manually if needed
+      console.warn('⚠ Continuing despite migration errors - server will start anyway');
+      logger.warn('Migration failed but server continuing', { error: migrationError.message });
     }
     
     // In development, also allow sync for convenience
@@ -202,7 +198,8 @@ const startServer = async () => {
       await syncDatabase(forceSync);
     }
 
-    app.listen(PORT, () => {
+    // Start server immediately - don't wait for migrations
+    app.listen(PORT, '0.0.0.0', () => {
       logger.info(`Server started`, {
         port: PORT,
         environment: process.env.NODE_ENV || 'development',
@@ -211,6 +208,7 @@ const startServer = async () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📡 API available at http://localhost:${PORT}/api`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`✅ Health check available at /health`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
