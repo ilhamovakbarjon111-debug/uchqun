@@ -25,7 +25,8 @@ export const login = async (req, res) => {
     logger.info('Login attempt', { 
       email: email ? email.substring(0, 3) + '***' : 'missing',
       hasPassword: !!password,
-      bodyKeys: Object.keys(req.body)
+      bodyKeys: Object.keys(req.body),
+      emailValue: email
     });
 
     if (!email || !password) {
@@ -33,18 +34,35 @@ export const login = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-    logger.info('Searching for user', { normalizedEmail });
+    // Email already normalized by validator, but ensure it's lowercase and trimmed
+    const normalizedEmail = (email || '').toLowerCase().trim();
+    logger.info('Searching for user', { normalizedEmail, originalEmail: email });
     
-    const user = await User.findOne({ where: { email: normalizedEmail } });
+    // Try exact match first
+    let user = await User.findOne({ where: { email: normalizedEmail } });
+    
+    // If not found, try case-insensitive search (in case database has different case)
     if (!user) {
-      logger.warn('Login attempt with non-existent email', { email: normalizedEmail });
+      const { Op } = await import('sequelize');
+      user = await User.findOne({ 
+        where: { 
+          email: { [Op.iLike]: normalizedEmail } 
+        } 
+      });
+    }
+    
+    if (!user) {
+      logger.warn('Login attempt with non-existent email', { 
+        normalizedEmail,
+        searchedWith: 'exact and case-insensitive'
+      });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     logger.info('User found', { 
       userId: user.id, 
       role: user.role,
+      email: user.email,
       hasPassword: !!user.password,
       passwordStartsWith: user.password ? user.password.substring(0, 7) : 'none'
     });
