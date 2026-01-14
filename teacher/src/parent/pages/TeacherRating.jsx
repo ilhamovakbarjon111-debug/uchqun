@@ -46,7 +46,9 @@ const TeacherRating = () => {
     setSchoolError('');
     try {
       // Get childId from selectedChild if available
+      console.log('Selected child:', selectedChild);
       const childIdParam = selectedChild?.id ? `?childId=${selectedChild.id}` : '';
+      console.log('Child ID param:', childIdParam);
       
       const [profileRes, ratingRes, schoolRatingRes] = await Promise.all([
         api.get('/parent/profile'),
@@ -75,6 +77,8 @@ const TeacherRating = () => {
 
       // School rating data
       const schoolRatingData = schoolRatingRes?.data?.data || { rating: null, school: null, summary: { average: 0, count: 0 } };
+      console.log('School rating data:', schoolRatingData);
+      console.log('School from response:', schoolRatingData.school);
       setSchool(schoolRatingData.school);
       setSchoolRating(schoolRatingData.rating);
       setSchoolStars(schoolRatingData.rating?.stars || 0);
@@ -149,7 +153,12 @@ const TeacherRating = () => {
 
     setSavingSchool(true);
     try {
-      await api.post('/parent/school-rating', { schoolId: school.id, stars: schoolStars, comment: schoolComment });
+      // Send schoolId if available, otherwise send schoolName
+      const payload = school.id 
+        ? { schoolId: school.id, stars: schoolStars, comment: schoolComment }
+        : { schoolName: school.name, stars: schoolStars, comment: schoolComment };
+      
+      await api.post('/parent/school-rating', payload);
       setSchoolRating({
         stars: schoolStars,
         comment: schoolComment,

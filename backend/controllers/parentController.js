@@ -504,42 +504,95 @@ export const getMyRating = async (req, res) => {
  */
 export const rateSchool = async (req, res) => {
   try {
-    const { schoolId, stars, comment } = req.body;
+    const { schoolId, schoolName, stars, comment } = req.body;
     const parentId = req.user.id;
 
-    if (!schoolId || !stars) {
-      return res.status(400).json({ error: 'School ID and stars are required' });
+    if (!stars) {
+      return res.status(400).json({ error: 'Stars are required' });
     }
 
     if (stars < 1 || stars > 5) {
       return res.status(400).json({ error: 'Stars must be between 1 and 5' });
     }
 
-    // Check if school exists
-    const school = await School.findByPk(schoolId);
-    if (!school) {
-      return res.status(404).json({ error: 'School not found' });
+    let school = null;
+    let finalSchoolId = schoolId;
+
+    // If schoolId is provided, find school by ID
+    if (schoolId) {
+      school = await School.findByPk(schoolId);
+      if (!school) {
+        return res.status(404).json({ error: 'School not found' });
+      }
+      finalSchoolId = schoolId;
+    } else if (schoolName) {
+      // If schoolName is provided but no schoolId, try to find or create school
+      school = await School.findOne({
+        where: {
+          name: {
+            [Op.iLike]: schoolName,
+          },
+        },
+      });
+
+      if (!school) {
+        // Try partial match
+        school = await School.findOne({
+          where: {
+            name: {
+              [Op.iLike]: `%${schoolName}%`,
+            },
+          },
+        });
+      }
+
+      if (school) {
+        finalSchoolId = school.id;
+      } else {
+        // Create new school if not found
+        school = await School.create({
+          name: schoolName,
+          address: null,
+          phone: null,
+          email: null,
+          type: null,
+        });
+        finalSchoolId = school.id;
+        logger.info('School created during rating', {
+          schoolId: school.id,
+          schoolName: school.name,
+          parentId,
+        });
+      }
+    } else {
+      return res.status(400).json({ error: 'School ID or school name is required' });
     }
 
     // Check if parent has a child in this school
     const child = await Child.findOne({
       where: {
         parentId,
-        schoolId,
+        [Op.or]: [
+          { schoolId: finalSchoolId },
+          { school: school.name },
+        ],
       },
     });
 
     if (!child) {
-      // If no schoolId, check by school name
-      const childByName = await Child.findOne({
-        where: {
-          parentId,
-          school: school.name,
-        },
-      });
+      return res.status(403).json({ error: 'You can only rate schools where your child is enrolled' });
+    }
 
-      if (!childByName) {
-        return res.status(403).json({ error: 'You can only rate schools where your child is enrolled' });
+    // Update child's schoolId if it was null
+    if (!child.schoolId && finalSchoolId) {
+      try {
+        await child.update({ schoolId: finalSchoolId });
+      } catch (err) {
+        logger.warn('Failed to update child schoolId during rating', {
+          childId: child.id,
+          schoolId: finalSchoolId,
+          error: err.message,
+        });
       }
     }
 
@@ -564,7 +617,7 @@ export const rateSchool = async (req, res) => {
     }
 
     logger.info('School rating saved', {
-      schoolId,
+      schoolId: finalSchoolId,
       parentId,
       stars,
       created,
@@ -688,6 +741,31 @@ export const getMySchoolRating = async (req, res) => {
       }
     }
 
+    // If school not found but child has school name, return school name for display
+    if (!schoolId && child.school) {
+      logger.info('School not found in database, returning school name from child', {
+        childId: child.id,
+        childSchool: child.school,
+        parentId,
+      });
+      return res.json({
+        success: true,
+        data: {
+          rating: null,
+          school: {
+            id: null,
+            name: child.school,
+            address: null,
+            phone: null,
+            email: null,
+            type: null,
+          },
+          summary: { average: 0, count: 0 },
+          allRatings: [],
+        },
+      });
+    }
+
     if (!schoolId) {
       return res.json({
         success: true,
@@ -695,6 +773,7 @@ export const getMySchoolRating = async (req, res) => {
           rating: null,
           school: null,
           summary: { average: 0, count: 0 },
+          allRatings: [],
         },
       });
     }
@@ -736,6 +815,15 @@ export const getMySchoolRating = async (req, res) => {
         : null,
       parentEmail: r.ratingParent?.email || null,
     }));
+
+    logger.info('Get school rating response', {
+      parentId,
+      childId: child.id,
+      schoolId,
+      schoolName: school?.name || child.school,
+      hasRating: !!rating,
+      ratingsCount: count,
+    });
 
     res.json({
       success: true,
