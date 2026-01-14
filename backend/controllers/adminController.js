@@ -833,6 +833,8 @@ export const getStatistics = async (req, res) => {
       attributes: ['id'],
     });
     const receptionIds = adminReceptions.map(r => r.id);
+    
+    logger.info('Admin receptions found', { count: receptionIds.length, adminId: req.user.id });
 
     // Get teachers created by these receptions
     let teacherIds = [];
@@ -902,14 +904,17 @@ export const getStatistics = async (req, res) => {
 
     // Get parent data statistics (only for parents created by admin's receptions)
     // Get parent IDs created by admin's receptions
-    const adminParents = await User.findAll({
-      where: { 
-        role: 'parent', 
-        createdBy: receptionIds.length > 0 ? { [Op.in]: receptionIds } : null,
-      },
-      attributes: ['id'],
-    });
-    const parentIds = adminParents.map(p => p.id);
+    let parentIds = [];
+    if (receptionIds.length > 0) {
+      const adminParents = await User.findAll({
+        where: { 
+          role: 'parent', 
+          createdBy: { [Op.in]: receptionIds },
+        },
+        attributes: ['id'],
+      });
+      parentIds = adminParents.map(p => p.id);
+    }
 
     const [totalActivities, totalMeals, totalMedia] = await Promise.all([
       parentIds.length > 0
@@ -992,13 +997,29 @@ export const getStatistics = async (req, res) => {
     logger.error('Get statistics error', { 
       error: error.message, 
       stack: error.stack,
-      adminId: req.user?.id 
+      adminId: req.user?.id,
+      errorName: error.name,
+      errorCode: error.code
     });
-    console.error('Statistics error details:', error);
-    res.status(500).json({ 
+    console.error('Statistics error details:', {
+      message: error.message,
+      name: error.name,
+      code: error.code,
+      stack: error.stack
+    });
+    
+    // Return more detailed error in development
+    const errorResponse = {
       error: 'Failed to fetch statistics',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+      message: error.message
+    };
+    
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.details = error.stack;
+      errorResponse.errorName = error.name;
+    }
+    
+    res.status(500).json(errorResponse);
   }
 };
 
