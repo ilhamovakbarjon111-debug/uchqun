@@ -7,7 +7,8 @@ import {
   UsersRound,
   Settings,
   LogOut,
-  Shield
+  Shield,
+  User
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -22,6 +23,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.parents'), href: '/reception/parents', icon: Users },
     { name: t('nav.teachers'), href: '/reception/teachers', icon: UserCheck },
     { name: t('nav.groups'), href: '/reception/groups', icon: UsersRound },
+    { name: t('nav.profile', { defaultValue: 'Profile' }), href: '/reception/profile', icon: User },
   ];
 
   const isActive = (path) => location.pathname === path;
