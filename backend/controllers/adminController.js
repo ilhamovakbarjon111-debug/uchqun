@@ -824,7 +824,12 @@ export const getParentById = async (req, res) => {
  */
 export const getStatistics = async (req, res) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
     logger.info('Getting statistics for admin', { adminId: req.user.id });
+    console.log('Statistics request:', { adminId: req.user.id, role: req.user.role });
 
     // Get counts for all roles
     // First get reception IDs created by this admin
@@ -1003,13 +1008,17 @@ export const getStatistics = async (req, res) => {
       stack: error.stack,
       adminId: req.user?.id,
       errorName: error.name,
-      errorCode: error.code
+      errorCode: error.code,
+      errorTable: error.table,
+      errorColumn: error.column
     });
     console.error('Statistics error details:', {
       message: error.message,
       name: error.name,
       code: error.code,
-      stack: error.stack
+      table: error.table,
+      column: error.column,
+      stack: error.stack?.substring(0, 500) // Limit stack trace
     });
     
     // Return more detailed error in development
@@ -1018,9 +1027,10 @@ export const getStatistics = async (req, res) => {
       message: error.message
     };
     
-    if (process.env.NODE_ENV === 'development') {
-      errorResponse.details = error.stack;
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
+      errorResponse.details = error.stack?.substring(0, 500);
       errorResponse.errorName = error.name;
+      errorResponse.errorCode = error.code;
     }
     
     res.status(500).json(errorResponse);
