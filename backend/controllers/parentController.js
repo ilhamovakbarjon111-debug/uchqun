@@ -569,14 +569,23 @@ export const rateSchool = async (req, res) => {
     }
 
     // Check if parent has a child in this school
+    const childWhere = {
+      parentId,
+    };
+    
+    if (finalSchoolId) {
+      childWhere[Op.or] = [
+        { schoolId: finalSchoolId },
+      ];
+      if (school && school.name) {
+        childWhere[Op.or].push({ school: school.name });
+      }
+    } else if (school && school.name) {
+      childWhere.school = school.name;
+    }
+    
     const child = await Child.findOne({
-      where: {
-        parentId,
-        [Op.or]: [
-          { schoolId: finalSchoolId },
-          { school: school.name },
-        ],
-      },
+      where: childWhere,
     });
 
     if (!child) {
@@ -599,11 +608,11 @@ export const rateSchool = async (req, res) => {
     // Create or update rating
     const [rating, created] = await SchoolRating.findOrCreate({
       where: {
-        schoolId,
+        schoolId: finalSchoolId,
         parentId,
       },
       defaults: {
-        schoolId,
+        schoolId: finalSchoolId,
         parentId,
         stars,
         comment: comment || null,
