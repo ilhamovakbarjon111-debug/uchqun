@@ -624,10 +624,11 @@ export const rateSchool = async (req, res) => {
     }
 
     // Ensure we have a valid schoolId before proceeding
-    if (!finalSchoolId) {
+    if (!finalSchoolId || finalSchoolId === null || finalSchoolId === undefined) {
       logger.error('No schoolId available for rating', {
         schoolId,
         schoolName,
+        finalSchoolId,
         hasSchool: !!school,
         childId: child.id,
       });
@@ -638,6 +639,10 @@ export const rateSchool = async (req, res) => {
     if (!child.schoolId && finalSchoolId) {
       try {
         await child.update({ schoolId: finalSchoolId });
+        logger.info('Updated child schoolId', {
+          childId: child.id,
+          schoolId: finalSchoolId,
+        });
       } catch (err) {
         logger.warn('Failed to update child schoolId during rating', {
           childId: child.id,
@@ -648,48 +653,44 @@ export const rateSchool = async (req, res) => {
     }
 
     // Create or update rating
-    try {
-      const [rating, created] = await SchoolRating.findOrCreate({
-        where: {
-          schoolId: finalSchoolId,
-          parentId,
-        },
-        defaults: {
-          schoolId: finalSchoolId,
-          parentId,
-          stars,
-          comment: comment || null,
-        },
-      });
+    logger.info('Creating/updating school rating', {
+      schoolId: finalSchoolId,
+      parentId,
+      stars,
+    });
 
-      if (!created) {
-        rating.stars = stars;
-        rating.comment = comment || null;
-        await rating.save();
-      }
-
-      logger.info('School rating saved', {
+    const [rating, created] = await SchoolRating.findOrCreate({
+      where: {
+        schoolId: finalSchoolId,
+        parentId,
+      },
+      defaults: {
         schoolId: finalSchoolId,
         parentId,
         stars,
-        created,
-      });
+        comment: comment || null,
+      },
+    });
 
-      res.json({
-        success: true,
-        message: created ? 'School rating created successfully' : 'School rating updated successfully',
-        data: rating.toJSON(),
-      });
-    } catch (ratingError) {
-      logger.error('Error creating/updating school rating', {
-        error: ratingError.message,
-        stack: ratingError.stack,
-        schoolId: finalSchoolId,
-        parentId,
-        stars,
-      });
-      throw ratingError; // Re-throw to be caught by outer try-catch
+    if (!created) {
+      rating.stars = stars;
+      rating.comment = comment || null;
+      await rating.save();
     }
+
+    logger.info('School rating saved', {
+      schoolId: finalSchoolId,
+      parentId,
+      stars,
+      created,
+      ratingId: rating.id,
+    });
+
+    res.json({
+      success: true,
+      message: created ? 'School rating created successfully' : 'School rating updated successfully',
+      data: rating.toJSON(),
+    });
   } catch (error) {
     logger.error('Rate school error', { 
       error: error.message, 
