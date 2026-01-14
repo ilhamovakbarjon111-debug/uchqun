@@ -230,6 +230,24 @@
     "summaryTitle": "Мнение других родителей",
     "lastUpdated": "Последнее обновление: {{date}}"
   },
+  "profile": {
+    "contactSuperAdmin": "Отправить сообщение супер-админу",
+    "myMessages": "Мои сообщения",
+    "messageRequired": "Тема и сообщение обязательны",
+    "messageSent": "Сообщение успешно отправлено",
+    "messageError": "Ошибка отправки сообщения",
+    "subject": "Тема",
+    "message": "Сообщение",
+    "subjectPlaceholder": "Тема сообщения...",
+    "messagePlaceholder": "Напишите ваше сообщение...",
+    "cancel": "Отмена",
+    "send": "Отправить",
+    "sending": "Отправка...",
+    "noMessages": "Пока нет сообщений",
+    "yourMessage": "Ваше сообщение",
+    "superAdminReply": "Ответ супер-админа",
+    "replied": "Получен ответ"
+  },
   "language": "Язык"
 }
 

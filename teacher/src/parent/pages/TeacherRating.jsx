@@ -374,7 +374,7 @@ const TeacherRating = () => {
       </div>
 
       {/* School Rating Section */}
-      {school && (
+      {school ? (
         <>
           <Card className="bg-gradient-to-r from-green-500 to-green-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">{t('schoolRatingPage.title')}</h2>
@@ -536,6 +536,16 @@ const TeacherRating = () => {
             </div>
           </div>
         </>
+      ) : (
+        <Card className="flex items-start gap-3">
+          <div className="p-2 rounded-full bg-green-50 text-green-600">
+            <Building2 className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">{t('schoolRatingPage.title')}</h2>
+            <p className="text-gray-600">{t('schoolRatingPage.noSchool')}</p>
+          </div>
+        </Card>
       )}
     </div>
   );

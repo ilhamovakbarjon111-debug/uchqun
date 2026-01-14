@@ -156,6 +156,32 @@
     "typeSchool": "Школа",
     "typeKindergarten": "Детский сад",
     "typeBoth": "Школа и Детский сад"
+  },
+  "profile": {
+    "title": "Профиль",
+    "subtitle": "Информация об аккаунте и сообщения",
+    "profileInfo": "Информация профиля",
+    "email": "Email",
+    "phone": "Телефон",
+    "language": "Язык",
+    "contactSuperAdmin": "Связаться с супер-админом",
+    "contactDescription": "Нажмите кнопку ниже, чтобы отправить сообщение супер-админу",
+    "sendMessage": "Отправить сообщение супер-админу",
+    "myMessages": "Мои сообщения",
+    "subject": "Тема",
+    "message": "Сообщение",
+    "subjectPlaceholder": "Тема сообщения...",
+    "messagePlaceholder": "Напишите ваше сообщение...",
+    "cancel": "Отмена",
+    "send": "Отправить",
+    "sending": "Отправка...",
+    "messageRequired": "Тема и сообщение обязательны",
+    "messageSent": "Сообщение успешно отправлено",
+    "messageError": "Ошибка отправки сообщения",
+    "noMessages": "Пока нет сообщений",
+    "yourMessage": "Ваше сообщение",
+    "superAdminReply": "Ответ супер-админа",
+    "replied": "Получен ответ"
   }
 }
 

@@ -238,6 +238,28 @@
     "delete": "Delete",
     "confirmDelete": "Delete this message?",
     "scrollToBottom": "Scroll to bottom"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your account",
+    "contactSuperAdmin": "Contact Super-Admin",
+    "contactDescription": "Click the button below to send a message to super-admin",
+    "sendMessage": "Send message to super-admin",
+    "myMessages": "My messages",
+    "subject": "Subject",
+    "message": "Message",
+    "subjectPlaceholder": "Message subject...",
+    "messagePlaceholder": "Write your message...",
+    "cancel": "Cancel",
+    "send": "Send",
+    "sending": "Sending...",
+    "messageRequired": "Subject and message are required",
+    "messageSent": "Message sent successfully",
+    "messageError": "Error sending message",
+    "noMessages": "No messages yet",
+    "yourMessage": "Your message",
+    "superAdminReply": "Super-admin reply",
+    "replied": "Replied"
   }
 }
 

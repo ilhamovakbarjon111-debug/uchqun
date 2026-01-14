@@ -230,6 +230,24 @@
     "summaryTitle": "Boshqa ota-onalar fikri",
     "lastUpdated": "So'nggi yangilanish: {{date}}"
   },
+  "profile": {
+    "contactSuperAdmin": "Super-adminga xabar yuborish",
+    "myMessages": "Mening xabarlarim",
+    "messageRequired": "Subject va xabar to'ldirilishi kerak",
+    "messageSent": "Xabar muvaffaqiyatli yuborildi",
+    "messageError": "Xabar yuborishda xatolik",
+    "subject": "Mavzu",
+    "message": "Xabar",
+    "subjectPlaceholder": "Xabar mavzusi...",
+    "messagePlaceholder": "Xabaringizni yozing...",
+    "cancel": "Bekor qilish",
+    "send": "Yuborish",
+    "sending": "Yuborilmoqda...",
+    "noMessages": "Hozircha xabarlar yo'q",
+    "yourMessage": "Sizning xabaringiz",
+    "superAdminReply": "Super-admin javobi",
+    "replied": "Javob berildi"
+  },
   "language": "Til"
 }
 

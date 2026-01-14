@@ -7,18 +7,14 @@ import {
   UserCheck,
   Shield,
   UsersRound,
-  LogOut,
   Crown,
   Building2,
-  MessageSquare,
   User
 } from 'lucide-react';
-import LanguageSwitcher from './LanguageSwitcher';
 
-const Sidebar = ({ onClose, onMessageClick, onMessagesClick, messagesCount = 0 }) => {
+const Sidebar = ({ onClose }) => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { t } = useTranslation();
 
   const navigation = [
@@ -32,11 +28,6 @@ const Sidebar = ({ onClose, onMessageClick, onMessagesClick, messagesCount = 0 }
   ];
 
   const isActive = (path) => location.pathname === path;
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <div className="flex flex-col h-screen w-64 bg-white border-r border-gray-100 shadow-sm">
@@ -81,7 +72,7 @@ const Sidebar = ({ onClose, onMessageClick, onMessagesClick, messagesCount = 0 }
       </nav>
 
       <div className="p-4 bg-gray-50/50 border-t border-gray-100">
-        <div className="flex items-center gap-3 mb-4 px-2">
+        <div className="flex items-center gap-3 px-2">
           <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold border-2 border-white shadow-sm">
             {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
           </div>
@@ -93,39 +84,6 @@ const Sidebar = ({ onClose, onMessageClick, onMessagesClick, messagesCount = 0 }
             <p className="text-xs text-orange-600 font-semibold mt-0.5">{t('role.admin')}</p>
           </div>
         </div>
-        <div className="flex items-center justify-between gap-2 px-2 mb-3">
-          <LanguageSwitcher />
-        </div>
-        <button
-          onClick={() => {
-            if (onMessageClick) onMessageClick();
-          }}
-          className="flex items-center justify-center w-full gap-2 px-4 py-2.5 text-sm font-medium text-blue-600 bg-white border border-blue-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm active:scale-95 mb-2"
-        >
-          <MessageSquare className="h-4 w-4" />
-          {t('nav.contactSuperAdmin', { defaultValue: 'Super-adminga xabar' })}
-        </button>
-        {messagesCount > 0 && (
-          <button
-            onClick={() => {
-              if (onMessagesClick) onMessagesClick();
-            }}
-            className="flex items-center justify-center w-full gap-2 px-4 py-2.5 text-sm font-medium text-green-600 bg-white border border-green-100 rounded-xl hover:bg-green-50 hover:border-green-200 transition-all duration-200 shadow-sm active:scale-95 mb-2 relative"
-          >
-            <MessageSquare className="h-4 w-4" />
-            Mening xabarlarim
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              {messagesCount}
-            </span>
-          </button>
-        )}
-        <button
-          onClick={handleLogout}
-          className="flex items-center justify-center w-full gap-2 px-4 py-2.5 text-sm font-medium text-red-600 bg-white border border-red-100 rounded-xl hover:bg-red-50 hover:border-red-200 transition-all duration-200 shadow-sm active:scale-95"
-        >
-          <LogOut className="h-4 w-4" />
-          {t('logout')}
-        </button>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { loadMessages, addMessage, markRead, updateMessage, deleteMessage } from
 import api from '../shared/services/api';
 import { useAuth } from '../shared/context/AuthContext';
 import { useToast } from '../shared/context/ToastContext';
+import Card from '../shared/components/Card';
 
 const Chat = () => {
   const { t } = useTranslation();

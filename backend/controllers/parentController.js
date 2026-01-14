@@ -10,6 +10,7 @@ import SchoolRating from '../models/SchoolRating.js';
 import SuperAdminMessage from '../models/SuperAdminMessage.js';
 import logger from '../utils/logger.js';
 import { Op, fn, col } from 'sequelize';
+import sequelize from '../config/database.js';
 
 /**
  * Parent Controller
@@ -620,12 +621,43 @@ export const getMySchoolRating = async (req, res) => {
       schoolId = child.schoolId;
       school = child.childSchool;
     } else if (child.school) {
-      // Find school by name
+      // Find school by name (case-insensitive search)
       school = await School.findOne({
-        where: { name: child.school },
+        where: {
+          name: {
+            [Op.iLike]: child.school,
+          },
+        },
       });
+      
       if (school) {
         schoolId = school.id;
+        // Update child's schoolId for future use
+        try {
+          await child.update({ schoolId: school.id });
+        } catch (err) {
+          logger.warn('Failed to update child schoolId', { childId: child.id, schoolId: school.id, error: err.message });
+        }
+      } else {
+        // If school not found by exact name, try partial match
+        const partialMatch = await School.findOne({
+          where: {
+            name: {
+              [Op.iLike]: `%${child.school}%`,
+            },
+          },
+        });
+        
+        if (partialMatch) {
+          school = partialMatch;
+          schoolId = partialMatch.id;
+          // Update child's schoolId
+          try {
+            await child.update({ schoolId: partialMatch.id });
+          } catch (err) {
+            logger.warn('Failed to update child schoolId', { childId: child.id, schoolId: partialMatch.id, error: err.message });
+          }
+        }
       }
     }
 

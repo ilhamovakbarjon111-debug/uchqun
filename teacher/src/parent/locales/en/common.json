@@ -230,6 +230,24 @@
     "summaryTitle": "Community rating",
     "lastUpdated": "Last updated {{date}}"
   },
+  "profile": {
+    "contactSuperAdmin": "Send message to super-admin",
+    "myMessages": "My messages",
+    "messageRequired": "Subject and message are required",
+    "messageSent": "Message sent successfully",
+    "messageError": "Error sending message",
+    "subject": "Subject",
+    "message": "Message",
+    "subjectPlaceholder": "Message subject...",
+    "messagePlaceholder": "Write your message...",
+    "cancel": "Cancel",
+    "send": "Send",
+    "sending": "Sending...",
+    "noMessages": "No messages yet",
+    "yourMessage": "Your message",
+    "superAdminReply": "Super-admin reply",
+    "replied": "Replied"
+  },
   "language": "Language"
 }
 

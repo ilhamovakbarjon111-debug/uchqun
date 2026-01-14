@@ -5,15 +5,12 @@ import {
   Users, 
   UserCheck,
   UsersRound,
-  LogOut,
   User,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const BottomNav = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
   const { t } = useTranslation();
 
   const navigation = [
@@ -29,11 +26,6 @@ const BottomNav = () => {
       return location.pathname === '/reception';
     }
     return location.pathname.startsWith(path);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
   };
 
   return (
@@ -56,15 +48,6 @@ const BottomNav = () => {
             </Link>
           );
         })}
-        {/* Exit Button */}
-        <button
-          onClick={handleLogout}
-          className="flex flex-col items-center justify-center flex-1 h-full transition-colors text-red-600 hover:text-red-700"
-          aria-label="Exit"
-        >
-          <LogOut className="w-5 h-5 mb-1" />
-          <span className="text-xs font-medium">{t('nav.logout')}</span>
-        </button>
       </nav>
     </div>
   );

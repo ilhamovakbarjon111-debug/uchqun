@@ -160,6 +160,32 @@
       "capacity": "Sig'im:",
       "teacher": "O'qituvchi:"
     }
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Hisobingiz ma'lumotlari va xabarlar",
+    "profileInfo": "Profil ma'lumotlari",
+    "email": "Email",
+    "phone": "Telefon",
+    "contactSuperAdmin": "Super-adminga bog'lanish",
+    "contactDescription": "Super-adminga xabar yuborish uchun quyidagi tugmani bosing",
+    "sendMessage": "Super-adminga xabar yuborish",
+    "myMessages": "Mening xabarlarim",
+    "subject": "Mavzu",
+    "message": "Xabar",
+    "subjectPlaceholder": "Xabar mavzusi...",
+    "messagePlaceholder": "Xabaringizni yozing...",
+    "cancel": "Bekor qilish",
+    "send": "Yuborish",
+    "sending": "Yuborilmoqda...",
+    "messageRequired": "Subject va xabar to'ldirilishi kerak",
+    "messageSent": "Xabar muvaffaqiyatli yuborildi",
+    "messageError": "Xabar yuborishda xatolik",
+    "noMessages": "Hozircha xabarlar yo'q",
+    "yourMessage": "Sizning xabaringiz",
+    "superAdminReply": "Super-admin javobi",
+    "replied": "Javob berildi",
+    "logout": "Chiqish"
   }
 }
 

@@ -519,7 +519,7 @@ const ChildProfile = () => {
               onClick={() => setShowAvatarSelector(false)}
               className="mt-6 w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-semibold transition"
             >
-              Bekor qilish
+              {t('profile.cancel', { defaultValue: 'Bekor qilish' })}
             </button>
           </div>
         </div>
@@ -587,12 +587,12 @@ const ChildProfile = () => {
             
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.messageSubject', { defaultValue: 'Mavzu' })}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.subject', { defaultValue: 'Mavzu' })}</label>
                 <input
                   type="text"
                   value={messageSubject}
                   onChange={(e) => setMessageSubject(e.target.value)}
-                  placeholder={t('profile.messageSubjectPlaceholder', { defaultValue: 'Xabar mavzusi...' })}
+                  placeholder={t('profile.subjectPlaceholder', { defaultValue: 'Xabar mavzusi...' })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>

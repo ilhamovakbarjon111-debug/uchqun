@@ -4,15 +4,16 @@ import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import {
   User,
   Mail,
-  Phone,
   MessageSquare,
   Send,
   X,
   Crown,
   LogOut,
+  Globe,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -51,7 +52,7 @@ const Profile = () => {
 
   const handleSendMessage = async () => {
     if (!messageSubject.trim() || !messageText.trim()) {
-      showError('Subject va xabar to\'ldirilishi kerak');
+      showError(t('profile.messageRequired', { defaultValue: 'Subject va xabar to\'ldirilishi kerak' }));
       return;
     }
 
@@ -61,7 +62,7 @@ const Profile = () => {
         subject: messageSubject.trim(),
         message: messageText.trim(),
       });
-      success('Xabar muvaffaqiyatli yuborildi');
+      success(t('profile.messageSent', { defaultValue: 'Xabar muvaffaqiyatli yuborildi' }));
       setMessageSubject('');
       setMessageText('');
       setShowMessageModal(false);
@@ -69,7 +70,7 @@ const Profile = () => {
       await loadMessages();
     } catch (error) {
       console.error('Error sending message:', error);
-      showError(error.response?.data?.error || 'Xabar yuborishda xatolik');
+      showError(error.response?.data?.error || t('profile.messageError', { defaultValue: 'Xabar yuborishda xatolik' }));
     } finally {
       setSendingMessage(false);
     }
@@ -115,20 +116,22 @@ const Profile = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
-            <Mail className="w-5 h-5 text-gray-400" />
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">{t('profile.email', { defaultValue: 'Email' })}</p>
-              <p className="text-gray-900 font-medium">{user?.email}</p>
-            </div>
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
+          <Mail className="w-5 h-5 text-gray-400" />
+          <div>
+            <p className="text-xs text-gray-500 uppercase font-semibold mb-1">{t('profile.email', { defaultValue: 'Email' })}</p>
+            <p className="text-gray-900 font-medium">{user?.email}</p>
           </div>
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
-            <Phone className="w-5 h-5 text-gray-400" />
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">{t('profile.phone', { defaultValue: 'Phone' })}</p>
-              <p className="text-gray-900 font-medium">{user?.phone || '—'}</p>
+        </div>
+
+        {/* Language Switcher */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Globe className="w-5 h-5 text-gray-400" />
+              <p className="text-sm font-medium text-gray-700">{t('profile.language', { defaultValue: 'Language' })}</p>
             </div>
+            <LanguageSwitcher />
           </div>
         </div>
       </Card>

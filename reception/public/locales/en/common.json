@@ -155,6 +155,32 @@
       "capacity": "Capacity:",
       "teacher": "Teacher:"
     }
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Your account information and messages",
+    "profileInfo": "Profile Information",
+    "email": "Email",
+    "phone": "Phone",
+    "contactSuperAdmin": "Contact Super-Admin",
+    "contactDescription": "Click the button below to send a message to super-admin",
+    "sendMessage": "Send message to super-admin",
+    "myMessages": "My messages",
+    "subject": "Subject",
+    "message": "Message",
+    "subjectPlaceholder": "Message subject...",
+    "messagePlaceholder": "Write your message...",
+    "cancel": "Cancel",
+    "send": "Send",
+    "sending": "Sending...",
+    "messageRequired": "Subject and message are required",
+    "messageSent": "Message sent successfully",
+    "messageError": "Error sending message",
+    "noMessages": "No messages yet",
+    "yourMessage": "Your message",
+    "superAdminReply": "Super-admin reply",
+    "replied": "Replied",
+    "logout": "Logout"
   }
 }
 
