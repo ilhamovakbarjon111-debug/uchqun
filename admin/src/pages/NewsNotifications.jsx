@@ -141,7 +141,7 @@ const NewsNotifications = () => {
 
         <button
           onClick={handleCreate}
-          className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors shadow-sm"
+          className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-sm"
         >
           <Plus className="w-5 h-5" />
           Add {activeTab === 'news' ? 'News' : 'Notification'}
@@ -153,7 +153,7 @@ const NewsNotifications = () => {
           onClick={() => setActiveTab('news')}
           className={`px-6 py-3 font-medium transition-colors ${
             activeTab === 'news'
-              ? 'border-b-2 border-orange-600 text-orange-600'
+              ? 'border-b-2 border-primary-600 text-primary-600'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -164,7 +164,7 @@ const NewsNotifications = () => {
           onClick={() => setActiveTab('notifications')}
           className={`px-6 py-3 font-medium transition-colors ${
             activeTab === 'notifications'
-              ? 'border-b-2 border-orange-600 text-orange-600'
+              ? 'border-b-2 border-primary-600 text-primary-600'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -252,7 +252,7 @@ const NewsNotifications = () => {
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
 
@@ -263,7 +263,7 @@ const NewsNotifications = () => {
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   rows={6}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
 
@@ -272,7 +272,7 @@ const NewsNotifications = () => {
                 <select
                   value={formData.targetAudience}
                   onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="all">All</option>
                   <option value="parents">Parents</option>
@@ -286,7 +286,7 @@ const NewsNotifications = () => {
                     type="checkbox"
                     checked={formData.published}
                     onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                    className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                   />
                   <span className="text-sm font-medium text-gray-700">Publish immediately</span>
                 </label>
@@ -302,7 +302,7 @@ const NewsNotifications = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {editingItem ? 'Update' : 'Create'}

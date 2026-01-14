@@ -107,7 +107,7 @@ const ParentManagement = () => {
             placeholder={t('parentsPage.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent w-full"
+            className="pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full"
           />
         </div>
       </div>
@@ -130,7 +130,7 @@ const ParentManagement = () => {
                   key={parent.id}
                   className={`p-4 cursor-pointer transition-colors ${
                     selectedParent?.id === parent.id
-                      ? 'bg-orange-50 border-l-4 border-orange-500'
+                      ? 'bg-primary-50 border-l-4 border-primary-500'
                       : 'hover:bg-gray-50'
                   }`}
                   onClick={() => handleViewParent(parent)}
@@ -138,7 +138,7 @@ const ParentManagement = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
-                        <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold">
+                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
                           {parent.firstName?.charAt(0)}{parent.lastName?.charAt(0)}
                         </div>
                         <div>
@@ -182,7 +182,7 @@ const ParentManagement = () => {
                   {/* Children */}
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <Baby className="w-5 h-5 text-orange-600" />
+                      <Baby className="w-5 h-5 text-primary-600" />
                       <h3 className="font-semibold text-gray-900">Children ({parentData.children?.length || 0})</h3>
                     </div>
                     <div className="space-y-2 max-h-32 overflow-y-auto">
@@ -207,7 +207,7 @@ const ParentManagement = () => {
                   {/* Activities */}
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <FileText className="w-5 h-5 text-orange-600" />
+                      <FileText className="w-5 h-5 text-primary-600" />
                       <h3 className="font-semibold text-gray-900">Activities ({parentData.activities?.length || 0})</h3>
                     </div>
                     <div className="space-y-2 max-h-32 overflow-y-auto">
@@ -227,7 +227,7 @@ const ParentManagement = () => {
                   {/* Meals */}
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <Utensils className="w-5 h-5 text-orange-600" />
+                      <Utensils className="w-5 h-5 text-primary-600" />
                       <h3 className="font-semibold text-gray-900">Meals ({parentData.meals?.length || 0})</h3>
                     </div>
                     <div className="space-y-2 max-h-32 overflow-y-auto">
@@ -247,7 +247,7 @@ const ParentManagement = () => {
                   {/* Media */}
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <ImageIcon className="w-5 h-5 text-orange-600" />
+                      <ImageIcon className="w-5 h-5 text-primary-600" />
                       <h3 className="font-semibold text-gray-900">Media ({parentData.media?.length || 0})</h3>
                     </div>
                     <div className="space-y-2 max-h-32 overflow-y-auto">

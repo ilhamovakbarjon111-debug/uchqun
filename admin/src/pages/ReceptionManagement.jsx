@@ -390,7 +390,7 @@ const ReceptionManagement = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <Plus className="w-5 h-5" />
           {t('receptionsPage.create')}
@@ -415,7 +415,7 @@ const ReceptionManagement = () => {
                   key={reception.id}
                   className={`p-4 cursor-pointer transition-colors ${
                     selectedReception?.id === reception.id
-                      ? 'bg-orange-50 border-l-4 border-orange-500'
+                      ? 'bg-primary-50 border-l-4 border-primary-500'
                       : 'hover:bg-gray-50'
                   }`}
                   onClick={() => handleViewReception(reception)}
@@ -440,7 +440,7 @@ const ReceptionManagement = () => {
                           e.stopPropagation();
                           handleEditReception(reception);
                         }}
-                        className="p-1.5 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                        className="p-1.5 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
                         title="Edit Reception"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -611,7 +611,7 @@ const ReceptionManagement = () => {
                   required
                   value={createFormData.firstName}
                   onChange={(e) => setCreateFormData({ ...createFormData, firstName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -623,7 +623,7 @@ const ReceptionManagement = () => {
                   required
                   value={createFormData.lastName}
                   onChange={(e) => setCreateFormData({ ...createFormData, lastName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -635,7 +635,7 @@ const ReceptionManagement = () => {
                   required
                   value={createFormData.email}
                   onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -647,7 +647,7 @@ const ReceptionManagement = () => {
                   required
                   value={createFormData.password}
                   onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -658,7 +658,7 @@ const ReceptionManagement = () => {
                   type="tel"
                   value={createFormData.phone}
                   onChange={(e) => setCreateFormData({ ...createFormData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div className="flex gap-3 pt-4">
@@ -672,7 +672,7 @@ const ReceptionManagement = () => {
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
                 >
                   {actionLoading ? t('receptionsPage.createSubmitting') : t('receptionsPage.createSubmit')}
                 </button>
@@ -708,7 +708,7 @@ const ReceptionManagement = () => {
                   required
                   value={editFormData.firstName}
                   onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -720,7 +720,7 @@ const ReceptionManagement = () => {
                   required
                   value={editFormData.lastName}
                   onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -732,7 +732,7 @@ const ReceptionManagement = () => {
                   required
                   value={editFormData.email}
                   onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -743,7 +743,7 @@ const ReceptionManagement = () => {
                   type="password"
                   value={editFormData.password}
                   onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -754,7 +754,7 @@ const ReceptionManagement = () => {
                   type="tel"
                   value={editFormData.phone}
                   onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div className="flex gap-3 pt-4">
@@ -771,7 +771,7 @@ const ReceptionManagement = () => {
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
                 >
                   {actionLoading ? t('receptionsPage.updateSubmitting') : t('receptionsPage.updateSubmit')}
                 </button>
