@@ -40,6 +40,9 @@ const router = express.Router();
 router.use(authenticate);
 router.use(requireAdmin);
 
+// Send message to super-admin (must be before other routes to avoid conflicts)
+router.post('/message-to-super-admin', sendMessage);
+
 // Reception management (Admin can CREATE, EDIT, DELETE and MANAGE)
 router.post('/receptions', createReception); // Admin can create Reception
 router.get('/receptions', getReceptions);
@@ -67,9 +70,6 @@ router.get('/statistics', getStatistics); // Admin can view all statistics
 
 // School ratings
 router.get('/school-ratings', getSchoolRatings); // View school ratings from parents created by admin's receptions
-
-// Send message to super-admin
-router.post('/message-to-super-admin', sendMessage);
 
 // Admin management (Super admin can create Admin accounts)
 router.post('/admins', createAdmin); // Create admin account with email and password
