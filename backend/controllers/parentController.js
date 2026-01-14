@@ -583,37 +583,64 @@ export const rateSchool = async (req, res) => {
 
 /**
  * Get my school rating
- * GET /api/parent/school-rating
+ * GET /api/parent/school-rating?childId=xxx
  */
 export const getMySchoolRating = async (req, res) => {
   try {
     const parentId = req.user.id;
+    const { childId } = req.query;
 
-    // Get parent's children to find their schools
-    const children = await Child.findAll({
-      where: { parentId },
-      include: [
-        {
-          model: School,
-          as: 'childSchool',
-          required: false,
-        },
-      ],
-    });
+    let child = null;
 
-    if (children.length === 0) {
-      return res.json({
-        success: true,
-        data: {
-          rating: null,
-          school: null,
-          summary: { average: 0, count: 0 },
+    // If childId is provided, get that specific child
+    if (childId) {
+      child = await Child.findOne({
+        where: {
+          id: childId,
+          parentId, // Ensure child belongs to this parent
         },
+        include: [
+          {
+            model: School,
+            as: 'childSchool',
+            required: false,
+          },
+        ],
       });
-    }
 
-    // Get school from first child (assuming one child per parent for now)
-    const child = children[0];
+      if (!child) {
+        return res.status(404).json({
+          success: false,
+          error: 'Child not found or does not belong to you',
+        });
+      }
+    } else {
+      // If no childId, get parent's children to find their schools
+      const children = await Child.findAll({
+        where: { parentId },
+        include: [
+          {
+            model: School,
+            as: 'childSchool',
+            required: false,
+          },
+        ],
+      });
+
+      if (children.length === 0) {
+        return res.json({
+          success: true,
+          data: {
+            rating: null,
+            school: null,
+            summary: { average: 0, count: 0 },
+          },
+        });
+      }
+
+      // Get school from first child (fallback to first child if no childId)
+      child = children[0];
+    }
     let school = null;
     let schoolId = null;
 

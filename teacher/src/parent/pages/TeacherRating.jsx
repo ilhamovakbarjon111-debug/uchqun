@@ -45,6 +45,9 @@ const TeacherRating = () => {
     setError('');
     setSchoolError('');
     try {
+      // Get childId from selectedChild if available
+      const childIdParam = selectedChild?.id ? `?childId=${selectedChild.id}` : '';
+      
       const [profileRes, ratingRes, schoolRatingRes] = await Promise.all([
         api.get('/parent/profile'),
         api.get('/parent/ratings').catch((err) => {
@@ -53,7 +56,7 @@ const TeacherRating = () => {
           }
           throw err;
         }),
-        api.get('/parent/school-rating').catch((err) => {
+        api.get(`/parent/school-rating${childIdParam}`).catch((err) => {
           if (err.response?.status === 400 || err.response?.status === 404) {
             return { data: { data: { rating: null, school: null, summary: { average: 0, count: 0 } } } };
           }
@@ -87,7 +90,7 @@ const TeacherRating = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedChild?.id]);
 
   const handleSubmit = async () => {
     setError('');
@@ -155,7 +158,8 @@ const TeacherRating = () => {
       setSchoolSuccess(t('schoolRatingPage.success'));
 
       // Refresh summary after saving
-      const refreshRes = await api.get('/parent/school-rating').catch((err) => {
+      const childIdParam = selectedChild?.id ? `?childId=${selectedChild.id}` : '';
+      const refreshRes = await api.get(`/parent/school-rating${childIdParam}`).catch((err) => {
         if (err.response?.status === 400 || err.response?.status === 404) {
           return { data: { data: { summary: { average: 0, count: 0 } } } };
         }
@@ -163,6 +167,10 @@ const TeacherRating = () => {
       });
       const ratingData = refreshRes?.data?.data || {};
       setSchoolSummary(ratingData.summary || { average: 0, count: 0 });
+      // Also update school data in case it was found/created
+      if (ratingData.school) {
+        setSchool(ratingData.school);
+      }
     } catch (err) {
       console.error('Error saving school rating:', err);
       setSchoolError(err.response?.data?.error || t('schoolRatingPage.errorSave'));
