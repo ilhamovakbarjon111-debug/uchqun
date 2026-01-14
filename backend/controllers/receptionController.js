@@ -4,6 +4,7 @@ import Group from '../models/Group.js';
 import Document from '../models/Document.js';
 import TeacherRating from '../models/TeacherRating.js';
 import SuperAdminMessage from '../models/SuperAdminMessage.js';
+import School from '../models/School.js';
 import logger from '../utils/logger.js';
 import bcrypt from 'bcryptjs';
 import { Op, fn, col } from 'sequelize';
@@ -361,6 +362,51 @@ export const createParent = async (req, res) => {
         photoUrl = child.photo;
       }
       
+      // Find school by name if school name is provided
+      let schoolId = null;
+      if (child.school) {
+        try {
+          // Try exact match first (case-insensitive)
+          let foundSchool = await School.findOne({
+            where: {
+              name: {
+                [Op.iLike]: child.school,
+              },
+            },
+          });
+          
+          // If not found, try partial match
+          if (!foundSchool) {
+            foundSchool = await School.findOne({
+              where: {
+                name: {
+                  [Op.iLike]: `%${child.school}%`,
+                },
+              },
+            });
+          }
+          
+          if (foundSchool) {
+            schoolId = foundSchool.id;
+            logger.info('School found for child', {
+              childSchool: child.school,
+              schoolId: foundSchool.id,
+              schoolName: foundSchool.name,
+            });
+          } else {
+            logger.warn('School not found for child', {
+              childSchool: child.school,
+            });
+          }
+        } catch (error) {
+          logger.error('Error finding school for child', {
+            error: error.message,
+            childSchool: child.school,
+          });
+          // Continue without schoolId if lookup fails
+        }
+      }
+      
       await Child.create({
         parentId: parent.id,
         firstName: child.firstName,
@@ -371,6 +417,7 @@ export const createParent = async (req, res) => {
         specialNeeds: child.specialNeeds || null,
         photo: photoUrl,
         school: child.school,
+        schoolId: schoolId,
         class: childClassName || child.class || '',
         teacher: childTeacherName || child.teacher || '',
         groupId: null, // Removed groupId from child
@@ -819,6 +866,51 @@ export const createChildForParent = async (req, res) => {
       photoUrl = req.body['child[photo]'];
     }
 
+    // Find school by name if school name is provided
+    let schoolId = null;
+    if (school) {
+      try {
+        // Try exact match first (case-insensitive)
+        let foundSchool = await School.findOne({
+          where: {
+            name: {
+              [Op.iLike]: school,
+            },
+          },
+        });
+        
+        // If not found, try partial match
+        if (!foundSchool) {
+          foundSchool = await School.findOne({
+            where: {
+              name: {
+                [Op.iLike]: `%${school}%`,
+              },
+            },
+          });
+        }
+        
+        if (foundSchool) {
+          schoolId = foundSchool.id;
+          logger.info('School found for child', {
+            childSchool: school,
+            schoolId: foundSchool.id,
+            schoolName: foundSchool.name,
+          });
+        } else {
+          logger.warn('School not found for child', {
+            childSchool: school,
+          });
+        }
+      } catch (error) {
+        logger.error('Error finding school for child', {
+          error: error.message,
+          childSchool: school,
+        });
+        // Continue without schoolId if lookup fails
+      }
+    }
+
     // Create child
     const child = await Child.create({
       parentId: parent.id,
@@ -830,6 +922,7 @@ export const createChildForParent = async (req, res) => {
       specialNeeds,
       photo: photoUrl,
       school,
+      schoolId: schoolId,
       class: '', // Will be set from group if needed
       teacher: '', // Will be set from group if needed
       groupId: null,
