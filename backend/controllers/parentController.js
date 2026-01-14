@@ -507,11 +507,11 @@ export const rateSchool = async (req, res) => {
     const { schoolId, schoolName, stars, comment } = req.body;
     const parentId = req.user.id;
 
-    if (!stars) {
+    if (!stars || Number.isNaN(Number(stars))) {
       return res.status(400).json({ error: 'Stars are required' });
     }
-
-    if (stars < 1 || stars > 5) {
+    const starsNum = Number(stars);
+    if (starsNum < 1 || starsNum > 5) {
       return res.status(400).json({ error: 'Stars must be between 1 and 5' });
     }
 
@@ -618,7 +618,7 @@ export const rateSchool = async (req, res) => {
     logger.info('Creating/updating school rating', {
       schoolId: finalSchoolId,
       parentId,
-      stars,
+      stars: starsNum,
     });
 
     const [rating, created] = await SchoolRating.findOrCreate({
@@ -629,13 +629,13 @@ export const rateSchool = async (req, res) => {
       defaults: {
         schoolId: finalSchoolId,
         parentId,
-        stars,
+        stars: starsNum,
         comment: comment || null,
       },
     });
 
     if (!created) {
-      rating.stars = stars;
+      rating.stars = starsNum;
       rating.comment = comment || null;
       await rating.save();
     }
@@ -643,7 +643,7 @@ export const rateSchool = async (req, res) => {
     logger.info('School rating saved', {
       schoolId: finalSchoolId,
       parentId,
-      stars,
+      stars: starsNum,
       created,
       ratingId: rating.id,
     });
