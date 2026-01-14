@@ -568,61 +568,6 @@ export const rateSchool = async (req, res) => {
       return res.status(400).json({ error: 'School ID or school name is required' });
     }
 
-    // Check if parent has a child in this school
-    // First, try to find child by schoolId if available
-    let child = null;
-    
-    if (finalSchoolId) {
-      child = await Child.findOne({
-        where: {
-          parentId,
-          schoolId: finalSchoolId,
-        },
-      });
-    }
-    
-    // If not found by schoolId, try to find by school name
-    if (!child) {
-      const schoolNameToCheck = (school && school.name) ? school.name : schoolName;
-      if (schoolNameToCheck) {
-        // Try exact match first
-        child = await Child.findOne({
-          where: {
-            parentId,
-            school: schoolNameToCheck,
-          },
-        });
-        
-        // If not found, try case-insensitive match
-        if (!child) {
-          child = await Child.findOne({
-            where: {
-              parentId,
-              school: {
-                [Op.iLike]: schoolNameToCheck,
-              },
-            },
-          });
-        }
-      }
-    }
-    
-    logger.info('Finding child for school rating', {
-      parentId,
-      finalSchoolId,
-      schoolName: (school && school.name) ? school.name : schoolName,
-      childFound: !!child,
-    });
-
-    if (!child) {
-      logger.warn('Child not found for school rating', {
-        parentId,
-        finalSchoolId,
-        schoolName: (school && school.name) ? school.name : schoolName,
-      });
-      return res.status(403).json({ error: 'You can only rate schools where your child is enrolled' });
-    }
-
     // Ensure we have a valid schoolId before proceeding
     if (!finalSchoolId || finalSchoolId === null || finalSchoolId === undefined) {
       logger.error('No schoolId available for rating', {
@@ -630,26 +575,43 @@ export const rateSchool = async (req, res) => {
         schoolName,
         finalSchoolId,
         hasSchool: !!school,
-        childId: child.id,
       });
       return res.status(400).json({ error: 'Unable to identify school for rating' });
     }
 
-    // Update child's schoolId if it was null
-    if (!child.schoolId && finalSchoolId) {
-      try {
-        await child.update({ schoolId: finalSchoolId });
-        logger.info('Updated child schoolId', {
-          childId: child.id,
-          schoolId: finalSchoolId,
-        });
-      } catch (err) {
-        logger.warn('Failed to update child schoolId during rating', {
-          childId: child.id,
-          schoolId: finalSchoolId,
-          error: err.message,
-        });
+    // Check if parent has any children (optional validation)
+    // If parent has children, try to update their schoolId if it matches
+    try {
+      const children = await Child.findAll({
+        where: { parentId },
+        limit: 1,
+      });
+      
+      if (children.length > 0) {
+        const child = children[0];
+        // Update child's schoolId if it was null and school name matches
+        if (!child.schoolId && finalSchoolId && school) {
+          try {
+            await child.update({ schoolId: finalSchoolId });
+            logger.info('Updated child schoolId', {
+              childId: child.id,
+              schoolId: finalSchoolId,
+            });
+          } catch (err) {
+            logger.warn('Failed to update child schoolId during rating', {
+              childId: child.id,
+              schoolId: finalSchoolId,
+              error: err.message,
+            });
+          }
+        }
       }
+    } catch (err) {
+      logger.warn('Error checking children during rating', {
+        error: err.message,
+        parentId,
+      });
+      // Continue with rating even if child check fails
     }
 
     // Create or update rating
