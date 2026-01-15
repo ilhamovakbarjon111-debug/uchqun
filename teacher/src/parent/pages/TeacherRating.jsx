@@ -347,7 +347,6 @@ const TeacherRating = () => {
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900">{t('ratingPage.yourRating')}</p>
-                <p className="text-xs text-gray-500">{t('ratingPage.rateCta')}</p>
               </div>
             </div>
 

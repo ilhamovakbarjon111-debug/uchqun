@@ -1,4 +1,4 @@
-import { LogOut, MessageSquare, Send, X } from 'lucide-react';
+﻿import { LogOut, MessageSquare, Send, X } from 'lucide-react';
 import { useAuth } from '../shared/context/AuthContext';
 import Card from '../shared/components/Card';
 import { useTranslation } from 'react-i18next';
@@ -91,7 +91,7 @@ const Profile = () => {
 
       <Card className="p-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-xl font-bold">
+          <div className="w-14 h-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold">
             {user?.firstName?.[0]}
             {user?.lastName?.[0]}
           </div>
@@ -117,7 +117,7 @@ const Profile = () => {
 
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-4">
-          <MessageSquare className="w-6 h-6 text-orange-600" />
+          <MessageSquare className="w-6 h-6 text-blue-600" />
           <h2 className="text-xl font-bold text-gray-900">{t('profile.contactSuperAdmin', { defaultValue: 'Contact Super-Admin' })}</h2>
         </div>
         <p className="text-sm text-gray-600 mb-4">

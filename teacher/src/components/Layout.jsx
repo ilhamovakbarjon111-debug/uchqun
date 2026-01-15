@@ -87,7 +87,7 @@ const Layout = () => {
         <div className="lg:hidden fixed bottom-20 right-4 z-40">
           <a
             href="/teacher/chat"
-            className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-orange-500 text-white shadow-lg hover:bg-orange-600 transition"
+            className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-500 text-white shadow-lg hover:bg-blue-600 transition"
             aria-label="Chat"
           >
             <MessageCircle className="w-6 h-6" />

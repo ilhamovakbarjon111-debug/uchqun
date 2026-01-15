@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -221,14 +221,14 @@ const SuperAdmin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                <Crown className="w-6 h-6 text-orange-600" />
+              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                <Crown className="w-6 h-6 text-primary-600" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">{t('header.title')}</h1>
@@ -260,7 +260,7 @@ const SuperAdmin = () => {
             onClick={() => setActiveTab('admins')}
             className={`px-6 py-3 font-medium transition-colors border-b-2 ${
               activeTab === 'admins'
-                ? 'border-orange-600 text-orange-600'
+                ? 'border-primary-600 text-primary-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -270,7 +270,7 @@ const SuperAdmin = () => {
             onClick={() => setActiveTab('schools')}
             className={`px-6 py-3 font-medium transition-colors border-b-2 ${
               activeTab === 'schools'
-                ? 'border-orange-600 text-orange-600'
+                ? 'border-primary-600 text-primary-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -280,7 +280,7 @@ const SuperAdmin = () => {
             onClick={() => setActiveTab('messages')}
             className={`px-6 py-3 font-medium transition-colors border-b-2 relative ${
               activeTab === 'messages'
-                ? 'border-orange-600 text-orange-600'
+                ? 'border-primary-600 text-primary-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -320,7 +320,7 @@ const SuperAdmin = () => {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder={t('superAdmin.form.firstName')}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     disabled={loading}
                   />
                 </div>
@@ -336,7 +336,7 @@ const SuperAdmin = () => {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder={t('superAdmin.form.lastName')}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     disabled={loading}
                   />
                 </div>
@@ -353,7 +353,7 @@ const SuperAdmin = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@example.com"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   disabled={loading}
                 />
               </div>
@@ -369,7 +369,7 @@ const SuperAdmin = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t('superAdmin.form.password')}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   disabled={loading}
                 />
               </div>
@@ -377,7 +377,7 @@ const SuperAdmin = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -402,7 +402,7 @@ const SuperAdmin = () => {
             </div>
             {loadingAdmins ? (
               <div className="flex items-center justify-center min-h-[120px]">
-                <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : admins.length === 0 ? (
               <p className="text-sm text-gray-600">{t('superAdmin.toastLoadError')}</p>
@@ -411,7 +411,7 @@ const SuperAdmin = () => {
                 {admins.map((adm) => (
                   <div key={adm.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
                     <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-700 font-bold flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-700 font-bold flex items-center justify-center">
                         {adm.firstName?.charAt(0)}
                         {adm.lastName?.charAt(0)}
                       </div>
@@ -431,7 +431,7 @@ const SuperAdmin = () => {
                     <div className="flex gap-2 mt-3">
                       <button
                         onClick={() => startEdit(adm)}
-                        className="px-3 py-2 text-sm font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+                        className="px-3 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
                       >
                         {t('superAdmin.form.update')}
                       </button>
@@ -463,7 +463,7 @@ const SuperAdmin = () => {
               <Card className="p-6 space-y-4">
                 {loadingSchools ? (
                   <div className="flex items-center justify-center min-h-[120px]">
-                    <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : schools.length === 0 ? (
                   <p className="text-sm text-gray-600">{t('superAdmin.schoolsEmpty')}</p>
@@ -518,7 +518,7 @@ const SuperAdmin = () => {
               <Card className="p-6 space-y-4">
                 {loadingMessages ? (
                   <div className="flex items-center justify-center min-h-[120px]">
-                    <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : messages.length === 0 ? (
                   <p className="text-sm text-gray-600">{t('superAdmin.messagesEmpty', { defaultValue: 'Xabarlar yo\'q' })}</p>
@@ -528,7 +528,7 @@ const SuperAdmin = () => {
                       <div
                         key={msg.id}
                         className={`border rounded-xl p-4 hover:shadow-sm transition-shadow ${
-                          !msg.isRead ? 'border-orange-300 bg-orange-50' : 'border-gray-100'
+                          !msg.isRead ? 'border-primary-300 bg-primary-50' : 'border-gray-100'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-4">
@@ -536,7 +536,7 @@ const SuperAdmin = () => {
                             <div className="flex items-center gap-2 mb-2">
                               <h3 className="font-semibold text-gray-900">{msg.subject}</h3>
                               {!msg.isRead && (
-                                <span className="px-2 py-0.5 text-xs font-semibold rounded bg-orange-500 text-white">
+                                <span className="px-2 py-0.5 text-xs font-semibold rounded bg-primary-500 text-white">
                                   {t('superAdmin.new', { defaultValue: 'Yangi' })}
                                 </span>
                               )}
@@ -615,7 +615,7 @@ const SuperAdmin = () => {
                           onChange={(e) => setReplyText(e.target.value)}
                           rows={6}
                           placeholder={t('superAdmin.replyPlaceholder', { defaultValue: 'Javobingizni yozing...' })}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                       </div>
                       <div className="flex gap-3">
@@ -632,7 +632,7 @@ const SuperAdmin = () => {
                         <button
                           onClick={() => handleReply(selectedMessage.id)}
                           disabled={replying || !replyText.trim()}
-                          className="flex-1 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          className="flex-1 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                           {replying ? (
                             <>
@@ -679,7 +679,7 @@ const SuperAdmin = () => {
                         required
                         value={editFirstName}
                         onChange={(e) => setEditFirstName(e.target.value)}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                     </div>
                     <div>
@@ -689,7 +689,7 @@ const SuperAdmin = () => {
                         required
                         value={editLastName}
                         onChange={(e) => setEditLastName(e.target.value)}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -701,7 +701,7 @@ const SuperAdmin = () => {
                       required
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
 
@@ -711,7 +711,7 @@ const SuperAdmin = () => {
                       type="tel"
                       value={editPhone}
                       onChange={(e) => setEditPhone(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
 
@@ -722,7 +722,7 @@ const SuperAdmin = () => {
                       value={editPassword}
                       onChange={(e) => setEditPassword(e.target.value)}
                       placeholder="Parolni o‘zgartirish uchun kiriting"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
 
@@ -738,7 +738,7 @@ const SuperAdmin = () => {
                     <button
                       type="submit"
                       disabled={editSaving}
-                      className="flex-1 px-4 py-2.5 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors disabled:opacity-50"
+                      className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
                     >
                       {editSaving ? t('superAdmin.status.loadingAdmins') : t('superAdmin.form.save')}
                     </button>

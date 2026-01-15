@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { 
   Calendar, 
   ChevronLeft,
@@ -144,7 +144,7 @@ const VideoPlayer = ({ url }) => {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 inline-block px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded-lg font-bold transition-colors"
+          className="mt-4 inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold transition-colors"
         >
           {t('mediaPage.video.openNewTab')}
         </a>
@@ -355,7 +355,7 @@ const Media = () => {
               onClick={() => setFilter(option.id)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
                   filter === option.id 
-                  ? 'bg-white text-orange-600 shadow-md scale-105' 
+                  ? 'bg-white text-blue-600 shadow-md scale-105' 
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
                 }`}
               >
@@ -369,7 +369,7 @@ const Media = () => {
           {isTeacher && (
             <button
               onClick={handleCreate}
-              className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-sm"
             >
               <Plus className="w-5 h-5" />
               <span className="hidden sm:inline">{t('mediaPage.add')}</span>
@@ -397,7 +397,7 @@ const Media = () => {
                 
                 {/* Overlay on Hover */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 text-white">
-                  <p className="text-xs font-bold uppercase tracking-widest text-orange-400 mb-1">
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-1">
                     {typeLabels[item.type] || item.type}
                   </p>
                   <h3 className="text-lg font-bold leading-tight">{item.title}</h3>
@@ -489,14 +489,14 @@ const Media = () => {
             <div className="flex-1 p-8 lg:p-12 overflow-y-auto bg-white">
               <button 
                 onClick={() => setSelectedMedia(null)}
-                className="hidden lg:flex items-center gap-2 text-gray-400 hover:text-orange-600 font-bold text-sm mb-10 transition-colors"
+                className="hidden lg:flex items-center gap-2 text-gray-400 hover:text-blue-600 font-bold text-sm mb-10 transition-colors"
               >
                 <ChevronLeft className="w-5 h-5" /> {t('mediaPage.back')}
               </button>
 
               <div className="space-y-6">
                 <div>
-                  <span className="px-4 py-1.5 bg-orange-50 text-orange-600 rounded-full text-[10px] font-black uppercase tracking-widest">
+                  <span className="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">
                     {selectedMedia.type === 'video' ? t('mediaPage.videoLabel') : t('mediaPage.photoLabel')}
                   </span>
                   <h3 className="text-3xl font-black text-gray-900 mt-4 leading-tight">
@@ -565,7 +565,7 @@ const Media = () => {
                       required
                       value={formData.childId}
                       onChange={(e) => setFormData({ ...formData, childId: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">{t('mediaPage.modal.selectChild')}</option>
                       {children.map(child => (
@@ -588,7 +588,7 @@ const Media = () => {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Enter media title"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -601,7 +601,7 @@ const Media = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -615,7 +615,7 @@ const Media = () => {
                     required
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -625,7 +625,7 @@ const Media = () => {
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="photo">{t('mediaPage.photoLabel')}</option>
                     <option value="video">{t('mediaPage.videoLabel')}</option>
@@ -642,7 +642,7 @@ const Media = () => {
                     type="file"
                     accept="image/*,video/*"
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">{t('mediaPage.modal.fileHelp')}</p>
                 </div>
@@ -658,7 +658,7 @@ const Media = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {editingMedia ? t('mediaPage.modal.update') : t('mediaPage.modal.create')}

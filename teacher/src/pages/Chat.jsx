@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, MessageCircle, Pencil, Send, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { loadMessages, addMessage, markRead, updateMessage, deleteMessage } from '../shared/services/chatStore';
@@ -140,7 +140,7 @@ const Chat = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <div className="p-3 rounded-2xl bg-orange-100 text-orange-600">
+        <div className="p-3 rounded-2xl bg-blue-100 text-blue-600">
           <MessageCircle className="w-6 h-6" />
         </div>
         <div>
@@ -153,7 +153,7 @@ const Chat = () => {
       <div className="bg-white border border-gray-100 rounded-xl p-3 flex gap-3 items-center shadow-sm">
         <span className="text-sm font-medium text-gray-600">{t('chat.parent') || 'Parent'}:</span>
         <select
-          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           value={selectedParent?.id || ''}
           onChange={(e) => {
             const v = e.target.value;
@@ -194,7 +194,7 @@ const Chat = () => {
               >
                 <div className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm shadow-sm border ${
                   isYou
-                    ? 'bg-orange-50 text-orange-900 border-orange-100'
+                    ? 'bg-blue-50 text-blue-900 border-blue-100'
                     : 'bg-gray-100 text-gray-900 border-gray-200'
                 }`}>
                   <div className="flex items-start justify-between gap-3">
@@ -237,7 +237,7 @@ const Chat = () => {
                       <textarea
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
+                        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                         rows={3}
                       />
                       <div className="flex items-center justify-end gap-2">
@@ -255,7 +255,7 @@ const Chat = () => {
                         </button>
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-orange-600 text-white hover:bg-orange-700"
+                          className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
                           onClick={() => handleSaveEdit(msg.id)}
                           disabled={busyId === msg.id || !editValue.trim()}
                         >
@@ -292,7 +292,7 @@ const Chat = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t('chat.placeholder')}
-            className="flex-1 h-12 rounded-xl border border-gray-200 px-4 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="flex-1 h-12 rounded-xl border border-gray-200 px-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -302,7 +302,7 @@ const Chat = () => {
           />
           <button
             onClick={handleSend}
-            className="w-12 h-12 inline-flex items-center justify-center rounded-xl bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+            className="w-12 h-12 inline-flex items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
             aria-label={t('chat.send')}
             title={t('chat.send')}
           >

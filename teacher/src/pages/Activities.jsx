@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { 
   Calendar, 
   CheckCircle2,
@@ -260,7 +260,7 @@ const Activities = () => {
         {isTeacher && (
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5" />
                 <span className="hidden sm:inline">{t('activitiesPage.add')}</span>
@@ -279,14 +279,14 @@ const Activities = () => {
                 className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-2xl transition-all duration-300 overflow-hidden group"
               >
                 {/* Card Header */}
-                <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-5">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-400 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">
                         {activity.skill || t('activitiesPage.formSkill') || 'Ko\'nikma'}
                       </h3>
                       {activity.goal && (
-                        <p className="text-sm text-orange-50 line-clamp-2">
+                        <p className="text-sm text-blue-50 line-clamp-2">
                           {activity.goal.length > 80 ? `${activity.goal.substring(0, 80)}...` : activity.goal}
                         </p>
                       )}
@@ -349,8 +349,8 @@ const Activities = () => {
                   {/* Teacher */}
                   {activity.teacher && (
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                      <div className="p-2 bg-gradient-to-br from-orange-100 to-orange-50 rounded-lg border border-orange-200">
-                        <User className="w-5 h-5 text-orange-600" />
+                      <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg border border-blue-200">
+                        <User className="w-5 h-5 text-blue-600" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs text-gray-500 font-semibold mb-0.5">{t('activitiesPage.teacher') || 'O\'qituvchi'}</p>
@@ -367,7 +367,7 @@ const Activities = () => {
                         {activity.services.slice(0, 3).map((service, idx) => (
                           <span
                             key={idx}
-                            className="px-2.5 py-1 bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 rounded-lg text-xs font-semibold border border-orange-200/50"
+                            className="px-2.5 py-1 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 rounded-lg text-xs font-semibold border border-blue-200/50"
                           >
                             {t(`activitiesPage.services.${service.replace(/\s+/g, '')}`) || service}
                           </span>
@@ -384,7 +384,7 @@ const Activities = () => {
                   {/* Details Button */}
                   <button
                     onClick={() => openDetailsModal(activity)}
-                    className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 rounded-xl text-white transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
+                    className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 rounded-xl text-white transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
                   >
                     <ChevronDown className="w-4 h-4" />
                     {t('activitiesPage.showDetails') || 'Batafsil'}
@@ -406,7 +406,7 @@ const Activities = () => {
       {showDetailsModal && selectedActivity && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
-            <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-orange-400 p-6 flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-400 p-6 flex items-center justify-between z-10">
               <h2 className="text-2xl font-bold text-white">
                 {selectedActivity.skill || t('activitiesPage.formSkill') || 'Ko\'nikma'}
               </h2>
@@ -421,8 +421,8 @@ const Activities = () => {
             <div className="p-6 space-y-6">
               {/* Goal */}
               {selectedActivity.goal && (
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-xl p-5 border border-orange-200">
-                  <p className="text-sm font-bold text-orange-700 mb-2">{t('activitiesPage.formGoal') || 'Maqsad'}</p>
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-5 border border-blue-200">
+                  <p className="text-sm font-bold text-blue-700 mb-2">{t('activitiesPage.formGoal') || 'Maqsad'}</p>
                   <p className="text-base text-gray-800 leading-relaxed">{selectedActivity.goal}</p>
                 </div>
               )}
@@ -453,8 +453,8 @@ const Activities = () => {
                 )}
                 {selectedActivity.teacher && (
                   <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                    <div className="p-2 bg-gradient-to-br from-orange-100 to-orange-50 rounded-lg border border-orange-200">
-                      <User className="w-5 h-5 text-orange-600" />
+                    <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg border border-blue-200">
+                      <User className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-gray-500 font-semibold mb-1">{t('activitiesPage.teacher') || 'O\'qituvchi'}</p>
@@ -468,7 +468,7 @@ const Activities = () => {
               {selectedActivity.tasks && Array.isArray(selectedActivity.tasks) && selectedActivity.tasks.length > 0 && (
                 <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
                   <p className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                    <CheckCircle2 className="w-5 h-5 text-blue-500" />
                     {t('activitiesPage.formTasks') || 'Vazifalar'}
                   </p>
                   <ul className="list-disc list-inside space-y-2 text-sm text-gray-700">
@@ -483,7 +483,7 @@ const Activities = () => {
               {selectedActivity.methods && (
                 <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
                   <p className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                    <CheckCircle2 className="w-5 h-5 text-blue-500" />
                     {t('activitiesPage.formMethods') || 'Usullar'}
                   </p>
                   <p className="text-sm text-gray-700 leading-relaxed">{selectedActivity.methods}</p>
@@ -494,7 +494,7 @@ const Activities = () => {
               {selectedActivity.progress && (
                 <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
                   <p className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                    <CheckCircle2 className="w-5 h-5 text-blue-500" />
                     {t('activitiesPage.formProgress') || 'Jarayon/Taraqqiyot'}
                   </p>
                   <p className="text-sm text-gray-700 leading-relaxed">{selectedActivity.progress}</p>
@@ -505,7 +505,7 @@ const Activities = () => {
               {selectedActivity.observation && (
                 <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
                   <p className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                    <CheckCircle2 className="w-5 h-5 text-blue-500" />
                     {t('activitiesPage.formObservation') || 'Kuzatish'}
                   </p>
                   <p className="text-sm text-gray-700 leading-relaxed">{selectedActivity.observation}</p>
@@ -516,14 +516,14 @@ const Activities = () => {
               {selectedActivity.services && Array.isArray(selectedActivity.services) && selectedActivity.services.length > 0 && (
                 <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
                   <p className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                    <CheckCircle2 className="w-5 h-5 text-blue-500" />
                     {t('activitiesPage.formServices') || 'Xizmatlar'}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {selectedActivity.services.map((service, idx) => (
                       <span
                         key={idx}
-                        className="px-3 py-1.5 bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 rounded-lg text-xs font-semibold border border-orange-200/50"
+                        className="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 rounded-lg text-xs font-semibold border border-blue-200/50"
                       >
                         {t(`activitiesPage.services.${service.replace(/\s+/g, '')}`) || service}
                       </span>
@@ -536,7 +536,7 @@ const Activities = () => {
               <div className="flex justify-end pt-4 border-t border-gray-200">
                 <button
                   onClick={closeDetailsModal}
-                  className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors shadow-md"
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors shadow-md"
                 >
                   {t('activitiesPage.close') || 'Yopish'}
                 </button>
@@ -581,7 +581,7 @@ const Activities = () => {
                           setChildren([]);
                         }
                       }}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">{t('activitiesPage.selectParent') || 'Ota-onani tanlang'}</option>
                       {parents.map(parent => (
@@ -600,7 +600,7 @@ const Activities = () => {
                       value={formData.childId}
                       onChange={(e) => setFormData({ ...formData, childId: e.target.value })}
                       disabled={!formData.parentId || children.length === 0}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       <option value="">{t('activitiesPage.selectChild')}</option>
                       {children.map(child => (
@@ -627,7 +627,7 @@ const Activities = () => {
                     type="text"
                     value={formData.skill}
                     onChange={(e) => setFormData({ ...formData, skill: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder={t('activitiesPage.formSkillPlaceholder') || 'Masalan: O\'z-o\'ziga xizmat ko\'rsatish ko\'nikmalari'}
                   />
                 </div>
@@ -640,7 +640,7 @@ const Activities = () => {
                     value={formData.goal}
                     onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder={t('activitiesPage.formGoalPlaceholder') || 'Maqsadni batafsil yozing'}
                   />
                 </div>
@@ -654,7 +654,7 @@ const Activities = () => {
                       type="date"
                       value={formData.startDate}
                       onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -665,7 +665,7 @@ const Activities = () => {
                       type="date"
                       value={formData.endDate}
                       onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -684,7 +684,7 @@ const Activities = () => {
                           newTasks[index] = e.target.value;
                           setFormData({ ...formData, tasks: newTasks });
                         }}
-                        className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder={`${t('activitiesPage.formTask') || 'Vazifa'} ${index + 1}`}
                       />
                       {formData.tasks.length > 1 && (
@@ -704,7 +704,7 @@ const Activities = () => {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, tasks: [...formData.tasks, ''] })}
-                    className="mt-2 text-sm text-orange-600 hover:text-orange-700 font-medium"
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
                     + {t('activitiesPage.addTask') || 'Vazifa qo\'shish'}
                   </button>
@@ -718,7 +718,7 @@ const Activities = () => {
                     value={formData.methods}
                     onChange={(e) => setFormData({ ...formData, methods: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder={t('activitiesPage.formMethodsPlaceholder') || 'Qo\'llaniladigan usullarni yozing'}
                   />
                 </div>
@@ -731,7 +731,7 @@ const Activities = () => {
                     value={formData.progress}
                     onChange={(e) => setFormData({ ...formData, progress: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder={t('activitiesPage.formProgressPlaceholder') || 'Jarayon va taraqqiyotni yozing'}
                   />
                 </div>
@@ -744,7 +744,7 @@ const Activities = () => {
                     value={formData.observation}
                     onChange={(e) => setFormData({ ...formData, observation: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder={t('activitiesPage.formObservationPlaceholder') || 'Kuzatuvlarni yozing'}
                   />
                 </div>
@@ -788,7 +788,7 @@ const Activities = () => {
                               });
                             }
                           }}
-                          className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
                         <span className="text-sm text-gray-700">
                           {t(`activitiesPage.services.${service.replace(/\s+/g, '')}`) || service}
@@ -809,7 +809,7 @@ const Activities = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {editingActivity ? t('activitiesPage.update') : t('activitiesPage.create')}
