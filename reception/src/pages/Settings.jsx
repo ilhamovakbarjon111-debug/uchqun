@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import api from '../services/api';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -172,7 +172,7 @@ const Settings = () => {
       <form onSubmit={handleProfileSubmit} className="space-y-6">
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-6">
-            <User className="w-6 h-6 text-orange-600" />
+            <User className="w-6 h-6 text-primary-600" />
             <h2 className="text-xl font-bold text-gray-900">Profile Information</h2>
           </div>
 
@@ -184,7 +184,7 @@ const Settings = () => {
                   type="text"
                   value={profileForm.firstName}
                   onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                 />
               </div>
@@ -195,7 +195,7 @@ const Settings = () => {
                   type="text"
                   value={profileForm.lastName}
                   onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                 />
               </div>
@@ -224,7 +224,7 @@ const Settings = () => {
                 type="tel"
                 value={profileForm.phone}
                 onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="+1 (555) 123-4567"
               />
             </div>
@@ -233,7 +233,7 @@ const Settings = () => {
           <div className="mt-6 flex justify-end">
             <button
               type="submit"
-              className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-sm"
             >
               <Save className="w-5 h-5" />
               Save Profile
@@ -246,7 +246,7 @@ const Settings = () => {
       <form onSubmit={handleProfileSubmit} className="space-y-6">
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-6">
-            <Bell className="w-6 h-6 text-orange-600" />
+            <Bell className="w-6 h-6 text-primary-600" />
             <h2 className="text-xl font-bold text-gray-900">Notification Preferences</h2>
           </div>
 
@@ -262,7 +262,7 @@ const Settings = () => {
                     email: e.target.checked,
                   },
                 })}
-                className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
               />
               <div>
                 <span className="text-sm font-medium text-gray-700">Email Notifications</span>
@@ -281,7 +281,7 @@ const Settings = () => {
                     push: e.target.checked,
                   },
                 })}
-                className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
               />
               <div>
                 <span className="text-sm font-medium text-gray-700">Push Notifications</span>
@@ -293,7 +293,7 @@ const Settings = () => {
           <div className="mt-6 flex justify-end">
             <button
               type="submit"
-              className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-sm"
             >
               <Save className="w-5 h-5" />
               Save Preferences
@@ -306,7 +306,7 @@ const Settings = () => {
       <form onSubmit={handlePasswordSubmit} className="space-y-6">
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-6">
-            <Lock className="w-6 h-6 text-orange-600" />
+            <Lock className="w-6 h-6 text-primary-600" />
             <h2 className="text-xl font-bold text-gray-900">Change Password</h2>
           </div>
 
@@ -317,7 +317,7 @@ const Settings = () => {
                 type="password"
                 value={passwordForm.currentPassword}
                 onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
               />
             </div>
@@ -328,7 +328,7 @@ const Settings = () => {
                 type="password"
                 value={passwordForm.newPassword}
                 onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
                 minLength={8}
               />
@@ -341,7 +341,7 @@ const Settings = () => {
                 type="password"
                 value={passwordForm.confirmPassword}
                 onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
                 minLength={8}
               />
@@ -351,7 +351,7 @@ const Settings = () => {
           <div className="mt-6 flex justify-end">
             <button
               type="submit"
-              className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-sm"
             >
               <Save className="w-5 h-5" />
               Change Password
@@ -363,7 +363,7 @@ const Settings = () => {
       {/* Contact Super-Admin */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
-          <MessageSquare className="w-6 h-6 text-orange-600" />
+          <MessageSquare className="w-6 h-6 text-primary-600" />
           <h2 className="text-xl font-bold text-gray-900">Contact Super-Admin</h2>
         </div>
         <p className="text-sm text-gray-600 mb-4">

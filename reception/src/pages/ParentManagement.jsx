@@ -1,4 +1,4 @@
-// Reception ParentManagement - Updated to use /reception/parents endpoint
+﻿// Reception ParentManagement - Updated to use /reception/parents endpoint
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 import Card from '../components/Card';
@@ -321,13 +321,13 @@ const ParentManagement = () => {
               placeholder={t('parentsPage.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent w-full md:w-64"
+              className="pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full md:w-64"
             />
           </div>
 
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5" />
             <span className="hidden sm:inline">{t('parentsPage.add')}</span>
@@ -341,7 +341,7 @@ const ParentManagement = () => {
             <Card key={parent.id} className="p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold">
+                  <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
                     {parent.firstName?.charAt(0)}{parent.lastName?.charAt(0)}
                   </div>
                   <div>
@@ -395,12 +395,12 @@ const ParentManagement = () => {
                 {parent.children && parent.children.length > 0 ? (
                   <div className="pt-3 border-t border-gray-100">
                     <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <Baby className="w-4 h-4 text-orange-600" />
+                      <Baby className="w-4 h-4 text-primary-600" />
                       <span>{t('parentsPage.children', { count: parent.children.length })}</span>
                     </div>
                     <div className="space-y-2">
                       {parent.children.map((child) => (
-                        <div key={child.id} className="bg-orange-50 rounded-lg p-3 border border-orange-100">
+                        <div key={child.id} className="bg-primary-50 rounded-lg p-3 border border-primary-100">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <p className="font-semibold text-gray-900 text-sm">
@@ -438,7 +438,7 @@ const ParentManagement = () => {
               <div className="flex gap-2 pt-4 border-t border-gray-100">
                 <button
                   onClick={() => handleAddChild(parent.id)}
-                  className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-orange-50 text-orange-600 rounded-lg font-medium hover:bg-orange-100 transition-colors text-sm min-w-0"
+                  className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-primary-50 text-primary-600 rounded-lg font-medium hover:bg-primary-100 transition-colors text-sm min-w-0"
                 >
                   <Baby className="w-4 h-4 flex-shrink-0" />
                   <span className="truncate">{t('parentsPage.buttons.addChild')}</span>
@@ -470,7 +470,7 @@ const ParentManagement = () => {
           {!searchQuery && (
             <button
               onClick={handleCreate}
-              className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors"
+              className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors"
             >
               <Plus className="w-5 h-5" />
               Add First Parent
@@ -503,7 +503,7 @@ const ParentManagement = () => {
                     required
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -513,7 +513,7 @@ const ParentManagement = () => {
                     required
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -525,7 +525,7 @@ const ParentManagement = () => {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
 
@@ -535,7 +535,7 @@ const ParentManagement = () => {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
 
@@ -547,7 +547,7 @@ const ParentManagement = () => {
                     required={!editingParent}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                   <button
                     type="button"
@@ -574,7 +574,7 @@ const ParentManagement = () => {
                         groupId: '' // Reset group when teacher changes
                       });
                     }}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
                     <option value="">{t('parentsPage.form.teacher')} tanlang</option>
                     {teachers.map((teacher) => (
@@ -600,7 +600,7 @@ const ParentManagement = () => {
                         teacherId: selectedGroup?.teacherId || formData.teacherId
                       });
                     }}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
                     <option value="">{t('parentsPage.form.group')} tanlang</option>
                     {filteredGroups.length > 0 ? (
@@ -634,7 +634,7 @@ const ParentManagement = () => {
                             ...formData, 
                             child: { ...formData.child, firstName: e.target.value }
                           })}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -649,7 +649,7 @@ const ParentManagement = () => {
                             ...formData, 
                             child: { ...formData.child, lastName: e.target.value }
                           })}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                       </div>
                     </div>
@@ -667,7 +667,7 @@ const ParentManagement = () => {
                             ...formData, 
                             child: { ...formData.child, dateOfBirth: e.target.value }
                           })}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -681,7 +681,7 @@ const ParentManagement = () => {
                             ...formData, 
                             child: { ...formData.child, gender: e.target.value }
                           })}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         >
                           <option value="Male">Erkak</option>
                           <option value="Female">Ayol</option>
@@ -702,7 +702,7 @@ const ParentManagement = () => {
                           ...formData, 
                           child: { ...formData.child, disabilityType: e.target.value }
                         })}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                     </div>
 
@@ -715,7 +715,7 @@ const ParentManagement = () => {
                           child: { ...formData.child, specialNeeds: e.target.value }
                         })}
                         rows={3}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                     </div>
 
@@ -731,7 +731,7 @@ const ParentManagement = () => {
                             ...formData, 
                             child: { ...formData.child, school: e.target.value }
                           })}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                       </div>
 
@@ -749,7 +749,7 @@ const ParentManagement = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {editingParent ? t('parentsPage.form.update') : t('parentsPage.form.create')}
@@ -787,7 +787,7 @@ const ParentManagement = () => {
                           required
                     value={childFormData.firstName}
                     onChange={(e) => setChildFormData({ ...childFormData, firstName: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                       </div>
                 <div>
@@ -799,7 +799,7 @@ const ParentManagement = () => {
                     required
                     value={childFormData.lastName}
                     onChange={(e) => setChildFormData({ ...childFormData, lastName: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                 </div>
                     </div>
@@ -814,7 +814,7 @@ const ParentManagement = () => {
                             required
                     value={childFormData.dateOfBirth}
                     onChange={(e) => setChildFormData({ ...childFormData, dateOfBirth: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           />
                         </div>
                         <div>
@@ -825,7 +825,7 @@ const ParentManagement = () => {
                     required
                     value={childFormData.gender}
                     onChange={(e) => setChildFormData({ ...childFormData, gender: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
                     <option value="Male">{t('gender.male', 'Erkak')}</option>
                     <option value="Female">{t('gender.female', 'Ayol')}</option>
@@ -843,7 +843,7 @@ const ParentManagement = () => {
                             required
                   value={childFormData.disabilityType}
                   onChange={(e) => setChildFormData({ ...childFormData, disabilityType: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           />
                         </div>
 
@@ -853,7 +853,7 @@ const ParentManagement = () => {
                   value={childFormData.specialNeeds}
                   onChange={(e) => setChildFormData({ ...childFormData, specialNeeds: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
 
@@ -866,7 +866,7 @@ const ParentManagement = () => {
                             required
                   value={childFormData.school}
                   onChange={(e) => setChildFormData({ ...childFormData, school: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           />
                         </div>
 
@@ -881,7 +881,7 @@ const ParentManagement = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {t('parentsPage.buttons.addChild')}

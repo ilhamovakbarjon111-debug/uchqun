@@ -433,7 +433,7 @@ export default function Activities() {
                 className="border border-gray-100 rounded-xl p-4 bg-gradient-to-br from-white to-gray-50 shadow-sm"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-orange-600">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-600">
                     {act.type || "Activity"}
                   </div>
                   <div className="text-xs text-gray-500">
@@ -462,7 +462,7 @@ export default function Activities() {
                   )}
                 </div>
                 {act.notes && (
-                  <div className="mt-3 text-xs text-gray-600 italic border-l-4 border-orange-400 pl-3">
+                  <div className="mt-3 text-xs text-gray-600 italic border-l-4 border-blue-400 pl-3">
                     “{act.notes}”
                   </div>
                 )}

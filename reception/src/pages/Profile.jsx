@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import api from '../services/api';
@@ -98,12 +98,12 @@ const Profile = () => {
       {/* Profile Information */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
-          <Shield className="w-6 h-6 text-orange-600" />
+          <Shield className="w-6 h-6 text-primary-600" />
           <h2 className="text-xl font-bold text-gray-900">{t('profile.profileInfo', { defaultValue: 'Profile Information' })}</h2>
         </div>
 
         <div className="flex items-center gap-6 mb-6">
-          <div className="w-20 h-20 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-2xl font-bold border-4 border-white shadow-lg">
+          <div className="w-20 h-20 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-2xl font-bold border-4 border-white shadow-lg">
             {user?.firstName?.[0]}
             {user?.lastName?.[0]}
           </div>
@@ -111,7 +111,7 @@ const Profile = () => {
             <h3 className="text-2xl font-bold text-gray-900">
               {user?.firstName} {user?.lastName}
             </h3>
-            <p className="text-sm text-orange-600 font-semibold mt-1">Reception</p>
+            <p className="text-sm text-primary-600 font-semibold mt-1">Reception</p>
           </div>
         </div>
 
@@ -136,7 +136,7 @@ const Profile = () => {
       {/* Contact Super-Admin */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
-          <MessageSquare className="w-6 h-6 text-orange-600" />
+          <MessageSquare className="w-6 h-6 text-primary-600" />
           <h2 className="text-xl font-bold text-gray-900">{t('profile.contactSuperAdmin', { defaultValue: 'Contact Super-Admin' })}</h2>
         </div>
         <p className="text-sm text-gray-600 mb-4">

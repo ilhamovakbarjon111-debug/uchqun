@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Card from '../components/Card';
@@ -72,7 +72,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-orange-600 to-orange-500 rounded-2xl p-6 md:p-8 -mx-4 md:mx-0">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl p-6 md:p-8 -mx-4 md:mx-0">
         <div className="flex items-center gap-3 mb-2">
           <Shield className="w-6 h-6 text-white" />
           <p className="text-white/90 text-sm font-medium">{t('dashboard.role')}</p>
@@ -116,8 +116,8 @@ const Dashboard = () => {
                 <p className="text-sm font-medium text-gray-600 mb-1">{t('dashboard.totalGroups')}</p>
                 <p className="text-3xl font-bold text-gray-900">{stats?.groups || 0}</p>
               </div>
-              <div className="p-3 bg-orange-50 rounded-xl">
-                <UsersRound className="w-8 h-8 text-orange-600" />
+              <div className="p-3 bg-primary-50 rounded-xl">
+                <UsersRound className="w-8 h-8 text-primary-600" />
               </div>
             </div>
           </Card>

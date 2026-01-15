@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import api from '../services/api';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -205,13 +205,13 @@ const TeacherManagement = () => {
               placeholder={t('teachersPage.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent w-full md:w-64"
+              className="pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full md:w-64"
             />
           </div>
 
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5" />
             <span className="hidden sm:inline">{t('teachersPage.add')}</span>
@@ -288,7 +288,7 @@ const TeacherManagement = () => {
           {!searchQuery && (
             <button
               onClick={handleCreate}
-              className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors"
+              className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors"
             >
               <Plus className="w-5 h-5" />
               {t('teachersPage.addFirst')}
@@ -302,7 +302,7 @@ const TeacherManagement = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide">
+                <p className="text-xs font-semibold text-primary-600 uppercase tracking-wide">
                   {t('teachersPage.ratings.title')}
                 </p>
                 <h2 className="text-2xl font-bold text-gray-900">
@@ -320,7 +320,7 @@ const TeacherManagement = () => {
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center gap-2">
-                  <Star className="w-6 h-6 text-orange-500 fill-orange-500" />
+                  <Star className="w-6 h-6 text-primary-500 fill-primary-500" />
                   <div>
                     <p className="text-sm text-gray-500">{t('teachersPage.ratings.average')}</p>
                     <p className="text-2xl font-bold text-gray-900">
@@ -405,7 +405,7 @@ const TeacherManagement = () => {
                     required
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -415,7 +415,7 @@ const TeacherManagement = () => {
                     required
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -427,7 +427,7 @@ const TeacherManagement = () => {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
 
@@ -437,7 +437,7 @@ const TeacherManagement = () => {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
 
@@ -451,7 +451,7 @@ const TeacherManagement = () => {
                     required={!editingTeacher}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                   <button
                     type="button"
@@ -473,7 +473,7 @@ const TeacherManagement = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {editingTeacher ? t('teachersPage.form.update') : t('teachersPage.form.create')}
