@@ -1,6 +1,6 @@
-# IMHA Admin Panel
+# Uchqun Reception Panel
 
-Independent frontend project for system administration of the IMHA Special Education School Management System.
+Independent frontend project for system administration of the Uchqun Special Education School Management System.
 
 ## Features
 

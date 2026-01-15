@@ -1,6 +1,6 @@
-# IMHA Backend API
+# Uchqun Backend API
 
-Backend API for IMHA Platform - Special Education School Management System.
+Backend API for Uchqun Platform - Special Education School Management System.
 
 ## Tech Stack
 

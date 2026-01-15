@@ -1,6 +1,6 @@
-# IMHA Super Admin Panel
+# Uchqun Admin Panel
 
-Independent frontend project for super administrator access to the IMHA Kindergarten Management System.
+Independent frontend project for administrator access to the Uchqun Special Education School Management System.
 
 ## Features
 

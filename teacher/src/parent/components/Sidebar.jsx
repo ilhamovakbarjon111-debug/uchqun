@@ -43,7 +43,7 @@ const Sidebar = ({ onClose }) => {
           <span className="text-white font-bold text-xl">U</span>
         </div>
         <h1 className="text-lg font-bold text-white tracking-tight">
-          Uchqun Platform
+          Uchqun Parent
         </h1>
       </div>
 

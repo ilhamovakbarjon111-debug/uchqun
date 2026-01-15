@@ -1,6 +1,6 @@
-# IMHA Teacher Frontend
+# Uchqun Teacher Frontend
 
-Standalone React application for teacher/admin users to manage the IMHA Special Education School Management platform.
+Standalone React application for teacher/admin users to manage the Uchqun Special Education School Management platform.
 
 ## Features
 

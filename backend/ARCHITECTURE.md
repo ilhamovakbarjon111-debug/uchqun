@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the backend architecture for the IMHA platform with role-based access control.
+This document describes the backend architecture for the Uchqun platform with role-based access control.
 
 ## Roles
 

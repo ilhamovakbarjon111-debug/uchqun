@@ -42,7 +42,7 @@ const Sidebar = ({ onClose }) => {
           <span className="text-white font-bold text-xl">T</span>
         </div>
         <h1 className="text-lg font-bold text-white tracking-tight">
-          Uchqun
+          Uchqun Teacher
         </h1>
       </div>
 

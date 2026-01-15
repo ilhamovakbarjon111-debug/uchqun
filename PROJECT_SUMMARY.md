@@ -1,4 +1,4 @@
-# IMHA Platform - Frontend Project Summary
+# Uchqun Platform - Frontend Project Summary
 
 ## What Has Been Built
 
