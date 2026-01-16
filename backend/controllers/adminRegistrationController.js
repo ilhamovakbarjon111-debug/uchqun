@@ -150,9 +150,28 @@ export const submitRegistrationRequest = async (req, res) => {
     logger.error('Submit admin registration request error', {
       error: error.message,
       stack: error.stack,
+      name: error.name,
     });
+    
+    // Check if it's a Sequelize validation error (from database constraints)
+    if (error.name === 'SequelizeValidationError') {
+      const validationErrors = error.errors?.map(e => e.message).join(', ') || error.message;
+      return res.status(400).json({
+        error: 'Ma\'lumotlarni to\'ldirishda xatolik',
+        details: validationErrors,
+      });
+    }
+    
+    // Check if it's a database constraint error
+    if (error.name === 'SequelizeDatabaseError' || error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({
+        error: 'Ma\'lumotlarni saqlashda xatolik',
+        details: error.message,
+      });
+    }
+    
     res.status(500).json({
-      error: 'Failed to submit registration request',
+      error: 'Ro\'yxatdan o\'tishda xatolik yuz berdi',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }

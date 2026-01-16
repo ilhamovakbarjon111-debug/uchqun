@@ -21,11 +21,19 @@ export async function up(queryInterface, Sequelize) {
     },
     phone: {
       type: Sequelize.STRING,
+      allowNull: false,
+    },
+    certificateFile: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    },
+    passportFile: {
+      type: Sequelize.STRING,
       allowNull: true,
     },
     passportNumber: {
       type: Sequelize.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     passportSeries: {
       type: Sequelize.STRING,
@@ -33,7 +41,7 @@ export async function up(queryInterface, Sequelize) {
     },
     location: {
       type: Sequelize.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     region: {
       type: Sequelize.STRING,
