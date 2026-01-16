@@ -14,6 +14,12 @@ import { sendAdminApprovalEmail } from '../utils/email.js';
 export const submitRegistrationRequest = async (req, res) => {
   try {
     // Debug: Log request data
+    console.log('=== Admin Registration Request ===');
+    console.log('req.body:', req.body);
+    console.log('req.body keys:', req.body ? Object.keys(req.body) : 'no body');
+    console.log('req.files:', req.files);
+    console.log('Content-Type:', req.headers['content-type']);
+    
     logger.info('Admin registration request received', {
       body: req.body,
       bodyKeys: req.body ? Object.keys(req.body) : 'no body',
@@ -23,23 +29,32 @@ export const submitRegistrationRequest = async (req, res) => {
       contentType: req.headers['content-type'],
     });
 
-    const {
-      firstName,
-      lastName,
-      email,
-      phone,
-    } = req.body || {};
+    // Get form data from req.body (multer should parse multipart/form-data)
+    const firstName = req.body?.firstName?.trim() || '';
+    const lastName = req.body?.lastName?.trim() || '';
+    const email = req.body?.email?.trim() || '';
+    const phone = req.body?.phone?.trim() || '';
 
-    // Validation
+    console.log('Extracted values:', { firstName, lastName, email, phone });
+
+    // Validation - faqat kerakli maydonlar
     if (!firstName || !lastName || !email || !phone) {
+      const missingFields = [];
+      if (!firstName) missingFields.push('firstName');
+      if (!lastName) missingFields.push('lastName');
+      if (!email) missingFields.push('email');
+      if (!phone) missingFields.push('phone');
+      
       logger.warn('Validation failed', {
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        phone: phone,
+        firstName,
+        lastName,
+        email,
+        phone,
+        missingFields,
         bodyKeys: req.body ? Object.keys(req.body) : 'no body',
         body: req.body,
       });
+      
       return res.status(400).json({
         error: 'Ism, familiya, email va telefon raqami to\'ldirilishi shart',
         details: {
@@ -49,6 +64,7 @@ export const submitRegistrationRequest = async (req, res) => {
             email: email || null, 
             phone: phone || null 
           },
+          missingFields,
           bodyKeys: req.body ? Object.keys(req.body) : [],
         },
       });
