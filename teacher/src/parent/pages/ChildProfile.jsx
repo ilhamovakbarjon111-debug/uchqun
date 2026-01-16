@@ -295,7 +295,7 @@ const ChildProfile = () => {
                   <h3 className="text-lg font-bold text-gray-900">
                     {c.firstName} {c.lastName}
                   </h3>
-                  <p className="text-sm text-gray-500">{c.school} • {c.class}</p>
+                  <p className="text-sm text-gray-500">{c.school}{c.childGroup?.name ? ` • ${c.childGroup.name}` : ''}</p>
                 </div>
               </div>
             </Card>
@@ -340,7 +340,7 @@ const ChildProfile = () => {
           >
             {children.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.firstName} {c.lastName} ({c.school}, {c.class})
+                {c.firstName} {c.lastName} ({c.school}{c.childGroup?.name ? `, ${c.childGroup.name}` : ''})
               </option>
             ))}
           </select>
@@ -422,10 +422,7 @@ const ChildProfile = () => {
                 <School className="w-4 h-4 text-blue-600" />
                 <span className="text-sm font-bold text-gray-800">
                   {child.school}
-                  {(() => {
-                    const groupName = (child.class && child.class.trim()) || (child.childGroup?.name) || '';
-                    return groupName ? ` • ${groupName}` : '';
-                  })()}
+                  {child.childGroup?.name ? ` • ${child.childGroup.name}` : ''}
                 </span>
               </div>
             </div>

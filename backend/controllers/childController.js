@@ -15,6 +15,11 @@ export const getChildren = async (req, res) => {
           as: 'parent',
           attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
         },
+        {
+          model: Group,
+          as: 'childGroup',
+          attributes: ['id', 'name'],
+        },
       ],
       order: [['createdAt', 'ASC']],
     });
