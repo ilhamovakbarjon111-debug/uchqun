@@ -44,7 +44,7 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<ParentDashboard />} />
+                <Route index element={<Navigate to="/child" replace />} />
                 <Route path="child" element={<ChildProfile />} />
                 <Route path="activities" element={<ParentActivities />} />
                 <Route path="meals" element={<ParentMeals />} />

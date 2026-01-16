@@ -22,7 +22,6 @@ const Sidebar = ({ onClose }) => {
   const { count, refreshNotifications } = useNotification();
 
   const navigation = [
-    { name: t('nav.home'), href: '/', icon: LayoutDashboard },
     { name: t('nav.profile'), href: '/child', icon: UserCircle },
     { name: t('nav.activities'), href: '/activities', icon: ClipboardList },
     { name: t('nav.meals'), href: '/meals', icon: Utensils },

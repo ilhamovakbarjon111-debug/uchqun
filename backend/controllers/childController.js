@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import Child from '../models/Child.js';
 import User from '../models/User.js';
+import Group from '../models/Group.js';
 import { uploadFile } from '../config/storage.js';
 
 // Get all children for the logged-in parent
@@ -46,6 +47,11 @@ export const getChild = async (req, res) => {
           model: User,
           as: 'parent',
           attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+        },
+        {
+          model: Group,
+          as: 'childGroup',
+          attributes: ['id', 'name'],
         },
       ],
     });

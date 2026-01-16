@@ -34,6 +34,7 @@ const ChildProfile = () => {
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [photoTimestamp, setPhotoTimestamp] = useState(Date.now());
   const [teacherName, setTeacherName] = useState('');
   const [weeklyStats, setWeeklyStats] = useState({
     activities: 0,
@@ -51,39 +52,69 @@ const ChildProfile = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showMessagesModal, setShowMessagesModal] = useState(false);
   
-  // Default avatars
-  const avatars = [
-    '/avatars/avatar1.jfif',
-    '/avatars/avatar2.jfif',
-    '/avatars/avatar3.png',
-    '/avatars/avatar4.jfif',
-    '/avatars/avatar7.jfif',
-    '/avatars/avatar6.jfif',
-  ];
-  
-  const selectAvatar = async (avatarPath) => {
-    // TEMPORARY FIX: Update child state directly without backend call
-    // until Railway deploys the new avatar route
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toastError(t('profile.invalidImage', { defaultValue: 'Faqat rasm fayllari qabul qilinadi' }));
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toastError(t('profile.imageTooLarge', { defaultValue: 'Rasm hajmi 5MB dan katta bo\'lmasligi kerak' }));
+      return;
+    }
+
     try {
       setUploading(true);
-      console.log('Setting avatar locally:', avatarPath);
       
-      // Update local state immediately
-      const updatedChild = { ...child, photo: avatarPath };
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      // Upload to backend
+      const response = await api.put(`/child/${child.id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Get the photo URL from response
+      const newPhotoUrl = response.data.photo || response.data.data?.photo;
+      
+      // Update timestamp to force image reload
+      const timestamp = Date.now();
+      setPhotoTimestamp(timestamp);
+      
+      // Update local state with new photo URL
+      const updatedChild = { 
+        ...child, 
+        photo: newPhotoUrl
+      };
       setChild(updatedChild);
       setShowAvatarSelector(false);
       
-      // Try to save to backend in background (will fail on old Railway, but OK)
-      api.put(`/child/${child.id}/avatar`, { photo: avatarPath })
-        .then(() => console.log('✅ Avatar saved to backend'))
-        .catch(() => console.log('⚠️ Backend save failed (old code), but local update OK'));
+      // Reload child data from server to ensure we have the latest
+      try {
+        const childResponse = await api.get(`/child/${child.id}`);
+        setChild(childResponse.data);
+        setPhotoTimestamp(Date.now());
+      } catch (reloadError) {
+        console.error('Error reloading child data:', reloadError);
+        // Continue with local update if reload fails
+      }
       
-      alert('Avatar tanlandi! ✅');
+      toastSuccess(t('profile.avatarUpdated', { defaultValue: 'Rasm muvaffaqiyatli yuklandi' }));
     } catch (err) {
-      console.error('Avatar xatolik:', err);
-      alert('Xatolik: ' + err.message);
+      console.error('Avatar yuklash xatolik:', err);
+      toastError(err.response?.data?.error || t('profile.uploadError', { defaultValue: 'Rasm yuklashda xatolik yuz berdi' }));
     } finally {
       setUploading(false);
+      // Reset file input
+      event.target.value = '';
     }
   };
 
@@ -324,13 +355,17 @@ const ChildProfile = () => {
           <div className="relative">
             <div className="relative group cursor-pointer">
               <img
+                key={`${child.photo}-${photoTimestamp}`}
                 src={
                   child.photo 
                     ? (child.photo.startsWith('/avatars/') 
                         // Local avatar - use as-is (frontend path)
                         ? child.photo
-                        // Backend/Appwrite photo - use API_BASE
-                        : `${API_BASE}${child.photo.startsWith('/') ? '' : '/'}${child.photo}?t=${Date.now()}`)
+                        : child.photo.startsWith('http://') || child.photo.startsWith('https://')
+                        // Full URL - use as-is with timestamp
+                        ? `${child.photo}?t=${photoTimestamp}`
+                        // Relative path - prepend API_BASE
+                        : `${API_BASE}${child.photo.startsWith('/') ? '' : '/'}${child.photo}?t=${photoTimestamp}`)
                     : defaultAvatar
                 }
                 alt={`${child.firstName} ${child.lastName}`}
@@ -378,14 +413,20 @@ const ChildProfile = () => {
               </div>
               <p className="text-lg text-gray-700 font-medium flex items-center justify-center md:justify-start gap-2">
                 <Baby className="w-5 h-5 text-blue-600" />
-                {t('child.ageYears', { count: calculateAge(child.dateOfBirth) })} • {new Date(child.dateOfBirth).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
+                {t('child.ageYears', { count: calculateAge(child.dateOfBirth) })}
               </p>
             </div>
 
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
               <div className="flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl border border-white/20 shadow-lg">
                 <School className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-bold text-gray-800">{child.school}</span>
+                <span className="text-sm font-bold text-gray-800">
+                  {child.school}
+                  {(() => {
+                    const groupName = (child.class && child.class.trim()) || (child.childGroup?.name) || '';
+                    return groupName ? ` • ${groupName}` : '';
+                  })()}
+                </span>
               </div>
             </div>
           </div>
@@ -405,7 +446,7 @@ const ChildProfile = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <InfoItem label={t('child.fullName')} value={`${child.firstName} ${child.lastName}`} icon={User} />
               <InfoItem label={t('child.birthDate')} value={new Date(child.dateOfBirth).toLocaleDateString(locale)} icon={Calendar} />
-              <InfoItem label={t('child.disability')} value={child.disabilityType} icon={ShieldAlert} color="text-red-500" />
+              <InfoItem label={t('child.diagnosis')} value={child.disabilityType} icon={ShieldAlert} color="text-red-500" />
               <InfoItem label={t('child.teacher')} value={teacherName || child.teacher || '—'} icon={Award} color="text-blue-500" />
             </div>
           </section>
@@ -492,32 +533,48 @@ const ChildProfile = () => {
 
       </div>
 
-      {/* Avatar Selector Modal */}
+      {/* Avatar Upload Modal */}
       {showAvatarSelector && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAvatarSelector(false)}>
-          <div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold mb-6 text-center">Avatar tanlang</h2>
-            <div className="grid grid-cols-3 gap-4">
-              {avatars.map((avatar, index) => (
-                <button
-                  key={index}
-                  onClick={() => selectAvatar(avatar)}
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-6 text-center">Rasm yuklash</h2>
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-500 transition-colors">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
                   disabled={uploading}
-                  className="relative group"
+                  className="hidden"
+                  id="avatar-upload"
+                />
+                <label
+                  htmlFor="avatar-upload"
+                  className={`cursor-pointer flex flex-col items-center gap-4 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <img
-                    src={avatar}
-                    alt={`Avatar ${index + 1}`}
-                    className="w-full aspect-square rounded-xl object-cover border-4 border-gray-200 group-hover:border-blue-500 transition"
-                    onError={(e) => e.target.src = defaultAvatar}
-                  />
-                  <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/20 rounded-xl transition" />
-                </button>
-              ))}
+                  {uploading ? (
+                    <>
+                      <LoadingSpinner size="md" />
+                      <span className="text-gray-600 font-medium">Yuklanmoqda...</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-gray-700 font-semibold mb-1">Galeriyadan rasm tanlang</p>
+                        <p className="text-sm text-gray-500">JPG, PNG yoki GIF (maks. 5MB)</p>
+                      </div>
+                    </>
+                  )}
+                </label>
+              </div>
             </div>
             <button
               onClick={() => setShowAvatarSelector(false)}
-              className="mt-6 w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-semibold transition"
+              disabled={uploading}
+              className="mt-6 w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('profile.cancel', { defaultValue: 'Bekor qilish' })}
             </button>

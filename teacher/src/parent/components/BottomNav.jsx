@@ -9,7 +9,6 @@ const BottomNav = () => {
   const { count, refreshNotifications } = useNotification();
 
   const navigation = [
-    { name: t('nav.home'), href: '/', icon: Home },
     { name: t('nav.profile'), href: '/child', icon: User },
     { name: t('nav.notifications', { defaultValue: 'Notifications' }), href: '/notifications', icon: Bell, badge: count },
     { name: t('nav.rating'), href: '/rating', icon: Star },

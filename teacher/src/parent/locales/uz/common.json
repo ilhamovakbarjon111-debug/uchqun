@@ -36,6 +36,7 @@
     "fullName": "To'liq ismi",
     "birthDate": "Tug'ilgan sana",
     "disability": "Imkoniyat turi",
+    "diagnosis": "Tashxisi",
     "teacher": "O'qituvchi",
     "specialNeeds": "Maxsus ehtiyojlar va allergiyalar",
     "emergency": "Favqulodda bog'lanish",
@@ -246,7 +247,11 @@
     "noMessages": "Hozircha xabarlar yo'q",
     "yourMessage": "Sizning xabaringiz",
     "superAdminReply": "Super-admin javobi",
-    "replied": "Javob berildi"
+    "replied": "Javob berildi",
+    "invalidImage": "Faqat rasm fayllari qabul qilinadi",
+    "imageTooLarge": "Rasm hajmi 5MB dan katta bo'lmasligi kerak",
+    "avatarUpdated": "Rasm muvaffaqiyatli yuklandi",
+    "uploadError": "Rasm yuklashda xatolik yuz berdi"
   },
   "language": "Til"
 }
