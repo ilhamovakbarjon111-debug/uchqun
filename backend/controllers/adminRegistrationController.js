@@ -2,6 +2,9 @@ import AdminRegistrationRequest from '../models/AdminRegistrationRequest.js';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
 import { Op } from 'sequelize';
+import { uploadFile } from '../config/storage.js';
+import fs from 'fs';
+import { sendAdminApprovalEmail } from '../utils/email.js';
 
 /**
  * Submit admin registration request
@@ -23,9 +26,16 @@ export const submitRegistrationRequest = async (req, res) => {
     } = req.body;
 
     // Validation
-    if (!firstName || !lastName || !email || !passportNumber || !location) {
+    if (!firstName || !lastName || !email || !phone) {
       return res.status(400).json({
-        error: 'First name, last name, email, passport number, and location are required',
+        error: 'First name, last name, email, and phone are required',
+      });
+    }
+
+    // Check if certificate or passport file is provided
+    if (!req.files || (!req.files.certificateFile && !req.files.passportFile)) {
+      return res.status(400).json({
+        error: 'At least one document (certificate or passport/ID card) must be uploaded',
       });
     }
 
@@ -51,15 +61,47 @@ export const submitRegistrationRequest = async (req, res) => {
       });
     }
 
+    // Upload files to storage
+    let certificateFilePath = null;
+    let passportFilePath = null;
+
+    if (req.files.certificateFile && req.files.certificateFile[0]) {
+      const certFile = req.files.certificateFile[0];
+      const certBuffer = await fs.promises.readFile(certFile.path);
+      const certUpload = await uploadFile(
+        certBuffer,
+        `admin-registration/certificate-${Date.now()}-${certFile.originalname}`,
+        certFile.mimetype
+      );
+      certificateFilePath = certUpload.url || certUpload.path;
+      // Clean up temp file
+      await fs.promises.unlink(certFile.path).catch(() => {});
+    }
+
+    if (req.files.passportFile && req.files.passportFile[0]) {
+      const passFile = req.files.passportFile[0];
+      const passBuffer = await fs.promises.readFile(passFile.path);
+      const passUpload = await uploadFile(
+        passBuffer,
+        `admin-registration/passport-${Date.now()}-${passFile.originalname}`,
+        passFile.mimetype
+      );
+      passportFilePath = passUpload.url || passUpload.path;
+      // Clean up temp file
+      await fs.promises.unlink(passFile.path).catch(() => {});
+    }
+
     // Create registration request
     const request = await AdminRegistrationRequest.create({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: email.toLowerCase().trim(),
-      phone: phone?.trim() || null,
-      passportNumber: passportNumber.trim(),
+      phone: phone.trim(),
+      certificateFile: certificateFilePath,
+      passportFile: passportFilePath,
+      passportNumber: passportNumber?.trim() || null,
       passportSeries: passportSeries?.trim() || null,
-      location: location.trim(),
+      location: location?.trim() || null,
       region: region?.trim() || null,
       city: city?.trim() || null,
       status: 'pending',
@@ -68,6 +110,8 @@ export const submitRegistrationRequest = async (req, res) => {
     logger.info('Admin registration request submitted', {
       requestId: request.id,
       email: request.email,
+      hasCertificate: !!certificateFilePath,
+      hasPassport: !!passportFilePath,
     });
 
     res.status(201).json({
@@ -180,15 +224,12 @@ export const getRegistrationRequestById = async (req, res) => {
 export const approveRegistrationRequest = async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, password } = req.body;
+    const { password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        error: 'Email and password are required to create admin account',
-      });
-    }
+    // Generate password if not provided
+    const generatedPassword = password || Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8).toUpperCase() + '123';
 
-    if (password.length < 6) {
+    if (generatedPassword.length < 6) {
       return res.status(400).json({
         error: 'Password must be at least 6 characters',
       });
@@ -209,7 +250,7 @@ export const approveRegistrationRequest = async (req, res) => {
 
     // Check if email is already taken
     const existingUser = await User.findOne({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: request.email },
     });
 
     if (existingUser) {
@@ -220,8 +261,8 @@ export const approveRegistrationRequest = async (req, res) => {
 
     // Create admin user account
     const adminUser = await User.create({
-      email: email.toLowerCase().trim(),
-      password: password, // Will be hashed by User model hook
+      email: request.email,
+      password: generatedPassword, // Will be hashed by User model hook
       firstName: request.firstName,
       lastName: request.lastName,
       phone: request.phone,
@@ -238,18 +279,32 @@ export const approveRegistrationRequest = async (req, res) => {
     request.approvedUserId = adminUser.id;
     await request.save();
 
+    // Send email with login credentials
+    try {
+      await sendAdminApprovalEmail(request.email, generatedPassword, request.firstName);
+      logger.info('Approval email sent', { email: request.email });
+    } catch (emailError) {
+      logger.error('Failed to send approval email', {
+        error: emailError.message,
+        email: request.email,
+      });
+      // Don't fail the request if email fails, but log it
+    }
+
     logger.info('Admin registration request approved', {
       requestId: id,
       adminUserId: adminUser.id,
       reviewedBy: req.user.id,
+      email: request.email,
     });
 
     res.json({
       success: true,
-      message: 'Registration request approved and admin account created',
+      message: 'Registration request approved and admin account created. Login credentials sent to email.',
       data: {
         request: request.toJSON(),
         admin: adminUser.toJSON(),
+        password: generatedPassword, // Return password in response for super-admin to see
       },
     });
   } catch (error) {

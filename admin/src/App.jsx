@@ -4,6 +4,7 @@ import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
+import AdminRegister from './pages/AdminRegister';
 import Dashboard from './pages/Dashboard';
 import ReceptionManagement from './pages/ReceptionManagement';
 import ParentManagement from './pages/ParentManagement';
@@ -28,6 +29,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/admin" replace />} />
+      <Route path="/admin-register" element={!isAuthenticated ? <AdminRegister /> : <Navigate to="/admin" replace />} />
       
       <Route
         path="/admin"

@@ -15,7 +15,9 @@ import {
   MessageSquare,
   Send,
   Check,
-  X
+  X,
+  Phone,
+  FileText
 } from 'lucide-react';
 import Card from '../components/Card';
 import { useTranslation } from 'react-i18next';
@@ -43,7 +45,13 @@ const SuperAdmin = () => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [replying, setReplying] = useState(false);
-  const [activeTab, setActiveTab] = useState('admins'); // 'admins', 'schools', 'messages'
+  const [activeTab, setActiveTab] = useState('admins'); // 'admins', 'schools', 'messages', 'registrations'
+  const [registrationRequests, setRegistrationRequests] = useState([]);
+  const [loadingRegistrations, setLoadingRegistrations] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [approvingRequest, setApprovingRequest] = useState(false);
+  const [rejectingRequest, setRejectingRequest] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
   const { success, error: showError } = useToast();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -103,6 +111,26 @@ const SuperAdmin = () => {
 
     loadMessages();
   }, []);
+
+  // Load admin registration requests
+  useEffect(() => {
+    const loadRegistrationRequests = async () => {
+      try {
+        setLoadingRegistrations(true);
+        const res = await api.get('/super-admin/admin-registrations?status=pending');
+        setRegistrationRequests(res.data?.data || []);
+      } catch (error) {
+        console.error('Failed to load registration requests', error);
+        setRegistrationRequests([]);
+      } finally {
+        setLoadingRegistrations(false);
+      }
+    };
+
+    if (activeTab === 'registrations') {
+      loadRegistrationRequests();
+    }
+  }, [activeTab]);
 
 
   const handleReply = async (messageId) => {
@@ -218,6 +246,45 @@ const SuperAdmin = () => {
       setAdmins((prev) => prev.filter((a) => a.id !== id));
     } catch (error) {
       showError(error.response?.data?.error || t('superAdmin.toastDeleteError'));
+    }
+  };
+
+  const handleApproveRequest = async (id) => {
+    if (!confirm('Bu so\'rovni tasdiqlaysizmi? Login ma\'lumotlari emailga yuboriladi.')) return;
+    
+    setApprovingRequest(true);
+    try {
+      const res = await api.post(`/super-admin/admin-registrations/${id}/approve`, {});
+      success('So\'rov tasdiqlandi va login ma\'lumotlari emailga yuborildi');
+      // Reload requests
+      const requestsRes = await api.get('/super-admin/admin-registrations?status=pending');
+      setRegistrationRequests(requestsRes.data?.data || []);
+      // Reload admins
+      const adminsRes = await api.get('/super-admin/admins');
+      setAdmins(adminsRes.data?.data || []);
+    } catch (error) {
+      showError(error.response?.data?.error || 'So\'rovni tasdiqlashda xatolik');
+    } finally {
+      setApprovingRequest(false);
+    }
+  };
+
+  const handleRejectRequest = async (id) => {
+    setRejectingRequest(true);
+    try {
+      await api.post(`/super-admin/admin-registrations/${id}/reject`, {
+        reason: rejectionReason.trim() || null,
+      });
+      success('So\'rov rad etildi');
+      setSelectedRequest(null);
+      setRejectionReason('');
+      // Reload requests
+      const res = await api.get('/super-admin/admin-registrations?status=pending');
+      setRegistrationRequests(res.data?.data || []);
+    } catch (error) {
+      showError(error.response?.data?.error || 'So\'rovni rad etishda xatolik');
+    } finally {
+      setRejectingRequest(false);
     }
   };
 
@@ -644,6 +711,185 @@ const SuperAdmin = () => {
                             <>
                               <Send className="w-4 h-4" />
                               <span>{t('superAdmin.send', { defaultValue: 'Yuborish' })}</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'registrations' && (
+            <>
+              <div className="text-center">
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-2">
+                  Admin Ro'yxatdan O'tish So'rovlari
+                </h2>
+                <p className="text-gray-600 font-medium">Yangi admin so'rovlarini ko'rib chiqing va tasdiqlang</p>
+              </div>
+
+              <Card className="p-6 space-y-4">
+                {loadingRegistrations ? (
+                  <div className="flex items-center justify-center min-h-[120px]">
+                    <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : registrationRequests.length === 0 ? (
+                  <p className="text-sm text-gray-600 text-center py-8">Hozircha so'rovlar yo'q</p>
+                ) : (
+                  <div className="space-y-4">
+                    {registrationRequests.map((request) => (
+                      <div
+                        key={request.id}
+                        className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-3">
+                            <div>
+                              <h3 className="font-bold text-lg text-gray-900">
+                                {request.firstName} {request.lastName}
+                              </h3>
+                              <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  <Mail className="w-4 h-4" />
+                                  {request.email}
+                                </span>
+                                {request.phone && (
+                                  <span className="flex items-center gap-1">
+                                    <Phone className="w-4 h-4" />
+                                    {request.phone}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {(request.passportNumber || request.location) && (
+                              <div className="text-sm text-gray-600 space-y-1">
+                                {request.passportNumber && (
+                                  <p>Passport: {request.passportNumber} {request.passportSeries && `(${request.passportSeries})`}</p>
+                                )}
+                                {request.location && <p>Manzil: {request.location}</p>}
+                                {request.region && <p>Viloyat: {request.region}</p>}
+                                {request.city && <p>Shahar: {request.city}</p>}
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
+                              {request.certificateFile && (
+                                <a
+                                  href={request.certificateFile}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                  Guvohnoma
+                                </a>
+                              )}
+                              {request.passportFile && (
+                                <a
+                                  href={request.passportFile}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                  Passport/ID
+                                </a>
+                              )}
+                            </div>
+
+                            <p className="text-xs text-gray-500">
+                              So'rov yuborilgan: {new Date(request.createdAt).toLocaleString('uz-UZ')}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => handleApproveRequest(request.id)}
+                              disabled={approvingRequest}
+                              className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                              <Check className="w-4 h-4" />
+                              Tasdiqlash
+                            </button>
+                            <button
+                              onClick={() => setSelectedRequest(request)}
+                              disabled={rejectingRequest}
+                              className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                              <X className="w-4 h-4" />
+                              Rad etish
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+
+              {/* Reject Modal */}
+              {selectedRequest && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                  <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
+                    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-gray-900">
+                        So'rovni rad etish
+                      </h3>
+                      <button
+                        onClick={() => {
+                          setSelectedRequest(null);
+                          setRejectionReason('');
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <X className="w-5 h-5 text-gray-500" />
+                      </button>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <p className="text-sm text-gray-600">
+                        {selectedRequest.firstName} {selectedRequest.lastName} so'rovini rad etishni tasdiqlaysizmi?
+                      </p>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Rad etish sababi (ixtiyoriy)
+                        </label>
+                        <textarea
+                          value={rejectionReason}
+                          onChange={(e) => setRejectionReason(e.target.value)}
+                          rows={4}
+                          placeholder="Rad etish sababini kiriting..."
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            setSelectedRequest(null);
+                            setRejectionReason('');
+                          }}
+                          className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors"
+                          disabled={rejectingRequest}
+                        >
+                          Bekor qilish
+                        </button>
+                        <button
+                          onClick={() => handleRejectRequest(selectedRequest.id)}
+                          disabled={rejectingRequest}
+                          className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {rejectingRequest ? (
+                            <>
+                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>Rad etilmoqda...</span>
+                            </>
+                          ) : (
+                            <>
+                              <X className="w-4 h-4" />
+                              <span>Rad etish</span>
                             </>
                           )}
                         </button>

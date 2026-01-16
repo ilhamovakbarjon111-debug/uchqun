@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
   },
 });
 
-// File filter
+// File filter for media files
 const fileFilter = (req, file, cb) => {
   // Check file type
   const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -38,6 +38,20 @@ const fileFilter = (req, file, cb) => {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type. Only images (JPEG, PNG, GIF, WebP) and videos (MP4, WebM, QuickTime) are allowed.'), false);
+  }
+};
+
+// File filter for documents (PDF and images)
+const documentFileFilter = (req, file, cb) => {
+  const allowedTypes = [
+    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf'
+  ];
+  
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only images (JPEG, PNG, GIF, WebP) and PDF files are allowed.'), false);
   }
 };
 
@@ -53,6 +67,20 @@ export const upload = multer({
 // Specific upload handlers
 export const uploadSingle = upload.single('file');
 export const uploadMultiple = upload.array('files', 10); // Max 10 files
+
+// Document upload (for admin registration - PDF and images)
+export const uploadDocument = multer({
+  storage,
+  fileFilter: documentFileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max file size for documents
+  },
+});
+
+export const uploadDocuments = uploadDocument.fields([
+  { name: 'certificateFile', maxCount: 1 },
+  { name: 'passportFile', maxCount: 1 },
+]);
 
 // Error handler for multer errors
 export const handleUploadError = (err, req, res, next) => {

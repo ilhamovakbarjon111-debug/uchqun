@@ -28,13 +28,23 @@ const AdminRegistrationRequest = sequelize.define('AdminRegistrationRequest', {
   },
   phone: {
     type: DataTypes.STRING,
-    allowNull: true,
+    allowNull: false,
     comment: 'Admin phone number',
+  },
+  certificateFile: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Path to uploaded certificate (guvohnoma) file',
+  },
+  passportFile: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Path to uploaded passport or ID card file',
   },
   passportNumber: {
     type: DataTypes.STRING,
-    allowNull: false,
-    comment: 'Passport serial number',
+    allowNull: true,
+    comment: 'Passport serial number (optional if passport file is provided)',
   },
   passportSeries: {
     type: DataTypes.STRING,
@@ -43,7 +53,7 @@ const AdminRegistrationRequest = sequelize.define('AdminRegistrationRequest', {
   },
   location: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
     comment: 'Location/address of the admin',
   },
   region: {

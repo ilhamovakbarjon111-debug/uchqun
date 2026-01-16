@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Crown, Eye, EyeOff } from 'lucide-react';
@@ -113,6 +113,18 @@ const Login = () => {
         <div className="mt-6 text-center text-sm text-gray-500">
           <p className="font-semibold mb-2">{t('login.blockTitle')}</p>
           <p className="text-xs">{t('login.blockSubtitle')}</p>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <p className="text-center text-sm text-gray-600 mb-3">
+            Admin bo'lishni xohlaysizmi?
+          </p>
+          <Link
+            to="/admin-register"
+            className="block w-full text-center px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+          >
+            Admin ro'yxatdan o'tish
+          </Link>
         </div>
       </div>
     </div>
