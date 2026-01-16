@@ -11,11 +11,6 @@ const AdminRegister = () => {
     lastName: '',
     email: '',
     phone: '',
-    passportNumber: '',
-    passportSeries: '',
-    location: '',
-    region: '',
-    city: '',
   });
   const [certificateFile, setCertificateFile] = useState(null);
   const [passportFile, setPassportFile] = useState(null);
@@ -224,85 +219,6 @@ const AdminRegister = () => {
                 required
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="+998901234567"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="passportNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                Passport seriya raqami
-              </label>
-              <input
-                id="passportNumber"
-                name="passportNumber"
-                type="text"
-                value={formData.passportNumber}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="AA1234567"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="passportSeries" className="block text-sm font-medium text-gray-700 mb-2">
-                Passport seriyasi
-              </label>
-              <input
-                id="passportSeries"
-                name="passportSeries"
-                type="text"
-                value={formData.passportSeries}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="AB"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-2">
-                Viloyat
-              </label>
-              <input
-                id="region"
-                name="region"
-                type="text"
-                value={formData.region}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Toshkent"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
-                Shahar
-              </label>
-              <input
-                id="city"
-                name="city"
-                type="text"
-                value={formData.city}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Toshkent"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
-                Manzil
-              </label>
-              <input
-                id="location"
-                name="location"
-                type="text"
-                value={formData.location}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="To'liq manzil"
               />
             </div>
           </div>

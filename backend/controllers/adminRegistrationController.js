@@ -28,14 +28,14 @@ export const submitRegistrationRequest = async (req, res) => {
     // Validation
     if (!firstName || !lastName || !email || !phone) {
       return res.status(400).json({
-        error: 'First name, last name, email, and phone are required',
+        error: 'Ism, familiya, email va telefon raqami to\'ldirilishi shart',
       });
     }
 
     // Check if certificate or passport file is provided
     if (!req.files || (!req.files.certificateFile && !req.files.passportFile)) {
       return res.status(400).json({
-        error: 'At least one document (certificate or passport/ID card) must be uploaded',
+        error: 'Kamida bitta hujjat (guvohnoma yoki passport/ID karta) yuklanishi kerak',
       });
     }
 
