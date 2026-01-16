@@ -127,8 +127,8 @@ export const login = async (req, res) => {
       }
     }
 
-    // Business Logic: Admin must be active to log in
-    if (user.role === 'admin') {
+    // Business Logic: Admin must be active to log in (except super-admin)
+    if (user.role === 'admin' && user.email !== 'superadmin@uchqun.uz') {
       if (!user.isActive) {
         return res.status(403).json({ 
           error: 'Admin account is not active. Please contact super-admin.',
