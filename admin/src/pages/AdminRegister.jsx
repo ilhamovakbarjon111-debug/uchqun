@@ -95,8 +95,9 @@ const AdminRegister = () => {
       }
 
       const response = await api.post('/auth/admin-register', formDataToSend, {
+        // Remove Content-Type header to let axios set it automatically with boundary
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': undefined,
         },
       });
 
@@ -107,7 +108,12 @@ const AdminRegister = () => {
         }, 3000);
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Ro\'yxatdan o\'tishda xatolik yuz berdi');
+      console.error('Registration error:', err);
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Ro\'yxatdan o\'tishda xatolik yuz berdi';
+      setError(errorMessage);
+      if (err.response?.data?.details) {
+        console.error('Error details:', err.response.data.details);
+      }
     } finally {
       setLoading(false);
     }

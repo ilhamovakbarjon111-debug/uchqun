@@ -13,6 +13,14 @@ import { sendAdminApprovalEmail } from '../utils/email.js';
  */
 export const submitRegistrationRequest = async (req, res) => {
   try {
+    // Debug: Log request data
+    logger.info('Admin registration request received', {
+      body: req.body,
+      files: req.files ? Object.keys(req.files) : 'no files',
+      hasCertificate: !!(req.files?.certificateFile),
+      hasPassport: !!(req.files?.passportFile),
+    });
+
     const {
       firstName,
       lastName,
@@ -27,8 +35,18 @@ export const submitRegistrationRequest = async (req, res) => {
 
     // Validation
     if (!firstName || !lastName || !email || !phone) {
+      logger.warn('Validation failed', {
+        firstName: !!firstName,
+        lastName: !!lastName,
+        email: !!email,
+        phone: !!phone,
+        bodyKeys: Object.keys(req.body),
+      });
       return res.status(400).json({
         error: 'Ism, familiya, email va telefon raqami to\'ldirilishi shart',
+        details: process.env.NODE_ENV === 'development' ? {
+          received: { firstName: !!firstName, lastName: !!lastName, email: !!email, phone: !!phone }
+        } : undefined,
       });
     }
 
