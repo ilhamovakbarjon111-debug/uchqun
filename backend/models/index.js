@@ -19,6 +19,7 @@ import ChatMessage from './ChatMessage.js';
 import School from './School.js';
 import SchoolRating from './SchoolRating.js';
 import SuperAdminMessage from './SuperAdminMessage.js';
+import AdminRegistrationRequest from './AdminRegistrationRequest.js';
 
 // Initialize all models
 const models = {
@@ -42,6 +43,7 @@ const models = {
   School,
   SchoolRating,
   SuperAdminMessage,
+  AdminRegistrationRequest,
   sequelize,
 };
 
@@ -125,6 +127,12 @@ Group.hasMany(Child, { foreignKey: 'groupId', as: 'groupChildren' });
 // Super Admin Messages
 User.hasMany(SuperAdminMessage, { foreignKey: 'senderId', as: 'superAdminMessages' });
 SuperAdminMessage.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
+
+// Admin Registration Requests
+User.hasMany(AdminRegistrationRequest, { foreignKey: 'reviewedBy', as: 'reviewedAdminRequests' });
+AdminRegistrationRequest.belongsTo(User, { foreignKey: 'reviewedBy', as: 'reviewer' });
+User.hasOne(AdminRegistrationRequest, { foreignKey: 'approvedUserId', as: 'adminRegistrationRequest' });
+AdminRegistrationRequest.belongsTo(User, { foreignKey: 'approvedUserId', as: 'approvedUser' });
 
 // Sync database (use with caution in production)
 export const syncDatabase = async (force = false) => {

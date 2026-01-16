@@ -127,6 +127,16 @@ export const login = async (req, res) => {
       }
     }
 
+    // Business Logic: Admin must be active to log in
+    if (user.role === 'admin') {
+      if (!user.isActive) {
+        return res.status(403).json({ 
+          error: 'Admin account is not active. Please contact super-admin.',
+          requiresApproval: true,
+        });
+      }
+    }
+
     const { accessToken, refreshToken } = generateTokens(user.id);
 
     logger.info('Successful login', { email: normalizedEmail, userId: user.id, role: user.role });

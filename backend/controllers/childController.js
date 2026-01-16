@@ -19,6 +19,7 @@ export const getChildren = async (req, res) => {
           model: Group,
           as: 'childGroup',
           attributes: ['id', 'name'],
+          required: false, // Child may not have a group
         },
       ],
       order: [['createdAt', 'ASC']],
@@ -27,6 +28,8 @@ export const getChildren = async (req, res) => {
     const childrenData = children.map(child => {
       const data = child.toJSON();
       data.age = child.getAge();
+      // Debug: Log childGroup for each child
+      console.log(`Child ${data.firstName} ${data.lastName} - groupId: ${data.groupId}, childGroup:`, data.childGroup);
       return data;
     });
 
@@ -57,6 +60,7 @@ export const getChild = async (req, res) => {
           model: Group,
           as: 'childGroup',
           attributes: ['id', 'name'],
+          required: false, // Child may not have a group
         },
       ],
     });
@@ -67,6 +71,10 @@ export const getChild = async (req, res) => {
 
     const childData = child.toJSON();
     childData.age = child.getAge();
+    
+    // Debug: Log childGroup data
+    console.log('Child groupId:', childData.groupId);
+    console.log('Child childGroup:', childData.childGroup);
 
     res.json(childData);
   } catch (error) {

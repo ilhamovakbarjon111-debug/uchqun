@@ -21,6 +21,7 @@ import {
   AlertCircle,
   MessageSquare,
   Send,
+  Users,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 // Default avatar - use first avatar as fallback
@@ -36,6 +37,7 @@ const ChildProfile = () => {
   const [error, setError] = useState(null);
   const [photoTimestamp, setPhotoTimestamp] = useState(Date.now());
   const [teacherName, setTeacherName] = useState('');
+  const [parentGroupName, setParentGroupName] = useState('');
   const [weeklyStats, setWeeklyStats] = useState({
     activities: 0,
     meals: 0,
@@ -202,6 +204,10 @@ const ChildProfile = () => {
 
           setChild(childResponse.data);
           const assignedTeacher = profileResponse?.data?.data?.user?.assignedTeacher;
+          // Faqat guruh nomini parent'dan olamiz
+          const parentGroup = profileResponse?.data?.data?.user?.group;
+          setParentGroupName(parentGroup?.name || '');
+          
           const combinedTeacherName = assignedTeacher
             ? [assignedTeacher.firstName, assignedTeacher.lastName].filter(Boolean).join(' ')
             : childResponse.data?.teacher;
@@ -295,7 +301,12 @@ const ChildProfile = () => {
                   <h3 className="text-lg font-bold text-gray-900">
                     {c.firstName} {c.lastName}
                   </h3>
-                  <p className="text-sm text-gray-500">{c.school}{c.childGroup?.name ? ` • ${c.childGroup.name}` : ''}</p>
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-500">{c.school}</p>
+                    {parentGroupName && (
+                      <p className="text-sm text-gray-500">{parentGroupName}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>
@@ -340,7 +351,7 @@ const ChildProfile = () => {
           >
             {children.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.firstName} {c.lastName} ({c.school}{c.childGroup?.name ? `, ${c.childGroup.name}` : ''})
+                {c.firstName} {c.lastName} ({c.school}{parentGroupName ? `, ${parentGroupName}` : ''})
               </option>
             ))}
           </select>
@@ -420,11 +431,14 @@ const ChildProfile = () => {
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
               <div className="flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl border border-white/20 shadow-lg">
                 <School className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-bold text-gray-800">
-                  {child.school}
-                  {child.childGroup?.name ? ` • ${child.childGroup.name}` : ''}
-                </span>
+                <span className="text-sm font-bold text-gray-800">{child.school}</span>
               </div>
+              {parentGroupName && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl border border-white/20 shadow-lg">
+                  <Users className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-bold text-gray-800">{parentGroupName}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

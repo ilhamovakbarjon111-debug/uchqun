@@ -43,7 +43,15 @@ const SuperAdmin = () => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [replying, setReplying] = useState(false);
-  const [activeTab, setActiveTab] = useState('admins'); // 'admins', 'schools', 'messages'
+  const [activeTab, setActiveTab] = useState('admins'); // 'admins', 'schools', 'messages', 'adminRegistrations'
+  const [adminRegistrations, setAdminRegistrations] = useState([]);
+  const [loadingRegistrations, setLoadingRegistrations] = useState(true);
+  const [selectedRegistration, setSelectedRegistration] = useState(null);
+  const [approveEmail, setApproveEmail] = useState('');
+  const [approvePassword, setApprovePassword] = useState('');
+  const [rejectReason, setRejectReason] = useState('');
+  const [approving, setApproving] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
   const { success, error: showError } = useToast();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -102,6 +110,24 @@ const SuperAdmin = () => {
     };
 
     loadMessages();
+  }, []);
+
+  // Load admin registrations
+  useEffect(() => {
+    const loadRegistrations = async () => {
+      try {
+        setLoadingRegistrations(true);
+        const res = await api.get('/super-admin/admin-registrations');
+        setAdminRegistrations(res.data?.data || []);
+      } catch (error) {
+        console.error('Failed to load admin registrations', error);
+        setAdminRegistrations([]);
+      } finally {
+        setLoadingRegistrations(false);
+      }
+    };
+
+    loadRegistrations();
   }, []);
 
   const handleReply = async (messageId) => {
@@ -220,6 +246,54 @@ const SuperAdmin = () => {
     }
   };
 
+  const handleApproveRegistration = async (id) => {
+    if (!approveEmail || !approvePassword) {
+      showError(t('superAdmin.regApproveRequired', { defaultValue: 'Email va parol kiritilishi kerak' }));
+      return;
+    }
+
+    setApproving(true);
+    try {
+      await api.post(`/super-admin/admin-registrations/${id}/approve`, {
+        email: approveEmail,
+        password: approvePassword,
+      });
+      success(t('superAdmin.regApproveSuccess', { defaultValue: 'Admin tasdiqlandi va akkaunt yaratildi' }));
+      setSelectedRegistration(null);
+      setApproveEmail('');
+      setApprovePassword('');
+      // Reload registrations
+      const res = await api.get('/super-admin/admin-registrations');
+      setAdminRegistrations(res.data?.data || []);
+      // Reload admins
+      const adminsRes = await api.get('/super-admin/admins');
+      setAdmins(adminsRes.data?.data || []);
+    } catch (error) {
+      showError(error.response?.data?.error || t('superAdmin.regApproveError', { defaultValue: 'Tasdiqlashda xatolik' }));
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  const handleRejectRegistration = async (id) => {
+    setRejecting(true);
+    try {
+      await api.post(`/super-admin/admin-registrations/${id}/reject`, {
+        reason: rejectReason || null,
+      });
+      success(t('superAdmin.regRejectSuccess', { defaultValue: 'Ariza rad etildi' }));
+      setSelectedRegistration(null);
+      setRejectReason('');
+      // Reload registrations
+      const res = await api.get('/super-admin/admin-registrations');
+      setAdminRegistrations(res.data?.data || []);
+    } catch (error) {
+      showError(error.response?.data?.error || t('superAdmin.regRejectError', { defaultValue: 'Rad etishda xatolik' }));
+    } finally {
+      setRejecting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
       {/* Header */}
@@ -288,6 +362,21 @@ const SuperAdmin = () => {
             {messages.filter(m => !m.isRead).length > 0 && (
               <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
                 {messages.filter(m => !m.isRead).length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('adminRegistrations')}
+            className={`px-6 py-3 font-medium transition-colors border-b-2 relative ${
+              activeTab === 'adminRegistrations'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {t('superAdmin.tabs.adminRegistrations', { defaultValue: 'Admin arizalari' })}
+            {adminRegistrations.filter(r => r.status === 'pending').length > 0 && (
+              <span className="ml-2 px-2 py-0.5 bg-orange-500 text-white text-xs rounded-full">
+                {adminRegistrations.filter(r => r.status === 'pending').length}
               </span>
             )}
           </button>
@@ -646,6 +735,278 @@ const SuperAdmin = () => {
                             </>
                           )}
                         </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'adminRegistrations' && (
+            <>
+              <div className="text-center">
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-2">
+                  {t('superAdmin.regTitle', { defaultValue: 'Admin Ro\'yxatdan O\'tish Arizalari' })}
+                </h2>
+                <p className="text-gray-600 font-medium">
+                  {t('superAdmin.regSubtitle', { defaultValue: 'Admin arizalarini ko\'rib chiqish va tasdiqlash' })}
+                </p>
+              </div>
+
+              <Card className="p-6 space-y-4">
+                {loadingRegistrations ? (
+                  <div className="flex items-center justify-center min-h-[120px]">
+                    <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : adminRegistrations.length === 0 ? (
+                  <p className="text-sm text-gray-600">
+                    {t('superAdmin.regEmpty', { defaultValue: 'Hozircha arizalar yo\'q' })}
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {adminRegistrations.map((reg) => (
+                      <div
+                        key={reg.id}
+                        className={`border rounded-xl p-4 hover:shadow-sm transition-shadow ${
+                          reg.status === 'pending'
+                            ? 'border-orange-300 bg-orange-50'
+                            : reg.status === 'approved'
+                            ? 'border-green-300 bg-green-50'
+                            : 'border-red-300 bg-red-50'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-gray-900">
+                                {reg.firstName} {reg.lastName}
+                              </h3>
+                              <span
+                                className={`px-2 py-0.5 text-xs font-semibold rounded ${
+                                  reg.status === 'pending'
+                                    ? 'bg-orange-500 text-white'
+                                    : reg.status === 'approved'
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-red-500 text-white'
+                                }`}
+                              >
+                                {reg.status === 'pending'
+                                  ? t('superAdmin.regStatusPending', { defaultValue: 'Kutilmoqda' })
+                                  : reg.status === 'approved'
+                                  ? t('superAdmin.regStatusApproved', { defaultValue: 'Tasdiqlangan' })
+                                  : t('superAdmin.regStatusRejected', { defaultValue: 'Rad etilgan' })}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-2">
+                              <div>
+                                <span className="font-medium">Email:</span> {reg.email}
+                              </div>
+                              {reg.phone && (
+                                <div>
+                                  <span className="font-medium">Telefon:</span> {reg.phone}
+                                </div>
+                              )}
+                              <div>
+                                <span className="font-medium">Pasport:</span> {reg.passportSeries || ''} {reg.passportNumber}
+                              </div>
+                              <div>
+                                <span className="font-medium">Manzil:</span> {reg.location}
+                              </div>
+                              {reg.region && (
+                                <div>
+                                  <span className="font-medium">Viloyat:</span> {reg.region}
+                                </div>
+                              )}
+                              {reg.city && (
+                                <div>
+                                  <span className="font-medium">Shahar:</span> {reg.city}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {t('superAdmin.regSubmitted', { defaultValue: 'Yuborilgan vaqt' })}: {new Date(reg.createdAt).toLocaleString()}
+                            </div>
+                            {reg.reviewedAt && (
+                              <div className="text-xs text-gray-500">
+                                {t('superAdmin.regReviewed', { defaultValue: 'Ko\'rib chiqilgan vaqt' })}: {new Date(reg.reviewedAt).toLocaleString()}
+                              </div>
+                            )}
+                            {reg.rejectionReason && (
+                              <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded text-xs text-red-700">
+                                <span className="font-medium">
+                                  {t('superAdmin.regRejectionReason', { defaultValue: 'Rad etish sababi' })}:
+                                </span>{' '}
+                                {reg.rejectionReason}
+                              </div>
+                            )}
+                          </div>
+                          {reg.status === 'pending' && (
+                            <div className="flex flex-col gap-2">
+                              <button
+                                onClick={() => setSelectedRegistration(reg)}
+                                className="px-3 py-1 text-xs font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+                              >
+                                {t('superAdmin.regReview', { defaultValue: 'Ko\'rib chiqish' })}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+
+              {/* Approve/Reject Modal */}
+              {selectedRegistration && selectedRegistration.status === 'pending' && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                  <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">
+                          {t('superAdmin.regReviewTitle', { defaultValue: 'Arizani ko\'rib chiqish' })}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {selectedRegistration.firstName} {selectedRegistration.lastName}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedRegistration(null);
+                          setApproveEmail('');
+                          setApprovePassword('');
+                          setRejectReason('');
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <X className="w-5 h-5 text-gray-500" />
+                      </button>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium text-gray-700">Email:</span>
+                          <p className="text-gray-600">{selectedRegistration.email}</p>
+                        </div>
+                        {selectedRegistration.phone && (
+                          <div>
+                            <span className="font-medium text-gray-700">Telefon:</span>
+                            <p className="text-gray-600">{selectedRegistration.phone}</p>
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-medium text-gray-700">Pasport:</span>
+                          <p className="text-gray-600">
+                            {selectedRegistration.passportSeries || ''} {selectedRegistration.passportNumber}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Manzil:</span>
+                          <p className="text-gray-600">{selectedRegistration.location}</p>
+                        </div>
+                        {selectedRegistration.region && (
+                          <div>
+                            <span className="font-medium text-gray-700">Viloyat:</span>
+                            <p className="text-gray-600">{selectedRegistration.region}</p>
+                          </div>
+                        )}
+                        {selectedRegistration.city && (
+                          <div>
+                            <span className="font-medium text-gray-700">Shahar:</span>
+                            <p className="text-gray-600">{selectedRegistration.city}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border-t pt-4 space-y-4">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-3">
+                            {t('superAdmin.regApproveTitle', { defaultValue: 'Tasdiqlash' })}
+                          </h4>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                {t('superAdmin.regApproveEmail', { defaultValue: 'Email' })} *
+                              </label>
+                              <input
+                                type="email"
+                                required
+                                value={approveEmail}
+                                onChange={(e) => setApproveEmail(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                placeholder="admin@example.com"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                {t('superAdmin.regApprovePassword', { defaultValue: 'Parol' })} *
+                              </label>
+                              <input
+                                type="password"
+                                required
+                                value={approvePassword}
+                                onChange={(e) => setApprovePassword(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                placeholder={t('superAdmin.regApprovePasswordPlaceholder', { defaultValue: 'Minimal 6 ta belgi' })}
+                              />
+                            </div>
+                            <button
+                              onClick={() => handleApproveRegistration(selectedRegistration.id)}
+                              disabled={approving || !approveEmail || !approvePassword || approvePassword.length < 6}
+                              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                              {approving ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                  <span>{t('superAdmin.regApproving', { defaultValue: 'Tasdiqlanmoqda...' })}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="w-4 h-4" />
+                                  <span>{t('superAdmin.regApprove', { defaultValue: 'Tasdiqlash' })}</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="border-t pt-4">
+                          <h4 className="font-semibold text-gray-900 mb-3">
+                            {t('superAdmin.regRejectTitle', { defaultValue: 'Rad etish' })}
+                          </h4>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                {t('superAdmin.regRejectReason', { defaultValue: 'Sabab (ixtiyoriy)' })}
+                              </label>
+                              <textarea
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                rows={3}
+                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                placeholder={t('superAdmin.regRejectReasonPlaceholder', { defaultValue: 'Rad etish sababini kiriting...' })}
+                              />
+                            </div>
+                            <button
+                              onClick={() => handleRejectRegistration(selectedRegistration.id)}
+                              disabled={rejecting}
+                              className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                              {rejecting ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                  <span>{t('superAdmin.regRejecting', { defaultValue: 'Rad etilmoqda...' })}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <X className="w-4 h-4" />
+                                  <span>{t('superAdmin.regReject', { defaultValue: 'Rad etish' })}</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
