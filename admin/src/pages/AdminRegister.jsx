@@ -79,11 +79,20 @@ const AdminRegister = () => {
     try {
       const formDataToSend = new FormData();
       
-      // Add form fields
-      Object.keys(formData).forEach(key => {
-        if (formData[key]) {
-          formDataToSend.append(key, formData[key]);
-        }
+      // Add form fields (always append, even if empty, to ensure they're sent)
+      formDataToSend.append('firstName', formData.firstName || '');
+      formDataToSend.append('lastName', formData.lastName || '');
+      formDataToSend.append('email', formData.email || '');
+      formDataToSend.append('phone', formData.phone || '');
+
+      // Debug: Log what we're sending
+      console.log('Sending form data:', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        hasCertificate: !!certificateFile,
+        hasPassport: !!passportFile,
       });
 
       // Add files
@@ -109,11 +118,14 @@ const AdminRegister = () => {
       }
     } catch (err) {
       console.error('Registration error:', err);
+      console.error('Error response:', err.response?.data);
       const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Ro\'yxatdan o\'tishda xatolik yuz berdi';
-      setError(errorMessage);
+      let fullErrorMessage = errorMessage;
       if (err.response?.data?.details) {
         console.error('Error details:', err.response.data.details);
+        fullErrorMessage += `\n\nTafsilotlar: ${JSON.stringify(err.response.data.details, null, 2)}`;
       }
+      setError(fullErrorMessage);
     } finally {
       setLoading(false);
     }

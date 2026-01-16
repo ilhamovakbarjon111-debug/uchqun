@@ -16,9 +16,11 @@ export const submitRegistrationRequest = async (req, res) => {
     // Debug: Log request data
     logger.info('Admin registration request received', {
       body: req.body,
+      bodyKeys: req.body ? Object.keys(req.body) : 'no body',
       files: req.files ? Object.keys(req.files) : 'no files',
       hasCertificate: !!(req.files?.certificateFile),
       hasPassport: !!(req.files?.passportFile),
+      contentType: req.headers['content-type'],
     });
 
     const {
@@ -31,22 +33,29 @@ export const submitRegistrationRequest = async (req, res) => {
       location,
       region,
       city,
-    } = req.body;
+    } = req.body || {};
 
     // Validation
     if (!firstName || !lastName || !email || !phone) {
       logger.warn('Validation failed', {
-        firstName: !!firstName,
-        lastName: !!lastName,
-        email: !!email,
-        phone: !!phone,
-        bodyKeys: Object.keys(req.body),
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phone: phone,
+        bodyKeys: req.body ? Object.keys(req.body) : 'no body',
+        body: req.body,
       });
       return res.status(400).json({
         error: 'Ism, familiya, email va telefon raqami to\'ldirilishi shart',
-        details: process.env.NODE_ENV === 'development' ? {
-          received: { firstName: !!firstName, lastName: !!lastName, email: !!email, phone: !!phone }
-        } : undefined,
+        details: {
+          received: { 
+            firstName: firstName || null, 
+            lastName: lastName || null, 
+            email: email || null, 
+            phone: phone || null 
+          },
+          bodyKeys: req.body ? Object.keys(req.body) : [],
+        },
       });
     }
 
