@@ -28,11 +28,6 @@ export const submitRegistrationRequest = async (req, res) => {
       lastName,
       email,
       phone,
-      passportNumber,
-      passportSeries,
-      location,
-      region,
-      city,
     } = req.body || {};
 
     // Validation
@@ -126,11 +121,6 @@ export const submitRegistrationRequest = async (req, res) => {
       phone: phone.trim(),
       certificateFile: certificateFilePath,
       passportFile: passportFilePath,
-      passportNumber: passportNumber?.trim() || null,
-      passportSeries: passportSeries?.trim() || null,
-      location: location?.trim() || null,
-      region: region?.trim() || null,
-      city: city?.trim() || null,
       status: 'pending',
     });
 
