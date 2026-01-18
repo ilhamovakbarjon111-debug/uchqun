@@ -1,16 +1,14 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, User, Star, Bot, Bell } from 'lucide-react';
+import { Home, User, Star, Bot } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useNotification } from '../context/NotificationContext';
 
 const BottomNav = () => {
   const location = useLocation();
   const { t } = useTranslation();
-  const { count, refreshNotifications } = useNotification();
 
   const navigation = [
+    { name: t('nav.home', { defaultValue: 'Home' }), href: '/', icon: Home },
     { name: t('nav.profile'), href: '/child', icon: User },
-    { name: t('nav.notifications', { defaultValue: 'Notifications' }), href: '/notifications', icon: Bell, badge: count },
     { name: t('nav.rating'), href: '/rating', icon: Star },
     { name: t('nav.aiChat'), href: '/ai-chat', icon: Bot },
   ];
@@ -34,9 +32,6 @@ const BottomNav = () => {
               className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
                 active ? 'text-blue-600' : 'text-gray-500'
               }`}
-              onClick={() => {
-                if (item.href === '/notifications') refreshNotifications();
-              }}
             >
               <div className="relative">
                 <item.icon className={`w-5 h-5 mb-1 ${active ? 'text-blue-600' : 'text-gray-500'}`} />

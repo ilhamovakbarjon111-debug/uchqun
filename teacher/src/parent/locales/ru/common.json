@@ -56,7 +56,12 @@
     "overview": "Обзор",
     "activities": "Индивидуальный план",
     "mealsTracked": "Питание",
-    "photos": "Фото"
+    "photos": "Фото",
+    "notifications": "Уведомления",
+    "individualPlan": "Индивидуальный план",
+    "meals": "Питание",
+    "media": "Медиа",
+    "viewAll": "Показать все"
   },
   "activities": {
     "title": "Индивидуальный план",

@@ -31,7 +31,8 @@ export function WebAppScreen() {
 
   const startUrl = useMemo(() => {
     const role = user?.role;
-    const path = role === 'teacher' || role === 'admin' ? '/teacher' : '/';
+    // Parent: / (Dashboard), Teacher: /teacher, Admin: /teacher
+    const path = role === 'teacher' || role === 'admin' || role === 'reception' ? '/teacher' : '/';
     return joinUrl(WEB_URL, path);
   }, [user]);
 
@@ -90,6 +91,11 @@ export function WebAppScreen() {
         javaScriptEnabled
         cacheEnabled={!__DEV__}
         cacheMode={__DEV__ ? 'LOAD_NO_CACHE' : 'LOAD_DEFAULT'}
+        // Mobile optimizations
+        allowsBackForwardNavigationGestures={true}
+        sharedCookiesEnabled={true}
+        allowsInlineMediaPlayback={true}
+        mediaPlaybackRequiresUserAction={false}
         injectedJavaScriptBeforeContentLoaded={injectedBeforeLoad}
         onLoadStart={() => {
           setWebError('');

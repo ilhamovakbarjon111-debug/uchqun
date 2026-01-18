@@ -4,6 +4,7 @@ export const API_URL =
 // IMPORTANT:
 // - Android Emulator: host machine -> http://10.0.2.2:<port>
 // - Real device: use your PC's LAN IP (e.g. http://192.168.x.x:<port>) or a deployed URL (Railway/Vercel/etc.)
+// - Production: Parent app -> https://uchqun-one.vercel.app, Teacher app -> https://uchqun-one.vercel.app/teacher
 export const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL || 'https://uchqun-one.vercel.app';
 
 export const STORAGE_KEYS = {

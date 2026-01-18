@@ -36,6 +36,7 @@ const ChildProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [photoTimestamp, setPhotoTimestamp] = useState(Date.now());
+  const [imageLoading, setImageLoading] = useState(true);
   const [teacherName, setTeacherName] = useState('');
   const [parentGroupName, setParentGroupName] = useState('');
   const [weeklyStats, setWeeklyStats] = useState({
@@ -90,6 +91,7 @@ const ChildProfile = () => {
       // Update timestamp to force image reload
       const timestamp = Date.now();
       setPhotoTimestamp(timestamp);
+      setImageLoading(true);
       
       // Update local state with new photo URL
       const updatedChild = { 
@@ -98,6 +100,19 @@ const ChildProfile = () => {
       };
       setChild(updatedChild);
       setShowAvatarSelector(false);
+      
+      // Preload new image
+      if (newPhotoUrl) {
+        const img = new Image();
+        const photoUrl = newPhotoUrl.startsWith('/avatars/')
+          ? newPhotoUrl
+          : newPhotoUrl.startsWith('http://') || newPhotoUrl.startsWith('https://')
+          ? newPhotoUrl
+          : `${API_BASE}${newPhotoUrl.startsWith('/') ? '' : '/'}${newPhotoUrl}`;
+        img.src = `${photoUrl}?t=${timestamp}`;
+        img.onload = () => setImageLoading(false);
+        img.onerror = () => setImageLoading(false);
+      }
       
       // Reload child data from server to ensure we have the latest
       try {
@@ -203,6 +218,22 @@ const ChildProfile = () => {
           ]);
 
           setChild(childResponse.data);
+          
+          // Preload image for faster display
+          if (childResponse.data?.photo) {
+            const img = new Image();
+            const photoUrl = childResponse.data.photo.startsWith('/avatars/')
+              ? childResponse.data.photo
+              : childResponse.data.photo.startsWith('http://') || childResponse.data.photo.startsWith('https://')
+              ? childResponse.data.photo
+              : `${API_BASE}${childResponse.data.photo.startsWith('/') ? '' : '/'}${childResponse.data.photo}`;
+            img.src = photoUrl;
+            img.onload = () => setImageLoading(false);
+            img.onerror = () => setImageLoading(false);
+          } else {
+            setImageLoading(false);
+          }
+          
           const assignedTeacher = profileResponse?.data?.data?.user?.assignedTeacher;
           // Faqat guruh nomini parent'dan olamiz
           const parentGroup = profileResponse?.data?.data?.user?.group;
@@ -365,6 +396,11 @@ const ChildProfile = () => {
         <div className="relative flex flex-col md:flex-row items-center gap-8">
           <div className="relative">
             <div className="relative group cursor-pointer">
+              {imageLoading && (
+                <div className="absolute inset-0 w-32 h-32 md:w-40 md:h-40 rounded-3xl bg-gray-200 animate-pulse flex items-center justify-center">
+                  <User className="w-12 h-12 md:w-16 md:h-16 text-gray-400" />
+                </div>
+              )}
               <img
                 key={`${child.photo}-${photoTimestamp}`}
                 src={
@@ -380,11 +416,22 @@ const ChildProfile = () => {
                     : defaultAvatar
                 }
                 alt={`${child.firstName} ${child.lastName}`}
-                className="w-32 h-32 md:w-40 md:h-40 rounded-3xl object-cover shadow-2xl border-4 border-white"
+                className={`w-32 h-32 md:w-40 md:h-40 rounded-3xl object-cover shadow-2xl border-4 border-white transition-opacity duration-300 ${
+                  imageLoading ? 'opacity-0' : 'opacity-100'
+                }`}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                onLoad={(e) => {
+                  setImageLoading(false);
+                  e.target.style.opacity = '1';
+                }}
                 onError={(e) => {
                   console.error('Image load error:', e.target.src);
                   console.error('Photo path:', child.photo);
+                  setImageLoading(false);
                   e.target.src = defaultAvatar;
+                  e.target.style.opacity = '1';
                 }}
               />
 

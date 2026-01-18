@@ -54,10 +54,15 @@
   "dashboard": {
     "role": "Mening rolim: Ota-ona",
     "welcome": "Xush kelibsiz",
-    "overview": "Umumiy ko‘rinish",
+    "overview": "Umumiy ko'rinish",
     "activities": "Individual reja",
     "mealsTracked": "Ovqatlar",
-    "photos": "Rasmlar"
+    "photos": "Rasmlar",
+    "notifications": "Bildirishnomalar",
+    "individualPlan": "Individual reja",
+    "meals": "Ovqatlar",
+    "media": "Media",
+    "viewAll": "Barchasini ko'rish"
   },
   "activities": {
     "title": "Individual reja",

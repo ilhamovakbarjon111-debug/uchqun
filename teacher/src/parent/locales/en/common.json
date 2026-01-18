@@ -56,7 +56,12 @@
     "overview": "Overview",
     "activities": "Individual Plan",
     "mealsTracked": "Meals Tracked",
-    "photos": "Photos"
+    "photos": "Photos",
+    "notifications": "Notifications",
+    "individualPlan": "Individual Plan",
+    "meals": "Meals",
+    "media": "Media",
+    "viewAll": "View all"
   },
   "activities": {
     "title": "Individual Plan",

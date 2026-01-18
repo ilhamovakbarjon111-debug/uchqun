@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useChild } from '../context/ChildContext';
@@ -10,13 +11,14 @@ import {
   Activity,
   UtensilsCrossed,
   Camera,
-  Users,
+  Bell,
+  ChevronRight,
 } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { selectedChildId } = useChild();
-  const { refreshNotifications } = useNotification();
+  const { refreshNotifications, count = 0 } = useNotification();
   const [child, setChild] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +59,7 @@ const Dashboard = () => {
     };
 
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChildId]);
 
   if (loading) {
@@ -69,19 +72,19 @@ const Dashboard = () => {
 
   const overviewCards = [
     {
-      title: t('dashboard.activities'),
+      title: t('dashboard.individualPlan') || 'Individual reja',
       value: stats?.activities || 0,
       icon: Activity,
       href: '/activities',
     },
     {
-      title: t('dashboard.mealsTracked'),
+      title: t('dashboard.meals') || t('dashboard.mealsTracked'),
       value: stats?.meals || 0,
       icon: UtensilsCrossed,
       href: '/meals',
     },
     {
-      title: t('dashboard.photos'),
+      title: t('dashboard.media') || t('dashboard.photos'),
       value: stats?.media || 0,
       icon: Camera,
       href: '/media',
@@ -89,39 +92,54 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Header Card */}
-      <Card className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
-        <div className="flex items-center gap-3 mb-2">
-          <Users className="w-6 h-6 text-white" />
-          <p className="text-white/90 text-sm font-medium">{t('dashboard.role')}</p>
-        </div>
-        <p className="text-white/90 text-sm mb-1">{t('dashboard.welcome')}</p>
-        <h1 className="text-3xl md:text-4xl font-bold text-white">
-          {user?.firstName || ''} {user?.lastName || ''}
-        </h1>
-      </Card>
+    <div className="max-w-7xl mx-auto pb-20 animate-in fade-in duration-500">
+      <div className="space-y-6">
+          {/* Welcome Header Card */}
+          <Card className="relative bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
+            {/* Notifications Icon in Top Right Corner of Card */}
+            <Link to="/notifications" className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
+              <div className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors backdrop-blur-sm relative">
+                <Bell className="w-5 h-5 text-white" />
+                {count > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] leading-none font-extrabold rounded-full px-1.5 py-1 border-2 border-white shadow-sm">
+                    {count > 9 ? '9+' : count}
+                  </span>
+                )}
+              </div>
+            </Link>
+            
+            <div className="flex items-center gap-3 mb-2">
+              <p className="text-white/90 text-sm font-medium">{t('dashboard.role')}</p>
+            </div>
+            <p className="text-white/90 text-sm mb-1">{t('dashboard.welcome')}</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-white">
+              {user?.firstName || ''} {user?.lastName || ''}
+            </h1>
+          </Card>
 
-      {/* Overview Cards */}
-      <div>
-        <h2 className="text-lg font-semibold text-white mb-4 drop-shadow-sm">{t('dashboard.overview')}</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {overviewCards.map((card) => (
-            <Card key={card.title} className="p-4 hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm">
-              <a href={card.href} className="flex items-center gap-4">
-                <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm">
-                  <card.icon className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{card.value}</p>
-                  <p className="text-sm text-gray-600">{card.title}</p>
-                </div>
-              </a>
-            </Card>
-          ))}
-        </div>
+          {/* Overview Cards */}
+          <div>
+            <h2 className="text-lg font-semibold text-white mb-4 drop-shadow-sm">{t('dashboard.overview')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {overviewCards.map((card) => (
+                <Link key={card.title} to={card.href}>
+                  <Card className="p-5 hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm cursor-pointer group">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+                        <card.icon className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+                        <p className="text-sm text-gray-600 font-medium">{card.title}</p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
       </div>
-
     </div>
   );
 };
