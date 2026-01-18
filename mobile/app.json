@@ -14,7 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.uchqun.platform"
+      "bundleIdentifier": "com.uchqun.platform",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs access to your camera to scan QR codes",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library"
+      }
     },
     "android": {
       "package": "com.uchqun.platform",
@@ -26,7 +30,8 @@
       "versionCode": 1,
       "permissions": [
         "INTERNET",
-        "ACCESS_NETWORK_STATE"
+        "ACCESS_NETWORK_STATE",
+        "CAMERA"
       ]
     },
     "web": {

@@ -8,7 +8,7 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://uchqun-production.up.railway.app/api",
-        "EXPO_PUBLIC_WEB_URL": "https://uchqun-one.vercel.app"
+        "EXPO_PUBLIC_WEB_URL": "https://uchqun-platform.netlify.app"
       }
     },
     "preview": {
@@ -18,7 +18,7 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://uchqun-production.up.railway.app/api",
-        "EXPO_PUBLIC_WEB_URL": "https://uchqun-one.vercel.app"
+        "EXPO_PUBLIC_WEB_URL": "https://uchqun-platform.netlify.app"
       }
     },
     "production": {
@@ -27,7 +27,7 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://uchqun-production.up.railway.app/api",
-        "EXPO_PUBLIC_WEB_URL": "https://uchqun-one.vercel.app"
+        "EXPO_PUBLIC_WEB_URL": "https://uchqun-platform.netlify.app"
       }
     }
   }

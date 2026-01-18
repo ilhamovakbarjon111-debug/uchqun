@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { joinUrl, WEB_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +17,27 @@ function buildLocalStorageBootstrap({ accessToken, refreshToken, user }) {
         if ('${rt}') localStorage.setItem('refreshToken', '${rt}');
         localStorage.setItem('user', '${safeUser}');
       } catch (e) {}
+      
+      // Enable camera API for scanner in WebView
+      try {
+        if (!navigator.mediaDevices) {
+          navigator.mediaDevices = {};
+        }
+        if (!navigator.mediaDevices.getUserMedia) {
+          navigator.mediaDevices.getUserMedia = function(constraints) {
+            const getUserMedia = navigator.getUserMedia || 
+              navigator.webkitGetUserMedia || 
+              navigator.mozGetUserMedia || 
+              navigator.msGetUserMedia;
+            if (!getUserMedia) {
+              return Promise.reject(new Error('getUserMedia is not supported'));
+            }
+            return new Promise(function(resolve, reject) {
+              getUserMedia.call(navigator, constraints, resolve, reject);
+            });
+          };
+        }
+      } catch (e) {}
     })();
     true;
   `;
@@ -33,7 +54,10 @@ export function WebAppScreen() {
     const role = user?.role;
     // Parent: / (Dashboard), Teacher: /teacher, Admin: /teacher
     const path = role === 'teacher' || role === 'admin' || role === 'reception' ? '/teacher' : '/';
-    return joinUrl(WEB_URL, path);
+    // Add cache-busting query parameter to ensure fresh content on each load
+    const url = joinUrl(WEB_URL, path);
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}_t=${Date.now()}&_v=1.0.0`;
   }, [user]);
 
   const injectedBeforeLoad = useMemo(
@@ -84,18 +108,20 @@ export function WebAppScreen() {
       <WebView
         ref={webRef}
         source={{ uri: startUrl }}
-        // Dev-only: avoid stale web assets/styles during iteration
-        // (In production, keep caching for speed.)
-        incognito={__DEV__}
+        // Force fresh content: disable cache to prevent stale data
+        incognito={false}
         domStorageEnabled
         javaScriptEnabled
-        cacheEnabled={!__DEV__}
-        cacheMode={__DEV__ ? 'LOAD_NO_CACHE' : 'LOAD_DEFAULT'}
+        cacheEnabled={false}
+        cacheMode="LOAD_NO_CACHE"
         // Mobile optimizations
         allowsBackForwardNavigationGestures={true}
         sharedCookiesEnabled={true}
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
+        // Camera permissions for scanner
+        androidHardwareAccelerationDisabled={false}
+        androidLayerType="hardware"
         injectedJavaScriptBeforeContentLoaded={injectedBeforeLoad}
         onLoadStart={() => {
           setWebError('');
@@ -135,6 +161,14 @@ export function WebAppScreen() {
             return true;
           }
           return true;
+        }}
+        onPermissionRequest={(request) => {
+          // Grant camera permission for scanner
+          if (request.nativeEvent.permission === 'camera' || request.nativeEvent.permission === 'media') {
+            request.nativeEvent.request.grant();
+          } else {
+            request.nativeEvent.request.deny();
+          }
         }}
       />
 
