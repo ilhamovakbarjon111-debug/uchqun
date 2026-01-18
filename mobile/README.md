@@ -1,61 +1,95 @@
-# Uchqun Mobile (Android) — React Native (Expo)
+# Uchqun Mobile App
 
-Bu mobil ilova **bitta login** bilan foydalanuvchi roli bo‘yicha:
+React Native (Expo) ilovasi - Teacher va Parent uchun ideal mobil ilova.
 
-- `parent` → web’dagi **Parent panel** (`/`)
-- `teacher`/`admin` → web’dagi **Teacher panel** (`/teacher`)
+## Struktura
 
-### Muhim sozlama (WEB URL)
+- **Clean Architecture** - Toza kod strukturasu
+- **Role-based Navigation** - Teacher/Parent uchun alohida routing
+- **WebView Integration** - Web ilova bilan perfect sync
+- **Modern UI** - Zamonaviy dizayn
 
-Mobil ilova web panelni `WebView` orqali ochadi. Shuning uchun teacher web frontend’ning URL’i kerak bo‘ladi.
+## Features
 
-- **Android emulator (local dev)**: `http://10.0.2.2:5174`
-- **Real device**: PC LAN IP (masalan `http://192.168.x.x:5174`) yoki Railway/Vercel’da deploy qilingan URL
+- ✅ Teacher va Parent uchun bitta login
+- ✅ Role-based routing (Teacher → `/teacher`, Parent → `/`)
+- ✅ Perfect localStorage synchronization
+- ✅ Camera permission support (scanner uchun)
+- ✅ Auto token refresh
+- ✅ Error handling va loading states
 
-### Environment variables
+## Development
+
+### Talablar
+
+- Node.js 18+ yoki 20+
+- Expo CLI
+- Android Studio (APK test qilish uchun)
+
+### Ishga Tushirish
+
+```bash
+cd mobile
+npm install
+npm start
+```
+
+Yoki tunnel mode (real device uchun):
+```bash
+npx expo start --tunnel
+```
+
+Expo Go ilovasida QR kodni scan qiling.
+
+### Environment Variables
 
 `.env` fayl yarating (`mobile/.env`):
 
 ```env
-EXPO_PUBLIC_API_URL=https://uchqun-production-4f83.up.railway.app/api
-EXPO_PUBLIC_WEB_URL=https://uchqun-platform.vercel.app
+EXPO_PUBLIC_API_URL=https://uchqun-production.up.railway.app/api
+EXPO_PUBLIC_WEB_URL=https://uchqun-platform.netlify.app
 ```
 
-### Run
+## Build (APK/AAB)
+
+EAS build uchun `BUILD_GUIDE.md` faylini qarang.
+
+### APK Build
 
 ```bash
 cd mobile
-npm run android
+eas build --platform android --profile preview
 ```
 
-## Build (APK/AAB) — EAS
-
-Expo Go test uchun yaxshi, lekin real ilova (.apk/.aab) uchun EAS build kerak bo‘ladi.
-
-### 1) EAS login
-
-```bash
-npx eas-cli login
-```
-
-### 2) APK (internal test)
+### Production Build (AAB)
 
 ```bash
 cd mobile
-npx eas-cli build -p android --profile preview
+eas build --platform android --profile production
 ```
 
-### 3) Play Store uchun AAB
+## Struktura
 
-```bash
-cd mobile
-npx eas-cli build -p android --profile production
+```
+mobile/
+├── src/
+│   ├── context/
+│   │   └── AuthContext.js       # Authentication context
+│   ├── navigation/
+│   │   └── RootNavigator.js     # Root navigation
+│   ├── screens/
+│   │   ├── LoginScreen.js       # Login screen
+│   │   ├── WebAppScreen.js      # WebView screen
+│   │   └── LoadingScreen.js     # Loading screen
+│   ├── services/
+│   │   └── api.js               # API service
+│   ├── storage/
+│   │   └── authStorage.js       # AsyncStorage wrapper
+│   └── config.js                # Configuration
+├── App.js                       # Main app component
+└── package.json
 ```
 
-### Android package nomi
+## Qo'llab-quvvatlash
 
-`mobile/app.json` ichida hozircha:
-- `android.package`: `com.uchqun.platform`
-
-Agar boshqa package xohlasangiz ayting — almashtirib beraman (Play Store’da unique bo‘lishi kerak).
-
+Muammolar uchun `EXPO_GO_FIX.md` faylini qarang.

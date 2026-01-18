@@ -8,9 +8,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer>
-          <RootNavigator />
-        </NavigationContainer>
+        <RootNavigator />
         <StatusBar style="auto" />
       </AuthProvider>
     </SafeAreaProvider>

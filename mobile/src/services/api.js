@@ -7,15 +7,26 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Request interceptor to add token and handle FormData
 api.interceptors.request.use(async (config) => {
   const { accessToken } = await getStoredAuth();
   if (accessToken) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
+  
+  // If the request data is FormData, remove Content-Type to let React Native set it with boundary
+  if (config.data instanceof FormData) {
+    console.log('[API] FormData detected! Removing Content-Type header');
+    delete config.headers['Content-Type'];
+  }
+  
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
+// Response interceptor to handle token refresh
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -39,6 +50,14 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (e) {
         await clearAuth();
+        // Notify WebView if running inside one
+        try {
+          if (typeof window !== 'undefined' && window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'sessionExpired' }));
+          }
+        } catch {
+          // ignore
+        }
         return Promise.reject(e);
       }
     }

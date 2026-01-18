@@ -22,16 +22,23 @@ export function LoginScreen() {
 
   const onSubmit = async () => {
     if (submitting) return;
+    if (!email.trim() || !password) {
+      setError('Email va parolni kiriting');
+      return;
+    }
     setError('');
     setSubmitting(true);
     try {
       await login(email.trim(), password);
+      // Navigation will happen via useEffect when isAuthenticated changes
     } catch (e) {
       const msg =
         e?.response?.data?.error ||
+        e?.response?.data?.message ||
         e?.message ||
-        'Login failed. Email/parolni tekshirib qayta urinib ko‘ring.';
+        'Login failed. Email/parolni tekshirib qayta urinib ko\'ring.';
       setError(msg);
+      console.error('[LoginScreen] Login error:', e);
     } finally {
       setSubmitting(false);
     }
@@ -43,63 +50,76 @@ export function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.card}>
-        <Text style={styles.title}>Uchqun</Text>
-        <Text style={styles.subtitle}>Teacher / Parent login</Text>
-
-        {!!error && <Text style={styles.error}>{error}</Text>}
-
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="email-address"
-          textContentType="username"
-          placeholder="email@example.com"
-          style={styles.input}
-        />
-
-        <Text style={styles.label}>Parol</Text>
-        <View style={styles.passwordWrap}>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            textContentType="password"
-            placeholder="••••••••"
-            style={[styles.input, styles.inputWithRightIcon]}
-          />
-          <Pressable
-            onPress={() => setShowPassword((v) => !v)}
-            accessibilityRole="button"
-            accessibilityLabel={showPassword ? 'Parolni yashirish' : 'Parolni ko‘rsatish'}
-            hitSlop={10}
-            style={({ pressed }) => [styles.eyeButton, pressed && styles.eyeButtonPressed]}
-          >
-            <Ionicons
-              name={showPassword ? 'eye-off' : 'eye'}
-              size={22}
-              color="#6b7280"
-            />
-          </Pressable>
+        <View style={styles.header}>
+          <View style={styles.iconContainer}>
+            <Text style={styles.iconEmoji}>🎓</Text>
+          </View>
+          <Text style={styles.title}>Uchqun Platform</Text>
+          <Text style={styles.subtitle}>Special Education School Management</Text>
         </View>
 
-        <Pressable
-          onPress={onSubmit}
-          disabled={submitting}
-          style={({ pressed }) => [
-            styles.button,
-            submitting && styles.buttonDisabled,
-            pressed && !submitting && styles.buttonPressed,
-          ]}
-        >
-          {submitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Kirish</Text>
-          )}
-        </Pressable>
+        {error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.error}>{error}</Text>
+          </View>
+        ) : null}
+
+        <View style={styles.form}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            textContentType="username"
+            placeholder="Enter your email"
+            placeholderTextColor="#9ca3af"
+            style={styles.input}
+          />
+
+          <Text style={styles.label}>Password</Text>
+          <View style={styles.passwordWrap}>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              textContentType="password"
+              placeholder="Enter your password"
+              placeholderTextColor="#9ca3af"
+              style={[styles.input, styles.inputWithRightIcon]}
+            />
+            <Pressable
+              onPress={() => setShowPassword((v) => !v)}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+              hitSlop={10}
+              style={({ pressed }) => [styles.eyeButton, pressed && styles.eyeButtonPressed]}
+            >
+              <Ionicons
+                name={showPassword ? 'eye-off' : 'eye'}
+                size={20}
+                color="#6b7280"
+              />
+            </Pressable>
+          </View>
+
+          <Pressable
+            onPress={onSubmit}
+            disabled={submitting}
+            style={({ pressed }) => [
+              styles.button,
+              submitting && styles.buttonDisabled,
+              pressed && !submitting && styles.buttonPressed,
+            ]}
+          >
+            {submitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Login</Text>
+            )}
+          </Pressable>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -110,63 +130,112 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#dbeafe',
     padding: 16,
   },
   card: {
     width: '100%',
     maxWidth: 420,
     backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#fed7aa',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    padding: 32,
   },
-  title: { fontSize: 28, fontWeight: '700', color: '#111827', textAlign: 'center' },
-  subtitle: { marginTop: 6, color: '#4b5563', textAlign: 'center', marginBottom: 16 },
-  label: { marginTop: 10, marginBottom: 6, color: '#374151', fontWeight: '600' },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#dbeafe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  iconEmoji: {
+    fontSize: 32,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  form: {
+    gap: 24,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#d1d5db',
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    borderRadius: 8,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#fff',
+    fontSize: 16,
+    color: '#111827',
   },
   passwordWrap: {
     position: 'relative',
     justifyContent: 'center',
   },
   inputWithRightIcon: {
-    paddingRight: 44,
+    paddingRight: 48,
   },
   eyeButton: {
     position: 'absolute',
-    right: 10,
+    right: 12,
     top: 0,
     bottom: 0,
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
-  eyeButtonPressed: { opacity: 0.7 },
+  eyeButtonPressed: {
+    opacity: 0.7,
+  },
   button: {
-    marginTop: 16,
-    backgroundColor: '#ea580c',
-    paddingVertical: 14,
-    borderRadius: 12,
+    marginTop: 8,
+    backgroundColor: '#2563eb',
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
   },
-  buttonPressed: { opacity: 0.9 },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  error: {
+  buttonPressed: {
+    backgroundColor: '#1d4ed8',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  errorContainer: {
     backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
     borderWidth: 1,
-    padding: 10,
-    borderRadius: 12,
+    borderColor: '#fecaca',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  error: {
     color: '#b91c1c',
-    marginBottom: 10,
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
-

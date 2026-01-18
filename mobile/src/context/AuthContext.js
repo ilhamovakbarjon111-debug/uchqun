@@ -19,12 +19,17 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const stored = await getStoredAuth();
-      if (!alive) return;
-      setUser(stored.user);
-      setAccessToken(stored.accessToken || null);
-      setRefreshToken(stored.refreshToken || null);
-      setBootstrapping(false);
+      try {
+        const stored = await getStoredAuth();
+        if (!alive) return;
+        setUser(stored.user);
+        setAccessToken(stored.accessToken || null);
+        setRefreshToken(stored.refreshToken || null);
+      } catch (error) {
+        console.error('[AuthContext] Bootstrap error:', error);
+      } finally {
+        setBootstrapping(false);
+      }
     })();
     return () => {
       alive = false;
@@ -58,12 +63,14 @@ export function AuthProvider({ children }) {
       refreshToken,
       bootstrapping,
       isAuthenticated: !!user && !!accessToken,
+      isTeacher: user?.role === 'teacher' || user?.role === 'admin' || user?.role === 'reception',
+      isParent: user?.role === 'parent',
       login,
       logout,
+      setUser, // Add setUser for compatibility with web app
     }),
     [user, accessToken, refreshToken, bootstrapping]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
