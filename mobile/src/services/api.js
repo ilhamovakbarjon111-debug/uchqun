@@ -50,14 +50,6 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (e) {
         await clearAuth();
-        // Notify WebView if running inside one
-        try {
-          if (typeof window !== 'undefined' && window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'sessionExpired' }));
-          }
-        } catch {
-          // ignore
-        }
         return Promise.reject(e);
       }
     }

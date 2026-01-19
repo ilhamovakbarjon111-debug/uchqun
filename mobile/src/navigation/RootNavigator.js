@@ -4,13 +4,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { LoadingScreen } from '../screens/LoadingScreen';
-import { LoginScreen } from '../screens/LoginScreen';
-import { WebAppScreen } from '../screens/WebAppScreen';
+import { LoginScreen } from '../screens/auth/LoginScreen';
+import { ParentNavigator } from './ParentNavigator';
+import { TeacherNavigator } from './TeacherNavigator';
 
 const Stack = createNativeStackNavigator();
 
 export function RootNavigator() {
-  const { bootstrapping, isAuthenticated, user } = useAuth();
+  const { bootstrapping, isAuthenticated, user, isTeacher, isParent } = useAuth();
   const navigationRef = useRef(null);
   const prevAuthRef = useRef(undefined);
 
@@ -36,7 +37,14 @@ export function RootNavigator() {
     const timer = setTimeout(() => {
       if (navigationRef.current) {
         try {
-          const targetRoute = isAuthenticated ? 'WebApp' : 'Login';
+          let targetRoute = 'Login';
+          if (isAuthenticated) {
+            if (isTeacher) {
+              targetRoute = 'Teacher';
+            } else if (isParent) {
+              targetRoute = 'Parent';
+            }
+          }
           console.log('[RootNavigator] Navigating to:', targetRoute);
           navigationRef.current.dispatch(
             CommonActions.reset({
@@ -51,14 +59,21 @@ export function RootNavigator() {
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated, bootstrapping, user]);
+  }, [isAuthenticated, bootstrapping, user, isTeacher, isParent]);
 
   if (bootstrapping) {
     return <LoadingScreen />;
   }
 
   // Determine initial route
-  const initialRoute = isAuthenticated ? 'WebApp' : 'Login';
+  let initialRoute = 'Login';
+  if (isAuthenticated) {
+    if (isTeacher) {
+      initialRoute = 'Teacher';
+    } else if (isParent) {
+      initialRoute = 'Parent';
+    }
+  }
   console.log('[RootNavigator] Initial route:', initialRoute, 'User:', user?.email, 'Role:', user?.role);
 
   return (
@@ -75,10 +90,17 @@ export function RootNavigator() {
           }}
         />
         <Stack.Screen 
-          name="WebApp" 
-          component={WebAppScreen}
+          name="Parent" 
+          component={ParentNavigator}
           options={{
-            gestureEnabled: false, // Prevent back gesture on main app screen
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen 
+          name="Teacher" 
+          component={TeacherNavigator}
+          options={{
+            gestureEnabled: false,
           }}
         />
       </Stack.Navigator>
