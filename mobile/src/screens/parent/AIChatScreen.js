@@ -15,22 +15,27 @@ export function AIChatScreen() {
   const sendMessage = async () => {
     if (!inputText.trim() || loading) return;
 
-    const userMessage = inputText;
+    const userMessage = inputText.trim();
     setInputText('');
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setLoading(true);
 
     try {
       const response = await parentService.aiChat(userMessage);
+      const assistantMessage = response?.advice || response?.message || response?.data?.advice || response?.data?.message || 'No response';
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: response.advice || response.message || 'No response' },
+        { role: 'assistant', content: assistantMessage },
       ]);
     } catch (error) {
       console.error('Error getting AI response:', error);
+      const errorMessage = error?.response?.data?.error || 
+                           error?.response?.data?.message || 
+                           error?.message || 
+                           'Sorry, I encountered an error. Please try again.';
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' },
+        { role: 'assistant', content: `Error: ${errorMessage}` },
       ]);
     } finally {
       setLoading(false);
@@ -81,13 +86,23 @@ export function AIChatScreen() {
           placeholder="Ask a question..."
           placeholderTextColor={theme.Colors.text.tertiary}
           multiline
+          onSubmitEditing={sendMessage}
+          returnKeyType="send"
         />
         <Pressable 
-          style={[styles.sendButton, (!inputText.trim() || loading) && styles.sendButtonDisabled]} 
+          style={({ pressed }) => [
+            styles.sendButton, 
+            (!inputText.trim() || loading) && styles.sendButtonDisabled,
+            pressed && !loading && inputText.trim() && styles.sendButtonPressed
+          ]} 
           onPress={sendMessage} 
           disabled={!inputText.trim() || loading}
         >
-          <Ionicons name="send" size={20} color={theme.Colors.text.inverse} />
+          {loading ? (
+            <LoadingSpinner size="small" color={theme.Colors.text.inverse} />
+          ) : (
+            <Ionicons name="send" size={20} color={theme.Colors.text.inverse} />
+          )}
         </Pressable>
       </View>
     </View>
@@ -181,5 +196,9 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     opacity: 0.5,
+  },
+  sendButtonPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.95 }],
   },
 });

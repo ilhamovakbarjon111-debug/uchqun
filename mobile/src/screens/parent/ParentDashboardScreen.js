@@ -100,16 +100,21 @@ export function ParentDashboardScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity 
+              style={styles.menuButton}
+              onPress={() => navigation.navigate('ParentTabs', { screen: 'Settings' })}
+            >
               <Ionicons name="menu" size={24} color={theme.Colors.text.inverse} />
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.notificationButton}
-              onPress={() => navigation.navigate('Notifications')}
-            >
-              <Ionicons name="notifications-outline" size={24} color={theme.Colors.text.inverse} />
-              {stats?.notifications > 0 && <View style={styles.notificationBadge} />}
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity 
+                style={styles.notificationButton}
+                onPress={() => navigation.navigate('Notifications')}
+              >
+                <Ionicons name="notifications-outline" size={24} color={theme.Colors.text.inverse} />
+                {stats?.notifications > 0 && <View style={styles.notificationBadge} />}
+              </TouchableOpacity>
+            </View>
           </View>
           
           <Text style={styles.greetingText}>{getGreeting()}</Text>
@@ -261,6 +266,10 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     padding: theme.Spacing.xs,
+  },
+  headerRight: {
+    flex: 1,
+    alignItems: 'flex-end',
   },
   notificationButton: {
     padding: theme.Spacing.xs,

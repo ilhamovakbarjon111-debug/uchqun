@@ -14,6 +14,8 @@ export function TeacherDashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [children, setChildren] = useState([]);
+  const [parentsData, setParentsData] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -22,9 +24,10 @@ export function TeacherDashboardScreen() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [dashboardData, tasksData] = await Promise.all([
+      const [dashboardData, tasksData, parentsData] = await Promise.all([
         teacherService.getDashboard().catch(() => null),
         teacherService.getTasks().catch(() => []),
+        teacherService.getParents().catch(() => []),
       ]);
       setStats(dashboardData);
       
@@ -37,6 +40,24 @@ export function TeacherDashboardScreen() {
         return false;
       }).slice(0, 4) : [];
       setTasks(todayTasks);
+      setParentsData(parentsData);
+
+      // Extract children from parents data
+      const allChildren = [];
+      if (Array.isArray(parentsData)) {
+        parentsData.forEach(parent => {
+          if (parent.children && Array.isArray(parent.children)) {
+            allChildren.push(...parent.children);
+          }
+        });
+      }
+      // Sort by name for ranking display
+      allChildren.sort((a, b) => {
+        const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim();
+        const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim();
+        return nameA.localeCompare(nameB);
+      });
+      setChildren(allChildren.slice(0, 5)); // Show top 5
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {
@@ -91,16 +112,21 @@ export function TeacherDashboardScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity 
+              style={styles.menuButton}
+              onPress={() => navigation.navigate('TeacherTabs', { screen: 'Settings' })}
+            >
               <Ionicons name="menu" size={24} color={theme.Colors.text.inverse} />
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.notificationButton}
-              onPress={() => navigation.navigate('Chat')}
-            >
-              <Ionicons name="notifications-outline" size={24} color={theme.Colors.text.inverse} />
-              <View style={styles.notificationBadge} />
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity 
+                style={styles.notificationButton}
+                onPress={() => navigation.navigate('Notifications')}
+              >
+                <Ionicons name="notifications-outline" size={24} color={theme.Colors.text.inverse} />
+                <View style={styles.notificationBadge} />
+              </TouchableOpacity>
+            </View>
           </View>
           
           <Text style={styles.greetingText}>{getGreeting()}</Text>
@@ -141,6 +167,50 @@ export function TeacherDashboardScreen() {
             ))}
           </View>
         </View>
+
+        {/* Children Ranking Section */}
+        {children.length > 0 && (
+          <View style={styles.rankingSection}>
+            <View style={styles.rankingHeader}>
+              <Text style={styles.sectionTitle}>Children Ranking</Text>
+              <Pressable onPress={() => navigation.navigate('TeacherTabs', { screen: 'Parents' })}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </Pressable>
+            </View>
+            <View style={styles.rankingList}>
+              {children.map((child, index) => (
+                <Pressable
+                  key={child.id || index}
+                  style={styles.rankingCard}
+                  onPress={() => {
+                    // Navigate to Parents tab to see all children
+                    navigation.navigate('TeacherTabs', { screen: 'Parents' });
+                  }}
+                >
+                  <View style={styles.rankingNumber}>
+                    <Text style={styles.rankingNumberText}>{index + 1}</Text>
+                  </View>
+                  <View style={styles.rankingAvatar}>
+                    <Text style={styles.rankingAvatarText}>
+                      {child.firstName?.charAt(0)}{child.lastName?.charAt(0)}
+                    </Text>
+                  </View>
+                  <View style={styles.rankingInfo}>
+                    <Text style={styles.rankingName}>
+                      {child.firstName} {child.lastName}
+                    </Text>
+                    {child.dateOfBirth && (
+                      <Text style={styles.rankingAge}>
+                        {new Date().getFullYear() - new Date(child.dateOfBirth).getFullYear()} years old
+                      </Text>
+                    )}
+                  </View>
+                  <Ionicons name="star" size={20} color={theme.Colors.status.warning} />
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Today's Tasks Section */}
         {tasks.length > 0 && (
@@ -222,6 +292,10 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     padding: theme.Spacing.xs,
+  },
+  headerRight: {
+    flex: 1,
+    alignItems: 'flex-end',
   },
   notificationButton: {
     padding: theme.Spacing.xs,
@@ -319,6 +393,74 @@ const styles = StyleSheet.create({
     color: theme.Colors.text.inverse,
     marginTop: theme.Spacing.xs,
     opacity: 0.95,
+  },
+  // Ranking Section
+  rankingSection: {
+    marginTop: theme.Spacing.lg,
+    paddingHorizontal: theme.Spacing.md,
+  },
+  rankingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.Spacing.md,
+  },
+  viewAllText: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.primary.blue,
+    fontWeight: theme.Typography.weights.semibold,
+  },
+  rankingList: {
+    gap: theme.Spacing.sm,
+  },
+  rankingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.Colors.background.card,
+    padding: theme.Spacing.md,
+    borderRadius: theme.BorderRadius.md,
+    ...theme.Colors.shadow.sm,
+  },
+  rankingNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.Colors.primary.blueBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.Spacing.md,
+  },
+  rankingNumberText: {
+    fontSize: theme.Typography.sizes.sm,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.primary.blue,
+  },
+  rankingAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.Colors.cards.parents + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.Spacing.md,
+  },
+  rankingAvatarText: {
+    fontSize: theme.Typography.sizes.base,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.cards.parents,
+  },
+  rankingInfo: {
+    flex: 1,
+  },
+  rankingName: {
+    fontSize: theme.Typography.sizes.base,
+    fontWeight: theme.Typography.weights.semibold,
+    color: theme.Colors.text.primary,
+    marginBottom: theme.Spacing.xs / 2,
+  },
+  rankingAge: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.secondary,
   },
   // Tasks Section
   tasksSection: {

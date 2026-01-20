@@ -48,7 +48,8 @@ export function LoginScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <View style={styles.card}>
         <View style={styles.header}>
@@ -84,7 +85,7 @@ export function LoginScreen() {
             <TextInput
               value={password}
               onChangeText={setPassword}
-              secureTextEntry={!showPassword}
+              secureTextEntry={true}
               textContentType="password"
               placeholder="Enter your password"
               placeholderTextColor="#9ca3af"
@@ -98,7 +99,7 @@ export function LoginScreen() {
               style={({ pressed }) => [styles.eyeButton, pressed && styles.eyeButtonPressed]}
             >
               <Ionicons
-                name={showPassword ? 'eye-off' : 'eye'}
+                name={showPassword ? 'eye' : 'eye-off'}
                 size={20}
                 color="#6b7280"
               />
@@ -141,6 +142,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.BorderRadius.lg,
     ...theme.Colors.shadow.lg,
     padding: theme.Spacing['2xl'],
+    marginVertical: theme.Spacing.lg,
   },
   header: {
     alignItems: 'center',
