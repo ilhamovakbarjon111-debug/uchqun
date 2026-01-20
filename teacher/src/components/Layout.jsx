@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import BottomNav from '../shared/components/BottomNav';
+import DecorativeBackground from '../shared/components/DecorativeBackground';
 import { MessageCircle } from 'lucide-react';
 
 const Layout = () => {
@@ -57,6 +58,9 @@ const Layout = () => {
         clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
         transform: 'translate(20%, 20%)'
       }}></div>
+
+      {/* Decorative Icons Background */}
+      <DecorativeBackground />
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:block fixed inset-y-0 left-0 w-64 bg-white shadow-lg z-40 pt-4">

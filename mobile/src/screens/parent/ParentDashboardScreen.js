@@ -7,6 +7,7 @@ import { parentService } from '../../services/parentService';
 import { Card } from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
+import DecorativeBackground from '../../components/common/DecorativeBackground';
 import theme from '../../styles/theme';
 
 export function ParentDashboardScreen() {
@@ -96,6 +97,7 @@ export function ParentDashboardScreen() {
 
   return (
     <View style={styles.container}>
+      <DecorativeBackground />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -241,10 +243,11 @@ export function ParentDashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+    backgroundColor: '#E3F2FD', // Och ko'k background
   },
   scrollView: {
     flex: 1,
+    zIndex: 1,
   },
   content: {
     paddingBottom: theme.Spacing.xl,

@@ -88,8 +88,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-blue-500 rounded-2xl p-6 md:p-8 -mx-4 md:mx-0">
+    <div className="space-y-6 relative z-10">
+      <div className="bg-blue-500 rounded-2xl p-6 md:p-8 -mx-4 md:mx-0 relative z-10">
         <div className="flex items-center gap-3 mb-2">
           <Users className="w-6 h-6 text-white" />
           <p className="text-white/90 text-sm font-medium">{getRoleText()}</p>
@@ -100,7 +100,7 @@ const Dashboard = () => {
         </h1>
       </div>
 
-      <div>
+      <div className="relative z-10">
         <h2 className="text-lg font-semibold text-white mb-4 drop-shadow-sm">{t('dashboard.overview')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {overviewCards.map((card) => (

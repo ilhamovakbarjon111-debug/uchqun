@@ -1,0 +1,94 @@
+.decorative-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Ayiqcha shakllari */
+.decorative-bear {
+  position: relative;
+}
+
+.bear-head {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 5px;
+}
+
+.bear-body {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  position: absolute;
+  top: 15px;
+  left: 6px;
+}
+
+/* Mashina shakllari */
+.decorative-car {
+  position: relative;
+}
+
+.car-body {
+  width: 30px;
+  height: 15px;
+  border-radius: 3px;
+  position: absolute;
+  top: 10px;
+  left: 5px;
+}
+
+.car-window {
+  width: 12px;
+  height: 8px;
+  border-radius: 2px;
+  position: absolute;
+  top: 12px;
+  left: 14px;
+}
+
+.car-wheel {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: absolute;
+  top: 20px;
+  left: 8px;
+}
+
+.car-wheel-right {
+  left: 24px;
+}
+
+/* Yulduzcha */
+.decorative-star {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pufakcha shakllari */
+.decorative-bubble {
+  position: relative;
+}
+
+.bubble-circle {
+  position: absolute;
+}
+
+.bubble-string {
+  position: absolute;
+  width: 1px;
+  height: 8px;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+}

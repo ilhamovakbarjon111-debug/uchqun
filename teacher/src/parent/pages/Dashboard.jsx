@@ -92,10 +92,10 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto pb-20 animate-in fade-in duration-500">
-      <div className="space-y-6">
+    <div className="max-w-7xl mx-auto pb-20 animate-in fade-in duration-500 relative z-10">
+      <div className="space-y-6 relative z-10">
           {/* Welcome Header Card */}
-          <Card className="relative bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
+          <Card className="relative bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0 z-10">
             {/* Notifications Icon in Top Right Corner of Card */}
             <Link to="/notifications" className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
               <div className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors backdrop-blur-sm relative">

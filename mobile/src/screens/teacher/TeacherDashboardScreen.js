@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { teacherService } from '../../services/teacherService';
 import { Card } from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import DecorativeBackground from '../../components/common/DecorativeBackground';
 import theme from '../../styles/theme';
 
 export function TeacherDashboardScreen() {
@@ -108,6 +109,7 @@ export function TeacherDashboardScreen() {
 
   return (
     <View style={styles.container}>
+      <DecorativeBackground />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -267,10 +269,11 @@ export function TeacherDashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+    backgroundColor: '#E3F2FD', // Och ko'k background
   },
   scrollView: {
     flex: 1,
+    zIndex: 1,
   },
   content: {
     paddingBottom: theme.Spacing.xl,
