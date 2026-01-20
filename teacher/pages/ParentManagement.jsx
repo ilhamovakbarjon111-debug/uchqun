@@ -8,7 +8,9 @@ import {
   Search,
   Trash2, 
   Users,
-  X
+  X,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import Card from '../../shared/components/Card';
 import LoadingSpinner from '../../shared/components/LoadingSpinner';
@@ -29,6 +31,7 @@ const ParentManagement = () => {
     phone: '',
     password: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
   const { success, error: showError } = useToast();
 
   useEffect(() => {
@@ -303,13 +306,22 @@ const ParentManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {editingParent ? 'New Password (leave blank to keep current)' : 'Password'}
                 </label>
-                <input
-                  type="password"
-                  required={!editingParent}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required={!editingParent}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">

@@ -85,7 +85,7 @@ export function LoginScreen() {
             <TextInput
               value={password}
               onChangeText={setPassword}
-              secureTextEntry={true}
+              secureTextEntry={!showPassword}
               textContentType="password"
               placeholder="Enter your password"
               placeholderTextColor="#9ca3af"

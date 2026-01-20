@@ -9,6 +9,7 @@ import {
   XCircle, 
   Clock,
   Eye,
+  EyeOff,
   Download,
   UserCheck,
   UserX,
@@ -41,6 +42,10 @@ const ReceptionManagement = () => {
     lastName: '',
     phone: '',
     password: '',
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    create: false,
+    edit: false,
   });
   const { success, error: showError } = useToast();
   const { t } = useTranslation();
@@ -642,13 +647,22 @@ const ReceptionManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {t('receptionsPage.password')} *
                 </label>
-                <input
-                  type="password"
-                  required
-                  value={createFormData.password}
-                  onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showPasswords.create ? 'text' : 'password'}
+                    required
+                    value={createFormData.password}
+                    onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords({ ...showPasswords, create: !showPasswords.create })}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPasswords.create ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -739,12 +753,21 @@ const ReceptionManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {t('receptionsPage.newPassword')}
                 </label>
-                <input
-                  type="password"
-                  value={editFormData.password}
-                  onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showPasswords.edit ? 'text' : 'password'}
+                    value={editFormData.password}
+                    onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords({ ...showPasswords, edit: !showPasswords.edit })}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPasswords.edit ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
