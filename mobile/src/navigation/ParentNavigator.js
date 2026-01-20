@@ -12,6 +12,7 @@ import { AIChatScreen } from '../screens/parent/AIChatScreen';
 import { NotificationsScreen } from '../screens/parent/NotificationsScreen';
 import { TeacherRatingScreen } from '../screens/parent/TeacherRatingScreen';
 import { SchoolRatingScreen } from '../screens/parent/SchoolRatingScreen';
+import theme from '../styles/theme';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -37,8 +38,22 @@ function ParentTabs() {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#2563eb',
-        tabBarInactiveTintColor: '#6b7280',
+        tabBarActiveTintColor: theme.Colors.navigation.active,
+        tabBarInactiveTintColor: theme.Colors.navigation.inactive,
+        tabBarStyle: {
+          backgroundColor: theme.Colors.navigation.background,
+          borderTopWidth: 1,
+          borderTopColor: theme.Colors.border.light,
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 10,
+          ...theme.Colors.shadow.md,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+          marginTop: 4,
+        },
         headerShown: false,
       })}
     >

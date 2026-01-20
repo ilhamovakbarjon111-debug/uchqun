@@ -4,6 +4,8 @@ import { parentService } from '../../services/parentService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ImageViewer } from '../../components/common/ImageViewer';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import theme from '../../styles/theme';
 
 const { width } = Dimensions.get('window');
 const itemSize = (width - 48) / 3;
@@ -63,15 +65,21 @@ export function MediaScreen() {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={media}
-        renderItem={renderMediaItem}
-        keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-        numColumns={3}
-        contentContainerStyle={styles.list}
-        refreshing={loading}
-        onRefresh={loadMedia}
-      />
+      <ScreenHeader title="Media" showBack={false} />
+      {media.length === 0 ? (
+        <EmptyState icon="images-outline" message="No media found" />
+      ) : (
+        <FlatList
+          data={media}
+          renderItem={renderMediaItem}
+          keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+          numColumns={3}
+          contentContainerStyle={styles.list}
+          refreshing={loading}
+          onRefresh={loadMedia}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
       <ImageViewer
         visible={viewerVisible}
         imageUri={selectedImage}
@@ -84,17 +92,18 @@ export function MediaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.Colors.background.secondary,
   },
   list: {
-    padding: 16,
+    padding: theme.Spacing.md,
   },
   mediaItem: {
     width: itemSize,
     height: itemSize,
     margin: 4,
-    borderRadius: 8,
+    borderRadius: theme.BorderRadius.sm,
     overflow: 'hidden',
+    ...theme.Colors.shadow.sm,
   },
   image: {
     width: '100%',

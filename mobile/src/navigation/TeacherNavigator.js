@@ -17,6 +17,8 @@ import { ChatScreen } from '../screens/teacher/ChatScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+import theme from '../styles/theme';
+
 function TeacherTabs() {
   return (
     <Tab.Navigator
@@ -38,8 +40,22 @@ function TeacherTabs() {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#2563eb',
-        tabBarInactiveTintColor: '#6b7280',
+        tabBarActiveTintColor: theme.Colors.navigation.active,
+        tabBarInactiveTintColor: theme.Colors.navigation.inactive,
+        tabBarStyle: {
+          backgroundColor: theme.Colors.navigation.background,
+          borderTopWidth: 1,
+          borderTopColor: theme.Colors.border.light,
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 10,
+          ...theme.Colors.shadow.md,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+          marginTop: 4,
+        },
         headerShown: false,
       })}
     >

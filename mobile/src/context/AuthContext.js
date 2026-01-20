@@ -38,9 +38,10 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const resp = await api.post('/auth/login', { email, password });
-    const { accessToken, refreshToken, user } = resp.data || {};
-    if (!accessToken || !user) {
-      throw new Error('Invalid login response');
+    // Backend returns { success: true, accessToken, refreshToken, user }
+    const { accessToken, refreshToken, user, success } = resp.data || {};
+    if (!success || !accessToken || !user) {
+      throw new Error(resp.data?.error || 'Invalid login response');
     }
     await storeAuth({ accessToken, refreshToken, user });
     setUser(user);

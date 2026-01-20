@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { parentService } from '../../services/parentService';
 import { Card } from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import theme from '../../styles/theme';
 
 export function AIChatScreen() {
   const [messages, setMessages] = useState([]);
@@ -36,19 +39,39 @@ export function AIChatScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.messagesContainer} contentContainerStyle={styles.messagesContent}>
+      <ScreenHeader title="AI Assistant" />
+      <ScrollView 
+        style={styles.messagesContainer} 
+        contentContainerStyle={styles.messagesContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {messages.length === 0 && (
+          <View style={styles.welcomeContainer}>
+            <Ionicons name="sparkles" size={48} color={theme.Colors.primary.blue} />
+            <Text style={styles.welcomeText}>Ask me anything about your child's education!</Text>
+          </View>
+        )}
         {messages.map((msg, index) => (
-          <Card
+          <View
             key={index}
             style={[
-              styles.messageCard,
+              styles.messageContainer,
               msg.role === 'user' ? styles.userMessage : styles.assistantMessage,
             ]}
           >
-            <Text style={styles.messageText}>{msg.content}</Text>
-          </Card>
+            {msg.role === 'assistant' && (
+              <Ionicons name="sparkles" size={20} color={theme.Colors.primary.blue} style={styles.aiIcon} />
+            )}
+            <Text style={[styles.messageText, msg.role === 'user' && styles.userMessageText]}>
+              {msg.content}
+            </Text>
+          </View>
         ))}
-        {loading && <LoadingSpinner size="small" />}
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <LoadingSpinner size="small" />
+          </View>
+        )}
       </ScrollView>
       <View style={styles.inputContainer}>
         <TextInput
@@ -56,10 +79,15 @@ export function AIChatScreen() {
           value={inputText}
           onChangeText={setInputText}
           placeholder="Ask a question..."
+          placeholderTextColor={theme.Colors.text.tertiary}
           multiline
         />
-        <Pressable style={styles.sendButton} onPress={sendMessage} disabled={loading}>
-          <Text style={styles.sendButtonText}>Send</Text>
+        <Pressable 
+          style={[styles.sendButton, (!inputText.trim() || loading) && styles.sendButtonDisabled]} 
+          onPress={sendMessage} 
+          disabled={!inputText.trim() || loading}
+        >
+          <Ionicons name="send" size={20} color={theme.Colors.text.inverse} />
         </Pressable>
       </View>
     </View>
@@ -69,53 +97,89 @@ export function AIChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.Colors.background.secondary,
   },
   messagesContainer: {
     flex: 1,
   },
   messagesContent: {
-    padding: 16,
+    padding: theme.Spacing.md,
   },
-  messageCard: {
-    marginBottom: 12,
+  welcomeContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.Spacing['2xl'],
+  },
+  welcomeText: {
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.secondary,
+    textAlign: 'center',
+    marginTop: theme.Spacing.md,
+    paddingHorizontal: theme.Spacing.lg,
+  },
+  messageContainer: {
+    flexDirection: 'row',
+    maxWidth: '85%',
+    padding: theme.Spacing.md,
+    borderRadius: theme.BorderRadius.md,
+    marginBottom: theme.Spacing.md,
+    ...theme.Colors.shadow.sm,
   },
   userMessage: {
-    backgroundColor: '#dbeafe',
+    alignSelf: 'flex-end',
+    backgroundColor: theme.Colors.primary.blue,
   },
   assistantMessage: {
-    backgroundColor: '#fff',
+    alignSelf: 'flex-start',
+    backgroundColor: theme.Colors.background.card,
+  },
+  aiIcon: {
+    marginRight: theme.Spacing.sm,
   },
   messageText: {
-    fontSize: 14,
-    color: '#111827',
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.primary,
+    flex: 1,
+    lineHeight: 20,
+  },
+  userMessageText: {
+    color: theme.Colors.text.inverse,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: theme.Spacing.md,
   },
   inputContainer: {
     flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#fff',
+    padding: theme.Spacing.md,
+    backgroundColor: theme.Colors.background.card,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: theme.Colors.border.light,
+    alignItems: 'flex-end',
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.Colors.border.medium,
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
+    paddingHorizontal: theme.Spacing.md,
+    paddingVertical: theme.Spacing.sm,
+    marginRight: theme.Spacing.sm,
     maxHeight: 100,
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.primary,
+    backgroundColor: theme.Colors.background.secondary,
   },
   sendButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    backgroundColor: theme.Colors.primary.blue,
+    width: 40,
+    height: 40,
     borderRadius: 20,
     justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.Colors.shadow.sm,
   },
-  sendButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+  sendButtonDisabled: {
+    opacity: 0.5,
   },
 });

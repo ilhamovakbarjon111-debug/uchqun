@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { chatService } from '../../services/chatService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import theme from '../../styles/theme';
 
 export function ChatScreen() {
   const { user } = useAuth();
@@ -57,9 +60,11 @@ export function ChatScreen() {
           isOwn ? styles.ownMessage : styles.otherMessage,
         ]}
       >
-        <Text style={styles.messageText}>{item.message}</Text>
+        <Text style={[styles.messageText, isOwn && styles.ownMessageText]}>
+          {item.message}
+        </Text>
         {item.createdAt && (
-          <Text style={styles.messageTime}>
+          <Text style={[styles.messageTime, isOwn && styles.ownMessageTime]}>
             {new Date(item.createdAt).toLocaleTimeString()}
           </Text>
         )}
@@ -69,8 +74,9 @@ export function ChatScreen() {
 
   return (
     <View style={styles.container}>
+      <ScreenHeader title="Chat" />
       {messages.length === 0 ? (
-        <EmptyState message="No messages" />
+        <EmptyState icon="chatbubbles-outline" message="No messages yet" description="Start a conversation" />
       ) : (
         <FlatList
           data={messages}
@@ -78,6 +84,7 @@ export function ChatScreen() {
           keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
           contentContainerStyle={styles.messagesList}
           inverted
+          showsVerticalScrollIndicator={false}
         />
       )}
       <View style={styles.inputContainer}>
@@ -86,10 +93,15 @@ export function ChatScreen() {
           value={inputText}
           onChangeText={setInputText}
           placeholder="Type a message..."
+          placeholderTextColor={theme.Colors.text.tertiary}
           multiline
         />
-        <Pressable style={styles.sendButton} onPress={sendMessage}>
-          <Text style={styles.sendButtonText}>Send</Text>
+        <Pressable 
+          style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]} 
+          onPress={sendMessage}
+          disabled={!inputText.trim()}
+        >
+          <Ionicons name="send" size={20} color={theme.Colors.text.inverse} />
         </Pressable>
       </View>
     </View>
@@ -99,60 +111,74 @@ export function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.Colors.background.secondary,
   },
   messagesList: {
-    padding: 16,
+    padding: theme.Spacing.md,
   },
   messageContainer: {
     maxWidth: '80%',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 8,
+    padding: theme.Spacing.md,
+    borderRadius: theme.BorderRadius.md,
+    marginBottom: theme.Spacing.sm,
+    ...theme.Colors.shadow.sm,
   },
   ownMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.Colors.primary.blue,
   },
   otherMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: '#fff',
+    backgroundColor: theme.Colors.background.card,
   },
   messageText: {
-    fontSize: 14,
-    color: '#111827',
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.primary,
+    lineHeight: 20,
+  },
+  ownMessageText: {
+    color: theme.Colors.text.inverse,
   },
   messageTime: {
-    fontSize: 10,
-    color: '#6b7280',
-    marginTop: 4,
+    fontSize: theme.Typography.sizes.xs,
+    color: theme.Colors.text.secondary,
+    marginTop: theme.Spacing.xs,
+  },
+  ownMessageTime: {
+    color: theme.Colors.text.inverse,
+    opacity: 0.8,
   },
   inputContainer: {
     flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#fff',
+    padding: theme.Spacing.md,
+    backgroundColor: theme.Colors.background.card,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: theme.Colors.border.light,
+    alignItems: 'flex-end',
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.Colors.border.medium,
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
+    paddingHorizontal: theme.Spacing.md,
+    paddingVertical: theme.Spacing.sm,
+    marginRight: theme.Spacing.sm,
     maxHeight: 100,
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.primary,
+    backgroundColor: theme.Colors.background.secondary,
   },
   sendButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    backgroundColor: theme.Colors.primary.blue,
+    width: 40,
+    height: 40,
     borderRadius: 20,
     justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.Colors.shadow.sm,
   },
-  sendButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+  sendButtonDisabled: {
+    opacity: 0.5,
   },
 });

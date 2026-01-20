@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View, Pressable, Modal, TextInput } from 'react-native';
+import { FlatList, StyleSheet, Text, View, Pressable, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { activityService } from '../../services/activityService';
 import { Card } from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
+import theme from '../../styles/theme';
 
 export function ActivitiesScreen() {
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -79,16 +82,29 @@ export function ActivitiesScreen() {
 
   const renderActivity = ({ item }) => (
     <Card>
-      <Text style={styles.title}>{item.title || 'Activity'}</Text>
+      <View style={styles.activityHeader}>
+        <View style={styles.activityIconContainer}>
+          <Ionicons name="clipboard" size={24} color={theme.Colors.cards.activities} />
+        </View>
+        <View style={styles.activityContent}>
+          <Text style={styles.title}>{item.title || item.skill || 'Activity'}</Text>
+          {item.date && (
+            <View style={styles.dateContainer}>
+              <Ionicons name="calendar-outline" size={14} color={theme.Colors.text.secondary} />
+              <Text style={styles.date}>{item.date}</Text>
+            </View>
+          )}
+        </View>
+      </View>
       {item.description && <Text style={styles.description}>{item.description}</Text>}
-      {item.date && <Text style={styles.date}>{item.date}</Text>}
+      {item.goal && <Text style={styles.goal}>Goal: {item.goal}</Text>}
       <View style={styles.actions}>
         <Pressable style={styles.editButton} onPress={() => handleEdit(item)}>
-          <Ionicons name="pencil" size={20} color="#2563eb" />
+          <Ionicons name="pencil" size={18} color={theme.Colors.primary.blue} />
           <Text style={styles.editButtonText}>Edit</Text>
         </Pressable>
         <Pressable style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
-          <Ionicons name="trash" size={20} color="#ef4444" />
+          <Ionicons name="trash-outline" size={18} color={theme.Colors.status.error} />
           <Text style={styles.deleteButtonText}>Delete</Text>
         </Pressable>
       </View>
@@ -97,12 +113,19 @@ export function ActivitiesScreen() {
 
   return (
     <View style={styles.container}>
-      <Pressable style={styles.addButton} onPress={handleCreate}>
-        <Ionicons name="add" size={24} color="#fff" />
-        <Text style={styles.addButtonText}>Add Activity</Text>
-      </Pressable>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.Colors.text.inverse} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Activities</Text>
+        <TouchableOpacity onPress={handleCreate} style={styles.headerAction}>
+          <Ionicons name="add" size={24} color={theme.Colors.text.inverse} />
+        </TouchableOpacity>
+      </View>
+
       {activities.length === 0 ? (
-        <EmptyState message="No activities found" />
+        <EmptyState icon="clipboard-outline" message="No activities found" />
       ) : (
         <FlatList
           data={activities}
@@ -111,24 +134,37 @@ export function ActivitiesScreen() {
           contentContainerStyle={styles.list}
           refreshing={loading}
           onRefresh={loadActivities}
+          showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Floating Action Button */}
+      <TouchableOpacity style={styles.fab} onPress={handleCreate}>
+        <Ionicons name="add" size={28} color={theme.Colors.text.inverse} />
+      </TouchableOpacity>
 
       <Modal visible={showModal} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {editingActivity ? 'Edit Activity' : 'Create Activity'}
-            </Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingActivity ? 'Edit Activity' : 'Create Activity'}
+              </Text>
+              <TouchableOpacity onPress={() => setShowModal(false)}>
+                <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={styles.input}
               placeholder="Title"
+              placeholderTextColor={theme.Colors.text.tertiary}
               value={formData.title}
               onChangeText={(text) => setFormData({ ...formData, title: text })}
             />
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Description"
+              placeholderTextColor={theme.Colors.text.tertiary}
               value={formData.description}
               onChangeText={(text) => setFormData({ ...formData, description: text })}
               multiline
@@ -151,61 +187,128 @@ export function ActivitiesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.Colors.background.secondary,
   },
-  addButton: {
+  // Header
+  header: {
     flexDirection: 'row',
-    backgroundColor: '#2563eb',
-    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.Colors.primary.blue,
+    paddingTop: 50,
+    paddingBottom: theme.Spacing.md,
+    paddingHorizontal: theme.Spacing.md,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  backButton: {
+    padding: theme.Spacing.xs,
+  },
+  headerTitle: {
+    fontSize: theme.Typography.sizes.xl,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.text.inverse,
+  },
+  headerAction: {
+    padding: theme.Spacing.xs,
+  },
+  // Floating Action Button
+  fab: {
+    position: 'absolute',
+    bottom: 90,
+    right: theme.Spacing.md,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.Colors.cards.activities,
     alignItems: 'center',
     justifyContent: 'center',
+    ...theme.Colors.shadow.lg,
   },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
+  // List
   list: {
-    padding: 16,
+    padding: theme.Spacing.md,
+    paddingBottom: 100,
+  },
+  // Activity Card
+  activityHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: theme.Spacing.sm,
+  },
+  activityIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.Colors.cards.activities + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.Spacing.md,
+  },
+  activityContent: {
+    flex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 8,
+    fontSize: theme.Typography.sizes.lg,
+    fontWeight: theme.Typography.weights.semibold,
+    color: theme.Colors.text.primary,
+    marginBottom: theme.Spacing.xs,
   },
   description: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 8,
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.secondary,
+    marginTop: theme.Spacing.sm,
+    lineHeight: 20,
+  },
+  goal: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.secondary,
+    fontStyle: 'italic',
+    marginTop: theme.Spacing.xs,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.Spacing.xs / 2,
   },
   date: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginBottom: 8,
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.secondary,
+    marginLeft: theme.Spacing.xs / 2,
   },
   actions: {
     flexDirection: 'row',
-    marginTop: 8,
+    marginTop: theme.Spacing.md,
+    paddingTop: theme.Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.Colors.border.light,
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: theme.Spacing.md,
+    paddingVertical: theme.Spacing.xs,
+    paddingHorizontal: theme.Spacing.sm,
   },
   editButtonText: {
-    color: '#2563eb',
-    marginLeft: 4,
+    color: theme.Colors.primary.blue,
+    marginLeft: theme.Spacing.xs,
+    fontSize: theme.Typography.sizes.sm,
+    fontWeight: theme.Typography.weights.medium,
   },
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: theme.Spacing.xs,
+    paddingHorizontal: theme.Spacing.sm,
   },
   deleteButtonText: {
-    color: '#ef4444',
-    marginLeft: 4,
+    color: theme.Colors.status.error,
+    marginLeft: theme.Spacing.xs,
+    fontSize: theme.Typography.sizes.sm,
+    fontWeight: theme.Typography.weights.medium,
   },
+  // Modal
   modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -213,25 +316,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
+    backgroundColor: theme.Colors.background.card,
+    borderRadius: theme.BorderRadius.lg,
+    padding: theme.Spacing.lg,
     width: '90%',
     maxWidth: 400,
+    ...theme.Colors.shadow.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.Spacing.md,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 16,
+    fontSize: theme.Typography.sizes.xl,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.text.primary,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    fontSize: 16,
+    borderColor: theme.Colors.border.medium,
+    borderRadius: theme.BorderRadius.sm,
+    padding: theme.Spacing.md,
+    marginBottom: theme.Spacing.md,
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.primary,
+    backgroundColor: theme.Colors.background.card,
   },
   textArea: {
     height: 100,
@@ -240,26 +351,27 @@ const styles = StyleSheet.create({
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 16,
+    marginTop: theme.Spacing.md,
   },
   cancelButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    marginRight: 12,
+    paddingHorizontal: theme.Spacing.lg,
+    paddingVertical: theme.Spacing.sm,
+    marginRight: theme.Spacing.md,
   },
   cancelButtonText: {
-    color: '#6b7280',
-    fontSize: 16,
+    color: theme.Colors.text.secondary,
+    fontSize: theme.Typography.sizes.base,
+    fontWeight: theme.Typography.weights.medium,
   },
   saveButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: theme.Colors.cards.activities,
+    paddingHorizontal: theme.Spacing.lg,
+    paddingVertical: theme.Spacing.sm,
+    borderRadius: theme.BorderRadius.sm,
   },
   saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.Colors.text.inverse,
+    fontSize: theme.Typography.sizes.base,
+    fontWeight: theme.Typography.weights.semibold,
   },
 });

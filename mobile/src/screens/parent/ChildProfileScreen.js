@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
 import { Card } from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import theme from '../../styles/theme';
 
 export function ChildProfileScreen() {
   const route = useRoute();
@@ -40,67 +43,142 @@ export function ChildProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Card>
-        <Text style={styles.sectionTitle}>Basic Information</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Name:</Text>
-          <Text style={styles.value}>
-            {child.firstName} {child.lastName}
-          </Text>
-        </View>
-        {child.dateOfBirth && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Date of Birth:</Text>
-            <Text style={styles.value}>{child.dateOfBirth}</Text>
-          </View>
-        )}
-        {child.gender && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Gender:</Text>
-            <Text style={styles.value}>{child.gender}</Text>
-          </View>
-        )}
-      </Card>
-
-      {child.teacher && (
+    <View style={styles.container}>
+      <ScreenHeader title={`${child.firstName} ${child.lastName}`} />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Card>
-          <Text style={styles.sectionTitle}>Teacher</Text>
-          <Text style={styles.value}>
-            {child.teacher.firstName} {child.teacher.lastName}
-          </Text>
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {child.firstName?.charAt(0)}{child.lastName?.charAt(0)}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.sectionTitle}>Basic Information</Text>
+          <View style={styles.infoRow}>
+            <Ionicons name="person-outline" size={18} color={theme.Colors.text.secondary} />
+            <View style={styles.infoContent}>
+              <Text style={styles.label}>Name</Text>
+              <Text style={styles.value}>
+                {child.firstName} {child.lastName}
+              </Text>
+            </View>
+          </View>
+          {child.dateOfBirth && (
+            <View style={styles.infoRow}>
+              <Ionicons name="calendar-outline" size={18} color={theme.Colors.text.secondary} />
+              <View style={styles.infoContent}>
+                <Text style={styles.label}>Date of Birth</Text>
+                <Text style={styles.value}>{child.dateOfBirth}</Text>
+              </View>
+            </View>
+          )}
+          {child.gender && (
+            <View style={styles.infoRow}>
+              <Ionicons name="person-circle-outline" size={18} color={theme.Colors.text.secondary} />
+              <View style={styles.infoContent}>
+                <Text style={styles.label}>Gender</Text>
+                <Text style={styles.value}>{child.gender}</Text>
+              </View>
+            </View>
+          )}
         </Card>
-      )}
-    </ScrollView>
+
+        {child.teacher && (
+          <Card>
+            <Text style={styles.sectionTitle}>Teacher</Text>
+            <View style={styles.teacherContainer}>
+              <View style={styles.teacherAvatar}>
+                <Text style={styles.teacherAvatarText}>
+                  {child.teacher.firstName?.charAt(0)}{child.teacher.lastName?.charAt(0)}
+                </Text>
+              </View>
+              <Text style={styles.teacherName}>
+                {child.teacher.firstName} {child.teacher.lastName}
+              </Text>
+            </View>
+          </Card>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.Colors.background.secondary,
   },
   content: {
-    padding: 16,
+    padding: theme.Spacing.md,
+  },
+  avatarContainer: {
+    alignItems: 'center',
+    marginBottom: theme.Spacing.lg,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: theme.Colors.primary.blueBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: theme.Typography.sizes['2xl'],
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.primary.blue,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 12,
+    fontSize: theme.Typography.sizes.lg,
+    fontWeight: theme.Typography.weights.semibold,
+    color: theme.Colors.text.primary,
+    marginBottom: theme.Spacing.md,
   },
   infoRow: {
     flexDirection: 'row',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: theme.Spacing.md,
+    paddingBottom: theme.Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.Colors.border.light,
+  },
+  infoContent: {
+    flex: 1,
+    marginLeft: theme.Spacing.md,
   },
   label: {
-    fontSize: 14,
-    color: '#6b7280',
-    width: 120,
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.secondary,
+    marginBottom: theme.Spacing.xs / 2,
   },
   value: {
-    fontSize: 14,
-    color: '#111827',
-    flex: 1,
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.primary,
+    fontWeight: theme.Typography.weights.medium,
+  },
+  teacherContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.Spacing.sm,
+  },
+  teacherAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.Colors.primary.blueBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.Spacing.md,
+  },
+  teacherAvatarText: {
+    fontSize: theme.Typography.sizes.base,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.primary.blue,
+  },
+  teacherName: {
+    fontSize: theme.Typography.sizes.base,
+    fontWeight: theme.Typography.weights.semibold,
+    color: theme.Colors.text.primary,
   },
 });

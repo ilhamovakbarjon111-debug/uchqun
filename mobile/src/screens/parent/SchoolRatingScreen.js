@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { parentService } from '../../services/parentService';
 import { Card } from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import theme from '../../styles/theme';
 
 export function SchoolRatingScreen() {
   const [loading, setLoading] = useState(true);
@@ -43,71 +45,102 @@ export function SchoolRatingScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Card>
-        <Text style={styles.title}>Rate Your School</Text>
-        <Text style={styles.description}>
-          Please rate the school based on overall experience and services.
-        </Text>
-        <View style={styles.ratingContainer}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Pressable
-              key={star}
-              onPress={() => setSelectedRating(star)}
-              style={styles.starButton}
-            >
-              <Ionicons
-                name={star <= selectedRating ? 'star' : 'star-outline'}
-                size={40}
-                color={star <= selectedRating ? '#fbbf24' : '#d1d5db'}
-              />
-            </Pressable>
-          ))}
-        </View>
-        <Pressable style={styles.submitButton} onPress={submitRating}>
-          <Text style={styles.submitButtonText}>Submit Rating</Text>
-        </Pressable>
-      </Card>
-    </ScrollView>
+    <View style={styles.container}>
+      <ScreenHeader title="Rate School" />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Card>
+          <View style={styles.iconContainer}>
+            <Ionicons name="school" size={48} color={theme.Colors.primary.blue} />
+          </View>
+          <Text style={styles.title}>Rate Your School</Text>
+          <Text style={styles.description}>
+            Please rate the school based on overall experience and services.
+          </Text>
+          <View style={styles.ratingContainer}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Pressable
+                key={star}
+                onPress={() => setSelectedRating(star)}
+                style={styles.starButton}
+              >
+                <Ionicons
+                  name={star <= selectedRating ? 'star' : 'star-outline'}
+                  size={40}
+                  color={star <= selectedRating ? theme.Colors.status.warning : theme.Colors.border.medium}
+                />
+              </Pressable>
+            ))}
+          </View>
+          {selectedRating > 0 && (
+            <Text style={styles.ratingText}>You selected {selectedRating} star{selectedRating > 1 ? 's' : ''}</Text>
+          )}
+          <Pressable 
+            style={[styles.submitButton, selectedRating === 0 && styles.submitButtonDisabled]} 
+            onPress={submitRating}
+            disabled={selectedRating === 0}
+          >
+            <Text style={styles.submitButtonText}>Submit Rating</Text>
+          </Pressable>
+        </Card>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.Colors.background.secondary,
   },
   content: {
-    padding: 16,
+    padding: theme.Spacing.md,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    marginBottom: theme.Spacing.md,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 8,
+    fontSize: theme.Typography.sizes.xl,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.text.primary,
+    textAlign: 'center',
+    marginBottom: theme.Spacing.sm,
   },
   description: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 24,
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: theme.Spacing.xl,
+    lineHeight: 20,
   },
   ratingContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
   },
   starButton: {
-    marginHorizontal: 4,
+    marginHorizontal: theme.Spacing.xs,
+  },
+  ratingText: {
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: theme.Spacing.lg,
+    fontWeight: theme.Typography.weights.medium,
   },
   submitButton: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: theme.Colors.primary.blue,
+    paddingVertical: theme.Spacing.md,
+    borderRadius: theme.BorderRadius.sm,
     alignItems: 'center',
+    ...theme.Colors.shadow.sm,
+  },
+  submitButtonDisabled: {
+    opacity: 0.5,
   },
   submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.Colors.text.inverse,
+    fontSize: theme.Typography.sizes.base,
+    fontWeight: theme.Typography.weights.semibold,
   },
 });

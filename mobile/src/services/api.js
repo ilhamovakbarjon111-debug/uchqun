@@ -39,8 +39,11 @@ api.interceptors.response.use(
         if (!refreshToken) throw new Error('No refresh token');
 
         const resp = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
-        const { accessToken } = resp.data || {};
-        if (!accessToken) throw new Error('Refresh did not return accessToken');
+        // Backend returns { success: true, accessToken }
+        const { accessToken, success } = resp.data || {};
+        if (!success || !accessToken) {
+          throw new Error('Refresh did not return accessToken');
+        }
 
         const current = await getStoredAuth();
         await storeAuth({ ...current, accessToken });

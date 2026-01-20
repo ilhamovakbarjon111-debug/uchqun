@@ -7,6 +7,7 @@ import { parentService } from '../../services/parentService';
 import { Card } from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
+import theme from '../../styles/theme';
 
 export function ParentDashboardScreen() {
   const { user } = useAuth();
@@ -23,11 +24,12 @@ export function ParentDashboardScreen() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [childrenData, activitiesData, mealsData, mediaData] = await Promise.all([
+      const [childrenData, activitiesData, mealsData, mediaData, notificationsData] = await Promise.all([
         parentService.getChildren().catch(() => []),
         parentService.getActivities().catch(() => []),
         parentService.getMeals().catch(() => []),
         parentService.getMedia().catch(() => []),
+        parentService.getMessages().catch(() => []),
       ]);
 
       setChildren(Array.isArray(childrenData) ? childrenData : []);
@@ -43,6 +45,7 @@ export function ParentDashboardScreen() {
         activities: activities.length,
         meals: meals.length,
         media: media.length,
+        notifications: Array.isArray(notificationsData) ? notificationsData.length : 0,
       });
     } catch (error) {
       console.error('Error loading dashboard:', error);
@@ -55,103 +58,176 @@ export function ParentDashboardScreen() {
     return <LoadingSpinner />;
   }
 
+  // Calculate progress (example: based on activities viewed)
+  const totalItems = (stats?.activities || 0) + (stats?.meals || 0) + (stats?.media || 0);
+  const progressPercentage = totalItems > 0 ? Math.min(Math.round((totalItems / 50) * 100), 100) : 0;
+
+  // Get greeting based on time
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   const statCards = [
     {
       title: 'Activities',
       value: stats?.activities || 0,
-      icon: 'clipboard-outline',
-      onPress: () => navigation.navigate('Activities'),
+      icon: 'checkmark-circle',
+      color: theme.Colors.cards.activities,
+      onPress: () => navigation.navigate('ParentTabs', { screen: 'Activities' }),
     },
     {
       title: 'Meals',
       value: stats?.meals || 0,
-      icon: 'restaurant-outline',
-      onPress: () => navigation.navigate('Meals'),
+      icon: 'restaurant',
+      color: theme.Colors.cards.meals,
+      onPress: () => navigation.navigate('ParentTabs', { screen: 'Meals' }),
     },
     {
       title: 'Media',
       value: stats?.media || 0,
-      icon: 'images-outline',
-      onPress: () => navigation.navigate('Media'),
+      icon: 'images',
+      color: theme.Colors.cards.media,
+      onPress: () => navigation.navigate('ParentTabs', { screen: 'Media' }),
     },
   ];
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <Card style={styles.headerCard}>
-          <Text style={styles.welcomeText}>Welcome back</Text>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity style={styles.menuButton}>
+              <Ionicons name="menu" size={24} color={theme.Colors.text.inverse} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={() => navigation.navigate('Notifications')}
+            >
+              <Ionicons name="notifications-outline" size={24} color={theme.Colors.text.inverse} />
+              {stats?.notifications > 0 && <View style={styles.notificationBadge} />}
+            </TouchableOpacity>
+          </View>
+          
+          <Text style={styles.greetingText}>{getGreeting()}</Text>
           <Text style={styles.nameText}>
             {user?.firstName || ''} {user?.lastName || ''}
           </Text>
-          {children.length > 0 && (
-            <View style={styles.childSelector}>
-              <Text style={styles.childLabel}>Select Child:</Text>
+          <View style={styles.motivationalContainer}>
+            <Text style={styles.motivationalText}>
+              You're doing amazing! Keep it up ☀️
+            </Text>
+          </View>
+        </View>
+
+        {/* Today's Progress Section */}
+        <View style={styles.progressSection}>
+          <View style={styles.progressHeader}>
+            <View>
+              <Text style={styles.sectionTitle}>Today's Progress</Text>
+              <Text style={styles.sectionSubtitle}>Here's what's next</Text>
+            </View>
+            <View style={styles.progressCircle}>
+              <Text style={styles.progressText}>{progressPercentage}%</Text>
+            </View>
+          </View>
+
+          {/* Stats Cards */}
+          <View style={styles.statsContainer}>
+            {statCards.map((stat, index) => (
+              <Pressable 
+                key={index} 
+                onPress={stat.onPress} 
+                style={[styles.statCard, { backgroundColor: stat.color }]}
+              >
+                <Ionicons name={stat.icon} size={28} color={theme.Colors.text.inverse} />
+                <Text style={styles.statValue}>{stat.value}</Text>
+                <Text style={styles.statTitle}>{stat.title}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* Child Selector */}
+        {children.length > 0 && (
+          <View style={styles.childrenSection}>
+            <Text style={styles.sectionTitle}>My Children</Text>
+            <View style={styles.childrenList}>
               {children.map((child) => (
                 <TouchableOpacity
                   key={child.id}
                   style={[
-                    styles.childButton,
-                    selectedChildId === child.id && styles.childButtonActive,
+                    styles.childCard,
+                    selectedChildId === child.id && styles.childCardActive,
                   ]}
                   onPress={() => {
                     setSelectedChildId(child.id);
                     navigation.navigate('ChildProfile', { childId: child.id });
                   }}
                 >
-                  <Text
-                    style={[
-                      styles.childButtonText,
-                      selectedChildId === child.id && styles.childButtonTextActive,
-                    ]}
-                  >
-                    {child.firstName} {child.lastName}
-                  </Text>
+                  <View style={styles.childAvatar}>
+                    <Text style={styles.childAvatarText}>
+                      {child.firstName?.charAt(0)}{child.lastName?.charAt(0)}
+                    </Text>
+                  </View>
+                  <View style={styles.childInfo}>
+                    <Text style={styles.childName}>
+                      {child.firstName} {child.lastName}
+                    </Text>
+                    {child.dateOfBirth && (
+                      <Text style={styles.childAge}>
+                        {new Date().getFullYear() - new Date(child.dateOfBirth).getFullYear()} years old
+                      </Text>
+                    )}
+                  </View>
+                  <Ionicons 
+                    name="chevron-forward" 
+                    size={20} 
+                    color={theme.Colors.text.secondary} 
+                  />
                 </TouchableOpacity>
               ))}
             </View>
-          )}
-        </Card>
-
-        {/* Stats Cards */}
-        <View style={styles.statsContainer}>
-          {statCards.map((stat, index) => (
-            <Pressable key={index} onPress={stat.onPress} style={styles.statCard}>
-              <Ionicons name={stat.icon} size={32} color="#2563eb" />
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statTitle}>{stat.title}</Text>
-            </Pressable>
-          ))}
-        </View>
+          </View>
+        )}
 
         {/* Quick Actions */}
-        <Card>
+        <View style={styles.actionsSection}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionsContainer}>
+          <View style={styles.actionsGrid}>
             <Pressable
-              style={styles.actionButton}
+              style={styles.actionCard}
               onPress={() => navigation.navigate('AIChat')}
             >
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#2563eb" />
+              <Ionicons name="chatbubble-ellipses" size={28} color={theme.Colors.primary.blue} />
               <Text style={styles.actionText}>AI Assistant</Text>
             </Pressable>
             <Pressable
-              style={styles.actionButton}
+              style={styles.actionCard}
               onPress={() => navigation.navigate('Notifications')}
             >
-              <Ionicons name="notifications-outline" size={24} color="#2563eb" />
+              <Ionicons name="notifications" size={28} color={theme.Colors.status.warning} />
               <Text style={styles.actionText}>Notifications</Text>
             </Pressable>
             <Pressable
-              style={styles.actionButton}
+              style={styles.actionCard}
               onPress={() => navigation.navigate('TeacherRating')}
             >
-              <Ionicons name="star-outline" size={24} color="#2563eb" />
+              <Ionicons name="star" size={28} color={theme.Colors.status.warning} />
               <Text style={styles.actionText}>Rate Teacher</Text>
             </Pressable>
+            <Pressable
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('SchoolRating')}
+            >
+              <Ionicons name="school" size={28} color={theme.Colors.primary.blue} />
+              <Text style={styles.actionText}>Rate School</Text>
+            </Pressable>
           </View>
-        </Card>
+        </View>
       </ScrollView>
     </View>
   );
@@ -160,94 +236,206 @@ export function ParentDashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.Colors.background.secondary,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: 16,
+    paddingBottom: theme.Spacing.xl,
   },
-  headerCard: {
-    backgroundColor: '#2563eb',
-    marginBottom: 16,
+  // Header Styles
+  header: {
+    backgroundColor: theme.Colors.primary.blue,
+    paddingTop: 50,
+    paddingBottom: theme.Spacing.lg,
+    paddingHorizontal: theme.Spacing.md,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  welcomeText: {
-    color: '#fff',
-    fontSize: 14,
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.Spacing.md,
+  },
+  menuButton: {
+    padding: theme.Spacing.xs,
+  },
+  notificationButton: {
+    padding: theme.Spacing.xs,
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.Colors.status.warning,
+  },
+  greetingText: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.inverse,
     opacity: 0.9,
+    marginBottom: theme.Spacing.xs,
   },
   nameText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 4,
+    fontSize: theme.Typography.sizes['2xl'],
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.text.inverse,
+    marginBottom: theme.Spacing.sm,
   },
-  childSelector: {
-    marginTop: 16,
+  motivationalContainer: {
+    marginTop: theme.Spacing.sm,
   },
-  childLabel: {
-    color: '#fff',
-    fontSize: 14,
-    marginBottom: 8,
+  motivationalText: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.inverse,
+    opacity: 0.9,
   },
-  childButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+  // Progress Section
+  progressSection: {
+    paddingHorizontal: theme.Spacing.md,
+    paddingTop: theme.Spacing.lg,
   },
-  childButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.Spacing.md,
   },
-  childButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  sectionTitle: {
+    fontSize: theme.Typography.sizes.lg,
+    fontWeight: theme.Typography.weights.semibold,
+    color: theme.Colors.text.primary,
+    marginBottom: theme.Spacing.xs,
   },
-  childButtonTextActive: {
-    fontWeight: 'bold',
+  sectionSubtitle: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.secondary,
   },
+  progressCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: theme.Colors.primary.blueBg,
+    borderWidth: 4,
+    borderColor: theme.Colors.primary.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressText: {
+    fontSize: theme.Typography.sizes.base,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.primary.blue,
+  },
+  // Stats Cards
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginTop: theme.Spacing.md,
+    gap: theme.Spacing.sm,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: theme.BorderRadius.md,
+    padding: theme.Spacing.md,
     alignItems: 'center',
-    marginHorizontal: 4,
+    minHeight: 110,
+    justifyContent: 'center',
+    ...theme.Colors.shadow.md,
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginTop: 8,
+    fontSize: theme.Typography.sizes['2xl'],
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.text.inverse,
+    marginTop: theme.Spacing.sm,
   },
   statTitle: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 4,
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.inverse,
+    marginTop: theme.Spacing.xs,
+    opacity: 0.95,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 12,
+  // Children Section
+  childrenSection: {
+    paddingHorizontal: theme.Spacing.md,
+    paddingTop: theme.Spacing.lg,
+    marginTop: theme.Spacing.md,
   },
-  actionsContainer: {
+  childrenList: {
+    gap: theme.Spacing.sm,
+    marginTop: theme.Spacing.md,
+  },
+  childCard: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  actionButton: {
     alignItems: 'center',
-    padding: 12,
+    backgroundColor: theme.Colors.background.card,
+    borderRadius: theme.BorderRadius.md,
+    padding: theme.Spacing.md,
+    ...theme.Colors.shadow.sm,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  childCardActive: {
+    borderColor: theme.Colors.primary.blue,
+  },
+  childAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: theme.Colors.primary.blueBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.Spacing.md,
+  },
+  childAvatarText: {
+    fontSize: theme.Typography.sizes.lg,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.primary.blue,
+  },
+  childInfo: {
+    flex: 1,
+  },
+  childName: {
+    fontSize: theme.Typography.sizes.base,
+    fontWeight: theme.Typography.weights.semibold,
+    color: theme.Colors.text.primary,
+    marginBottom: theme.Spacing.xs / 2,
+  },
+  childAge: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.secondary,
+  },
+  // Actions Section
+  actionsSection: {
+    paddingHorizontal: theme.Spacing.md,
+    paddingTop: theme.Spacing.lg,
+    marginTop: theme.Spacing.md,
+  },
+  actionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.Spacing.md,
+    marginTop: theme.Spacing.md,
+  },
+  actionCard: {
+    width: '47%',
+    backgroundColor: theme.Colors.background.card,
+    borderRadius: theme.BorderRadius.md,
+    padding: theme.Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 100,
+    ...theme.Colors.shadow.sm,
   },
   actionText: {
-    fontSize: 12,
-    color: '#374151',
-    marginTop: 4,
+    fontSize: theme.Typography.sizes.sm,
+    fontWeight: theme.Typography.weights.medium,
+    color: theme.Colors.text.primary,
+    marginTop: theme.Spacing.sm,
+    textAlign: 'center',
   },
 });
