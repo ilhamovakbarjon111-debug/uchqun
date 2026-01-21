@@ -1,7 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
-import Child from './Child.js';
-import User from './User.js';
 
 const EmotionalMonitoring = sequelize.define('EmotionalMonitoring', {
   id: {
@@ -73,11 +71,6 @@ const EmotionalMonitoring = sequelize.define('EmotionalMonitoring', {
   ],
 });
 
-// Define associations
-EmotionalMonitoring.belongsTo(Child, { foreignKey: 'childId', as: 'child' });
-Child.hasMany(EmotionalMonitoring, { foreignKey: 'childId', as: 'emotionalMonitoring' });
-
-EmotionalMonitoring.belongsTo(User, { foreignKey: 'teacherId', as: 'teacher' });
-User.hasMany(EmotionalMonitoring, { foreignKey: 'teacherId', as: 'emotionalMonitoringRecords' });
+// Note: Associations are defined in models/index.js to avoid circular dependencies
 
 export default EmotionalMonitoring;
