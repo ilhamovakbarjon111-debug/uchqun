@@ -20,8 +20,58 @@ export const createOrUpdateMonitoring = async (req, res) => {
   try {
     const { childId, date, emotionalState, notes, teacherSignature } = req.body;
     const teacherId = req.user.id;
+    const recordId = req.params.id; // For PUT requests
 
-    // Validation
+    // If PUT request with ID, update existing record
+    if (req.method === 'PUT' && recordId) {
+      const existingRecord = await EmotionalMonitoring.findByPk(recordId);
+      
+      if (!existingRecord) {
+        return res.status(404).json({ error: 'Monitoring record not found' });
+      }
+
+      // Check authorization
+      if (existingRecord.teacherId !== teacherId && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'You do not have permission to update this record' });
+      }
+
+      // Update fields
+      if (emotionalState !== undefined) existingRecord.emotionalState = emotionalState;
+      if (notes !== undefined) existingRecord.notes = notes;
+      if (teacherSignature !== undefined) existingRecord.teacherSignature = teacherSignature;
+      if (date) existingRecord.date = date;
+      
+      await existingRecord.save();
+
+      // Fetch with relations
+      const recordWithRelations = await EmotionalMonitoring.findByPk(existingRecord.id, {
+        include: [
+          {
+            model: Child,
+            as: 'child',
+            attributes: ['id', 'firstName', 'lastName'],
+          },
+          {
+            model: User,
+            as: 'teacher',
+            attributes: ['id', 'firstName', 'lastName'],
+          },
+        ],
+      });
+
+      logger.info('Emotional monitoring record updated', {
+        recordId: existingRecord.id,
+        teacherId,
+      });
+
+      return res.json({
+        success: true,
+        message: 'Monitoring record updated successfully',
+        data: recordWithRelations,
+      });
+    }
+
+    // Validation for POST requests
     if (!childId || !date) {
       return res.status(400).json({ error: 'Child ID and date are required' });
     }

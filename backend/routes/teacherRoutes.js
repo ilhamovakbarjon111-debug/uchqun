@@ -69,11 +69,13 @@ router.post('/message-to-super-admin', sendMessage);
 router.get('/messages', getMyMessages);
 
 // Emotional Monitoring
-router.post('/emotional-monitoring', createOrUpdateMonitoring);
-router.get('/emotional-monitoring', getAllMonitoring);
+// Specific routes must come before general routes
 router.get('/emotional-monitoring/child/:childId', getMonitoringByChild);
 router.get('/emotional-monitoring/:id', getMonitoringById);
 router.put('/emotional-monitoring/:id', createOrUpdateMonitoring);
 router.delete('/emotional-monitoring/:id', deleteMonitoring);
+// General routes come after specific routes
+router.post('/emotional-monitoring', createOrUpdateMonitoring);
+router.get('/emotional-monitoring', getAllMonitoring);
 
 export default router;
