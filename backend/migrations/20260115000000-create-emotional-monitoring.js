@@ -61,33 +61,54 @@ export async function up(queryInterface, Sequelize) {
     createdAt: {
       type: Sequelize.DATE,
       allowNull: false,
-      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      defaultValue: Sequelize.fn('NOW'),
     },
     updatedAt: {
       type: Sequelize.DATE,
       allowNull: false,
-      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      defaultValue: Sequelize.fn('NOW'),
     },
   });
 
   // Create unique index for childId and date combination
-  await queryInterface.addIndex('emotional_monitoring', {
-    fields: ['childId', 'date'],
-    unique: true,
-    name: 'unique_child_date',
-  });
+  try {
+    await queryInterface.addIndex('emotional_monitoring', {
+      fields: ['childId', 'date'],
+      unique: true,
+      name: 'unique_child_date',
+      ifNotExists: true,
+    });
+  } catch (error) {
+    if (!error.message.includes('already exists')) {
+      throw error;
+    }
+  }
 
   // Create index for teacherId
-  await queryInterface.addIndex('emotional_monitoring', {
-    fields: ['teacherId'],
-    name: 'idx_emotional_monitoring_teacher_id',
-  });
+  try {
+    await queryInterface.addIndex('emotional_monitoring', {
+      fields: ['teacherId'],
+      name: 'idx_emotional_monitoring_teacher_id',
+      ifNotExists: true,
+    });
+  } catch (error) {
+    if (!error.message.includes('already exists')) {
+      throw error;
+    }
+  }
 
   // Create index for date
-  await queryInterface.addIndex('emotional_monitoring', {
-    fields: ['date'],
-    name: 'idx_emotional_monitoring_date',
-  });
+  try {
+    await queryInterface.addIndex('emotional_monitoring', {
+      fields: ['date'],
+      name: 'idx_emotional_monitoring_date',
+      ifNotExists: true,
+    });
+  } catch (error) {
+    if (!error.message.includes('already exists')) {
+      throw error;
+    }
+  }
 };
 
 export async function down(queryInterface, Sequelize) {
