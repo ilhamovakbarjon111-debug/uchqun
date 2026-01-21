@@ -23,7 +23,7 @@ import { useTranslation } from 'react-i18next';
 const MonitoringJournal = () => {
   const { user } = useAuth();
   const { success, error: showError } = useToast();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [monitoringRecords, setMonitoringRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -60,7 +60,7 @@ const MonitoringJournal = () => {
       const response = await api.get('/teacher/parents');
       const parentsList = Array.isArray(response.data.parents) ? response.data.parents : [];
       setParents(parentsList);
-      
+
       // Collect all children
       const allChildren = [];
       parentsList.forEach(parent => {
@@ -73,7 +73,7 @@ const MonitoringJournal = () => {
       setChildren(allChildren);
     } catch (error) {
       console.error('Error loading parents:', error);
-      showError('Failed to load parents');
+      showError(t('monitoring.toastLoadParentsError'));
     }
   };
 
@@ -85,7 +85,7 @@ const MonitoringJournal = () => {
       setMonitoringRecords(records);
     } catch (error) {
       console.error('Error loading monitoring records:', error);
-      showError('Failed to load monitoring records');
+      showError(t('monitoring.toastLoadError'));
     } finally {
       setLoading(false);
     }
@@ -136,40 +136,40 @@ const MonitoringJournal = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.childId || !formData.date) {
-      showError('Please select a child and date');
+      showError(t('monitoring.selectChildError'));
       return;
     }
 
     try {
       if (editingRecord) {
         await api.put(`/teacher/emotional-monitoring/${editingRecord.id}`, formData);
-        success('Monitoring record updated successfully');
+        success(t('monitoring.toastUpdate'));
       } else {
         await api.post('/teacher/emotional-monitoring', formData);
-        success('Monitoring record created successfully');
+        success(t('monitoring.toastCreate'));
       }
       handleCloseModal();
       loadMonitoringRecords();
     } catch (error) {
       console.error('Error saving monitoring record:', error);
-      showError(error.response?.data?.error || 'Failed to save monitoring record');
+      showError(error.response?.data?.error || t('monitoring.toastError'));
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this monitoring record?')) {
+    if (!confirm(t('monitoring.confirmDelete'))) {
       return;
     }
 
     try {
       await api.delete(`/teacher/emotional-monitoring/${id}`);
-      success('Monitoring record deleted successfully');
+      success(t('monitoring.toastDelete'));
       loadMonitoringRecords();
     } catch (error) {
       console.error('Error deleting monitoring record:', error);
-      showError('Failed to delete monitoring record');
+      showError(t('monitoring.toastError'));
     }
   };
 
@@ -183,17 +183,17 @@ const MonitoringJournal = () => {
     }));
   };
 
-  const emotionalStateLabels = {
-    stable: 'Боланинг ҳиссий ҳолати барқарор',
-    positiveEmotions: 'Бола ижобий ҳис-туйғуларни намоён этади (табассум, қувонч, қизиқиш)',
-    noAnxiety: 'Хавотирланиш белгилари йўқ (тортинчоқлик, йиғлоқилик, ўзини четга олиш)',
-    noHostility: 'Болалар ва катталарга нисбатан душманлик муносабати кузатилмайди',
-    calmResponse: 'Танбеҳ ва илтимосларга хотиржам муносабат билдиради',
-    showsEmpathy: 'Бошқа болаларга ҳамдардлик кўрсатади',
-    quickRecovery: 'Стрессли вазиятдан кейин тезда ўзини ўнглаб олади',
-    stableMood: 'Кайфияти кун давомида барқарор туради',
-    trustingRelationship: 'Тарбиячи билан муносабати ишончли ва мустаҳкам',
-  };
+  const emotionalStateKeys = [
+    'stable',
+    'positiveEmotions',
+    'noAnxiety',
+    'noHostility',
+    'calmResponse',
+    'showsEmpathy',
+    'quickRecovery',
+    'stableMood',
+    'trustingRelationship',
+  ];
 
   const getRecordForChild = (childId, date) => {
     return monitoringRecords.find(r => r.childId === childId && r.date === date);
@@ -212,10 +212,10 @@ const MonitoringJournal = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-sm">
-            Ҳафталик мониторинг журнали
+            {t('monitoring.title')}
           </h1>
           <p className="text-white/90 font-medium mt-1 drop-shadow-sm">
-            Болаларнинг эмоционал ҳолатини мониторинг қилиш
+            {t('monitoring.subtitle')}
           </p>
         </div>
       </div>
@@ -245,12 +245,12 @@ const MonitoringJournal = () => {
                 {todayRecord ? (
                   <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Бугун учун баҳоланди</span>
+                    <span>{t('monitoring.assessedToday')}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-sm text-gray-400">
                     <FileX className="w-4 h-4" />
-                    <span>Бугун учун баҳоланмади</span>
+                    <span>{t('monitoring.notAssessedToday')}</span>
                   </div>
                 )}
 
@@ -262,12 +262,12 @@ const MonitoringJournal = () => {
                     {todayRecord ? (
                       <>
                         <Edit2 className="w-4 h-4" />
-                        Тахрирлаш
+                        {t('monitoring.edit')}
                       </>
                     ) : (
                       <>
                         <Plus className="w-4 h-4" />
-                        Баҳолаш
+                        {t('monitoring.assess')}
                       </>
                     )}
                   </button>
@@ -284,7 +284,7 @@ const MonitoringJournal = () => {
           <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                {editingRecord ? 'Мониторинг журналини тахрирлаш' : 'Янги мониторинг жумласи'}
+                {editingRecord ? t('monitoring.editModal') : t('monitoring.createModal')}
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -311,7 +311,7 @@ const MonitoringJournal = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Сана
+                  {t('monitoring.date')}
                 </label>
                 <input
                   type="date"
@@ -324,10 +324,10 @@ const MonitoringJournal = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-4">
-                  Болаларнинг эмоционал ҳолати
+                  {t('monitoring.emotionalState')}
                 </label>
                 <div className="space-y-3">
-                  {Object.entries(emotionalStateLabels).map(([key, label]) => (
+                  {emotionalStateKeys.map((key) => (
                     <label
                       key={key}
                       className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
@@ -338,7 +338,7 @@ const MonitoringJournal = () => {
                         onChange={() => toggleEmotionalState(key)}
                         className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
-                      <span className="text-sm text-gray-700 flex-1">{label}</span>
+                      <span className="text-sm text-gray-700 flex-1">{t(`monitoring.emotionalStates.${key}`)}</span>
                     </label>
                   ))}
                 </div>
@@ -346,27 +346,27 @@ const MonitoringJournal = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Изоҳ / бошқа
+                  {t('monitoring.notes')}
                 </label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                   rows={4}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Қўшимча изоҳлар..."
+                  placeholder={t('monitoring.notesPlaceholder')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Масъул тарбиячи ФИШ ва имзоси
+                  {t('monitoring.teacherSignature')}
                 </label>
                 <input
                   type="text"
                   value={formData.teacherSignature}
                   onChange={(e) => setFormData(prev => ({ ...prev, teacherSignature: e.target.value }))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="ФИШ ва имзо"
+                  placeholder={t('monitoring.teacherSignaturePlaceholder')}
                 />
               </div>
 
@@ -376,14 +376,14 @@ const MonitoringJournal = () => {
                   className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
                 >
                   <Save className="w-5 h-5" />
-                  Сақлаш
+                  {t('monitoring.save')}
                 </button>
                 <button
                   type="button"
                   onClick={handleCloseModal}
                   className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                 >
-                  Бекор қилиш
+                  {t('monitoring.cancel')}
                 </button>
                 {editingRecord && (
                   <button
@@ -392,7 +392,7 @@ const MonitoringJournal = () => {
                     className="px-6 py-3 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium flex items-center gap-2"
                   >
                     <Trash2 className="w-5 h-5" />
-                    Ўчириш
+                    {t('monitoring.delete')}
                   </button>
                 )}
               </div>

@@ -260,5 +260,43 @@
     "yourMessage": "Sizning xabaringiz",
     "superAdminReply": "Super-admin javobi",
     "replied": "Javob berildi"
+  },
+  "monitoring": {
+    "title": "Haftalik monitoring jurnali",
+    "subtitle": "Bolalarning emotsional holatini monitoring qilish",
+    "assessedToday": "Bugun uchun baholandi",
+    "notAssessedToday": "Bugun uchun baholanmadi",
+    "edit": "Tahrirlash",
+    "assess": "Baholash",
+    "editModal": "Monitoring jurnalini tahrirlash",
+    "createModal": "Yangi monitoring yozuvi",
+    "date": "Sana",
+    "emotionalState": "Bolalarning emotsional holati",
+    "notes": "Izoh / boshqa",
+    "notesPlaceholder": "Qo'shimcha izohlar...",
+    "teacherSignature": "Mas'ul tarbiyachi FISH va imzosi",
+    "teacherSignaturePlaceholder": "FISH va imzo",
+    "save": "Saqlash",
+    "cancel": "Bekor qilish",
+    "delete": "O'chirish",
+    "confirmDelete": "Ushbu monitoring yozuvini o'chirmoqchimisiz?",
+    "toastCreate": "Monitoring yozuvi muvaffaqiyatli yaratildi",
+    "toastUpdate": "Monitoring yozuvi muvaffaqiyatli yangilandi",
+    "toastDelete": "Monitoring yozuvi o'chirildi",
+    "toastError": "Monitoring yozuvini saqlashda xatolik",
+    "toastLoadError": "Monitoring yozuvlarini yuklashda xatolik",
+    "toastLoadParentsError": "Ota-onalarni yuklashda xatolik",
+    "selectChildError": "Iltimos, bola va sanani tanlang",
+    "emotionalStates": {
+      "stable": "Bolaning hissiy holati barqaror",
+      "positiveEmotions": "Bola ijobiy his-tuyg'ularni namoyon etadi (tabassum, quvonch, qiziqish)",
+      "noAnxiety": "Xavotirlanish belgilari yo'q (tortinchoqlik, yig'loqilik, o'zini chetga olish)",
+      "noHostility": "Bolalar va kattalarga nisbatan dushmanlik munosabati kuzatilmaydi",
+      "calmResponse": "Tanbeh va iltimooslarga xotirjam munosabat bildiradi",
+      "showsEmpathy": "Boshqa bolalarga hamdardlik ko'rsatadi",
+      "quickRecovery": "Stressli vaziyatdan keyin tezda o'zini o'nglab oladi",
+      "stableMood": "Kayfiyati kun davomida barqaror turadi",
+      "trustingRelationship": "Tarbiyachi bilan munosabati ishonchli va mustahkam"
+    }
   }
 }
