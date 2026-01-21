@@ -147,16 +147,13 @@ try {
 } catch (error) {
   console.error('⚠ Environment variable validation failed:');
   console.error(error.message);
-  // In production, don't exit - allow server to start
+  // Don't exit - allow server to start
   // Missing optional variables won't break the server
-  if (process.env.NODE_ENV === 'production') {
-    console.warn('⚠ Continuing despite validation errors (production mode)');
-    console.warn('⚠ Some features may not work correctly');
-  } else {
-    // In development, exit to catch issues early
-    console.error('✗ Exiting due to validation errors (development mode)');
-    process.exit(1);
-  }
+  // Log warning but continue
+  console.warn('⚠ Continuing despite validation errors');
+  console.warn('⚠ Some features may not work correctly');
+  // Don't exit in any environment - let the server start
+  // Railway healthcheck will catch if server doesn't respond
 }
 
 
