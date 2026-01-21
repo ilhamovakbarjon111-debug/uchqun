@@ -16,6 +16,13 @@ import {
   getMyMessages,
 } from '../controllers/teacherController.js';
 import { sendMessage } from '../controllers/superAdminController.js';
+import {
+  createOrUpdateMonitoring,
+  getAllMonitoring,
+  getMonitoringByChild,
+  getMonitoringById,
+  deleteMonitoring,
+} from '../controllers/emotionalMonitoringController.js';
 
 const router = express.Router();
 
@@ -60,5 +67,13 @@ router.get('/parents/:id', getParentById);
 router.post('/message-to-super-admin', sendMessage);
 // Get my messages to super-admin (with replies)
 router.get('/messages', getMyMessages);
+
+// Emotional Monitoring
+router.post('/emotional-monitoring', createOrUpdateMonitoring);
+router.get('/emotional-monitoring', getAllMonitoring);
+router.get('/emotional-monitoring/child/:childId', getMonitoringByChild);
+router.get('/emotional-monitoring/:id', getMonitoringById);
+router.put('/emotional-monitoring/:id', createOrUpdateMonitoring);
+router.delete('/emotional-monitoring/:id', deleteMonitoring);
 
 export default router;

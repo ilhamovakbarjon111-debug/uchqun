@@ -54,6 +54,8 @@ const ChildProfile = () => {
   const [myMessages, setMyMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showMessagesModal, setShowMessagesModal] = useState(false);
+  const [monitoringRecords, setMonitoringRecords] = useState([]);
+  const [loadingMonitoring, setLoadingMonitoring] = useState(false);
   
   const handleFileUpload = async (event) => {
     const file = event.target.files?.[0];
@@ -209,12 +211,13 @@ const ChildProfile = () => {
         try {
           setLoading(true);
           setError(null);
-          const [childResponse, activitiesResponse, mealsResponse, mediaResponse, profileResponse] = await Promise.all([
+          const [childResponse, activitiesResponse, mealsResponse, mediaResponse, profileResponse, monitoringResponse] = await Promise.all([
             api.get(`/child/${selectedChildId}`),
             api.get(`/activities?childId=${selectedChildId}`).catch(() => ({ data: [] })),
             api.get(`/meals?childId=${selectedChildId}`).catch(() => ({ data: [] })),
             api.get(`/media?childId=${selectedChildId}`).catch(() => ({ data: [] })),
             api.get('/parent/profile').catch(() => null),
+            api.get(`/parent/emotional-monitoring/child/${selectedChildId}`).catch(() => ({ data: { data: [] } })),
           ]);
 
           setChild(childResponse.data);
@@ -272,6 +275,10 @@ const ChildProfile = () => {
             meals: mealsThisWeek,
             media: mediaThisWeek,
           });
+
+          // Load monitoring records
+          const monitoring = Array.isArray(monitoringResponse.data?.data) ? monitoringResponse.data.data : [];
+          setMonitoringRecords(monitoring);
         } catch (error) {
           console.error('Error loading child data:', error);
           if (error.response?.status === 404) {
@@ -518,6 +525,89 @@ const ChildProfile = () => {
               {child.specialNeeds}
             </div>
           </section>
+
+          {/* Emotional Monitoring Section */}
+          {monitoringRecords.length > 0 && (
+            <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Heart className="w-6 h-6 text-pink-600" /> Ҳафталик мониторинг журнали
+              </h3>
+              <div className="space-y-4">
+                {monitoringRecords.slice(0, 5).map((record) => {
+                  const emotionalState = record.emotionalState || {};
+                  const checkedCount = Object.values(emotionalState).filter(Boolean).length;
+                  const totalCount = Object.keys(emotionalState).length;
+                  const percentage = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
+                  
+                  return (
+                    <div key={record.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {new Date(record.date).toLocaleDateString('uz-UZ', { 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                          {record.teacher && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              Тарбиячи: {record.teacher.firstName} {record.teacher.lastName}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-blue-600">{percentage}%</div>
+                          <div className="text-xs text-gray-500">
+                            {checkedCount} / {totalCount}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2 mb-4">
+                        {Object.entries({
+                          stable: 'Боланинг ҳиссий ҳолати барқарор',
+                          positiveEmotions: 'Бола ижобий ҳис-туйғуларни намоён этади',
+                          noAnxiety: 'Хавотирланиш белгилари йўқ',
+                          noHostility: 'Душманлик муносабати кузатилмайди',
+                          calmResponse: 'Танбеҳ ва илтимосларга хотиржам муносабат',
+                          showsEmpathy: 'Бошқа болаларга ҳамдардлик кўрсатади',
+                          quickRecovery: 'Стрессли вазиятдан кейин тезда ўзини ўнглаб олади',
+                          stableMood: 'Кайфияти кун давомида барқарор туради',
+                          trustingRelationship: 'Тарбиячи билан муносабати ишончли',
+                        }).map(([key, label]) => (
+                          emotionalState[key] && (
+                            <div key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                              <span>{label}</span>
+                            </div>
+                          )
+                        ))}
+                      </div>
+                      
+                      {record.notes && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <p className="text-sm font-medium text-gray-700 mb-1">Изоҳ:</p>
+                          <p className="text-sm text-gray-600">{record.notes}</p>
+                        </div>
+                      )}
+                      
+                      {record.teacherSignature && (
+                        <div className="mt-2 text-xs text-gray-500">
+                          Имзо: {record.teacherSignature}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {monitoringRecords.length > 5 && (
+                <p className="text-sm text-gray-500 mt-4 text-center">
+                  +{monitoringRecords.length - 5} та яна жумла
+                </p>
+              )}
+            </section>
+          )}
         </div>
 
         {/* --- Right Column: Sidebar --- */}
