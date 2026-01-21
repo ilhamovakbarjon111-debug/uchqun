@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
@@ -13,6 +14,7 @@ import theme from '../../styles/theme';
 export function ParentDashboardScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [children, setChildren] = useState([]);
@@ -66,32 +68,32 @@ export function ParentDashboardScreen() {
   // Get greeting based on time
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return t('dashboard.goodMorning');
+    if (hour < 17) return t('dashboard.goodAfternoon');
+    return t('dashboard.goodEvening');
   };
 
   const statCards = [
     {
-      title: 'Activities',
+      title: t('dashboard.activities'),
       value: stats?.activities || 0,
       icon: 'checkmark-circle',
       color: theme.Colors.cards.activities,
-      onPress: () => navigation.navigate('ParentTabs', { screen: 'Activities' }),
+      onPress: () => navigation.navigate('Activities'),
     },
     {
-      title: 'Meals',
+      title: t('dashboard.meals'),
       value: stats?.meals || 0,
       icon: 'restaurant',
       color: theme.Colors.cards.meals,
-      onPress: () => navigation.navigate('ParentTabs', { screen: 'Meals' }),
+      onPress: () => navigation.navigate('Meals'),
     },
     {
-      title: 'Media',
+      title: t('dashboard.media'),
       value: stats?.media || 0,
       icon: 'images',
       color: theme.Colors.cards.media,
-      onPress: () => navigation.navigate('ParentTabs', { screen: 'Media' }),
+      onPress: () => navigation.navigate('Media'),
     },
   ];
 
@@ -120,24 +122,14 @@ export function ParentDashboardScreen() {
           </Text>
           <View style={styles.motivationalContainer}>
             <Text style={styles.motivationalText}>
-              You're doing amazing! Keep it up ☀️
+              {t('dashboard.motivationalMessage')} ☀️
             </Text>
           </View>
         </View>
 
-        {/* Today's Progress Section */}
-        <View style={styles.progressSection}>
-          <View style={styles.progressHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Today's Progress</Text>
-              <Text style={styles.sectionSubtitle}>Here's what's next</Text>
-            </View>
-            <View style={styles.progressCircle}>
-              <Text style={styles.progressText}>{progressPercentage}%</Text>
-            </View>
-          </View>
-
-          {/* Stats Cards */}
+        {/* Stats Cards Section */}
+        <View style={styles.statsSection}>
+          <Text style={styles.sectionTitle}>{t('dashboard.quickActions')}</Text>
           <View style={styles.statsContainer}>
             {statCards.map((stat, index) => (
               <Pressable 
@@ -156,7 +148,7 @@ export function ParentDashboardScreen() {
         {/* Child Selector */}
         {children.length > 0 && (
           <View style={styles.childrenSection}>
-            <Text style={styles.sectionTitle}>My Children</Text>
+            <Text style={styles.sectionTitle}>{t('dashboard.myChildren')}</Text>
             <View style={styles.childrenList}>
               {children.map((child) => (
                 <TouchableOpacity
@@ -262,8 +254,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.Spacing.md,
   },
-  menuButton: {
-    padding: theme.Spacing.xs,
+  placeholder: {
+    width: 40,
   },
   headerRight: {
     flex: 1,
@@ -302,41 +294,16 @@ const styles = StyleSheet.create({
     color: theme.Colors.text.inverse,
     opacity: 0.9,
   },
-  // Progress Section
-  progressSection: {
+  // Stats Section
+  statsSection: {
     paddingHorizontal: theme.Spacing.md,
     paddingTop: theme.Spacing.lg,
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.Spacing.md,
   },
   sectionTitle: {
     fontSize: theme.Typography.sizes.lg,
     fontWeight: theme.Typography.weights.semibold,
     color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs,
-  },
-  sectionSubtitle: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-  },
-  progressCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: theme.Colors.primary.blueBg,
-    borderWidth: 4,
-    borderColor: theme.Colors.primary.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressText: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.primary.blue,
+    marginBottom: theme.Spacing.md,
   },
   // Stats Cards
   statsContainer: {

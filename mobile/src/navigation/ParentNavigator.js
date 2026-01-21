@@ -18,6 +18,7 @@ import { SettingsScreen } from '../screens/parent/SettingsScreen';
 import { ParentsListScreen } from '../screens/parent/ParentsListScreen';
 import { DiagnosticsScreen } from '../screens/parent/DiagnosticsScreen';
 import tokens from '../styles/tokens';
+import { useTranslation } from 'react-i18next';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -27,22 +28,27 @@ const TAB_CONFIG = {
   Dashboard: {
     icon: 'home',
     emoji: '🏠',
-    label: 'Bosh sahifa',
+    label: 'Dashboard',
   },
   Children: {
     icon: 'people',
     emoji: '👨‍👩‍👧‍👦',
-    label: 'Bolalar',
+    label: 'Children',
+  },
+  Rating: {
+    icon: 'star',
+    emoji: '⭐',
+    label: 'Rating',
   },
   AIChat: {
     icon: 'chatbubble-ellipses',
     emoji: '🤖',
-    label: 'AI Yordam',
+    label: 'AI Chat',
   },
   Settings: {
     icon: 'settings',
     emoji: '⚙️',
-    label: 'Sozlamalar',
+    label: 'Settings',
   },
 };
 
@@ -81,6 +87,18 @@ function TabIcon({ route, focused, color, size }) {
 
 function ParentTabs() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+
+  const getTabLabel = (routeName) => {
+    const labelMap = {
+      Dashboard: t('nav.dashboard'),
+      Children: t('nav.parents'),
+      Rating: t('nav.rating'),
+      AIChat: t('nav.aiChat'),
+      Settings: t('nav.menu'),
+    };
+    return labelMap[routeName] || routeName;
+  };
 
   return (
     <Tab.Navigator
@@ -101,12 +119,13 @@ function ParentTabs() {
           fontWeight: '600',
           marginTop: 2,
         },
-        tabBarLabel: TAB_CONFIG[route.name]?.label || route.name,
+        tabBarLabel: getTabLabel(route.name),
         headerShown: false,
       })}
     >
       <Tab.Screen name="Dashboard" component={ParentDashboardScreen} />
       <Tab.Screen name="Children" component={ParentsListScreen} />
+      <Tab.Screen name="Rating" component={TeacherRatingScreen} />
       <Tab.Screen name="AIChat" component={AIChatScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
