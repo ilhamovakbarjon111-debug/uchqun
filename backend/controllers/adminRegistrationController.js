@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import AdminRegistrationRequest from '../models/AdminRegistrationRequest.js';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
@@ -7,19 +8,40 @@ import fs from 'fs';
 import { sendAdminApprovalEmail } from '../utils/email.js';
 
 /**
+ * Generate a cryptographically secure random password
+ * @param {number} length - Password length (default: 16)
+ * @returns {string} Secure random password
+ */
+const generateSecurePassword = (length = 16) => {
+  const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lowercase = 'abcdefghjkmnpqrstuvwxyz';
+  const numbers = '23456789';
+  const symbols = '!@#$%&*';
+  const allChars = uppercase + lowercase + numbers + symbols;
+
+  // Ensure at least one of each type
+  let password = '';
+  password += uppercase[crypto.randomInt(uppercase.length)];
+  password += lowercase[crypto.randomInt(lowercase.length)];
+  password += numbers[crypto.randomInt(numbers.length)];
+  password += symbols[crypto.randomInt(symbols.length)];
+
+  // Fill the rest randomly
+  for (let i = password.length; i < length; i++) {
+    password += allChars[crypto.randomInt(allChars.length)];
+  }
+
+  // Shuffle the password
+  return password.split('').sort(() => crypto.randomInt(3) - 1).join('');
+};
+
+/**
  * Submit admin registration request
  * POST /api/auth/admin-register
  * Public endpoint - no authentication required
  */
 export const submitRegistrationRequest = async (req, res) => {
   try {
-    // Debug: Log request data
-    console.log('=== Admin Registration Request ===');
-    console.log('req.body:', req.body);
-    console.log('req.body keys:', req.body ? Object.keys(req.body) : 'no body');
-    console.log('req.files:', req.files);
-    console.log('Content-Type:', req.headers['content-type']);
-    
     logger.info('Admin registration request received', {
       body: req.body,
       bodyKeys: req.body ? Object.keys(req.body) : 'no body',
@@ -34,8 +56,6 @@ export const submitRegistrationRequest = async (req, res) => {
     const lastName = req.body?.lastName?.trim() || '';
     const email = req.body?.email?.trim() || '';
     const phone = req.body?.phone?.trim() || '';
-
-    console.log('Extracted values:', { firstName, lastName, email, phone });
 
     // Validation - faqat kerakli maydonlar
     if (!firstName || !lastName || !email || !phone) {
@@ -278,8 +298,8 @@ export const approveRegistrationRequest = async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;
 
-    // Generate password if not provided
-    const generatedPassword = password || Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8).toUpperCase() + '123';
+    // Generate cryptographically secure password if not provided
+    const generatedPassword = password || generateSecurePassword(16);
 
     if (generatedPassword.length < 6) {
       return res.status(400).json({

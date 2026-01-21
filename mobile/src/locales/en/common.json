@@ -407,5 +407,12 @@
     "error": "Error",
     "success": "Success",
     "notFound": "Not found"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "account": "Account",
+    "languageChanged": "Language Changed",
+    "languageChangedDesc": "Language has been changed successfully"
   }
 }

@@ -1,5 +1,6 @@
 import ChatMessage from '../models/ChatMessage.js';
 import User from '../models/User.js';
+import logger from '../utils/logger.js';
 
 const buildConversationId = (parentId) => `parent:${parentId}`;
 
@@ -31,7 +32,7 @@ export const listMessages = async (req, res) => {
 
     res.json(msgs);
   } catch (err) {
-    console.error('listMessages error', err);
+    logger.error('listMessages error', err);
     res.status(500).json({ error: 'Failed to load messages' });
   }
 };
@@ -58,7 +59,7 @@ export const createMessage = async (req, res) => {
 
     res.status(201).json(msg);
   } catch (err) {
-    console.error('createMessage error', err);
+    logger.error('createMessage error', err);
     res.status(500).json({ error: 'Failed to send message' });
   }
 };
@@ -81,7 +82,7 @@ export const markConversationRead = async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error('markConversationRead error', err);
+    logger.error('markConversationRead error', err);
     res.status(500).json({ error: 'Failed to mark read' });
   }
 };
@@ -112,7 +113,7 @@ export const updateMessage = async (req, res) => {
 
     res.json(msg);
   } catch (err) {
-    console.error('updateMessage error', err);
+    logger.error('updateMessage error', err);
     res.status(500).json({ error: 'Failed to update message' });
   }
 };
@@ -140,7 +141,7 @@ export const deleteMessage = async (req, res) => {
     await msg.destroy();
     res.json({ success: true });
   } catch (err) {
-    console.error('deleteMessage error', err);
+    logger.error('deleteMessage error', err);
     res.status(500).json({ error: 'Failed to delete message' });
   }
 };

@@ -30,15 +30,23 @@ function TeacherTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+          // CRITICAL: Safe route name access
+          const routeName = route?.name;
+          if (!routeName) {
+            console.warn('[TeacherTabIcon] Missing route.name');
+            return <Ionicons name="help-outline" size={size} color={color} />;
+          }
 
-          if (route.name === 'Dashboard') {
+          // CRITICAL: Safe icon name with fallback
+          let iconName = 'help-outline'; // Default fallback
+
+          if (routeName === 'Dashboard') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Parents') {
+          } else if (routeName === 'Parents') {
             iconName = focused ? 'people' : 'people-outline';
-          } else if (route.name === 'AIChat') {
+          } else if (routeName === 'AIChat') {
             iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
-          } else if (route.name === 'Settings') {
+          } else if (routeName === 'Settings') {
             iconName = focused ? 'settings' : 'settings-outline';
           }
 

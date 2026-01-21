@@ -1,19 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
-import { Card } from '../../components/common/Card';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { EmptyState } from '../../components/common/EmptyState';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
+import Screen from '../../components/layout/Screen';
+import Card from '../../components/common/Card';
+import ListRow from '../../components/common/ListRow';
+import Skeleton from '../../components/common/Skeleton';
+import EmptyState from '../../components/common/EmptyState';
 
 export function ChildProfileScreen() {
   const route = useRoute();
-  const { childId } = route.params || {};
+  const navigation = useNavigation();
+  // DATA SAFETY: Safe param access with defaults
+  const { childId = null } = route?.params || {};
   const [loading, setLoading] = useState(true);
   const [child, setChild] = useState(null);
+
+  // ROUTE SAFETY: Show fallback if required param missing
+  if (!childId) {
+    return (
+      <Screen scroll={true} padded={true}>
+        <Card>
+          <View style={{ padding: tokens.space.xl, alignItems: 'center' }}>
+            <Ionicons name="alert-circle-outline" size={48} color={tokens.colors.semantic.error} />
+            <Text style={{ marginTop: tokens.space.md, fontSize: tokens.type.body.fontSize, color: tokens.colors.text.secondary }}>
+              Missing childId parameter
+            </Text>
+          </View>
+        </Card>
+      </Screen>
+    );
+  }
 
   useEffect(() => {
     if (childId) {
@@ -34,151 +53,212 @@ export function ChildProfileScreen() {
     }
   };
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    } catch {
+      return dateString;
+    }
+  };
 
-  if (!child) {
-    return <EmptyState message="Child not found" />;
-  }
+  const header = (
+    <View style={styles.topBar}>
+      <Pressable
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Ionicons name="arrow-back" size={24} color={tokens.colors.text.primary} />
+      </Pressable>
+      <Text style={styles.topBarTitle} allowFontScaling={true}>
+        {child ? `${child.firstName} ${child.lastName}` : 'Child Profile'}
+      </Text>
+      <View style={styles.placeholder} />
+    </View>
+  );
 
   return (
-    <View style={styles.container}>
-      <ScreenHeader title={`${child.firstName} ${child.lastName}`} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Card>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {child.firstName?.charAt(0)}{child.lastName?.charAt(0)}
-              </Text>
-            </View>
-          </View>
-          <Text style={styles.sectionTitle}>Basic Information</Text>
-          <View style={styles.infoRow}>
-            <Ionicons name="person-outline" size={18} color={theme.Colors.text.secondary} />
-            <View style={styles.infoContent}>
-              <Text style={styles.label}>Name</Text>
-              <Text style={styles.value}>
-                {child.firstName} {child.lastName}
-              </Text>
-            </View>
-          </View>
-          {child.dateOfBirth && (
-            <View style={styles.infoRow}>
-              <Ionicons name="calendar-outline" size={18} color={theme.Colors.text.secondary} />
-              <View style={styles.infoContent}>
-                <Text style={styles.label}>Date of Birth</Text>
-                <Text style={styles.value}>{child.dateOfBirth}</Text>
-              </View>
-            </View>
-          )}
-          {child.gender && (
-            <View style={styles.infoRow}>
-              <Ionicons name="person-circle-outline" size={18} color={theme.Colors.text.secondary} />
-              <View style={styles.infoContent}>
-                <Text style={styles.label}>Gender</Text>
-                <Text style={styles.value}>{child.gender}</Text>
-              </View>
-            </View>
-          )}
-        </Card>
-
-        {child.teacher && (
-          <Card>
-            <Text style={styles.sectionTitle}>Teacher</Text>
-            <View style={styles.teacherContainer}>
-              <View style={styles.teacherAvatar}>
-                <Text style={styles.teacherAvatarText}>
-                  {child.teacher.firstName?.charAt(0)}{child.teacher.lastName?.charAt(0)}
-                </Text>
-              </View>
-              <Text style={styles.teacherName}>
-                {child.teacher.firstName} {child.teacher.lastName}
-              </Text>
-            </View>
+    <Screen scroll={true} padded={true} header={header}>
+        {loading ? (
+          <Card style={styles.card}>
+            <Skeleton width={80} height={80} variant="circle" style={{ alignSelf: 'center', marginBottom: tokens.space.lg }} />
+            <Skeleton width="100%" height={60} style={{ marginBottom: tokens.space.md }} />
+            <Skeleton width="100%" height={60} style={{ marginBottom: tokens.space.md }} />
           </Card>
+        ) : !child ? (
+          <Card style={styles.emptyCard}>
+            <EmptyState
+              icon="person-outline"
+              title="Child not found"
+              description="The requested child profile could not be loaded"
+            />
+          </Card>
+        ) : (
+          <>
+            <Card style={styles.card}>
+              <View style={styles.avatarContainer}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {child.firstName?.charAt(0) || ''}{child.lastName?.charAt(0) || ''}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.sectionTitle} allowFontScaling={true}>Basic Information</Text>
+              
+              <ListRow
+                icon="person-outline"
+                iconColor={tokens.colors.accent.blue}
+                title="Name"
+                subtitle={`${child.firstName || ''} ${child.lastName || ''}`}
+                chevron={false}
+                style={styles.infoRow}
+              />
+              
+              {child.dateOfBirth && (
+                <ListRow
+                  icon="calendar-outline"
+                  iconColor={tokens.colors.accent.blue}
+                  title="Date of Birth"
+                  subtitle={formatDate(child.dateOfBirth)}
+                  chevron={false}
+                  style={styles.infoRow}
+                />
+              )}
+              
+              {child.gender && (
+                <ListRow
+                  icon="person-circle-outline"
+                  iconColor={tokens.colors.accent.blue}
+                  title="Gender"
+                  subtitle={child.gender}
+                  chevron={false}
+                  style={styles.infoRow}
+                />
+              )}
+            </Card>
+
+            {child.teacher && (
+              <Card style={styles.card}>
+                <Text style={styles.sectionTitle} allowFontScaling={true}>Teacher</Text>
+                <View style={styles.teacherContainer}>
+                  <View style={styles.teacherAvatar}>
+                    <Text style={styles.teacherAvatarText}>
+                      {child.teacher.firstName?.charAt(0) || ''}{child.teacher.lastName?.charAt(0) || ''}
+                    </Text>
+                  </View>
+                  <View style={styles.teacherInfo}>
+                    <Text style={styles.teacherName} allowFontScaling={true}>
+                      {child.teacher.firstName} {child.teacher.lastName}
+                    </Text>
+                    {child.teacher.email && (
+                      <Text style={styles.teacherEmail} allowFontScaling={true}>
+                        {child.teacher.email}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              </Card>
+            )}
+          </>
         )}
-      </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: tokens.space.xl,
+    paddingTop: tokens.space.md,
+    paddingBottom: tokens.space.md,
+    backgroundColor: 'transparent',
   },
-  content: {
-    padding: theme.Spacing.md,
+  backButton: {
+    padding: tokens.space.sm,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  topBarTitle: {
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.text.primary,
+  },
+  placeholder: {
+    width: 44,
+  },
+  card: {
+    marginBottom: tokens.space.lg,
+  },
+  emptyCard: {
+    marginTop: tokens.space.xl,
   },
   avatarContainer: {
     alignItems: 'center',
-    marginBottom: theme.Spacing.lg,
+    marginBottom: tokens.space.lg,
   },
   avatar: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.Colors.primary.blueBg,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.colors.accent.blueSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: theme.Typography.sizes['2xl'],
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.primary.blue,
+    fontSize: tokens.type.h1.fontSize,
+    fontWeight: tokens.type.h1.fontWeight,
+    color: tokens.colors.accent.blue,
   },
   sectionTitle: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.md,
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.md,
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: theme.Spacing.md,
-    paddingBottom: theme.Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
-  },
-  infoContent: {
-    flex: 1,
-    marginLeft: theme.Spacing.md,
-  },
-  label: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    marginBottom: theme.Spacing.xs / 2,
-  },
-  value: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    fontWeight: theme.Typography.weights.medium,
+    marginBottom: tokens.space.sm,
   },
   teacherContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.Spacing.sm,
+    marginTop: tokens.space.sm,
   },
   teacherAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.Colors.primary.blueBg,
+    width: 50,
+    height: 50,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.colors.accent.blueSoft,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   teacherAvatarText: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.primary.blue,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.accent.blue,
+  },
+  teacherInfo: {
+    flex: 1,
   },
   teacherName: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs / 2,
+  },
+  teacherEmail: {
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.type.sub.fontWeight,
+    color: tokens.colors.text.secondary,
   },
 });

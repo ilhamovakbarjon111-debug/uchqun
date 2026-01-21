@@ -4,13 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { teacherService } from '../../services/teacherService';
-import { Card } from '../../components/common/Card';
+import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import DecorativeBackground from '../../components/common/DecorativeBackground';
 import theme from '../../styles/theme';
 
 export function TeacherDashboardScreen() {
-  const { user } = useAuth();
+  const { user, isTeacher, isAdmin, isReception } = useAuth();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -18,17 +18,52 @@ export function TeacherDashboardScreen() {
   const [children, setChildren] = useState([]);
   const [parentsData, setParentsData] = useState([]);
 
+  // Helper for safe navigation
+  const safeNavigate = (screenName, params = {}) => {
+    try {
+      navigation.navigate(screenName, params);
+    } catch (error) {
+      console.error(`[TeacherDashboard] Navigation error to ${screenName}:`, error);
+    }
+  };
+
+  const safeNavigateToTab = (tabName) => {
+    try {
+      navigation.navigate('TeacherTabs', { screen: tabName });
+    } catch (error) {
+      console.error(`[TeacherDashboard] Navigation error to tab ${tabName}:`, error);
+    }
+  };
+
   useEffect(() => {
-    loadData();
-  }, []);
+    // CRITICAL FIX: Only load data if user is actually a teacher
+    // Admin/Reception might not have access to teacher services
+    if (isTeacher) {
+      loadData();
+    } else {
+      console.warn('[TeacherDashboard] User is not a teacher, skipping data load. Role:', user?.role);
+      setLoading(false);
+    }
+  }, [isTeacher]);
 
   const loadData = async () => {
     try {
       setLoading(true);
+      // CRITICAL FIX: Wrap all service calls in try-catch
+      // Admin/Reception might not have access to these endpoints
       const [dashboardData, tasksData, parentsData] = await Promise.all([
-        teacherService.getDashboard().catch(() => null),
-        teacherService.getTasks().catch(() => []),
-        teacherService.getParents().catch(() => []),
+        teacherService.getDashboard().catch((err) => {
+          console.warn('[TeacherDashboard] getDashboard error:', err);
+          return null;
+        }),
+        teacherService.getTasks().catch((err) => {
+          console.warn('[TeacherDashboard] getTasks error:', err);
+          return [];
+        }),
+        teacherService.getParents().catch((err) => {
+          console.warn('[TeacherDashboard] getParents error:', err);
+          return [];
+        }),
       ]);
       setStats(dashboardData);
       
@@ -66,6 +101,26 @@ export function TeacherDashboardScreen() {
     }
   };
 
+  // CRITICAL FIX: Show fallback UI for admin/reception users
+  if (!isTeacher && (isAdmin || isReception)) {
+    return (
+      <View style={styles.container}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+          <Card>
+            <View style={{ padding: theme.Spacing.xl, alignItems: 'center' }}>
+              <Ionicons name="information-circle-outline" size={48} color={theme.Colors.primary.blue} />
+              <Text style={{ marginTop: theme.Spacing.md, fontSize: theme.Typography.sizes.base, color: theme.Colors.text.secondary, textAlign: 'center' }}>
+                {isAdmin ? 'Admin' : 'Reception'} role detected.{'\n'}
+                This mobile app is designed for Teachers and Parents.{'\n'}
+                Please use the web application for {isAdmin ? 'Admin' : 'Reception'} features.
+              </Text>
+            </View>
+          </Card>
+        </ScrollView>
+      </View>
+    );
+  }
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -89,21 +144,21 @@ export function TeacherDashboardScreen() {
       value: stats?.parents || stats?.parentsCount || 0,
       icon: 'people',
       color: theme.Colors.cards.parents,
-      onPress: () => navigation.navigate('TeacherTabs', { screen: 'Parents' }),
+      onPress: () => safeNavigateToTab('Parents'),
     },
     {
       title: 'Activities',
       value: stats?.activities || stats?.activitiesCount || 0,
       icon: 'checkmark-circle',
       color: theme.Colors.cards.activities,
-      onPress: () => navigation.navigate('TeacherTabs', { screen: 'Activities' }),
+      onPress: () => safeNavigateToTab('Activities'),
     },
     {
       title: 'Meals',
       value: stats?.meals || stats?.mealsCount || 0,
       icon: 'restaurant',
       color: theme.Colors.cards.meals,
-      onPress: () => navigation.navigate('TeacherTabs', { screen: 'Meals' }),
+      onPress: () => safeNavigateToTab('Meals'),
     },
   ];
 
@@ -114,16 +169,11 @@ export function TeacherDashboardScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <TouchableOpacity 
-              style={styles.menuButton}
-              onPress={() => navigation.navigate('TeacherTabs', { screen: 'Settings' })}
-            >
-              <Ionicons name="menu" size={24} color={theme.Colors.text.inverse} />
-            </TouchableOpacity>
+            <View style={styles.placeholder} />
             <View style={styles.headerRight}>
               <TouchableOpacity 
                 style={styles.notificationButton}
-                onPress={() => navigation.navigate('Notifications')}
+                onPress={() => safeNavigate('Notifications')}
               >
                 <Ionicons name="notifications-outline" size={24} color={theme.Colors.text.inverse} />
                 <View style={styles.notificationBadge} />
@@ -133,7 +183,7 @@ export function TeacherDashboardScreen() {
           
           <Text style={styles.greetingText}>{getGreeting()}</Text>
           <Text style={styles.nameText}>
-            {user?.firstName || ''} {user?.lastName || ''}
+            {user?.firstName ?? '—'} {user?.lastName ?? ''}
           </Text>
           <View style={styles.motivationalContainer}>
             <Text style={styles.motivationalText}>
@@ -175,7 +225,7 @@ export function TeacherDashboardScreen() {
           <View style={styles.rankingSection}>
             <View style={styles.rankingHeader}>
               <Text style={styles.sectionTitle}>Children Ranking</Text>
-              <Pressable onPress={() => navigation.navigate('TeacherTabs', { screen: 'Parents' })}>
+              <Pressable onPress={() => safeNavigateToTab('Parents')}>
                 <Text style={styles.viewAllText}>View All</Text>
               </Pressable>
             </View>
@@ -186,7 +236,7 @@ export function TeacherDashboardScreen() {
                   style={styles.rankingCard}
                   onPress={() => {
                     // Navigate to Parents tab to see all children
-                    navigation.navigate('TeacherTabs', { screen: 'Parents' });
+                    safeNavigateToTab('Parents');
                   }}
                 >
                   <View style={styles.rankingNumber}>
@@ -199,7 +249,7 @@ export function TeacherDashboardScreen() {
                   </View>
                   <View style={styles.rankingInfo}>
                     <Text style={styles.rankingName}>
-                      {child.firstName} {child.lastName}
+                      {child.firstName ?? '—'} {child.lastName ?? ''}
                     </Text>
                     {child.dateOfBirth && (
                       <Text style={styles.rankingAge}>
@@ -231,7 +281,7 @@ export function TeacherDashboardScreen() {
                   <Pressable 
                     key={task.id || index} 
                     style={styles.taskCard}
-                    onPress={() => navigation.navigate('Tasks')}
+                    onPress={() => safeNavigate('Tasks')}
                   >
                     <View style={styles.taskIcon}>
                       <Ionicons 

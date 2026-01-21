@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { notificationService } from '../../services/notificationService';
-import { Card } from '../../components/common/Card';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { EmptyState } from '../../components/common/EmptyState';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
+import Screen from '../../components/layout/Screen';
+import Card from '../../components/common/Card';
+import ListRow from '../../components/common/ListRow';
+import Skeleton from '../../components/common/Skeleton';
+import EmptyState from '../../components/common/EmptyState';
 
 export function NotificationsScreen() {
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
 
@@ -20,7 +23,6 @@ export function NotificationsScreen() {
     try {
       setLoading(true);
       const result = await notificationService.getNotifications();
-      // Service now returns { data, unreadCount, total }
       setNotifications(Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : []));
     } catch (error) {
       console.error('Error loading notifications:', error);
@@ -39,118 +41,136 @@ export function NotificationsScreen() {
     }
   };
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
-  if (notifications.length === 0) {
-    return <EmptyState message="No notifications" />;
-  }
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
 
-  const renderNotification = ({ item }) => (
-    <Pressable onPress={() => markAsRead(item.id)}>
-      <Card style={!item.isRead ? styles.unreadCard : null}>
-        <View style={styles.notificationHeader}>
-          <View style={[styles.notificationIcon, !item.isRead && styles.unreadIcon]}>
-            <Ionicons 
-              name={item.isRead ? 'notifications-outline' : 'notifications'} 
-              size={20} 
-              color={!item.isRead ? theme.Colors.primary.blue : theme.Colors.text.secondary} 
-            />
-          </View>
-          <View style={styles.notificationContent}>
-            <Text style={[styles.title, !item.isRead && styles.unreadTitle]}>
-              {item.title || 'Notification'}
-            </Text>
-            {item.message && <Text style={styles.message}>{item.message}</Text>}
-            {item.createdAt && (
-              <View style={styles.timeContainer}>
-                <Ionicons name="time-outline" size={12} color={theme.Colors.text.tertiary} />
-                <Text style={styles.time}>
-                  {new Date(item.createdAt).toLocaleString()}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </Card>
-    </Pressable>
+  const header = (
+    <View style={styles.topBar}>
+      <Pressable
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Ionicons name="arrow-back" size={24} color={tokens.colors.text.primary} />
+      </Pressable>
+      <Text style={styles.topBarTitle} allowFontScaling={true}>Notifications</Text>
+      <View style={styles.placeholder} />
+    </View>
   );
 
   return (
-    <View style={styles.container}>
-      <ScreenHeader title="Notifications" />
-      {notifications.length === 0 ? (
-        <EmptyState icon="notifications-outline" message="No notifications" />
-      ) : (
-        <FlatList
-          data={notifications}
-          renderItem={renderNotification}
-          keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-          contentContainerStyle={styles.list}
-          refreshing={loading}
-          onRefresh={loadNotifications}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
-    </View>
+    <Screen scroll={true} padded={true} header={header}>
+        {loading ? (
+          <>
+            <Card style={styles.card}>
+              <Skeleton width="100%" height={80} />
+            </Card>
+            <Card style={styles.card}>
+              <Skeleton width="100%" height={80} />
+            </Card>
+          </>
+        ) : notifications.length === 0 ? (
+          <Card style={styles.emptyCard}>
+            <EmptyState
+              icon="notifications-outline"
+              title="No notifications"
+              description="You're all caught up!"
+            />
+          </Card>
+        ) : (
+          <View style={styles.list}>
+            {notifications.map((item) => (
+              <Card 
+                key={item.id?.toString() || Math.random()} 
+                style={[
+                  styles.card,
+                  !item.isRead && styles.unreadCard
+                ]}
+              >
+                <Pressable onPress={() => markAsRead(item.id)}>
+                  <ListRow
+                    icon={item.isRead ? 'notifications-outline' : 'notifications'}
+                    iconColor={!item.isRead ? tokens.colors.accent.blue : tokens.colors.text.muted}
+                    title={item.title || 'Notification'}
+                    subtitle={item.message}
+                    time={formatTimestamp(item.createdAt)}
+                    chevron={false}
+                  />
+                  {!item.isRead && (
+                    <View style={styles.unreadBadge}>
+                      <View style={styles.unreadDot} />
+                    </View>
+                  )}
+                </Pressable>
+              </Card>
+            ))}
+          </View>
+        )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: tokens.space.xl,
+    paddingTop: tokens.space.md,
+    paddingBottom: tokens.space.md,
+    backgroundColor: 'transparent',
+  },
+  backButton: {
+    padding: tokens.space.sm,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  topBarTitle: {
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.text.primary,
+  },
+  placeholder: {
+    width: 44,
   },
   list: {
-    padding: theme.Spacing.md,
+    gap: tokens.space.md,
+  },
+  card: {
+    marginBottom: tokens.space.sm,
+    position: 'relative',
   },
   unreadCard: {
-    backgroundColor: theme.Colors.primary.blueBg,
     borderLeftWidth: 4,
-    borderLeftColor: theme.Colors.primary.blue,
+    borderLeftColor: tokens.colors.accent.blue,
   },
-  notificationHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  emptyCard: {
+    marginTop: tokens.space.xl,
   },
-  notificationIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.Colors.background.secondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+  unreadBadge: {
+    position: 'absolute',
+    top: tokens.space.md,
+    right: tokens.space.md,
   },
-  unreadIcon: {
-    backgroundColor: theme.Colors.primary.blueBg,
-  },
-  notificationContent: {
-    flex: 1,
-  },
-  title: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs,
-  },
-  unreadTitle: {
-    fontWeight: theme.Typography.weights.bold,
-  },
-  message: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    marginBottom: theme.Spacing.sm,
-    lineHeight: 18,
-  },
-  timeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  time: {
-    fontSize: theme.Typography.sizes.xs,
-    color: theme.Colors.text.tertiary,
-    marginLeft: theme.Spacing.xs / 2,
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: tokens.colors.accent.blue,
   },
 });

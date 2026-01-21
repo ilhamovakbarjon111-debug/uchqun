@@ -1,37 +1,67 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
 
-export function EmptyState({ icon = 'document-outline', message = 'No data available', description }) {
+export default function EmptyState({
+  icon,
+  emoji,
+  title = 'No data available',
+  description,
+  style,
+}) {
   return (
-    <View style={styles.container}>
-      <Ionicons name={icon} size={64} color={theme.Colors.text.tertiary} />
-      <Text style={styles.message}>{message}</Text>
-      {description && <Text style={styles.description}>{description}</Text>}
+    <View style={[styles.container, style]}>
+      <View style={styles.iconContainer}>
+        {emoji ? (
+          <Text style={styles.emoji}>{emoji}</Text>
+        ) : (
+          <Ionicons name={icon || 'document-outline'} size={40} color={tokens.colors.text.muted} />
+        )}
+      </View>
+      <Text style={styles.title} allowFontScaling={true}>
+        {title}
+      </Text>
+      {description && (
+        <Text style={styles.description} allowFontScaling={true}>
+          {description}
+        </Text>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.Colors.background.secondary,
-    padding: theme.Spacing['2xl'],
+    justifyContent: 'center',
+    paddingVertical: tokens.space['2xl'],
   },
-  message: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginTop: theme.Spacing.md,
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(148, 163, 184, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: tokens.space.lg,
+  },
+  emoji: {
+    fontSize: 40,
+  },
+  title: {
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.sm,
     textAlign: 'center',
   },
   description: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.secondary,
-    marginTop: theme.Spacing.sm,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.type.body.fontWeight,
+    color: tokens.colors.text.secondary,
     textAlign: 'center',
+    maxWidth: 280,
+    lineHeight: 22,
   },
 });

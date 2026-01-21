@@ -41,7 +41,13 @@ export function ParentsListScreen() {
   }
 
   const renderParent = ({ item }) => (
-    <Pressable onPress={() => navigation.navigate('ParentDetail', { parentId: item.id })}>
+    <Pressable onPress={() => {
+      try {
+        navigation.navigate('ParentDetail', { parentId: item.id });
+      } catch (error) {
+        console.error('[TeacherParentsList] Navigation error:', error);
+      }
+    }}>
       <Card>
         <View style={styles.parentHeader}>
           <View style={styles.parentAvatar}>

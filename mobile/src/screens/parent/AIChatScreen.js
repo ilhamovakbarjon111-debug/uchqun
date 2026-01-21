@@ -1,204 +1,673 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  Pressable,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Animated,
+  Easing,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
-import { Card } from '../../components/common/Card';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
+import Screen from '../../components/layout/Screen';
+
+const CHAT_STORAGE_KEY = '@uchqun/ai-chat-messages';
+const DEFAULT_MESSAGE = {
+  role: 'assistant',
+  content: "Salom! Men sizning AI yordamchingizman. Farzandingiz ta'limi haqida savollaringiz bo'lsa, bemalol so'rang! 🎓",
+  timestamp: new Date().toISOString(),
+};
+
+const QUICK_PROMPTS = [
+  { emoji: '📚', text: "Uy vazifasi maslahatlar" },
+  { emoji: '🎯', text: "O'qishda rivojlanish" },
+  { emoji: '💡', text: "Motivatsiya usullari" },
+  { emoji: '🤝', text: "Ijtimoiy ko'nikmalar" },
+];
+
+// Animated loading dots component
+function TypingIndicator() {
+  const dots = [
+    useRef(new Animated.Value(0)).current,
+    useRef(new Animated.Value(0)).current,
+    useRef(new Animated.Value(0)).current,
+  ];
+
+  useEffect(() => {
+    const animations = dots.map((dot, index) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(index * 150),
+          Animated.timing(dot, {
+            toValue: 1,
+            duration: 300,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot, {
+            toValue: 0,
+            duration: 300,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      )
+    );
+    animations.forEach((a) => a.start());
+    return () => animations.forEach((a) => a.stop());
+  }, []);
+
+  return (
+    <View style={styles.typingContainer}>
+      <View style={styles.typingAvatar}>
+        <Text style={styles.typingAvatarEmoji}>🤖</Text>
+      </View>
+      <View style={styles.typingBubble}>
+        <View style={styles.typingDots}>
+          {dots.map((dot, i) => (
+            <Animated.View
+              key={i}
+              style={[
+                styles.typingDot,
+                {
+                  transform: [
+                    {
+                      translateY: dot.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, -6],
+                      }),
+                    },
+                  ],
+                  opacity: dot.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.4, 1],
+                  }),
+                },
+              ]}
+            />
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
 
 export function AIChatScreen() {
-  const [messages, setMessages] = useState([]);
+  const navigation = useNavigation();
+  const [messages, setMessages] = useState([DEFAULT_MESSAGE]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const scrollViewRef = useRef(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const sendMessage = async () => {
-    if (!inputText.trim() || loading) return;
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
-    const userMessage = inputText.trim();
+  useEffect(() => {
+    const loadMessages = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(CHAT_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMessages(parsed);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load saved AI chat:', e);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    loadMessages();
+  }, []);
+
+  useEffect(() => {
+    if (initialLoading) return;
+    const saveMessages = async () => {
+      try {
+        await AsyncStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+      } catch (e) {
+        console.warn('Failed to save AI chat history:', e);
+      }
+    };
+    saveMessages();
+  }, [messages, initialLoading]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, [messages]);
+
+  const sendMessage = async (text) => {
+    const messageText = text || inputText.trim();
+    if (!messageText || loading) return;
+
     setInputText('');
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'user',
+        content: messageText,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
     setLoading(true);
 
     try {
-      const response = await parentService.aiChat(userMessage);
-      const assistantMessage = response?.advice || response?.message || response?.data?.advice || response?.data?.message || 'No response';
+      const response = await parentService.aiChat(messageText);
+      const assistantMessage =
+        response?.advice ||
+        response?.message ||
+        response?.data?.advice ||
+        response?.data?.message ||
+        'No response';
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: assistantMessage },
+        {
+          role: 'assistant',
+          content: assistantMessage,
+          timestamp: new Date().toISOString(),
+        },
       ]);
     } catch (error) {
-      console.error('Error getting AI response:', error);
-      const errorMessage = error?.response?.data?.error || 
-                           error?.response?.data?.message || 
-                           error?.message || 
-                           'Sorry, I encountered an error. Please try again.';
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Kechirasiz, xatolik yuz berdi. Qaytadan urinib ko'ring.";
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: `Error: ${errorMessage}` },
+        {
+          role: 'assistant',
+          content: `😕 ${errorMessage}`,
+          timestamp: new Date().toISOString(),
+        },
       ]);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <ScreenHeader title="AI Assistant" />
-      <ScrollView 
-        style={styles.messagesContainer} 
-        contentContainerStyle={styles.messagesContent}
-        showsVerticalScrollIndicator={false}
+  const clearChat = async () => {
+    setMessages([DEFAULT_MESSAGE]);
+    try {
+      await AsyncStorage.removeItem(CHAT_STORAGE_KEY);
+    } catch (e) {
+      console.warn('Failed to clear chat:', e);
+    }
+  };
+
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('uz-UZ', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const header = (
+    <View style={styles.headerContainer}>
+      <LinearGradient
+        colors={['#667EEA', '#764BA2']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.headerGradient}
       >
-        {messages.length === 0 && (
-          <View style={styles.welcomeContainer}>
-            <Ionicons name="sparkles" size={48} color={theme.Colors.primary.blue} />
-            <Text style={styles.welcomeText}>Ask me anything about your child's education!</Text>
-          </View>
-        )}
-        {messages.map((msg, index) => (
-          <View
-            key={index}
-            style={[
-              styles.messageContainer,
-              msg.role === 'user' ? styles.userMessage : styles.assistantMessage,
-            ]}
-          >
-            {msg.role === 'assistant' && (
-              <Ionicons name="sparkles" size={20} color={theme.Colors.primary.blue} style={styles.aiIcon} />
-            )}
-            <Text style={[styles.messageText, msg.role === 'user' && styles.userMessageText]}>
-              {msg.content}
-            </Text>
-          </View>
-        ))}
-        {loading && (
-          <View style={styles.loadingContainer}>
-            <LoadingSpinner size="small" />
-          </View>
-        )}
-      </ScrollView>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder="Ask a question..."
-          placeholderTextColor={theme.Colors.text.tertiary}
-          multiline
-          onSubmitEditing={sendMessage}
-          returnKeyType="send"
-        />
-        <Pressable 
-          style={({ pressed }) => [
-            styles.sendButton, 
-            (!inputText.trim() || loading) && styles.sendButtonDisabled,
-            pressed && !loading && inputText.trim() && styles.sendButtonPressed
-          ]} 
-          onPress={sendMessage} 
-          disabled={!inputText.trim() || loading}
+        <Pressable
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          {loading ? (
-            <LoadingSpinner size="small" color={theme.Colors.text.inverse} />
-          ) : (
-            <Ionicons name="send" size={20} color={theme.Colors.text.inverse} />
-          )}
+          <Ionicons name="arrow-back" size={24} color="#fff" />
         </Pressable>
-      </View>
+        <View style={styles.headerTitleContainer}>
+          <View style={styles.headerAvatar}>
+            <Text style={styles.headerAvatarEmoji}>🤖</Text>
+          </View>
+          <View>
+            <Text style={styles.headerTitle}>AI Yordamchi</Text>
+            <Text style={styles.headerSubtitle}>Doim yordamga tayyor</Text>
+          </View>
+        </View>
+        <Pressable
+          style={styles.clearButton}
+          onPress={clearChat}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="trash-outline" size={20} color="rgba(255,255,255,0.8)" />
+        </Pressable>
+      </LinearGradient>
     </View>
+  );
+
+  return (
+    <Screen scroll={false} padded={false} header={header} showAI={false}>
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messagesContainer}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Welcome card for empty/initial state */}
+            {messages.length <= 1 && (
+              <View style={styles.welcomeCard}>
+                <View style={styles.welcomeIconContainer}>
+                  <Text style={styles.welcomeIcon}>🎓</Text>
+                </View>
+                <Text style={styles.welcomeTitle}>
+                  Ta'lim bo'yicha yordam
+                </Text>
+                <Text style={styles.welcomeText}>
+                  Farzandingiz ta'limi, rivojlanishi va qo'llab-quvvatlash
+                  haqida savollar bering
+                </Text>
+
+                {/* Quick prompts */}
+                <View style={styles.quickPromptsContainer}>
+                  {QUICK_PROMPTS.map((prompt, index) => (
+                    <Pressable
+                      key={index}
+                      style={({ pressed }) => [
+                        styles.quickPrompt,
+                        pressed && styles.quickPromptPressed,
+                      ]}
+                      onPress={() => sendMessage(prompt.text)}
+                    >
+                      <Text style={styles.quickPromptEmoji}>{prompt.emoji}</Text>
+                      <Text style={styles.quickPromptText}>{prompt.text}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Messages */}
+            {messages.map((msg, index) => {
+              const isUser = msg.role === 'user';
+              return (
+                <View
+                  key={index}
+                  style={[
+                    styles.messageRow,
+                    isUser && styles.userMessageRow,
+                  ]}
+                >
+                  {!isUser && (
+                    <View style={styles.avatarContainer}>
+                      <Text style={styles.avatarEmoji}>🤖</Text>
+                    </View>
+                  )}
+                  <View
+                    style={[
+                      styles.messageBubble,
+                      isUser ? styles.userBubble : styles.aiBubble,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.messageText,
+                        isUser && styles.userMessageText,
+                      ]}
+                    >
+                      {msg.content}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.messageTime,
+                        isUser && styles.userMessageTime,
+                      ]}
+                    >
+                      {formatTime(msg.timestamp)}
+                    </Text>
+                  </View>
+                  {isUser && (
+                    <View style={styles.userAvatarContainer}>
+                      <Text style={styles.avatarEmoji}>👤</Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+
+            {loading && <TypingIndicator />}
+          </ScrollView>
+
+          {/* Input Bar */}
+          <View style={styles.inputContainer}>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder="Savol yozing..."
+                placeholderTextColor={tokens.colors.text.muted}
+                multiline
+                maxLength={500}
+              />
+              <Pressable
+                style={({ pressed }) => [
+                  styles.sendButton,
+                  (!inputText.trim() || loading) && styles.sendButtonDisabled,
+                  pressed && inputText.trim() && !loading && styles.sendButtonPressed,
+                ]}
+                onPress={() => sendMessage()}
+                disabled={!inputText.trim() || loading}
+              >
+                <LinearGradient
+                  colors={
+                    inputText.trim() && !loading
+                      ? ['#667EEA', '#764BA2']
+                      : ['#E2E8F0', '#E2E8F0']
+                  }
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.sendButtonGradient}
+                >
+                  <Ionicons
+                    name="send"
+                    size={18}
+                    color={inputText.trim() && !loading ? '#fff' : tokens.colors.text.muted}
+                  />
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Animated.View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+  },
+  headerContainer: {
+    overflow: 'hidden',
+  },
+  headerGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: tokens.space.lg,
+    paddingVertical: tokens.space.md,
+    paddingTop: tokens.space.lg,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitleContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: tokens.space.md,
+    gap: tokens.space.sm,
+  },
+  headerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerAvatarEmoji: {
+    fontSize: 22,
+  },
+  headerTitle: {
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: '#fff',
+  },
+  headerSubtitle: {
+    fontSize: tokens.type.caption.fontSize,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 1,
+  },
+  clearButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  keyboardView: {
+    flex: 1,
   },
   messagesContainer: {
     flex: 1,
   },
   messagesContent: {
-    padding: theme.Spacing.md,
+    padding: tokens.space.lg,
+    paddingBottom: tokens.space.xl,
   },
-  welcomeContainer: {
+  welcomeCard: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: tokens.radius.xl,
+    padding: tokens.space.xl,
+    marginBottom: tokens.space.xl,
+    alignItems: 'center',
+    ...tokens.shadow.soft,
+  },
+  welcomeIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: tokens.colors.accent[100],
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.Spacing['2xl'],
+    marginBottom: tokens.space.md,
+  },
+  welcomeIcon: {
+    fontSize: 32,
+  },
+  welcomeTitle: {
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.sm,
   },
   welcomeText: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.secondary,
     textAlign: 'center',
-    marginTop: theme.Spacing.md,
-    paddingHorizontal: theme.Spacing.lg,
+    lineHeight: 22,
+    marginBottom: tokens.space.lg,
   },
-  messageContainer: {
+  quickPromptsContainer: {
     flexDirection: 'row',
-    maxWidth: '85%',
-    padding: theme.Spacing.md,
-    borderRadius: theme.BorderRadius.md,
-    marginBottom: theme.Spacing.md,
-    ...theme.Colors.shadow.sm,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: tokens.space.sm,
+    marginTop: tokens.space.sm,
   },
-  userMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: theme.Colors.primary.blue,
+  quickPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: tokens.colors.accent[50],
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.sm,
+    borderRadius: tokens.radius.pill,
+    gap: tokens.space.xs,
+    borderWidth: 1,
+    borderColor: tokens.colors.accent[200],
   },
-  assistantMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: theme.Colors.background.card,
+  quickPromptPressed: {
+    backgroundColor: tokens.colors.accent[100],
+    transform: [{ scale: 0.98 }],
   },
-  aiIcon: {
-    marginRight: theme.Spacing.sm,
+  quickPromptEmoji: {
+    fontSize: 14,
+  },
+  quickPromptText: {
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.accent.blueVibrant,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: tokens.space.md,
+  },
+  userMessageRow: {
+    justifyContent: 'flex-end',
+  },
+  avatarContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: tokens.colors.accent[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: tokens.space.sm,
+  },
+  userAvatarContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: tokens.colors.joy.lavenderSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: tokens.space.sm,
+  },
+  avatarEmoji: {
+    fontSize: 16,
+  },
+  messageBubble: {
+    maxWidth: '75%',
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.sm + 2,
+    borderRadius: tokens.radius.lg,
+  },
+  aiBubble: {
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderBottomLeftRadius: tokens.radius.xs,
+    ...tokens.shadow.xs,
+  },
+  userBubble: {
+    backgroundColor: tokens.colors.accent.blue,
+    borderBottomRightRadius: tokens.radius.xs,
   },
   messageText: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    flex: 1,
-    lineHeight: 20,
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.fontSize * 1.5,
+    color: tokens.colors.text.primary,
   },
   userMessageText: {
-    color: theme.Colors.text.inverse,
+    color: '#fff',
   },
-  loadingContainer: {
+  messageTime: {
+    fontSize: 10,
+    color: tokens.colors.text.muted,
+    marginTop: tokens.space.xs,
+    alignSelf: 'flex-end',
+  },
+  userMessageTime: {
+    color: 'rgba(255,255,255,0.7)',
+  },
+  typingContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: tokens.space.md,
+  },
+  typingAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: tokens.colors.accent[100],
     alignItems: 'center',
-    padding: theme.Spacing.md,
+    justifyContent: 'center',
+    marginRight: tokens.space.sm,
+  },
+  typingAvatarEmoji: {
+    fontSize: 16,
+  },
+  typingBubble: {
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    paddingHorizontal: tokens.space.lg,
+    paddingVertical: tokens.space.md,
+    borderRadius: tokens.radius.lg,
+    borderBottomLeftRadius: tokens.radius.xs,
+    ...tokens.shadow.xs,
+  },
+  typingDots: {
+    flexDirection: 'row',
+    gap: tokens.space.xs,
+  },
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: tokens.colors.accent.blue,
   },
   inputContainer: {
-    flexDirection: 'row',
-    padding: theme.Spacing.md,
-    backgroundColor: theme.Colors.background.card,
+    paddingHorizontal: tokens.space.lg,
+    paddingVertical: tokens.space.md,
+    paddingBottom: tokens.space.lg,
+    backgroundColor: 'rgba(255,255,255,0.95)',
     borderTopWidth: 1,
-    borderTopColor: theme.Colors.border.light,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
     alignItems: 'flex-end',
+    backgroundColor: tokens.colors.accent[50],
+    borderRadius: tokens.radius.xl,
+    paddingLeft: tokens.space.md,
+    paddingRight: tokens.space.xs,
+    paddingVertical: tokens.space.xs,
+    borderWidth: 1,
+    borderColor: tokens.colors.accent[200],
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: theme.Colors.border.medium,
-    borderRadius: 20,
-    paddingHorizontal: theme.Spacing.md,
-    paddingVertical: theme.Spacing.sm,
-    marginRight: theme.Spacing.sm,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
     maxHeight: 100,
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    backgroundColor: theme.Colors.background.secondary,
+    paddingVertical: tokens.space.sm,
+    paddingRight: tokens.space.sm,
   },
   sendButton: {
-    backgroundColor: theme.Colors.primary.blue,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...theme.Colors.shadow.sm,
+    borderRadius: tokens.radius.pill,
+    overflow: 'hidden',
   },
   sendButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.6,
   },
   sendButtonPressed: {
-    opacity: 0.8,
     transform: [{ scale: 0.95 }],
+  },
+  sendButtonGradient: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

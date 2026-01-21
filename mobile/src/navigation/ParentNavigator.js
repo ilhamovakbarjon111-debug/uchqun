@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,48 +16,92 @@ import { TeacherRatingScreen } from '../screens/parent/TeacherRatingScreen';
 import { SchoolRatingScreen } from '../screens/parent/SchoolRatingScreen';
 import { SettingsScreen } from '../screens/parent/SettingsScreen';
 import { ParentsListScreen } from '../screens/parent/ParentsListScreen';
-import theme from '../styles/theme';
+import { DiagnosticsScreen } from '../screens/parent/DiagnosticsScreen';
+import tokens from '../styles/tokens';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+// Tab configuration with joyful emojis
+const TAB_CONFIG = {
+  Dashboard: {
+    icon: 'home',
+    emoji: '🏠',
+    label: 'Bosh sahifa',
+  },
+  Children: {
+    icon: 'people',
+    emoji: '👨‍👩‍👧‍👦',
+    label: 'Bolalar',
+  },
+  AIChat: {
+    icon: 'chatbubble-ellipses',
+    emoji: '🤖',
+    label: 'AI Yordam',
+  },
+  Settings: {
+    icon: 'settings',
+    emoji: '⚙️',
+    label: 'Sozlamalar',
+  },
+};
+
+// Custom tab bar icon with emoji option
+function TabIcon({ route, focused, color, size }) {
+  // CRITICAL: Ensure route and route.name exist
+  const routeName = route?.name;
+  if (!routeName) {
+    console.warn('[TabIcon] Missing route.name');
+    return <Ionicons name="help-outline" size={size} color={color} />;
+  }
+
+  // CRITICAL: Safe lookup with optional chaining
+  const config = TAB_CONFIG?.[routeName];
+
+  // CRITICAL: Fallback if config missing
+  if (!config) {
+    console.warn(`[TabIcon] Unknown route: ${routeName}`);
+    return <Ionicons name="help-outline" size={size} color={color} />;
+  }
+
+  // Use emoji for focused state, icon for unfocused
+  if (focused) {
+    return (
+      <View style={styles.activeTabIcon}>
+        <Text style={styles.tabEmoji}>{config.emoji || '📱'}</Text>
+      </View>
+    );
+  }
+
+  // CRITICAL: Ensure icon always exists
+  const iconBase = config.icon || 'help';
+  const iconName = `${iconBase}-outline`;
+  return <Ionicons name={iconName} size={size} color={color} />;
+}
+
 function ParentTabs() {
   const insets = useSafeAreaInsets();
-  
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          if (route.name === 'Dashboard') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Children') {
-            iconName = focused ? 'people' : 'people-outline';
-          } else if (route.name === 'AIChat') {
-            iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: theme.Colors.navigation.active,
-        tabBarInactiveTintColor: theme.Colors.navigation.inactive,
+        tabBarIcon: (props) => <TabIcon route={route} {...props} />,
+        tabBarActiveTintColor: tokens.colors.accent.blue,
+        tabBarInactiveTintColor: tokens.colors.text.muted,
         tabBarStyle: {
-          backgroundColor: theme.Colors.navigation.background,
-          borderTopWidth: 1,
-          borderTopColor: theme.Colors.border.light,
-          height: 70 + insets.bottom,
-          paddingBottom: 10 + insets.bottom,
-          paddingTop: 10,
-          ...theme.Colors.shadow.md,
+          backgroundColor: 'rgba(255, 255, 255, 0.98)',
+          borderTopWidth: 0,
+          height: 75 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
+          paddingTop: 12,
+          ...tokens.shadow.card,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-          marginTop: 4,
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 2,
         },
+        tabBarLabel: TAB_CONFIG[route.name]?.label || route.name,
         headerShown: false,
       })}
     >
@@ -80,6 +125,23 @@ export function ParentNavigator() {
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="TeacherRating" component={TeacherRatingScreen} />
       <Stack.Screen name="SchoolRating" component={SchoolRatingScreen} />
+      {__DEV__ && (
+        <Stack.Screen name="Diagnostics" component={DiagnosticsScreen} />
+      )}
     </Stack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  activeTabIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: tokens.colors.accent[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabEmoji: {
+    fontSize: 20,
+  },
+});

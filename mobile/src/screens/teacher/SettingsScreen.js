@@ -1,15 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
-import { Card } from '../../components/common/Card';
+import { changeLanguage, getCurrentLanguage, getAvailableLanguages } from '../../i18n/config';
+import Card from '../../components/common/Card';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import theme from '../../styles/theme';
 
 export function SettingsScreen() {
   const { user, logout } = useAuth();
   const navigation = useNavigation();
+  const { t } = useTranslation();
+  const [currentLanguage, setCurrentLanguage] = useState('en');
+
+  useEffect(() => {
+    setCurrentLanguage(getCurrentLanguage());
+  }, []);
+
+  const handleLanguageChange = async (languageCode) => {
+    await changeLanguage(languageCode);
+    setCurrentLanguage(languageCode);
+    Alert.alert(t('settings.languageChanged'), t('settings.languageChangedDesc'));
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -32,26 +46,35 @@ export function SettingsScreen() {
     );
   };
 
+  // Helper for safe navigation
+  const safeNavigate = (screenName, params = {}) => {
+    try {
+      navigation.navigate(screenName, params);
+    } catch (error) {
+      console.error(`[TeacherSettings] Navigation error to ${screenName}:`, error);
+    }
+  };
+
   const settingsItems = [
     {
       icon: 'person-outline',
       title: 'Profile',
-      onPress: () => navigation.navigate('Profile'),
+      onPress: () => safeNavigate('Profile'),
     },
     {
       icon: 'list-outline',
       title: 'Responsibilities',
-      onPress: () => navigation.navigate('Responsibilities'),
+      onPress: () => safeNavigate('Responsibilities'),
     },
     {
       icon: 'checkmark-circle-outline',
       title: 'Tasks',
-      onPress: () => navigation.navigate('Tasks'),
+      onPress: () => safeNavigate('Tasks'),
     },
     {
       icon: 'time-outline',
       title: 'Work History',
-      onPress: () => navigation.navigate('WorkHistory'),
+      onPress: () => safeNavigate('WorkHistory'),
     },
     {
       icon: 'information-circle-outline',
@@ -79,9 +102,9 @@ export function SettingsScreen() {
             </View>
             <View style={styles.userDetails}>
               <Text style={styles.userName}>
-                {user?.firstName} {user?.lastName}
+                {user?.firstName ?? '—'} {user?.lastName ?? ''}
               </Text>
-              <Text style={styles.userEmail}>{user?.email}</Text>
+              <Text style={styles.userEmail}>{user?.email ?? '—'}</Text>
               <View style={styles.roleBadge}>
                 <Ionicons name="school" size={14} color={theme.Colors.primary.blue} />
                 <Text style={styles.roleText}>Teacher</Text>
@@ -91,7 +114,29 @@ export function SettingsScreen() {
         </Card>
 
         <Card>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
+          {getAvailableLanguages().map((lang) => (
+            <Pressable
+              key={lang.code}
+              style={[
+                styles.languageItem,
+                currentLanguage === lang.code && styles.languageItemActive,
+              ]}
+              onPress={() => handleLanguageChange(lang.code)}
+            >
+              <View style={styles.languageInfo}>
+                <Text style={styles.languageName}>{lang.nativeName}</Text>
+                <Text style={styles.languageSubtitle}>{lang.name}</Text>
+              </View>
+              {currentLanguage === lang.code && (
+                <Ionicons name="checkmark-circle" size={24} color={theme.Colors.primary.blue} />
+              )}
+            </Pressable>
+          ))}
+        </Card>
+
+        <Card>
+          <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
           {settingsItems.map((item, index) => (
             <Pressable
               key={index}
@@ -208,5 +253,31 @@ const styles = StyleSheet.create({
   },
   settingsItemTextDestructive: {
     color: theme.Colors.status.error,
+  },
+  languageItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.Spacing.md,
+    paddingHorizontal: theme.Spacing.sm,
+    borderRadius: theme.BorderRadius.md,
+    marginBottom: theme.Spacing.xs,
+  },
+  languageItemActive: {
+    backgroundColor: theme.Colors.primary.blueBg,
+  },
+  languageInfo: {
+    flex: 1,
+  },
+  languageName: {
+    fontSize: theme.Typography.sizes.base,
+    fontWeight: theme.Typography.weights.semibold,
+    color: theme.Colors.text.primary,
+    marginBottom: theme.Spacing.xs / 2,
+  },
+  languageSubtitle: {
+    fontSize: theme.Typography.sizes.sm,
+    fontWeight: theme.Typography.weights.normal,
+    color: theme.Colors.text.secondary,
   },
 });

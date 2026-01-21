@@ -11,9 +11,29 @@ import theme from '../../styles/theme';
 
 export function ParentDetailScreen() {
   const route = useRoute();
-  const { parentId } = route.params || {};
+  // DATA SAFETY: Safe param access with defaults
+  const { parentId = null } = route?.params || {};
   const [loading, setLoading] = useState(true);
   const [parent, setParent] = useState(null);
+
+  // ROUTE SAFETY: Show fallback if required param missing
+  if (!parentId) {
+    return (
+      <View style={styles.container}>
+        <ScreenHeader title="Parent Detail" />
+        <View style={styles.content}>
+          <Card>
+            <View style={{ padding: theme.Spacing.xl, alignItems: 'center' }}>
+              <Ionicons name="alert-circle-outline" size={48} color={theme.Colors.status.error} />
+              <Text style={{ marginTop: theme.Spacing.md, fontSize: theme.Typography.sizes.base, color: theme.Colors.text.secondary }}>
+                Missing parentId parameter
+              </Text>
+            </View>
+          </Card>
+        </View>
+      </View>
+    );
+  }
 
   useEffect(() => {
     if (parentId) {
@@ -43,7 +63,7 @@ export function ParentDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title={`${parent.firstName} ${parent.lastName}`} />
+      <ScreenHeader title={`${parent.firstName ?? '—'} ${parent.lastName ?? ''}`} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Card>
           <View style={styles.avatarContainer}>
@@ -59,7 +79,7 @@ export function ParentDetailScreen() {
             <View style={styles.infoContent}>
               <Text style={styles.label}>Name</Text>
               <Text style={styles.value}>
-                {parent.firstName} {parent.lastName}
+                {parent.firstName ?? '—'} {parent.lastName ?? ''}
               </Text>
             </View>
           </View>
@@ -74,18 +94,18 @@ export function ParentDetailScreen() {
           )}
         </Card>
 
-        {parent.children && parent.children.length > 0 && (
+        {parent.children && Array.isArray(parent.children) && parent.children.length > 0 && (
           <Card>
             <Text style={styles.sectionTitle}>Children</Text>
-            {parent.children.map((child) => (
-              <View key={child.id} style={styles.childItem}>
+            {parent.children.map((child, index) => (
+              <View key={child?.id || index} style={styles.childItem}>
                 <View style={styles.childAvatar}>
                   <Text style={styles.childAvatarText}>
                     {child.firstName?.charAt(0)}{child.lastName?.charAt(0)}
                   </Text>
                 </View>
                 <Text style={styles.childName}>
-                  {child.firstName} {child.lastName}
+                  {child.firstName ?? '—'} {child.lastName ?? ''}
                 </Text>
               </View>
             ))}

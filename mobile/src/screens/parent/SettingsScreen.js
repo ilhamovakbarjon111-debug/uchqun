@@ -1,15 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
-import { Card } from '../../components/common/Card';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
-import theme from '../../styles/theme';
+import { changeLanguage, getCurrentLanguage, getAvailableLanguages } from '../../i18n/config';
+import tokens from '../../styles/tokens';
+import Screen from '../../components/layout/Screen';
+import Card from '../../components/common/Card';
+import ListRow from '../../components/common/ListRow';
+import Pill from '../../components/common/Pill';
 
 export function SettingsScreen() {
   const { user, logout } = useAuth();
   const navigation = useNavigation();
+  const { t } = useTranslation();
+  const [currentLanguage, setCurrentLanguage] = useState('en');
+
+  // Get parent navigator to access stack screens
+  const parentNavigation = navigation.getParent();
+
+  useEffect(() => {
+    setCurrentLanguage(getCurrentLanguage());
+  }, []);
+
+  const handleLanguageChange = async (languageCode) => {
+    await changeLanguage(languageCode);
+    setCurrentLanguage(languageCode);
+    Alert.alert(t('settings.languageChanged'), t('settings.languageChangedDesc'));
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -32,21 +51,43 @@ export function SettingsScreen() {
     );
   };
 
+  // Helper function to navigate to stack screens safely
+  const navigateToStackScreen = (screenName) => {
+    try {
+      if (parentNavigation) {
+        parentNavigation.navigate(screenName);
+      } else {
+        console.warn(`Cannot navigate to ${screenName}: Parent navigator not found`);
+        // Fallback: try direct navigation
+        navigation.navigate(screenName);
+      }
+    } catch (error) {
+      console.error(`Navigation error to ${screenName}:`, error);
+    }
+  };
+
   const settingsItems = [
     {
       icon: 'chatbubble-ellipses-outline',
       title: 'AI Assistant',
-      onPress: () => navigation.navigate('AIChat'),
+      onPress: () => {
+        // AIChat is a tab, so we can navigate directly
+        try {
+          navigation.navigate('AIChat');
+        } catch (error) {
+          console.error('Navigation error to AIChat:', error);
+        }
+      },
     },
     {
       icon: 'star-outline',
       title: 'Rate Teacher',
-      onPress: () => navigation.navigate('TeacherRating'),
+      onPress: () => navigateToStackScreen('TeacherRating'),
     },
     {
       icon: 'school-outline',
       title: 'Rate School',
-      onPress: () => navigation.navigate('SchoolRating'),
+      onPress: () => navigateToStackScreen('SchoolRating'),
     },
     {
       icon: 'information-circle-outline',
@@ -61,73 +102,101 @@ export function SettingsScreen() {
     },
   ];
 
+  const header = (
+    <View style={styles.topBar}>
+      <View style={styles.placeholder} />
+      <Text style={styles.topBarTitle} allowFontScaling={true}>Settings</Text>
+      <View style={styles.placeholder} />
+    </View>
+  );
+
   return (
-    <View style={styles.container}>
-      <ScreenHeader title="Settings" />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Card>
+    <Screen scroll={true} padded={true} header={header}>
+        {/* User Info Card */}
+        <Card style={styles.card}>
           <View style={styles.userInfo}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
               </Text>
             </View>
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>
-                {user?.firstName} {user?.lastName}
+              <Text style={styles.userName} allowFontScaling={true}>
+                {user?.firstName ?? '—'} {user?.lastName ?? ''}
               </Text>
-              <Text style={styles.userEmail}>{user?.email}</Text>
-              <View style={styles.roleBadge}>
-                <Ionicons name="people" size={14} color={theme.Colors.cards.parents} />
-                <Text style={styles.roleText}>Parent</Text>
-              </View>
+              <Text style={styles.userEmail} allowFontScaling={true}>{user?.email ?? '—'}</Text>
+              <Pill style={styles.roleBadge}>
+                <Ionicons name="people" size={14} color={tokens.colors.accent.blue} />
+                <Text style={styles.roleText} allowFontScaling={true}>Parent</Text>
+              </Pill>
             </View>
           </View>
         </Card>
 
-        <Card>
-          <Text style={styles.sectionTitle}>Account</Text>
-          {settingsItems.map((item, index) => (
+        {/* Language Selector Card */}
+        <Card style={styles.card}>
+          <Text style={styles.sectionTitle} allowFontScaling={true}>{t('settings.language')}</Text>
+          {getAvailableLanguages().map((lang) => (
             <Pressable
-              key={index}
-              style={styles.settingsItem}
-              onPress={item.onPress}
+              key={lang.code}
+              style={[
+                styles.languageItem,
+                currentLanguage === lang.code && styles.languageItemActive,
+              ]}
+              onPress={() => handleLanguageChange(lang.code)}
             >
-              <View style={styles.settingsItemLeft}>
-                <Ionicons
-                  name={item.icon}
-                  size={22}
-                  color={item.destructive ? theme.Colors.status.error : theme.Colors.text.secondary}
-                />
-                <Text
-                  style={[
-                    styles.settingsItemText,
-                    item.destructive && styles.settingsItemTextDestructive,
-                  ]}
-                >
-                  {item.title}
-                </Text>
+              <View style={styles.languageInfo}>
+                <Text style={styles.languageName} allowFontScaling={true}>{lang.nativeName}</Text>
+                <Text style={styles.languageSubtitle} allowFontScaling={true}>{lang.name}</Text>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={theme.Colors.text.tertiary}
-              />
+              {currentLanguage === lang.code && (
+                <Ionicons name="checkmark-circle" size={24} color={tokens.colors.accent.blue} />
+              )}
             </Pressable>
           ))}
         </Card>
-      </ScrollView>
-    </View>
+
+        {/* Settings Items Card */}
+        <Card style={styles.card}>
+          <Text style={styles.sectionTitle} allowFontScaling={true}>{t('settings.account')}</Text>
+          {settingsItems.map((item, index) => (
+            <ListRow
+              key={index}
+              icon={item.icon}
+              iconColor={item.destructive ? tokens.colors.semantic.error : tokens.colors.accent.blue}
+              title={item.title}
+              onPress={item.onPress}
+              style={[
+                styles.settingsItem,
+                index === settingsItems.length - 1 && styles.lastItem,
+              ]}
+            />
+          ))}
+        </Card>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: tokens.space.xl,
+    paddingTop: tokens.space.md,
+    paddingBottom: tokens.space.md,
+    backgroundColor: 'transparent',
   },
-  content: {
-    padding: theme.Spacing.md,
+  placeholder: {
+    width: 44,
+  },
+  topBarTitle: {
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.text.primary,
+  },
+  card: {
+    marginBottom: tokens.space.lg,
   },
   userInfo: {
     flexDirection: 'row',
@@ -136,72 +205,80 @@ const styles = StyleSheet.create({
   avatar: {
     width: 60,
     height: 60,
-    borderRadius: 30,
-    backgroundColor: theme.Colors.cards.parents + '20',
+    borderRadius: tokens.radius.pill,
+    backgroundColor: `${tokens.colors.accent.blue}20`,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   avatarText: {
-    fontSize: theme.Typography.sizes['2xl'],
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.cards.parents,
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.accent.blue,
   },
   userDetails: {
     flex: 1,
   },
   userName: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs / 2,
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs / 2,
   },
   userEmail: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    marginBottom: theme.Spacing.xs,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.type.sub.fontWeight,
+    color: tokens.colors.text.secondary,
+    marginBottom: tokens.space.sm,
   },
   roleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: theme.Colors.cards.parents + '20',
-    paddingHorizontal: theme.Spacing.sm,
-    paddingVertical: theme.Spacing.xs / 2,
-    borderRadius: theme.BorderRadius.sm,
+    gap: tokens.space.xs,
+    backgroundColor: `${tokens.colors.accent.blue}15`,
   },
   roleText: {
-    fontSize: theme.Typography.sizes.xs,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.cards.parents,
-    marginLeft: theme.Spacing.xs / 2,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.type.sub.fontWeight,
+    color: tokens.colors.accent.blue,
   },
   sectionTitle: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.md,
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.md,
   },
   settingsItem: {
+    marginBottom: 0,
+  },
+  lastItem: {
+    borderBottomWidth: 0,
+  },
+  languageItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
+    paddingVertical: tokens.space.md,
+    paddingHorizontal: tokens.space.sm,
+    borderRadius: tokens.radius.md,
+    marginBottom: tokens.space.xs,
   },
-  settingsItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  languageItemActive: {
+    backgroundColor: `${tokens.colors.accent.blue}10`,
+  },
+  languageInfo: {
     flex: 1,
   },
-  settingsItemText: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    marginLeft: theme.Spacing.md,
-    fontWeight: theme.Typography.weights.medium,
+  languageName: {
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs / 2,
   },
-  settingsItemTextDestructive: {
-    color: theme.Colors.status.error,
+  languageSubtitle: {
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.type.sub.fontWeight,
+    color: tokens.colors.text.secondary,
   },
 });

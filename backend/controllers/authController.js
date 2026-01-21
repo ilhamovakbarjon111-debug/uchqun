@@ -20,10 +20,6 @@ const generateTokens = (userId) => {
 
 export const login = async (req, res) => {
   try {
-    console.log('=== LOGIN REQUEST ===');
-    console.log('Body:', { email: req.body?.email, hasPassword: !!req.body?.password });
-    console.log('Headers:', { 'content-type': req.headers['content-type'] });
-    
     const { email, password } = req.body;
 
     logger.info('Login attempt', { 

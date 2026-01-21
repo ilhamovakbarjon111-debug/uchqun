@@ -6,7 +6,28 @@ const AuthContext = createContext(null);
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  // TEMP STABILITY: Return safe defaults instead of throwing
+  // This prevents crashes if hook is used outside provider
+  if (!ctx) {
+    console.warn('[useAuth] Used outside AuthProvider, returning safe defaults');
+    return {
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      bootstrapping: false,
+      isAuthenticated: false,
+      isTeacher: false,
+      isParent: false,
+      login: async () => {
+        console.warn('[useAuth] login called but not in provider');
+        throw new Error('AuthProvider not available');
+      },
+      logout: async () => {
+        console.warn('[useAuth] logout called but not in provider');
+      },
+      setUser: () => {},
+    };
+  }
   return ctx;
 }
 
@@ -64,8 +85,13 @@ export function AuthProvider({ children }) {
       refreshToken,
       bootstrapping,
       isAuthenticated: !!user && !!accessToken,
-      isTeacher: user?.role === 'teacher' || user?.role === 'admin' || user?.role === 'reception',
+      // CRITICAL FIX: Only set isTeacher for actual 'teacher' role
+      // Admin and Reception should NOT be treated as teachers to prevent crashes
+      isTeacher: user?.role === 'teacher',
       isParent: user?.role === 'parent',
+      // Add explicit role checks for better handling
+      isAdmin: user?.role === 'admin',
+      isReception: user?.role === 'reception',
       login,
       logout,
       setUser, // Add setUser for compatibility with web app

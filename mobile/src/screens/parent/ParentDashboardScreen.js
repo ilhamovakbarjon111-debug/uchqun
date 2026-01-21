@@ -4,9 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
-import { Card } from '../../components/common/Card';
+import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { EmptyState } from '../../components/common/EmptyState';
+import EmptyState from '../../components/common/EmptyState';
 import DecorativeBackground from '../../components/common/DecorativeBackground';
 import theme from '../../styles/theme';
 
@@ -102,12 +102,7 @@ export function ParentDashboardScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <TouchableOpacity 
-              style={styles.menuButton}
-              onPress={() => navigation.navigate('ParentTabs', { screen: 'Settings' })}
-            >
-              <Ionicons name="menu" size={24} color={theme.Colors.text.inverse} />
-            </TouchableOpacity>
+            <View style={styles.placeholder} />
             <View style={styles.headerRight}>
               <TouchableOpacity 
                 style={styles.notificationButton}

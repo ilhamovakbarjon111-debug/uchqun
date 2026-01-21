@@ -17,7 +17,6 @@ api.interceptors.request.use(async (config) => {
   
   // If the request data is FormData, remove Content-Type to let React Native set it with boundary
   if (config.data instanceof FormData) {
-    console.log('[API] FormData detected! Removing Content-Type header');
     delete config.headers['Content-Type'];
   }
   

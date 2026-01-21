@@ -433,5 +433,12 @@
     "error": "Xatolik",
     "success": "Muvaffaqiyat",
     "notFound": "Topilmadi"
+  },
+  "settings": {
+    "title": "Sozlamalar",
+    "language": "Til",
+    "account": "Hisob",
+    "languageChanged": "Til o'zgartirildi",
+    "languageChangedDesc": "Til muvaffaqiyatli o'zgartirildi"
   }
 }
