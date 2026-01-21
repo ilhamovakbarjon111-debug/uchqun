@@ -7,6 +7,7 @@ import {
   Utensils,
   MessageCircle,
   UserCircle,
+  Heart,
 } from 'lucide-react';
 import { useAuth } from '../shared/context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +26,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.activities'), href: '/teacher/activities', icon: ClipboardList },
     { name: t('nav.meals'), href: '/teacher/meals', icon: Utensils },
     { name: t('nav.media'), href: '/teacher/media', icon: ImageIcon },
+    { name: 'Мониторинг журнали', href: '/teacher/monitoring', icon: Heart },
     { name: t('nav.chat'), href: '/teacher/chat', icon: MessageCircle, badge: unreadChat },
   ];
 

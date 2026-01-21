@@ -19,6 +19,10 @@ import {
   getMyMessages,
 } from '../controllers/parentController.js';
 import { sendMessage } from '../controllers/superAdminController.js';
+import {
+  getMonitoringByChild,
+  getMonitoringById,
+} from '../controllers/emotionalMonitoringController.js';
 
 const router = express.Router();
 
@@ -55,6 +59,10 @@ router.get('/schools', authenticate, requireParent, getSchools);
 router.post('/message-to-super-admin', authenticate, requireParent, sendMessage);
 // Get my messages to super-admin (with replies)
 router.get('/messages', authenticate, requireParent, getMyMessages);
+
+// Emotional Monitoring (read-only for parents)
+router.get('/emotional-monitoring/child/:childId', authenticate, requireParent, getMonitoringByChild);
+router.get('/emotional-monitoring/:id', authenticate, requireParent, getMonitoringById);
 
 // View parent data (accessible by Admin or Reception when clicking on parent in list)
 // This route must come after all specific routes to avoid conflicts

@@ -20,6 +20,7 @@ import School from './School.js';
 import SchoolRating from './SchoolRating.js';
 import SuperAdminMessage from './SuperAdminMessage.js';
 import AdminRegistrationRequest from './AdminRegistrationRequest.js';
+import EmotionalMonitoring from './EmotionalMonitoring.js';
 
 // Initialize all models
 const models = {
@@ -44,6 +45,7 @@ const models = {
   SchoolRating,
   SuperAdminMessage,
   AdminRegistrationRequest,
+  EmotionalMonitoring,
   sequelize,
 };
 
@@ -133,6 +135,12 @@ User.hasMany(AdminRegistrationRequest, { foreignKey: 'reviewedBy', as: 'reviewed
 AdminRegistrationRequest.belongsTo(User, { foreignKey: 'reviewedBy', as: 'reviewer' });
 User.hasOne(AdminRegistrationRequest, { foreignKey: 'approvedUserId', as: 'adminRegistrationRequest' });
 AdminRegistrationRequest.belongsTo(User, { foreignKey: 'approvedUserId', as: 'approvedUser' });
+
+// Emotional Monitoring
+Child.hasMany(EmotionalMonitoring, { foreignKey: 'childId', as: 'emotionalMonitoring' });
+EmotionalMonitoring.belongsTo(Child, { foreignKey: 'childId', as: 'child' });
+User.hasMany(EmotionalMonitoring, { foreignKey: 'teacherId', as: 'emotionalMonitoringRecords' });
+EmotionalMonitoring.belongsTo(User, { foreignKey: 'teacherId', as: 'teacher' });
 
 // Sync database (use with caution in production)
 export const syncDatabase = async (force = false) => {

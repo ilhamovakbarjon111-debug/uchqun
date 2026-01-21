@@ -13,6 +13,7 @@ import Meals from './pages/Meals';
 import Media from './pages/Media';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
+import MonitoringJournal from './pages/MonitoringJournal';
 import ParentApp from './parent/ParentApp';
 import ParentDashboard from './parent/pages/Dashboard';
 import ChildProfile from './parent/pages/ChildProfile';
@@ -72,6 +73,7 @@ function App() {
                 <Route path="meals" element={<Meals />} />
                 <Route path="media" element={<Media />} />
                 <Route path="chat" element={<Chat />} />
+                <Route path="monitoring" element={<MonitoringJournal />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />
