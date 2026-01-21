@@ -26,8 +26,14 @@ export const securityHeaders = helmet({
 });
 
 // HTTPS enforcement middleware (production only)
+// Note: Health endpoint should be excluded from this middleware
 export const enforceHTTPS = (req, res, next) => {
   if (process.env.NODE_ENV === 'production') {
+    // Skip health endpoint - allow Railway healthchecks over HTTP
+    if (req.path === '/health') {
+      return next();
+    }
+    
     // Check if request is secure (direct or behind proxy)
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
     
