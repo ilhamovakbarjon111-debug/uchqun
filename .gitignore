@@ -42,9 +42,11 @@ coverage/
 tmp/
 temp/
 
-
 # Security - Keystore files
 *.keystore
 *.jks
 *.p12
 *.pfx
+
+# Duplicate uchqun folder
+uchqun/
