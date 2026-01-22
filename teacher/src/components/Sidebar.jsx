@@ -35,8 +35,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.profile') || 'Profile', href: '/teacher/profile', icon: UserCircle },
     { name: t('nav.activities'), href: '/teacher/activities', icon: CheckCircle },
     { name: t('nav.meals'), href: '/teacher/meals', icon: Utensils },
-    { name: t('nav.media'), href: '/teacher/media', icon: ImageIcon },
-    { name: 'Мониторинг журнали', href: '/teacher/monitoring', icon: Heart },
+    { name: t('nav.media'), href: '/teacher/media', icon: ImageIcon },    { name: 'Monitoring', href: '/teacher/monitoring', icon: Heart },
     { name: t('nav.chat'), href: '/teacher/chat', icon: MessageCircle, badge: unreadChat },
     { name: t('nav.settings', { defaultValue: 'Sozlamalar' }), href: '/teacher/settings', icon: Settings },
   ];

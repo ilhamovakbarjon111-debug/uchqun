@@ -220,6 +220,8 @@
     "ratingsCount": "{{count}} ratings",
     "noSchool": "School not found. Please contact the administrator.",
     "starsLabel": "Select a rating",
+    "evaluationLabel": "Evaluation Checklist",
+    "evaluationSubtitle": "Check the following criteria",
     "commentLabel": "Comment",
     "commentPlaceholder": "Share your thoughts about the school...",
     "optional": "Optional",
@@ -228,12 +230,24 @@
     "success": "Thank you! Your rating has been saved.",
     "errorLoad": "Could not load rating data. Please try again.",
     "errorSave": "Could not save your rating. Please try again.",
-    "errorRequired": "Please choose a star rating.",
+    "errorRequired": "Please check at least one criterion.",
     "yourRating": "Your rating",
     "rateCta": "Your school will see this rating",
     "noComment": "You have not added a comment yet.",
     "summaryTitle": "Community rating",
-    "lastUpdated": "Last updated {{date}}"
+    "lastUpdated": "Last updated {{date}}",
+    "criteria": {
+      "officiallyRegistered": "Service officially registered",
+      "qualifiedSpecialists": "Qualified specialists available",
+      "individualPlan": "Individual plan developed",
+      "safeEnvironment": "Safe and adapted environment",
+      "medicalRequirements": "Medical and hygienic requirements met",
+      "developmentalActivities": "Developmental activities available",
+      "foodQuality": "Food quality satisfactory",
+      "regularInformation": "Parents are regularly informed",
+      "clearPayments": "Payments are clear and not hidden",
+      "kindAttitude": "Kind attitude towards the child"
+    }
   },
   "profile": {
     "contactSuperAdmin": "Send message to super-admin",

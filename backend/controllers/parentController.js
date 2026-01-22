@@ -625,15 +625,41 @@ export const getMyRating = async (req, res) => {
  */
 export const rateSchool = async (req, res) => {
   try {
-    const { schoolId, schoolName, stars, comment } = req.body;
+    const { schoolId, schoolName, stars, evaluation, comment } = req.body;
     const parentId = req.user.id;
 
-    if (!stars || Number.isNaN(Number(stars))) {
-      return res.status(400).json({ error: 'Stars are required' });
-    }
-    const starsNum = Number(stars);
-    if (starsNum < 1 || starsNum > 5) {
-      return res.status(400).json({ error: 'Stars must be between 1 and 5' });
+    // Support both old stars format (for backward compatibility) and new evaluation format
+    let evaluationData = evaluation;
+    let starsNum = stars ? Number(stars) : null;
+
+    // If evaluation is provided, use it; otherwise fall back to stars for backward compatibility
+    if (evaluationData && typeof evaluationData === 'object') {
+      // Validate evaluation criteria
+      const validKeys = [
+        'officiallyRegistered',
+        'qualifiedSpecialists',
+        'individualPlan',
+        'safeEnvironment',
+        'medicalRequirements',
+        'developmentalActivities',
+        'foodQuality',
+        'regularInformation',
+        'clearPayments',
+        'kindAttitude'
+      ];
+      
+      // Ensure all keys are boolean
+      const validatedEvaluation = {};
+      for (const key of validKeys) {
+        validatedEvaluation[key] = evaluationData[key] === true;
+      }
+      evaluationData = validatedEvaluation;
+    } else if (starsNum && !isNaN(starsNum) && starsNum >= 1 && starsNum <= 5) {
+      // Backward compatibility: convert stars to evaluation if needed
+      // This is a fallback for old ratings
+      evaluationData = null;
+    } else {
+      return res.status(400).json({ error: 'Evaluation criteria or stars are required' });
     }
 
     let school = null;
@@ -736,6 +762,7 @@ export const rateSchool = async (req, res) => {
     logger.info('Creating/updating school rating', {
       schoolId: finalSchoolId,
       parentId,
+      hasEvaluation: !!evaluationData,
       stars: starsNum,
     });
 
@@ -748,12 +775,18 @@ export const rateSchool = async (req, res) => {
         schoolId: finalSchoolId,
         parentId,
         stars: starsNum,
+        evaluation: evaluationData,
         comment: comment || null,
       },
     });
 
     if (!created) {
-      rating.stars = starsNum;
+      if (evaluationData) {
+        rating.evaluation = evaluationData;
+        rating.stars = null; // Clear stars when using evaluation
+      } else if (starsNum !== null) {
+        rating.stars = starsNum;
+      }
       rating.comment = comment || null;
       await rating.save();
     }
@@ -761,6 +794,7 @@ export const rateSchool = async (req, res) => {
     logger.info('School rating saved', {
       schoolId: finalSchoolId,
       parentId,
+      hasEvaluation: !!evaluationData,
       stars: starsNum,
       created,
       ratingId: rating.id,
@@ -953,12 +987,53 @@ export const getMySchoolRating = async (req, res) => {
       order: [['updatedAt', 'DESC']],
     });
 
-    // Calculate average rating
-    const ratings = allRatings.map(r => r.stars);
-    const average = ratings.length > 0
-      ? (ratings.reduce((sum, s) => sum + s, 0) / ratings.length).toFixed(1)
-      : 0;
-    const count = ratings.length;
+    // Calculate average rating based on evaluation criteria or stars (for backward compatibility)
+    let average = 0;
+    const count = allRatings.length;
+    
+    if (count > 0) {
+      const ratingsWithEvaluation = allRatings.filter(r => r.evaluation && typeof r.evaluation === 'object');
+      const ratingsWithStars = allRatings.filter(r => r.stars && !r.evaluation);
+      
+      if (ratingsWithEvaluation.length > 0) {
+        // Calculate average based on evaluation criteria
+        // Count how many criteria are met across all ratings
+        const criteriaKeys = [
+          'officiallyRegistered',
+          'qualifiedSpecialists',
+          'individualPlan',
+          'safeEnvironment',
+          'medicalRequirements',
+          'developmentalActivities',
+          'foodQuality',
+          'regularInformation',
+          'clearPayments',
+          'kindAttitude'
+        ];
+        
+        let totalCriteriaMet = 0;
+        let totalCriteriaCount = 0;
+        
+        ratingsWithEvaluation.forEach(rating => {
+          criteriaKeys.forEach(key => {
+            totalCriteriaCount++;
+            if (rating.evaluation[key] === true) {
+              totalCriteriaMet++;
+            }
+          });
+        });
+        
+        // Calculate percentage and convert to 0-5 scale
+        const percentage = totalCriteriaCount > 0 ? (totalCriteriaMet / totalCriteriaCount) * 100 : 0;
+        average = (percentage / 100 * 5).toFixed(1);
+      } else if (ratingsWithStars.length > 0) {
+        // Fallback to stars for backward compatibility
+        const stars = ratingsWithStars.map(r => r.stars).filter(s => s !== null);
+        if (stars.length > 0) {
+          average = (stars.reduce((sum, s) => sum + s, 0) / stars.length).toFixed(1);
+        }
+      }
+    }
 
     // Format ratings with parent names
     const formattedRatings = allRatings.map((r) => ({
