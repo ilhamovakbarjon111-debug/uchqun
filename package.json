@@ -1,0 +1,32 @@
+{
+  "name": "uzbekistan-schools-platform",
+  "version": "1.0.0",
+  "description": "Enterprise-grade, privacy-first, multi-tenant, offline-first Flutter platform for Uzbekistan schools",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+    "test:rls": "node scripts/test-rls.js",
+    "setup": "node scripts/setup.js",
+    "build": "cd teacher && npm run build",
+    "install": "cd teacher && npm install"
+  },
+  "keywords": [
+    "education",
+    "schools",
+    "multi-tenant",
+    "flutter",
+    "nestjs",
+    "privacy"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
+

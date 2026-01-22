@@ -260,6 +260,44 @@
     "yourMessage": "Your message",
     "superAdminReply": "Super-admin reply",
     "replied": "Replied"
+  },
+  "monitoring": {
+    "title": "Weekly Monitoring Journal",
+    "subtitle": "Monitor children's emotional state",
+    "assessedToday": "Assessed for today",
+    "notAssessedToday": "Not assessed for today",
+    "edit": "Edit",
+    "assess": "Assess",
+    "editModal": "Edit monitoring record",
+    "createModal": "New monitoring record",
+    "date": "Date",
+    "emotionalState": "Children's emotional state",
+    "notes": "Notes / other",
+    "notesPlaceholder": "Additional notes...",
+    "teacherSignature": "Responsible teacher's name and signature",
+    "teacherSignaturePlaceholder": "Name and signature",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirmDelete": "Are you sure you want to delete this monitoring record?",
+    "toastCreate": "Monitoring record created successfully",
+    "toastUpdate": "Monitoring record updated successfully",
+    "toastDelete": "Monitoring record deleted",
+    "toastError": "Error saving monitoring record",
+    "toastLoadError": "Error loading monitoring records",
+    "toastLoadParentsError": "Error loading parents",
+    "selectChildError": "Please select a child and date",
+    "emotionalStates": {
+      "stable": "Child's emotional state is stable",
+      "positiveEmotions": "Child displays positive emotions (smile, joy, interest)",
+      "noAnxiety": "No signs of anxiety (shyness, tearfulness, withdrawal)",
+      "noHostility": "No hostile attitude towards children and adults observed",
+      "calmResponse": "Responds calmly to remarks and requests",
+      "showsEmpathy": "Shows empathy towards other children",
+      "quickRecovery": "Recovers quickly after stressful situations",
+      "stableMood": "Mood is stable throughout the day",
+      "trustingRelationship": "Relationship with teacher is trusting and strong"
+    }
   }
 }
 

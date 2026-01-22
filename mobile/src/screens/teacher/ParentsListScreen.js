@@ -1,18 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View, Pressable } from 'react-native';
+import React, { useEffect, useState, useMemo } from 'react';
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  TextInput,
+  TouchableOpacity,
+  Linking,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { teacherService } from '../../services/teacherService';
-import { Card } from '../../components/common/Card';
+import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { EmptyState } from '../../components/common/EmptyState';
+import EmptyState from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import theme from '../../styles/theme';
 
 export function ParentsListScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [parents, setParents] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadParents();
@@ -22,7 +34,6 @@ export function ParentsListScreen() {
     try {
       setLoading(true);
       const data = await teacherService.getParents();
-      // Service now returns array directly (handles special backend format internally)
       setParents(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading parents:', error);
@@ -32,62 +43,161 @@ export function ParentsListScreen() {
     }
   };
 
+  // Filter parents by search query
+  const filteredParents = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return parents;
+    }
+    const query = searchQuery.toLowerCase();
+    return parents.filter((parent) => {
+      const fullName = `${parent.firstName || ''} ${parent.lastName || ''}`.toLowerCase();
+      const email = (parent.email || '').toLowerCase();
+      const phone = (parent.phone || '').toLowerCase();
+      return fullName.includes(query) || email.includes(query) || phone.includes(query);
+    });
+  }, [parents, searchQuery]);
+
+  const handleCall = (phone) => {
+    if (phone) {
+      Linking.openURL(`tel:${phone}`);
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
 
-  if (parents.length === 0) {
-    return <EmptyState message="No parents found" />;
-  }
-
   const renderParent = ({ item }) => (
-    <Pressable onPress={() => {
-      try {
-        navigation.navigate('ParentDetail', { parentId: item.id });
-      } catch (error) {
-        console.error('[TeacherParentsList] Navigation error:', error);
-      }
-    }}>
+    <Pressable
+      onPress={() => {
+        try {
+          navigation.navigate('ParentDetail', { parentId: item.id });
+        } catch (error) {
+          console.error('[TeacherParentsList] Navigation error:', error);
+        }
+      }}
+    >
       <Card>
         <View style={styles.parentHeader}>
           <View style={styles.parentAvatar}>
             <Text style={styles.parentAvatarText}>
-              {item.firstName?.charAt(0)}{item.lastName?.charAt(0)}
+              {item.firstName?.charAt(0)}
+              {item.lastName?.charAt(0)}
             </Text>
           </View>
           <View style={styles.parentContent}>
             <Text style={styles.name}>
               {item.firstName} {item.lastName}
             </Text>
-            {item.email && (
-              <View style={styles.emailContainer}>
-                <Ionicons name="mail-outline" size={14} color={theme.Colors.text.secondary} />
-                <Text style={styles.email}>{item.email}</Text>
+
+            {/* Contact Info Row */}
+            <View style={styles.contactRow}>
+              {item.email && (
+                <View style={styles.contactItem}>
+                  <Ionicons name="mail-outline" size={14} color={theme.Colors.text.secondary} />
+                  <Text style={styles.contactText} numberOfLines={1}>
+                    {item.email}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Phone Number */}
+            {item.phone && (
+              <View style={styles.phoneRow}>
+                <View style={styles.phoneItem}>
+                  <Ionicons name="call-outline" size={14} color={theme.Colors.primary.blue} />
+                  <Text style={styles.phoneText}>{item.phone}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.callButton}
+                  onPress={() => handleCall(item.phone)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons name="call" size={16} color={theme.Colors.text.inverse} />
+                </TouchableOpacity>
               </View>
             )}
-            {item.children && item.children.length > 0 && (
-              <View style={styles.childrenContainer}>
-                <Ionicons name="people-outline" size={14} color={theme.Colors.text.secondary} />
-                <Text style={styles.children}>
-                  {item.children.length} child{item.children.length > 1 ? 'ren' : ''}
-                </Text>
+
+            {/* Group Badge */}
+            {item.group && (
+              <View style={styles.groupBadge}>
+                <Ionicons name="school-outline" size={12} color={theme.Colors.primary.blue} />
+                <Text style={styles.groupText}>{item.group.name}</Text>
               </View>
             )}
           </View>
           <Ionicons name="chevron-forward" size={20} color={theme.Colors.text.secondary} />
         </View>
+
+        {/* Children Section */}
+        {item.children && item.children.length > 0 && (
+          <View style={styles.childrenSection}>
+            <View style={styles.childrenHeader}>
+              <Ionicons name="people-outline" size={14} color={theme.Colors.text.secondary} />
+              <Text style={styles.childrenCount}>
+                {item.children.length} {t('parentsPage.children') || 'child'}
+                {item.children.length > 1 ? (t('parentsPage.childrenSuffix') || 'ren') : ''}
+              </Text>
+            </View>
+            <View style={styles.childrenList}>
+              {item.children.map((child, index) => (
+                <View key={child.id || index} style={styles.childChip}>
+                  <Text style={styles.childChipText}>
+                    {child.firstName} {child.lastName?.charAt(0)}.
+                  </Text>
+                  {child.class && (
+                    <Text style={styles.childClass}>({child.class})</Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
       </Card>
     </Pressable>
   );
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Parents" showBack={false} />
-      {parents.length === 0 ? (
-        <EmptyState icon="people-outline" message="No parents found" />
+      <ScreenHeader title={t('tabs.parents') || 'Parents'} showBack={false} />
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputWrapper}>
+          <Ionicons name="search" size={20} color={theme.Colors.text.secondary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('parentsPage.searchPlaceholder') || 'Search by name, email or phone...'}
+            placeholderTextColor={theme.Colors.text.tertiary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color={theme.Colors.text.secondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <Text style={styles.resultCount}>
+          {filteredParents.length} {t('parentsPage.results') || 'results'}
+        </Text>
+      </View>
+
+      {filteredParents.length === 0 ? (
+        <EmptyState
+          icon="people-outline"
+          message={
+            searchQuery
+              ? t('parentsPage.noSearchResults') || 'No parents found for this search'
+              : t('parentsPage.empty') || 'No parents found'
+          }
+        />
       ) : (
         <FlatList
-          data={parents}
+          data={filteredParents}
           renderItem={renderParent}
           keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
           contentContainerStyle={styles.list}
@@ -105,12 +215,41 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.Colors.background.secondary,
   },
+  searchContainer: {
+    paddingHorizontal: theme.Spacing.md,
+    paddingVertical: theme.Spacing.sm,
+    backgroundColor: theme.Colors.background.card,
+    marginHorizontal: theme.Spacing.md,
+    marginTop: theme.Spacing.sm,
+    borderRadius: theme.BorderRadius.md,
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.Colors.background.secondary,
+    borderRadius: theme.BorderRadius.sm,
+    paddingHorizontal: theme.Spacing.sm,
+    gap: theme.Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    height: 44,
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.primary,
+  },
+  resultCount: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.secondary,
+    marginTop: theme.Spacing.xs,
+    textAlign: 'right',
+  },
   list: {
     padding: theme.Spacing.md,
+    paddingBottom: 100,
   },
   parentHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   parentAvatar: {
     width: 50,
@@ -131,28 +270,101 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.semibold,
+    fontWeight: theme.Typography.weights.bold,
     color: theme.Colors.text.primary,
     marginBottom: theme.Spacing.xs,
   },
-  emailContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  contactRow: {
     marginBottom: theme.Spacing.xs / 2,
   },
-  email: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    marginLeft: theme.Spacing.xs / 2,
-  },
-  childrenContainer: {
+  contactItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.Spacing.xs / 2,
+    gap: 4,
   },
-  children: {
+  contactText: {
     fontSize: theme.Typography.sizes.sm,
     color: theme.Colors.text.secondary,
-    marginLeft: theme.Spacing.xs / 2,
+    flex: 1,
+  },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: theme.Spacing.xs,
+  },
+  phoneItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  phoneText: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.primary.blue,
+    fontWeight: theme.Typography.weights.medium,
+  },
+  callButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: theme.Colors.status.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  groupBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.Colors.primary.blueBg,
+    paddingHorizontal: theme.Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginTop: theme.Spacing.xs,
+    gap: 4,
+  },
+  groupText: {
+    fontSize: theme.Typography.sizes.xs,
+    color: theme.Colors.primary.blue,
+    fontWeight: theme.Typography.weights.semibold,
+  },
+  childrenSection: {
+    marginTop: theme.Spacing.md,
+    paddingTop: theme.Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.Colors.border.light,
+  },
+  childrenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: theme.Spacing.sm,
+  },
+  childrenCount: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.secondary,
+    fontWeight: theme.Typography.weights.medium,
+  },
+  childrenList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.Spacing.xs,
+  },
+  childChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.Colors.background.secondary,
+    paddingHorizontal: theme.Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+  },
+  childChipText: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.primary,
+    fontWeight: theme.Typography.weights.medium,
+  },
+  childClass: {
+    fontSize: theme.Typography.sizes.xs,
+    color: theme.Colors.text.secondary,
   },
 });

@@ -1,19 +1,28 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  LayoutDashboard,
+  Home,
   UserCircle,
-  ClipboardList,
+  CheckCircle,
   Utensils,
   Image as ImageIcon,
-  Bot,
-  Star,
   MessageCircle,
+  Star,
   Bell,
-  Building2,
+  Settings,
+  Heart,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../context/NotificationContext';
+
+// Color scheme per Mobile-icons.md
+const COLORS = {
+  softNavy: '#2E3A59',
+  textTertiary: '#8F9BB3',
+  powderBlue: '#E8F4FD',
+  mintMist: '#E5F7F0',
+  blushPeach: '#FFF0E5',
+};
 
 const Sidebar = ({ onClose }) => {
   const location = useLocation();
@@ -21,15 +30,17 @@ const Sidebar = ({ onClose }) => {
   const { t } = useTranslation();
   const { count, refreshNotifications } = useNotification();
 
+  // Icon mapping per Mobile-icons.md
   const navigation = [
     { name: t('nav.profile'), href: '/child', icon: UserCircle },
-    { name: t('nav.activities'), href: '/activities', icon: ClipboardList },
+    { name: t('nav.activities'), href: '/activities', icon: CheckCircle },
     { name: t('nav.meals'), href: '/meals', icon: Utensils },
     { name: t('nav.media'), href: '/media', icon: ImageIcon },
     { name: t('nav.rating'), href: '/rating', icon: Star },
-    { name: t('nav.aiChat'), href: '/ai-chat', icon: Bot },
+    { name: t('nav.aiChat'), href: '/ai-chat', icon: Heart },
     { name: t('nav.chat'), href: '/chat', icon: MessageCircle },
     { name: t('nav.notifications', { defaultValue: 'Notifications' }), href: '/notifications', icon: Bell, badge: count },
+    { name: t('nav.settings', { defaultValue: 'Sozlamalar' }), href: '/settings', icon: Settings },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -37,7 +48,7 @@ const Sidebar = ({ onClose }) => {
   return (
     <div className="flex flex-col h-screen w-64 bg-white border-r border-gray-100 shadow-sm">
       {/* Logo Section */}
-      <div className="flex items-center gap-3 px-6 h-20 bg-gradient-to-r from-blue-600 to-blue-500">
+      <div className="flex items-center gap-3 px-6 h-20" style={{ backgroundColor: COLORS.softNavy }}>
         <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
           <span className="text-white font-bold text-xl">U</span>
         </div>
@@ -48,7 +59,7 @@ const Sidebar = ({ onClose }) => {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
-        <p className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: COLORS.textTertiary }}>
           {t('nav.menu')}
         </p>
         {navigation.map((item) => {
@@ -57,11 +68,13 @@ const Sidebar = ({ onClose }) => {
             <Link
               key={item.name}
               to={item.href}
-              className={`group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                Active
-                  ? 'bg-blue-50 text-blue-600 shadow-sm'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              className={`group flex items-center px-3 py-2.5 rounded-xl transition-all duration-300 ${
+                Active ? 'shadow-sm' : 'hover:bg-gray-50'
               }`}
+              style={{
+                backgroundColor: Active ? COLORS.powderBlue : 'transparent',
+                color: Active ? COLORS.softNavy : COLORS.textTertiary,
+              }}
               onClick={() => {
                 if (item.href === '/notifications') refreshNotifications();
                 onClose?.();
@@ -69,19 +82,20 @@ const Sidebar = ({ onClose }) => {
             >
               <div className="relative flex items-center">
                 <item.icon
-                  className={`mr-3 h-5 w-5 transition-colors ${
-                    Active ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
-                  }`}
+                  className="mr-3 h-5 w-5 transition-colors"
+                  strokeWidth={Active ? 2 : 1.5}
+                  style={{ color: Active ? COLORS.softNavy : COLORS.textTertiary }}
                 />
                 {item.badge > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] leading-none font-extrabold rounded-full px-1.5 py-1 border-2 border-white shadow-sm">
+                  <span className="absolute -top-2 -right-2 text-white text-[10px] leading-none font-extrabold rounded-full px-1.5 py-1 border-2 border-white shadow-sm"
+                    style={{ backgroundColor: COLORS.softNavy }}>
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 )}
               </div>
               <span className="text-sm font-medium">{item.name}</span>
               {Active && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600" />
+                <div className="ml-auto w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.softNavy }} />
               )}
             </Link>
           );
@@ -89,16 +103,17 @@ const Sidebar = ({ onClose }) => {
       </nav>
 
       {/* User Info */}
-      <div className="p-4 bg-gray-50/50 border-t border-gray-100">
+      <div className="p-4 border-t border-gray-100" style={{ backgroundColor: COLORS.powderBlue + '40' }}>
         <div className="flex items-center gap-3 px-2">
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border-2 border-white shadow-sm">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm"
+            style={{ backgroundColor: COLORS.powderBlue, color: COLORS.softNavy }}>
             {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-900 truncate">
+            <p className="text-sm font-bold truncate" style={{ color: COLORS.softNavy }}>
               {user?.firstName} {user?.lastName}
             </p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+            <p className="text-xs truncate" style={{ color: COLORS.textTertiary }}>{user?.email}</p>
           </div>
         </div>
       </div>

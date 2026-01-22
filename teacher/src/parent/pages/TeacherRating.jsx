@@ -20,6 +20,18 @@ const TeacherRating = () => {
   const [schoolRating, setSchoolRating] = useState(null);
   const [schoolSummary, setSchoolSummary] = useState({ average: 0, count: 0 });
   const [schoolStars, setSchoolStars] = useState(0);
+  const [schoolEvaluation, setSchoolEvaluation] = useState({
+    officiallyRegistered: false,
+    qualifiedSpecialists: false,
+    individualPlan: false,
+    safeEnvironment: false,
+    medicalRequirements: false,
+    developmentalActivities: false,
+    foodQuality: false,
+    regularInformation: false,
+    clearPayments: false,
+    kindAttitude: false,
+  });
   const [schoolComment, setSchoolComment] = useState('');
   
   const [loading, setLoading] = useState(true);
@@ -78,6 +90,18 @@ const TeacherRating = () => {
       setSchool(schoolRatingData.school);
       setSchoolRating(schoolRatingData.rating);
       setSchoolStars(schoolRatingData.rating?.stars || 0);
+      setSchoolEvaluation(schoolRatingData.rating?.evaluation || {
+        officiallyRegistered: false,
+        qualifiedSpecialists: false,
+        individualPlan: false,
+        safeEnvironment: false,
+        medicalRequirements: false,
+        developmentalActivities: false,
+        foodQuality: false,
+        regularInformation: false,
+        clearPayments: false,
+        kindAttitude: false,
+      });
       setSchoolComment(schoolRatingData.rating?.comment || '');
       setSchoolSummary(schoolRatingData.summary || { average: 0, count: 0 });
     } catch (err) {
@@ -142,7 +166,9 @@ const TeacherRating = () => {
       return;
     }
 
-    if (!schoolStars) {
+    // Check if at least one evaluation criterion is selected
+    const hasEvaluation = Object.values(schoolEvaluation).some(value => value === true);
+    if (!hasEvaluation && !schoolStars) {
       setSchoolError(t('schoolRatingPage.errorRequired'));
       return;
     }
@@ -151,12 +177,20 @@ const TeacherRating = () => {
     try {
       // Send schoolId if available, otherwise send schoolName
       const payload = school.id 
-        ? { schoolId: school.id, stars: schoolStars, comment: schoolComment }
-        : { schoolName: school.name, stars: schoolStars, comment: schoolComment };
+        ? { 
+            schoolId: school.id, 
+            evaluation: schoolEvaluation,
+            comment: schoolComment 
+          }
+        : { 
+            schoolName: school.name, 
+            evaluation: schoolEvaluation,
+            comment: schoolComment 
+          };
       
       await api.post('/parent/school-rating', payload);
       setSchoolRating({
-        stars: schoolStars,
+        evaluation: schoolEvaluation,
         comment: schoolComment,
         updatedAt: new Date().toISOString(),
       });
@@ -200,9 +234,10 @@ const TeacherRating = () => {
     );
   }
 
-  if (!teacher) {
-    return (
-      <div className="max-w-3xl mx-auto space-y-4">
+  return (
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
+      {/* Teacher Rating Section */}
+      {!teacher ? (
         <Card className="flex items-start gap-3">
           <div className="p-2 rounded-full bg-blue-50 text-blue-600">
             <AlertCircle className="w-5 h-5" />
@@ -212,16 +247,12 @@ const TeacherRating = () => {
             <p className="text-gray-600">{t('ratingPage.noTeacher')}</p>
           </div>
         </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <Card className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{t('ratingPage.title')}</h1>
-        <p className="text-white/90 text-sm md:text-base">{t('ratingPage.subtitle')}</p>
-      </Card>
+      ) : (
+        <>
+          <Card className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{t('ratingPage.title')}</h1>
+            <p className="text-white/90 text-sm md:text-base">{t('ratingPage.subtitle')}</p>
+          </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
@@ -384,6 +415,8 @@ const TeacherRating = () => {
           </Card>
         </div>
       </div>
+        </>
+      )}
 
       {/* School Rating Section */}
       {school ? (
@@ -431,25 +464,25 @@ const TeacherRating = () => {
 
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-2">{t('schoolRatingPage.starsLabel')}</p>
-                  <div className="flex items-center gap-2">
-                    {starButtons.map((value) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setSchoolStars(value)}
-                        className={`p-3 rounded-2xl border transition-colors ${
-                          schoolStars >= value
-                            ? 'bg-green-50 border-green-200 text-green-600'
-                            : 'bg-white border-gray-200 text-gray-400 hover:border-green-200 hover:text-green-500'
-                        }`}
+                  <p className="text-sm font-semibold text-gray-700 mb-1">{t('schoolRatingPage.evaluationLabel')}</p>
+                  <p className="text-xs text-gray-500 mb-4">{t('schoolRatingPage.evaluationSubtitle')}</p>
+                  <div className="space-y-3">
+                    {Object.keys(schoolEvaluation).map((key) => (
+                      <label
+                        key={key}
+                        className="flex items-start gap-3 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
                       >
-                        <Star
-                          className="w-6 h-6"
-                          fill={schoolStars >= value ? '#22c55e' : 'none'}
-                          stroke={schoolStars >= value ? '#16a34a' : 'currentColor'}
+                        <input
+                          type="checkbox"
+                          checked={schoolEvaluation[key] || false}
+                          onChange={(e) => setSchoolEvaluation(prev => ({
+                            ...prev,
+                            [key]: e.target.checked
+                          }))}
+                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
                         />
-                      </button>
+                        <span className="text-sm text-gray-700 flex-1">{t(`schoolRatingPage.criteria.${key}`)}</span>
+                      </label>
                     ))}
                   </div>
                 </div>
@@ -505,7 +538,7 @@ const TeacherRating = () => {
               <Card className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-green-50 text-green-600">
-                    <Star className="w-5 h-5" />
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{t('schoolRatingPage.yourRating')}</p>
@@ -513,18 +546,24 @@ const TeacherRating = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {starButtons.map((value) => (
-                    <Star
-                      key={value}
-                      className="w-5 h-5"
-                      fill={(schoolRating?.stars || schoolStars) >= value ? '#22c55e' : 'none'}
-                      stroke={(schoolRating?.stars || schoolStars) >= value ? '#16a34a' : '#9ca3af'}
-                    />
-                  ))}
+                <div className="space-y-2">
+                  {Object.keys(schoolEvaluation).map((key) => {
+                    const isChecked = (schoolRating?.evaluation?.[key] || schoolEvaluation[key]) === true;
+                    return (
+                      <div key={key} className="flex items-center gap-2 text-sm">
+                        <CheckCircle2 
+                          className={`w-4 h-4 ${isChecked ? 'text-green-600' : 'text-gray-300'}`}
+                          fill={isChecked ? '#22c55e' : 'none'}
+                        />
+                        <span className={isChecked ? 'text-gray-700' : 'text-gray-400'}>
+                          {t(`schoolRatingPage.criteria.${key}`)}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
 
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 pt-2 border-t border-gray-200">
                   {schoolRating?.comment ? `"${schoolRating.comment}"` : t('schoolRatingPage.noComment')}
                 </div>
               </Card>

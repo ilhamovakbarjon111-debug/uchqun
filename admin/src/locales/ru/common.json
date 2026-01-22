@@ -5,7 +5,9 @@
     "parents": "Родители",
     "teachers": "Учителя",
     "groups": "Группы",
-    "schoolRatings": "Оценки школ"
+    "schoolRatings": "Оценки школ",
+    "profile": "Профиль",
+    "settings": "Настройки"
   },
   "role.admin": "Администратор",
   "logout": "Выход",

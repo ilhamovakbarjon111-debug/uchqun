@@ -25,11 +25,16 @@ const SchoolRating = sequelize.define('SchoolRating', {
   },
   stars: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     validate: {
       min: 1,
       max: 5,
     },
+  },
+  evaluation: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: {},
   },
   comment: {
     type: DataTypes.TEXT,

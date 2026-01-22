@@ -3,9 +3,11 @@
     "dashboard": "Bosh sahifa",
     "receptions": "Qabul boshqaruvi",
     "parents": "Ota-onalar",
-    "teachers": "O‘qituvchilar",
+    "teachers": "O'qituvchilar",
     "groups": "Guruhlar",
-    "schoolRatings": "Maktab baholari"
+    "schoolRatings": "Maktab baholari",
+    "profile": "Profil",
+    "settings": "Sozlamalar"
   },
   "role.admin": "Administrator",
   "logout": "Chiqish",

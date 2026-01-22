@@ -9,9 +9,16 @@ export const tokens = {
     text: {
       primary: "#1E293B",
       secondary: "#64748B",
-      muted: "#94A3B8",
+      muted: "#8F9BB3",    // Updated to match Mobile-icons.md Text Tertiary
       white: "#FFFFFF",
       inverse: "#F8FAFC",
+    },
+
+    // Navigation colors (from Mobile-icons.md)
+    nav: {
+      active: "#2E3A59",     // Soft Navy
+      inactive: "#8F9BB3",   // Text Tertiary
+      background: "#FFFFFF",
     },
 
     // Glassmorphism cards

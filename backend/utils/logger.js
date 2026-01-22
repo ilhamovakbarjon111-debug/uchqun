@@ -7,10 +7,19 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Create logs directory if it doesn't exist
+// Create logs directory if it doesn't exist (skip in production/Railway)
 const logsDir = path.join(__dirname, '../logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+let canWriteLogs = false;
+
+try {
+  if (process.env.NODE_ENV !== 'production') {
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+    canWriteLogs = true;
+  }
+} catch (error) {
+  console.warn('Could not create logs directory, file logging disabled:', error.message);
 }
 
 // Define log format
@@ -45,8 +54,8 @@ transports.push(
   })
 );
 
-// File transports (development and production)
-if (process.env.NODE_ENV !== 'test') {
+// File transports (development only, skip in production/Railway)
+if (process.env.NODE_ENV !== 'test' && canWriteLogs) {
   // Combined log file
   transports.push(
     new winston.transports.File({
@@ -86,8 +95,8 @@ if (process.env.NODE_ENV === 'production' && process.env.GCP_PROJECT_ID) {
   }
 }
 
-// Create logger instance
-const logger = winston.createLogger({
+// Create logger config
+const loggerConfig = {
   level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
   format: logFormat,
   defaultMeta: {
@@ -95,20 +104,26 @@ const logger = winston.createLogger({
     environment: process.env.NODE_ENV || 'development',
   },
   transports,
-  // Handle exceptions and rejections
-  exceptionHandlers: [
+};
+
+// Add file-based exception/rejection handlers only if we can write logs
+if (canWriteLogs) {
+  loggerConfig.exceptionHandlers = [
     new winston.transports.File({
       filename: path.join(logsDir, 'exceptions.log'),
       format: logFormat,
     }),
-  ],
-  rejectionHandlers: [
+  ];
+  loggerConfig.rejectionHandlers = [
     new winston.transports.File({
       filename: path.join(logsDir, 'rejections.log'),
       format: logFormat,
     }),
-  ],
-});
+  ];
+}
+
+// Create logger instance
+const logger = winston.createLogger(loggerConfig);
 
 // Create stream for HTTP request logging
 logger.stream = {

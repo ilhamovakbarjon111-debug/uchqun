@@ -229,7 +229,13 @@ const ParentManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Validate group is required for new parents (ensures proper data flow)
+    if (!editingParent && !formData.groupId) {
+      showError(t('parentsPage.form.groupRequiredError') || 'Guruh tanlash majburiy');
+      return;
+    }
+
     try {
       if (editingParent) {
         // Update parent info
@@ -586,15 +592,16 @@ const ParentManagement = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('parentsPage.form.group')}
+                    {t('parentsPage.form.group')} <span className="text-red-500">*</span>
                   </label>
                   <select
+                    required
                     value={formData.groupId}
                     onChange={(e) => {
                       const selectedGroupId = e.target.value;
                       const selectedGroup = groups.find(g => g.id === selectedGroupId);
-                      setFormData({ 
-                        ...formData, 
+                      setFormData({
+                        ...formData,
                         groupId: selectedGroupId,
                         // Auto-set teacher from group if no teacher was selected
                         teacherId: selectedGroup?.teacherId || formData.teacherId
@@ -613,6 +620,7 @@ const ParentManagement = () => {
                       <option value="" disabled>Avval o'qituvchi tanlang</option>
                     )}
                   </select>
+                  <p className="mt-1 text-xs text-gray-500">{t('parentsPage.form.groupRequired') || 'Guruh tanlash majburiy - bu bolaning faoliyat va ovqatlarini ko\'rish uchun kerak'}</p>
                 </div>
               </div>
 

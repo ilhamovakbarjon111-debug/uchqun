@@ -45,19 +45,12 @@ const PORT = process.env.PORT || 5000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const localUploadsRoot = process.env.LOCAL_UPLOADS_DIR || path.join(process.cwd(), 'uploads');
 
-// Security middleware (should be first)
-app.use(securityHeaders);
-
-// HTTPS enforcement (production only)
-if (process.env.NODE_ENV === 'production') {
-  app.use(enforceHTTPS);
-}
-
 // Trust proxy (needed for HTTPS behind reverse proxy)
 app.set('trust proxy', 1);
 
-// Simple health check endpoint (must be FIRST - before CORS and other middleware)
+// Simple health check endpoint (must be FIRST - before all middleware including HTTPS enforcement)
 // This allows Railway to check health even during server startup
+// Must be before enforceHTTPS to avoid redirects that break healthchecks
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -65,6 +58,21 @@ app.get('/health', (req, res) => {
     service: 'uchqun-backend',
   });
 });
+
+// Security middleware (after health endpoint)
+app.use(securityHeaders);
+
+// HTTPS enforcement (production only)
+// Skip health endpoint to allow Railway healthchecks over HTTP
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    // Skip HTTPS enforcement for health endpoint
+    if (req.path === '/health') {
+      return next();
+    }
+    enforceHTTPS(req, res, next);
+  });
+}
 
 // CORS Configuration
 const allowedOrigins = process.env.FRONTEND_URL

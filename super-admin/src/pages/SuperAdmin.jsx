@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { 
-  Crown, 
+import {
+  Crown,
   Mail,
   Lock,
   Plus,
@@ -24,6 +24,7 @@ import {
 import Card from '../components/Card';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import SuperAdminBackground from '../components/SuperAdminBackground';
 
 const SuperAdmin = () => {
   const [firstName, setFirstName] = useState('');
@@ -295,9 +296,12 @@ const SuperAdmin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Super Admin Background - Premium executive theme */}
+      <SuperAdminBackground />
+
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
+      <div className="bg-white border-b border-gray-200 shadow-sm relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -328,7 +332,7 @@ const SuperAdmin = () => {
       </div>
 
       {/* Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 relative z-10">
         <div className="flex gap-2 border-b border-gray-200">
           <button
             onClick={() => setActiveTab('admins')}
@@ -369,7 +373,7 @@ const SuperAdmin = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex items-center justify-center px-4 py-12">
+      <div className="flex items-center justify-center px-4 py-12 relative z-10">
         <div className={`${activeTab === 'messages' ? 'max-w-6xl' : 'max-w-2xl'} w-full space-y-8`}>
           {activeTab === 'admins' && (
             <>

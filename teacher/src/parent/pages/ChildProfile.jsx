@@ -530,7 +530,7 @@ const ChildProfile = () => {
           {monitoringRecords.length > 0 && (
             <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
               <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Heart className="w-6 h-6 text-pink-600" /> Ҳафталик мониторинг журнали
+                <Heart className="w-6 h-6 text-pink-600" /> {t('profile.monitoringJournal', { defaultValue: 'Monitoring Journal' })}
               </h3>
               <div className="space-y-4">
                 {monitoringRecords.slice(0, 5).map((record) => {

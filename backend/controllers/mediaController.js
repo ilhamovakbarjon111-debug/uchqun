@@ -5,9 +5,23 @@ import Activity from '../models/Activity.js';
 import User from '../models/User.js';
 import { uploadFile, deleteFile } from '../config/storage.js';
 import { createNotification } from './notificationController.js';
-import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
+import logger from '../utils/logger.js';
+
+// sharp is loaded dynamically to avoid startup crashes in containers
+let sharpModule = null;
+async function getSharp() {
+  if (!sharpModule) {
+    try {
+      sharpModule = (await import('sharp')).default;
+    } catch (error) {
+      console.warn('Sharp module not available, thumbnails will be skipped:', error.message);
+      return null;
+    }
+  }
+  return sharpModule;
+}
 
 // Normalize media output: keep URL as-is, drop thumbnail
 function sanitizeMediaUrls(media) {
@@ -206,23 +220,29 @@ export const getMediaItem = async (req, res) => {
 // Generate thumbnail for image
 async function generateThumbnail(filePath, filename) {
   try {
+    const sharp = await getSharp();
+    if (!sharp) {
+      logger.warn('Sharp not available, skipping thumbnail generation', { filename });
+      return null;
+    }
+
     const thumbnailName = `thumb_${filename}`;
     const thumbnailPath = path.join(path.dirname(filePath), thumbnailName);
-    
+
     await sharp(filePath)
       .resize(300, 300, {
         fit: 'inside',
         withoutEnlargement: true,
       })
       .toFile(thumbnailPath);
-    
+
     // Upload thumbnail to storage
     const thumbnailBuffer = fs.readFileSync(thumbnailPath);
     const thumbnailResult = await uploadFile(thumbnailBuffer, thumbnailName, 'image/jpeg');
-    
+
     // Delete local thumbnail file
     fs.unlinkSync(thumbnailPath);
-    
+
     return thumbnailResult.url;
   } catch (error) {
     logger.warn('Error generating thumbnail', { error: error.message, filename });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,9 +24,12 @@ const Stack = createNativeStackNavigator();
 
 import theme from '../styles/theme';
 
+// Icon size per Mobile-icons.md (20px)
+const ICON_SIZE = 20;
+
 function TeacherTabs() {
   const insets = useSafeAreaInsets();
-  
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -34,23 +38,37 @@ function TeacherTabs() {
           const routeName = route?.name;
           if (!routeName) {
             console.warn('[TeacherTabIcon] Missing route.name');
-            return <Ionicons name="help-outline" size={size} color={color} />;
+            return <Ionicons name="help-outline" size={ICON_SIZE} color={color} />;
           }
 
-          // CRITICAL: Safe icon name with fallback
-          let iconName = 'help-outline'; // Default fallback
+          // Icon mapping per Mobile-icons.md design system
+          const iconMap = {
+            Dashboard: 'home',      // Home icon
+            Parents: 'people',      // Users icon
+            AIChat: 'chatbubble-ellipses', // Chat icon
+            Settings: 'settings',   // Settings icon
+          };
 
-          if (routeName === 'Dashboard') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (routeName === 'Parents') {
-            iconName = focused ? 'people' : 'people-outline';
-          } else if (routeName === 'AIChat') {
-            iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
-          } else if (routeName === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
+          const baseIcon = iconMap[routeName] || 'help';
+          const iconName = focused ? baseIcon : `${baseIcon}-outline`;
+
+          // Per Mobile-icons.md: Active state has navy background with white icon
+          if (focused) {
+            return (
+              <View style={{
+                width: 48,
+                height: 48,
+                borderRadius: 16,
+                backgroundColor: theme.Colors.navigation.activeBackground,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Ionicons name={baseIcon} size={ICON_SIZE} color="#FFFFFF" />
+              </View>
+            );
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <Ionicons name={iconName} size={ICON_SIZE} color={color} />;
         },
         tabBarActiveTintColor: theme.Colors.navigation.active,
         tabBarInactiveTintColor: theme.Colors.navigation.inactive,
@@ -58,14 +76,14 @@ function TeacherTabs() {
           backgroundColor: theme.Colors.navigation.background,
           borderTopWidth: 1,
           borderTopColor: theme.Colors.border.light,
-          height: 70 + insets.bottom,
+          height: 80 + insets.bottom,
           paddingBottom: 10 + insets.bottom,
-          paddingTop: 10,
+          paddingTop: 12,
           ...theme.Colors.shadow.md,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
+          fontSize: 11,
+          fontWeight: '600',
           marginTop: 4,
         },
         headerShown: false,
