@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd teacher && npm install && npm run build",
+  "buildCommand": "npm run build",
   "outputDirectory": "teacher/dist",
-  "installCommand": "cd teacher && npm install",
+  "installCommand": "npm install",
   "redirects": [
     { "source": "/favicon.ico", "destination": "/favicon.svg", "permanent": false },
     { "source": "/favicon.png", "destination": "/favicon.svg", "permanent": false }
