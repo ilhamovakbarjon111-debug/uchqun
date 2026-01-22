@@ -13,6 +13,7 @@ import Meals from './pages/Meals';
 import Media from './pages/Media';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import ParentApp from './parent/ParentApp';
 import ParentDashboard from './parent/pages/Dashboard';
 import ChildProfile from './parent/pages/ChildProfile';
@@ -24,6 +25,7 @@ import Notifications from './parent/pages/Notifications';
 import Help from './parent/pages/Help';
 import AIChat from './parent/pages/AIChat';
 import TeacherRating from './parent/pages/TeacherRating';
+import ParentSettings from './parent/pages/Settings';
 
 function App() {
   return (
@@ -54,6 +56,7 @@ function App() {
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="help" element={<Help />} />
                 <Route path="rating" element={<TeacherRating />} />
+                <Route path="settings" element={<ParentSettings />} />
               </Route>
 
               {/* Teacher routes */}
@@ -72,6 +75,7 @@ function App() {
                 <Route path="meals" element={<Meals />} />
                 <Route path="media" element={<Media />} />
                 <Route path="chat" element={<Chat />} />
+                <Route path="settings" element={<Settings />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

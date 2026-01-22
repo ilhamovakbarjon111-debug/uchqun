@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import Child from '../models/Child.js';
+import Group from '../models/Group.js';
 import TeacherResponsibility from '../models/TeacherResponsibility.js';
 import TeacherTask from '../models/TeacherTask.js';
 import TeacherWorkHistory from '../models/TeacherWorkHistory.js';
@@ -415,26 +416,57 @@ export const getDashboard = async (req, res) => {
 /**
  * Get all Parents
  * GET /api/teacher/parents
+ *
+ * Business Logic:
+ * - Teachers see parents from ALL their groups combined
+ * - Admin can see all parents
  */
 export const getParents = async (req, res) => {
   try {
     const { search, limit = 100, offset = 0 } = req.query;
 
     const where = { role: 'parent' };
-    
-    // If user is a teacher, only show parents assigned to them
+
+    // If user is a teacher, show parents from all their groups
     if (req.user.role === 'teacher') {
-      where.teacherId = req.user.id;
+      // Get all groups assigned to this teacher
+      const teacherGroups = await Group.findAll({
+        where: { teacherId: req.user.id },
+        attributes: ['id'],
+      });
+      const groupIds = teacherGroups.map(g => g.id);
+
+      if (groupIds.length > 0) {
+        // Filter by groupId (parents assigned to teacher's groups)
+        // OR by direct teacherId assignment (legacy support)
+        where[Op.or] = [
+          { groupId: { [Op.in]: groupIds } },
+          { teacherId: req.user.id },
+        ];
+      } else {
+        // Fallback to direct teacherId if no groups
+        where.teacherId = req.user.id;
+      }
     }
     // Admin can see all parents
-    
+
     if (search) {
-      where[Op.or] = [
-        { firstName: { [Op.iLike]: `%${search}%` } },
-        { lastName: { [Op.iLike]: `%${search}%` } },
-        { email: { [Op.iLike]: `%${search}%` } },
-        { phone: { [Op.iLike]: `%${search}%` } },
-      ];
+      const searchCondition = {
+        [Op.or]: [
+          { firstName: { [Op.iLike]: `%${search}%` } },
+          { lastName: { [Op.iLike]: `%${search}%` } },
+          { email: { [Op.iLike]: `%${search}%` } },
+          { phone: { [Op.iLike]: `%${search}%` } },
+        ],
+      };
+
+      // Combine role/group filter with search
+      if (where[Op.or]) {
+        where[Op.and] = [{ [Op.or]: where[Op.or] }, searchCondition];
+        delete where[Op.or];
+      } else {
+        Object.assign(where, searchCondition);
+      }
     }
 
     const { count, rows: parents } = await User.findAndCountAll({
@@ -445,6 +477,12 @@ export const getParents = async (req, res) => {
           model: Child,
           as: 'children',
           attributes: ['id', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'disabilityType', 'school', 'class', 'teacher'],
+          required: false,
+        },
+        {
+          model: Group,
+          as: 'group',
+          attributes: ['id', 'name'],
           required: false,
         },
       ],

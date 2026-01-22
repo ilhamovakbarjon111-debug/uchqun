@@ -15,7 +15,7 @@ export function ParentsListScreen() {
   const [children, setChildren] = useState([]);
 
   // Get parent navigator to access stack screens
-  const parentNavigation = navigation.getParent();
+  const parentNavigation = navigation?.getParent?.();
 
   useEffect(() => {
     loadChildren();
@@ -37,11 +37,17 @@ export function ParentsListScreen() {
   // Helper to navigate to stack screens safely
   const navigateToChildProfile = (childId) => {
     try {
+      if (!childId) {
+        console.error('[ParentsListScreen] Invalid childId');
+        return;
+      }
       if (parentNavigation) {
         parentNavigation.navigate('ChildProfile', { childId });
       } else {
         // Fallback: try direct navigation
-        navigation.navigate('ChildProfile', { childId });
+        if (navigation?.navigate) {
+          navigation.navigate('ChildProfile', { childId });
+        }
       }
     } catch (error) {
       console.error('Navigation error to ChildProfile:', error);
@@ -83,7 +89,7 @@ export function ParentsListScreen() {
         </Card>
       ) : (
         <View style={styles.list}>
-          {children.map((item) => {
+          {(Array.isArray(children) ? children : []).map((item) => {
             const initials = `${item.firstName?.charAt(0) || ''}${item.lastName?.charAt(0) || ''}`;
             const age = getAge(item.dateOfBirth);
             return (

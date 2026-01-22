@@ -1,15 +1,27 @@
 /**
  * Mobile App UI/UX Color Palette & Design System
- * Based on the provided design specification
+ * Based on Mobile-icons.md design specification
  */
 
 export const Colors = {
-  // Primary Colors
+  // Primary Colors (Updated per Mobile-icons.md)
   primary: {
+    navy: '#2E3A59',        // Soft Navy - primary icon color
     blue: '#2563eb',        // Primary blue (used for dashboard, primary actions)
     blueLight: '#3b82f6',   // Lighter blue variant
     blueDark: '#1e40af',    // Darker blue variant
     blueBg: '#eff6ff',      // Light blue background
+  },
+
+  // Design System Colors (from Mobile-icons.md)
+  design: {
+    softNavy: '#2E3A59',     // Icon color on light backgrounds
+    textTertiary: '#8F9BB3', // Inactive state color
+    powderBlue: '#E8F4FD',   // Stat card backgrounds
+    mintMist: '#E5F7F0',     // Success/completed state backgrounds
+    blushPeach: '#FFF0E5',   // Warm accent backgrounds
+    glassBackground: 'rgba(255, 255, 255, 0.8)',
+    glassBorder: 'rgba(255, 255, 255, 0.5)',
   },
 
   // Card Colors (from screenshot)
@@ -59,11 +71,12 @@ export const Colors = {
     success: '#10b981',     // Success progress
   },
 
-  // Navigation
+  // Navigation (Updated per Mobile-icons.md)
   navigation: {
-    active: '#2563eb',      // Active tab color
-    inactive: '#6b7280',    // Inactive tab color
+    active: '#2E3A59',      // Soft Navy - active tab color
+    inactive: '#8F9BB3',    // Text Tertiary - inactive tab color
     background: '#ffffff',  // Navigation background
+    activeBackground: '#2E3A59', // Background for active icon
   },
 
   // Shadows

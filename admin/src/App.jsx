@@ -12,6 +12,7 @@ import TeacherManagement from './pages/TeacherManagement';
 import GroupManagement from './pages/GroupManagement';
 import SchoolRatings from './pages/SchoolRatings';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import { ToastContainer } from './components/Toast';
 import LoadingSpinner from './components/LoadingSpinner';
 
@@ -46,6 +47,7 @@ const AppRoutes = () => {
         <Route path="groups" element={<GroupManagement />} />
         <Route path="school-ratings" element={<SchoolRatings />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
 
       <Route path="/" element={<Navigate to={isAuthenticated && isAdmin ? "/admin" : "/login"} replace />} />

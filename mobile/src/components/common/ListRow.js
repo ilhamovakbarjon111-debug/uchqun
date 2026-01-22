@@ -30,7 +30,7 @@ export default function ListRow({
           allowFontScaling={true}
           numberOfLines={1}
         >
-          {title}
+          {title || ''}
         </Text>
         {subtitle && (
           <Text 

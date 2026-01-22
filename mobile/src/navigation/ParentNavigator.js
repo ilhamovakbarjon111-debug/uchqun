@@ -23,42 +23,40 @@ import { useTranslation } from 'react-i18next';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Tab configuration with joyful emojis
+// Icon size per Mobile-icons.md (20px)
+const ICON_SIZE = 20;
+
+// Tab configuration per Mobile-icons.md design system
 const TAB_CONFIG = {
   Dashboard: {
     icon: 'home',
-    emoji: '🏠',
     label: 'Dashboard',
   },
   Children: {
     icon: 'people',
-    emoji: '👨‍👩‍👧‍👦',
     label: 'Children',
   },
   Rating: {
     icon: 'star',
-    emoji: '⭐',
     label: 'Rating',
   },
   AIChat: {
     icon: 'chatbubble-ellipses',
-    emoji: '🤖',
     label: 'AI Chat',
   },
   Settings: {
     icon: 'settings',
-    emoji: '⚙️',
     label: 'Settings',
   },
 };
 
-// Custom tab bar icon with emoji option
-function TabIcon({ route, focused, color, size }) {
+// Custom tab bar icon following Mobile-icons.md spec
+function TabIcon({ route, focused, color }) {
   // CRITICAL: Ensure route and route.name exist
   const routeName = route?.name;
   if (!routeName) {
     console.warn('[TabIcon] Missing route.name');
-    return <Ionicons name="help-outline" size={size} color={color} />;
+    return <Ionicons name="help-outline" size={ICON_SIZE} color={color} />;
   }
 
   // CRITICAL: Safe lookup with optional chaining
@@ -67,22 +65,23 @@ function TabIcon({ route, focused, color, size }) {
   // CRITICAL: Fallback if config missing
   if (!config) {
     console.warn(`[TabIcon] Unknown route: ${routeName}`);
-    return <Ionicons name="help-outline" size={size} color={color} />;
+    return <Ionicons name="help-outline" size={ICON_SIZE} color={color} />;
   }
 
-  // Use emoji for focused state, icon for unfocused
+  const baseIcon = config.icon || 'help';
+
+  // Per Mobile-icons.md: Active state has navy background with white icon
   if (focused) {
     return (
       <View style={styles.activeTabIcon}>
-        <Text style={styles.tabEmoji}>{config.emoji || '📱'}</Text>
+        <Ionicons name={baseIcon} size={ICON_SIZE} color="#FFFFFF" />
       </View>
     );
   }
 
-  // CRITICAL: Ensure icon always exists
-  const iconBase = config.icon || 'help';
-  const iconName = `${iconBase}-outline`;
-  return <Ionicons name={iconName} size={size} color={color} />;
+  // Inactive state: outline icon with muted color
+  const iconName = `${baseIcon}-outline`;
+  return <Ionicons name={iconName} size={ICON_SIZE} color={color} />;
 }
 
 function ParentTabs() {
@@ -104,12 +103,13 @@ function ParentTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: (props) => <TabIcon route={route} {...props} />,
-        tabBarActiveTintColor: tokens.colors.accent.blue,
-        tabBarInactiveTintColor: tokens.colors.text.muted,
+        // Per Mobile-icons.md: Soft Navy for active, Text Tertiary for inactive
+        tabBarActiveTintColor: tokens.colors.nav?.active || '#2E3A59',
+        tabBarInactiveTintColor: tokens.colors.nav?.inactive || '#8F9BB3',
         tabBarStyle: {
           backgroundColor: 'rgba(255, 255, 255, 0.98)',
           borderTopWidth: 0,
-          height: 75 + insets.bottom,
+          height: 80 + insets.bottom,
           paddingBottom: 8 + insets.bottom,
           paddingTop: 12,
           ...tokens.shadow.card,
@@ -117,7 +117,7 @@ function ParentTabs() {
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          marginTop: 2,
+          marginTop: 4,
         },
         tabBarLabel: getTabLabel(route.name),
         headerShown: false,
@@ -152,15 +152,13 @@ export function ParentNavigator() {
 }
 
 const styles = StyleSheet.create({
+  // Per Mobile-icons.md: Active tab has navy background, 48x48 rounded square
   activeTabIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: tokens.colors.accent[100],
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#2E3A59', // Soft Navy per Mobile-icons.md
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  tabEmoji: {
-    fontSize: 20,
   },
 });

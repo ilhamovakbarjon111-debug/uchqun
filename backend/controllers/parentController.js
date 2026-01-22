@@ -8,6 +8,10 @@ import TeacherRating from '../models/TeacherRating.js';
 import School from '../models/School.js';
 import SchoolRating from '../models/SchoolRating.js';
 import SuperAdminMessage from '../models/SuperAdminMessage.js';
+// Teacher-created data tables (linked to childId)
+import Activity from '../models/Activity.js';
+import Meal from '../models/Meal.js';
+import Media from '../models/Media.js';
 import logger from '../utils/logger.js';
 import { Op, fn, col } from 'sequelize';
 import sequelize from '../config/database.js';
@@ -44,34 +48,75 @@ export const getMyChildren = async (req, res) => {
 };
 
 /**
- * Get parent's own activities
+ * Get parent's activities (from their group)
  * GET /api/parent/activities
- * 
+ *
  * Business Logic:
- * - Parents can only view their own activities
- * - When viewing parent list, clicking on a parent shows their activities
+ * - Parents see ALL activities from their group (any child in same group)
+ * - Queries teacher-created activities linked to children via groupId
  */
 export const getMyActivities = async (req, res) => {
   try {
     const { limit = 50, offset = 0, activityType, startDate, endDate } = req.query;
 
-    const where = { parentId: req.user.id };
-    
-    if (activityType) {
-      where.activityType = activityType;
-    }
-    
-    if (startDate || endDate) {
-      where.activityDate = {};
-      if (startDate) where.activityDate[Op.gte] = new Date(startDate);
-      if (endDate) where.activityDate[Op.lte] = new Date(endDate);
+    // Get parent's groupId
+    const parent = await User.findByPk(req.user.id, { attributes: ['groupId'] });
+
+    if (!parent || !parent.groupId) {
+      // Fallback to legacy parent_activities if no group assigned
+      const where = { parentId: req.user.id };
+
+      if (activityType) {
+        where.activityType = activityType;
+      }
+
+      if (startDate || endDate) {
+        where.activityDate = {};
+        if (startDate) where.activityDate[Op.gte] = new Date(startDate);
+        if (endDate) where.activityDate[Op.lte] = new Date(endDate);
+      }
+
+      const activities = await ParentActivity.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['activityDate', 'DESC']],
+      });
+
+      return res.json({
+        success: true,
+        data: activities.rows,
+        total: activities.count,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      });
     }
 
-    const activities = await ParentActivity.findAndCountAll({
-      where,
+    // Query teacher-created activities for all children in the parent's group
+    const whereActivity = {};
+
+    if (activityType) {
+      whereActivity.type = activityType;
+    }
+
+    if (startDate || endDate) {
+      whereActivity.date = {};
+      if (startDate) whereActivity.date[Op.gte] = new Date(startDate);
+      if (endDate) whereActivity.date[Op.lte] = new Date(endDate);
+    }
+
+    const activities = await Activity.findAndCountAll({
+      where: whereActivity,
+      include: [{
+        model: Child,
+        as: 'child',
+        where: { groupId: parent.groupId },
+        attributes: ['id', 'firstName', 'lastName', 'photo'],
+        required: true,
+      }],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['activityDate', 'DESC']],
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
     });
 
     res.json({
@@ -114,34 +159,75 @@ export const getActivityById = async (req, res) => {
 };
 
 /**
- * Get parent's own meals
+ * Get parent's meals (from their group)
  * GET /api/parent/meals
- * 
+ *
  * Business Logic:
- * - Parents can only view their own meals
- * - When viewing parent list, clicking on a parent shows their meals
+ * - Parents see ALL meals from their group (any child in same group)
+ * - Queries teacher-created meals linked to children via groupId
  */
 export const getMyMeals = async (req, res) => {
   try {
     const { limit = 50, offset = 0, mealType, startDate, endDate } = req.query;
 
-    const where = { parentId: req.user.id };
-    
-    if (mealType) {
-      where.mealType = mealType;
-    }
-    
-    if (startDate || endDate) {
-      where.mealDate = {};
-      if (startDate) where.mealDate[Op.gte] = new Date(startDate);
-      if (endDate) where.mealDate[Op.lte] = new Date(endDate);
+    // Get parent's groupId
+    const parent = await User.findByPk(req.user.id, { attributes: ['groupId'] });
+
+    if (!parent || !parent.groupId) {
+      // Fallback to legacy parent_meals if no group assigned
+      const where = { parentId: req.user.id };
+
+      if (mealType) {
+        where.mealType = mealType;
+      }
+
+      if (startDate || endDate) {
+        where.mealDate = {};
+        if (startDate) where.mealDate[Op.gte] = new Date(startDate);
+        if (endDate) where.mealDate[Op.lte] = new Date(endDate);
+      }
+
+      const meals = await ParentMeal.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['mealDate', 'DESC']],
+      });
+
+      return res.json({
+        success: true,
+        data: meals.rows,
+        total: meals.count,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      });
     }
 
-    const meals = await ParentMeal.findAndCountAll({
-      where,
+    // Query teacher-created meals for all children in the parent's group
+    const whereMeal = {};
+
+    if (mealType) {
+      whereMeal.mealType = mealType;
+    }
+
+    if (startDate || endDate) {
+      whereMeal.date = {};
+      if (startDate) whereMeal.date[Op.gte] = new Date(startDate);
+      if (endDate) whereMeal.date[Op.lte] = new Date(endDate);
+    }
+
+    const meals = await Meal.findAndCountAll({
+      where: whereMeal,
+      include: [{
+        model: Child,
+        as: 'child',
+        where: { groupId: parent.groupId },
+        attributes: ['id', 'firstName', 'lastName', 'photo'],
+        required: true,
+      }],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['mealDate', 'DESC']],
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
     });
 
     res.json({
@@ -184,28 +270,63 @@ export const getMealById = async (req, res) => {
 };
 
 /**
- * Get parent's own media
+ * Get parent's media (from their group)
  * GET /api/parent/media
- * 
+ *
  * Business Logic:
- * - Parents can only view their own media
- * - When viewing parent list, clicking on a parent shows their media
+ * - Parents see ALL media from their group (any child in same group)
+ * - Queries teacher-created media linked to children via groupId
  */
 export const getMyMedia = async (req, res) => {
   try {
     const { limit = 50, offset = 0, fileType } = req.query;
 
-    const where = { parentId: req.user.id };
-    
-    if (fileType) {
-      where.fileType = fileType;
+    // Get parent's groupId
+    const parent = await User.findByPk(req.user.id, { attributes: ['groupId'] });
+
+    if (!parent || !parent.groupId) {
+      // Fallback to legacy parent_media if no group assigned
+      const where = { parentId: req.user.id };
+
+      if (fileType) {
+        where.fileType = fileType;
+      }
+
+      const media = await ParentMedia.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['uploadDate', 'DESC']],
+      });
+
+      return res.json({
+        success: true,
+        data: media.rows,
+        total: media.count,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      });
     }
 
-    const media = await ParentMedia.findAndCountAll({
-      where,
+    // Query teacher-created media for all children in the parent's group
+    const whereMedia = {};
+
+    if (fileType) {
+      whereMedia.type = fileType;
+    }
+
+    const media = await Media.findAndCountAll({
+      where: whereMedia,
+      include: [{
+        model: Child,
+        as: 'child',
+        where: { groupId: parent.groupId },
+        attributes: ['id', 'firstName', 'lastName', 'photo'],
+        required: true,
+      }],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['uploadDate', 'DESC']],
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
     });
 
     res.json({

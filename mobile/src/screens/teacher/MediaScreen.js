@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { mediaService } from '../../services/mediaService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { EmptyState } from '../../components/common/EmptyState';
+import EmptyState from '../../components/common/EmptyState';
 import { ImageViewer } from '../../components/common/ImageViewer';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import theme from '../../styles/theme';

@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { teacherService } from '../../services/teacherService';
-import { Card } from '../../components/common/Card';
+import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { EmptyState } from '../../components/common/EmptyState';
+import EmptyState from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import theme from '../../styles/theme';
 
