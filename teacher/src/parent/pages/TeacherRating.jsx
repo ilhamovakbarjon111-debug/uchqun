@@ -234,9 +234,10 @@ const TeacherRating = () => {
     );
   }
 
-  if (!teacher) {
-    return (
-      <div className="max-w-3xl mx-auto space-y-4">
+  return (
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
+      {/* Teacher Rating Section */}
+      {!teacher ? (
         <Card className="flex items-start gap-3">
           <div className="p-2 rounded-full bg-blue-50 text-blue-600">
             <AlertCircle className="w-5 h-5" />
@@ -246,16 +247,12 @@ const TeacherRating = () => {
             <p className="text-gray-600">{t('ratingPage.noTeacher')}</p>
           </div>
         </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <Card className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{t('ratingPage.title')}</h1>
-        <p className="text-white/90 text-sm md:text-base">{t('ratingPage.subtitle')}</p>
-      </Card>
+      ) : (
+        <>
+          <Card className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 md:p-8 shadow-xl border-0">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{t('ratingPage.title')}</h1>
+            <p className="text-white/90 text-sm md:text-base">{t('ratingPage.subtitle')}</p>
+          </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
@@ -418,6 +415,8 @@ const TeacherRating = () => {
           </Card>
         </div>
       </div>
+        </>
+      )}
 
       {/* School Rating Section */}
       {school ? (
