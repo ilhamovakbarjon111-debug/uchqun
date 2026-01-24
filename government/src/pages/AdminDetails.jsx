@@ -64,46 +64,53 @@ const AdminDetails = () => {
 
   const statCards = [
     {
-      title: 'Receptionlar',
-      value: stats.receptions,
-      icon: UserCheck,
-      color: 'bg-blue-500',
-    },
-    {
-      title: 'Maktablar',
-      value: stats.schools,
-      icon: Building2,
-      color: 'bg-green-500',
-    },
-    {
-      title: 'O\'qituvchilar',
-      value: stats.teachers,
-      icon: GraduationCap,
-      color: 'bg-purple-500',
+      title: 'O\'quvchilar',
+      value: stats.students || 0,
+      icon: Baby,
+      color: 'bg-pink-500',
+      description: 'Jami o\'quvchilar soni',
     },
     {
       title: 'Ota-onalar',
-      value: stats.parents,
+      value: stats.parents || 0,
       icon: Users,
       color: 'bg-orange-500',
+      description: 'Jami ota-onalar soni',
     },
     {
-      title: 'O\'quvchilar',
-      value: stats.students,
-      icon: Baby,
-      color: 'bg-pink-500',
+      title: 'O\'qituvchilar',
+      value: stats.teachers || 0,
+      icon: GraduationCap,
+      color: 'bg-purple-500',
+      description: 'Jami o\'qituvchilar soni',
+    },
+    {
+      title: 'Receptionlar',
+      value: stats.receptions || 0,
+      icon: UserCheck,
+      color: 'bg-blue-500',
+      description: 'Jami receptionlar soni',
+    },
+    {
+      title: 'Maktablar',
+      value: stats.schools || 0,
+      icon: Building2,
+      color: 'bg-green-500',
+      description: 'Jami maktablar soni',
     },
     {
       title: 'O\'rtacha Reyting',
-      value: stats.averageRating.toFixed(1),
+      value: (stats.averageRating || 0).toFixed(1),
       icon: Star,
       color: 'bg-yellow-500',
+      description: 'Maktablar o\'rtacha reytingi',
     },
     {
       title: 'Jami Daromad',
-      value: `${stats.totalRevenue.toLocaleString()} UZS`,
+      value: `${(stats.totalRevenue || 0).toLocaleString()} UZS`,
       icon: DollarSign,
       color: 'bg-emerald-500',
+      description: 'Jami to\'langan summa',
     },
   ];
 
@@ -163,23 +170,29 @@ const AdminDetails = () => {
       </Card>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((card, index) => {
-          const Icon = card.icon;
-          return (
-            <Card key={index} className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">{card.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Statistika</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {statCards.map((card, index) => {
+            const Icon = card.icon;
+            return (
+              <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-600 mb-1">{card.title}</p>
+                    <p className="text-3xl font-bold text-gray-900 mb-1">{card.value}</p>
+                    {card.description && (
+                      <p className="text-xs text-gray-500">{card.description}</p>
+                    )}
+                  </div>
+                  <div className={`${card.color} p-3 rounded-lg shadow-sm`}>
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
                 </div>
-                <div className={`${card.color} p-3 rounded-lg`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </Card>
-          );
-        })}
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
       {/* Receptions */}
