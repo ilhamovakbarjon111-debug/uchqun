@@ -317,7 +317,7 @@ const ChildProfile = () => {
   }
 
   // Show child selector if multiple children
-  if (children.length > 1 && !selectedChild) {
+  if (Array.isArray(children) && children.length > 1 && !selectedChildId) {
     return (
       <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
         <div className="mb-10">
@@ -373,11 +373,14 @@ const ChildProfile = () => {
     );
   }
 
+  // Debug: Log children data
+  console.log('ChildProfile - children:', children, 'length:', children?.length, 'selectedChildId:', selectedChildId);
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
       {/* Child Selector (if multiple children) - Prominent at top */}
-      {children.length > 1 && (
+      {Array.isArray(children) && children.length > 1 && (
         <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
