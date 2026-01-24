@@ -460,29 +460,7 @@ export const getPaymentsStats = async (req, res) => {
         : null;
       
       // Get school from include or from map
-      let school = payment.school;
-      if (!school && payment.schoolId) {
-        school = schoolsMap.get(payment.schoolId);
-        if (!school) {
-          // Try to fetch school directly if not in map
-          try {
-            const directSchool = await School.findByPk(payment.schoolId, {
-              attributes: ['id', 'name'],
-            });
-            if (directSchool) {
-              school = directSchool;
-              schoolsMap.set(payment.schoolId, directSchool);
-            }
-          } catch (error) {
-            logger.warn('Error fetching school directly', {
-              paymentId: payment.id,
-              schoolId: payment.schoolId,
-              error: error.message,
-            });
-          }
-        }
-      }
-      
+      const school = payment.school || (payment.schoolId ? schoolsMap.get(payment.schoolId) : null);
       const schoolName = school?.name || null;
       
       // Debug logging
