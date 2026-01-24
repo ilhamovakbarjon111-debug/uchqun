@@ -1546,27 +1546,32 @@ export const createGovernment = async (req, res) => {
     
     // Provide more specific error messages
     if (error.name === 'SequelizeValidationError') {
+      const validationErrors = error.errors?.map(e => e.message) || [error.message];
       return res.status(400).json({
-        error: 'Validation error',
-        details: error.errors?.map(e => e.message) || [error.message],
+        error: validationErrors.join(', ') || 'Validation error',
+        details: validationErrors,
       });
     }
     
     if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({
-        error: 'User with this email already exists',
+        error: 'Bu email bilan foydalanuvchi allaqachon mavjud',
       });
     }
     
     if (error.name === 'SequelizeDatabaseError') {
+      logger.error('Database error creating government', {
+        error: error.message,
+        original: error.original?.message,
+      });
       return res.status(400).json({
-        error: 'Database error',
+        error: 'Ma\'lumotlar bazasi xatosi',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       });
     }
 
     res.status(500).json({ 
-      error: 'Failed to create government account',
+      error: 'Government foydalanuvchisini yaratishda xatolik',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }

@@ -286,27 +286,55 @@ const SuperAdmin = () => {
   const handleCreateGovernment = async (e) => {
     e.preventDefault();
     
-    if (!govFirstName || !govLastName || !govEmail || !govPassword) {
+    // Trim all inputs
+    const trimmedFirstName = govFirstName.trim();
+    const trimmedLastName = govLastName.trim();
+    const trimmedEmail = govEmail.trim();
+    const trimmedPassword = govPassword.trim();
+    
+    if (!trimmedFirstName || !trimmedLastName || !trimmedEmail || !trimmedPassword) {
       showError('Barcha maydonlar to\'ldirilishi kerak');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      showError('Email formati noto\'g\'ri');
+      return;
+    }
+
+    // Validate password length
+    if (trimmedPassword.length < 6) {
+      showError('Parol kamida 6 belgidan iborat bo\'lishi kerak');
       return;
     }
 
     try {
       setGovLoading(true);
-      await api.post('/super-admin/government', {
-        firstName: govFirstName,
-        lastName: govLastName,
-        email: govEmail,
-        password: govPassword,
+      const response = await api.post('/super-admin/government', {
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
+        email: trimmedEmail,
+        password: trimmedPassword,
       });
       
-      success('Government foydalanuvchisi muvaffaqiyatli yaratildi');
-      setGovFirstName('');
-      setGovLastName('');
-      setGovEmail('');
-      setGovPassword('');
+      if (response.data?.success) {
+        success('Government foydalanuvchisi muvaffaqiyatli yaratildi');
+        setGovFirstName('');
+        setGovLastName('');
+        setGovEmail('');
+        setGovPassword('');
+      } else {
+        showError(response.data?.error || 'Government foydalanuvchisini yaratishda xatolik');
+      }
     } catch (error) {
-      showError(error.response?.data?.error || 'Government foydalanuvchisini yaratishda xatolik');
+      console.error('Create government error:', error);
+      const errorMessage = error.response?.data?.error 
+        || error.response?.data?.details?.join(', ')
+        || error.message
+        || 'Government foydalanuvchisini yaratishda xatolik';
+      showError(errorMessage);
     } finally {
       setGovLoading(false);
     }
