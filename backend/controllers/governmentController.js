@@ -394,6 +394,29 @@ export const getPaymentsStats = async (req, res) => {
       limit: 100,
     });
 
+    // If some payments don't have parent or school, fetch them separately
+    const parentIds = [...new Set(payments.map(p => p.parentId).filter(Boolean))];
+    const schoolIds = [...new Set(payments.map(p => p.schoolId).filter(Boolean))];
+    
+    const parentsMap = new Map();
+    const schoolsMap = new Map();
+    
+    if (parentIds.length > 0) {
+      const parents = await User.findAll({
+        where: { id: { [Op.in]: parentIds } },
+        attributes: ['id', 'firstName', 'lastName', 'email'],
+      });
+      parents.forEach(p => parentsMap.set(p.id, p));
+    }
+    
+    if (schoolIds.length > 0) {
+      const schools = await School.findAll({
+        where: { id: { [Op.in]: schoolIds } },
+        attributes: ['id', 'name'],
+      });
+      schools.forEach(s => schoolsMap.set(s.id, s));
+    }
+
     const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
     const byType = {};
     payments.forEach(p => {
@@ -408,25 +431,31 @@ export const getPaymentsStats = async (req, res) => {
     // Format payments with parent and school names
     const formattedPayments = payments.map(payment => {
       const paymentData = payment.toJSON();
-      const parentName = payment.parent 
-        ? `${payment.parent.firstName || ''} ${payment.parent.lastName || ''}`.trim() || null
+      
+      // Get parent from include or from map
+      const parent = payment.parent || (payment.parentId ? parentsMap.get(payment.parentId) : null);
+      const parentName = parent 
+        ? `${parent.firstName || ''} ${parent.lastName || ''}`.trim() || parent.email || null
         : null;
-      const schoolName = payment.school?.name || null;
+      
+      // Get school from include or from map
+      const school = payment.school || (payment.schoolId ? schoolsMap.get(payment.schoolId) : null);
+      const schoolName = school?.name || null;
       
       return {
         ...paymentData,
         parentName: parentName,
         schoolName: schoolName,
         // Also include parent and school objects for fallback
-        parent: payment.parent ? {
-          id: payment.parent.id,
-          firstName: payment.parent.firstName,
-          lastName: payment.parent.lastName,
-          email: payment.parent.email,
+        parent: parent ? {
+          id: parent.id,
+          firstName: parent.firstName,
+          lastName: parent.lastName,
+          email: parent.email,
         } : null,
-        school: payment.school ? {
-          id: payment.school.id,
-          name: payment.school.name,
+        school: school ? {
+          id: school.id,
+          name: school.name,
         } : null,
       };
     });
