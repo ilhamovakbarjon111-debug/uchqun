@@ -371,6 +371,48 @@ const SuperAdmin = () => {
     }
   };
 
+  const startEditGovernment = (gov) => {
+    setEditingGovernment(gov);
+    setEditGovFirstName(gov.firstName || '');
+    setEditGovLastName(gov.lastName || '');
+    setEditGovEmail(gov.email || '');
+    setEditGovPassword('');
+  };
+
+  const handleUpdateGovernment = async (e) => {
+    e.preventDefault();
+    if (!editingGovernment) return;
+    try {
+      setEditGovSaving(true);
+      await api.put(`/super-admin/government/${editingGovernment.id}`, {
+        firstName: editGovFirstName,
+        lastName: editGovLastName,
+        email: editGovEmail,
+        password: editGovPassword || undefined,
+      });
+      success('Government foydalanuvchi muvaffaqiyatli yangilandi');
+      const res = await api.get('/super-admin/government');
+      setGovernments(res.data?.data || []);
+      setEditingGovernment(null);
+      setEditGovPassword('');
+    } catch (error) {
+      showError(error.response?.data?.error || 'Government foydalanuvchi yangilashda xatolik');
+    } finally {
+      setEditGovSaving(false);
+    }
+  };
+
+  const handleDeleteGovernment = async (id) => {
+    if (!confirm('Bu government foydalanuvchisini o\'chirishni xohlaysizmi?')) return;
+    try {
+      await api.delete(`/super-admin/government/${id}`);
+      success('Government foydalanuvchi muvaffaqiyatli o\'chirildi');
+      setGovernments((prev) => prev.filter((g) => g.id !== id));
+    } catch (error) {
+      showError(error.response?.data?.error || 'Government foydalanuvchi o\'chirishda xatolik');
+    }
+  };
+
   const handleApproveRequest = async (id) => {
     if (!confirm('Bu so\'rovni tasdiqlaysizmi? Login ma\'lumotlari emailga yuboriladi.')) return;
     
