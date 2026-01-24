@@ -60,6 +60,8 @@ const SuperAdmin = () => {
   const [govEmail, setGovEmail] = useState('');
   const [govPassword, setGovPassword] = useState('');
   const [govLoading, setGovLoading] = useState(false);
+  const [governments, setGovernments] = useState([]);
+  const [loadingGovernments, setLoadingGovernments] = useState(true);
   const [registrationRequests, setRegistrationRequests] = useState([]);
   const [loadingRegistrations, setLoadingRegistrations] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -88,6 +90,25 @@ const SuperAdmin = () => {
     };
 
     loadAdmins();
+  }, [showError]);
+
+  // Load existing governments
+  useEffect(() => {
+    const loadGovernments = async () => {
+      try {
+        setLoadingGovernments(true);
+        const res = await api.get('/super-admin/government');
+        setGovernments(res.data?.data || []);
+      } catch (error) {
+        console.error('Failed to load governments', error);
+        showError('Government foydalanuvchilarini yuklashda xatolik');
+        setGovernments([]);
+      } finally {
+        setLoadingGovernments(false);
+      }
+    };
+
+    loadGovernments();
   }, [showError]);
 
   // Load schools
@@ -320,11 +341,14 @@ const SuperAdmin = () => {
       });
       
       if (response.data?.success) {
-        success('Government foydalanuvchisi muvaffaqiyatli yaratildi');
-        setGovFirstName('');
-        setGovLastName('');
-        setGovEmail('');
-        setGovPassword('');
+      success('Government foydalanuvchisi muvaffaqiyatli yaratildi');
+      setGovFirstName('');
+      setGovLastName('');
+      setGovEmail('');
+      setGovPassword('');
+      // Reload governments list
+      const res = await api.get('/super-admin/government');
+      setGovernments(res.data?.data || []);
       } else {
         showError(response.data?.error || 'Government foydalanuvchisini yaratishda xatolik');
       }
@@ -978,6 +1002,63 @@ const SuperAdmin = () => {
                   </button>
                 </form>
               </Card>
+
+              {/* Governments List */}
+              <div className="mt-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  Qo'shilgan Government Foydalanuvchilar ({governments.length})
+                </h3>
+                {loadingGovernments ? (
+                  <Card className="p-8">
+                    <div className="flex items-center justify-center min-h-[120px]">
+                      <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  </Card>
+                ) : governments.length === 0 ? (
+                  <Card className="p-8">
+                    <p className="text-sm text-gray-600 text-center py-8">
+                      Hozircha government foydalanuvchilar yo'q
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {governments.map((gov) => (
+                      <Card key={gov.id} className="p-6 hover:shadow-lg transition-shadow">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                              {gov.firstName?.charAt(0)}{gov.lastName?.charAt(0)}
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-gray-900">
+                                {gov.firstName} {gov.lastName}
+                              </h4>
+                              <p className="text-sm text-gray-600">{gov.email}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className={`px-2 py-1 rounded-full font-medium ${
+                            gov.isActive 
+                              ? 'bg-green-100 text-green-700' 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {gov.isActive ? 'Faol' : 'Nofaol'}
+                          </span>
+                          <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full font-medium">
+                            Government
+                          </span>
+                        </div>
+                        {gov.createdAt && (
+                          <p className="text-xs text-gray-500 mt-3">
+                            Yaratilgan: {new Date(gov.createdAt).toLocaleDateString('uz-UZ')}
+                          </p>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
             </>
           )}
 
