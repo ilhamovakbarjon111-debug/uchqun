@@ -41,7 +41,6 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.teachers'), href: '/admin/teachers', icon: UserCheck },
     { name: t('nav.groups'), href: '/admin/groups', icon: UsersRound },
     { name: t('nav.schoolRatings'), href: '/admin/school-ratings', icon: Building2 },
-    { name: t('nav.therapy', { defaultValue: 'Terapiya' }), href: '/admin/therapy', icon: Music },
     { name: t('nav.payments', { defaultValue: 'To\'lovlar' }), href: '/admin/payments', icon: CreditCard },
     { name: t('nav.statistics', { defaultValue: 'Statistics' }), href: '/admin/statistics', icon: BarChart3 },
     { name: t('nav.revenue', { defaultValue: 'Revenue' }), href: '/admin/revenue', icon: DollarSign },

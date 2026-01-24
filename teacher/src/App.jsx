@@ -15,6 +15,7 @@ import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import MonitoringJournal from './pages/MonitoringJournal';
+import TherapyManagement from './pages/TherapyManagement';
 import ParentApp from './parent/ParentApp';
 import ParentDashboard from './parent/pages/Dashboard';
 import ChildProfile from './parent/pages/ChildProfile';
@@ -83,6 +84,7 @@ function App() {
                 <Route path="media" element={<Media />} />
                 <Route path="chat" element={<Chat />} />
                 <Route path="monitoring" element={<MonitoringJournal />} />
+                <Route path="therapy" element={<TherapyManagement />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 

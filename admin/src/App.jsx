@@ -10,7 +10,6 @@ import BusinessStats from './pages/BusinessStats';
 import RevenueStats from './pages/RevenueStats';
 import UsageStats from './pages/UsageStats';
 import UsersStats from './pages/UsersStats';
-import TherapyManagement from './pages/TherapyManagement';
 import PaymentManagement from './pages/PaymentManagement';
 import ReceptionManagement from './pages/ReceptionManagement';
 import ParentManagement from './pages/ParentManagement';
@@ -56,7 +55,6 @@ const AppRoutes = () => {
         <Route path="revenue" element={<RevenueStats />} />
         <Route path="users" element={<UsersStats />} />
         <Route path="usage" element={<UsageStats />} />
-        <Route path="therapy" element={<TherapyManagement />} />
         <Route path="payments" element={<PaymentManagement />} />
         <Route path="profile" element={<Profile />} />
         <Route path="settings" element={<Settings />} />

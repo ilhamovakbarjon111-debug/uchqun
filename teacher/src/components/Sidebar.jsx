@@ -9,6 +9,7 @@ import {
   MessageCircle,
   Settings,
   Heart,
+  Music,
 } from 'lucide-react';
 import { useAuth } from '../shared/context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +38,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.meals'), href: '/teacher/meals', icon: Utensils },
     { name: t('nav.media'), href: '/teacher/media', icon: ImageIcon },
     { name: t('nav.monitoring', { defaultValue: 'Monitoring' }), href: '/teacher/monitoring', icon: Heart },
+    { name: t('nav.therapy', { defaultValue: 'Terapiya' }), href: '/teacher/therapy', icon: Music },
     { name: t('nav.chat'), href: '/teacher/chat', icon: MessageCircle, badge: unreadChat },
     { name: t('nav.settings', { defaultValue: 'Sozlamalar' }), href: '/teacher/settings', icon: Settings },
   ];
