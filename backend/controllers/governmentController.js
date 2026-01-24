@@ -439,7 +439,11 @@ export const getPaymentsStats = async (req, res) => {
         : null;
       
       // Get school from include or from map
-      const school = payment.school || (payment.schoolId ? schoolsMap.get(payment.schoolId) : null);
+      let school = payment.school;
+      if (!school && payment.schoolId) {
+        school = schoolsMap.get(payment.schoolId);
+      }
+      
       const schoolName = school?.name || null;
       
       // Debug logging
@@ -449,13 +453,14 @@ export const getPaymentsStats = async (req, res) => {
           schoolId: payment.schoolId,
           schoolFromInclude: !!payment.school,
           schoolFromMap: !!schoolsMap.get(payment.schoolId),
+          schoolsMapSize: schoolsMap.size,
         });
       }
       
       return {
         ...paymentData,
         parentName: parentName,
-        schoolName: schoolName || (school?.name) || null,
+        schoolName: schoolName,
         // Also include parent and school objects for fallback
         parent: parent ? {
           id: parent.id,
