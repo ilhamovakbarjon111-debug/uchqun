@@ -60,7 +60,9 @@ const PaymentManagement = () => {
         api.get('/admin/parents'),
       ]);
 
-      setPayments(paymentsRes.data.data?.payments || []);
+      // Ensure payments is always an array
+      const paymentsData = paymentsRes.data?.data?.payments;
+      setPayments(Array.isArray(paymentsData) ? paymentsData : []);
       setParents(parentsRes.data.data || []);
     } catch (error) {
       showError(t('payment.loadError', { defaultValue: 'To\'lovlarni yuklashda xatolik' }));
@@ -127,7 +129,7 @@ const PaymentManagement = () => {
     }
   };
 
-  const filteredPayments = payments.filter((payment) => {
+  const filteredPayments = Array.isArray(payments) ? payments.filter((payment) => {
     const query = searchQuery.toLowerCase();
     return (
       payment.parent?.firstName?.toLowerCase().includes(query) ||
@@ -135,7 +137,7 @@ const PaymentManagement = () => {
       payment.parent?.email?.toLowerCase().includes(query) ||
       payment.description?.toLowerCase().includes(query)
     );
-  });
+  }) : [];
 
   if (loading) {
     return (

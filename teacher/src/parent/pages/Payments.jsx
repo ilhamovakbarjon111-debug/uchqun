@@ -46,10 +46,14 @@ const Payments = () => {
         params.childId = selectedChild.id;
       }
       const response = await api.get('/payments', { params });
-      setPayments(response.data.data.payments || []);
-      setTotalAmount(response.data.data.totalAmount || 0);
+      // Ensure payments is always an array
+      const paymentsData = response.data?.data?.payments;
+      setPayments(Array.isArray(paymentsData) ? paymentsData : []);
+      setTotalAmount(response.data?.data?.totalAmount || 0);
     } catch (error) {
       console.error('Error loading payments:', error);
+      setPayments([]);
+      setTotalAmount(0);
     } finally {
       setLoading(false);
     }
@@ -160,7 +164,7 @@ const Payments = () => {
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
           <p className="text-3xl font-bold text-gray-900 mb-1">
-            {payments.filter(p => p.status === 'completed').length}
+            {Array.isArray(payments) ? payments.filter(p => p.status === 'completed').length : 0}
           </p>
           <p className="text-gray-600">{t('payments.completed', { defaultValue: 'Yakunlangan' })}</p>
         </Card>
@@ -170,7 +174,7 @@ const Payments = () => {
             <Clock className="w-8 h-8 text-yellow-600" />
           </div>
           <p className="text-3xl font-bold text-gray-900 mb-1">
-            {payments.filter(p => p.status === 'pending' || p.status === 'processing').length}
+            {Array.isArray(payments) ? payments.filter(p => p.status === 'pending' || p.status === 'processing').length : 0}
           </p>
           <p className="text-gray-600">{t('payments.pending', { defaultValue: 'Kutilmoqda' })}</p>
         </Card>
@@ -307,7 +311,7 @@ const Payments = () => {
 
       {/* Payments List */}
       <div className="space-y-4">
-        {payments.map((payment) => {
+        {Array.isArray(payments) && payments.map((payment) => {
           const StatusIcon = getStatusIcon(payment.status);
           const statusColor = getStatusColor(payment.status);
           return (
@@ -347,7 +351,7 @@ const Payments = () => {
         })}
       </div>
 
-      {payments.length === 0 && (
+      {(!Array.isArray(payments) || payments.length === 0) && (
         <Card className="p-12 text-center">
           <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
