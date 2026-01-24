@@ -406,13 +406,30 @@ export const getPaymentsStats = async (req, res) => {
     });
 
     // Format payments with parent and school names
-    const formattedPayments = payments.map(payment => ({
-      ...payment.toJSON(),
-      parentName: payment.parent 
-        ? `${payment.parent.firstName || ''} ${payment.parent.lastName || ''}`.trim()
-        : null,
-      schoolName: payment.school?.name || null,
-    }));
+    const formattedPayments = payments.map(payment => {
+      const paymentData = payment.toJSON();
+      const parentName = payment.parent 
+        ? `${payment.parent.firstName || ''} ${payment.parent.lastName || ''}`.trim() || null
+        : null;
+      const schoolName = payment.school?.name || null;
+      
+      return {
+        ...paymentData,
+        parentName: parentName,
+        schoolName: schoolName,
+        // Also include parent and school objects for fallback
+        parent: payment.parent ? {
+          id: payment.parent.id,
+          firstName: payment.parent.firstName,
+          lastName: payment.parent.lastName,
+          email: payment.parent.email,
+        } : null,
+        school: payment.school ? {
+          id: payment.school.id,
+          name: payment.school.name,
+        } : null,
+      };
+    });
 
     res.json({
       success: true,
