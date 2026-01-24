@@ -8,7 +8,6 @@ import Dashboard from './pages/Dashboard';
 import Schools from './pages/Schools';
 import Ratings from './pages/Ratings';
 import Payments from './pages/Payments';
-import Stats from './pages/Stats';
 import LoadingSpinner from './components/LoadingSpinner';
 
 const AppRoutes = () => {
@@ -38,7 +37,6 @@ const AppRoutes = () => {
         <Route path="schools" element={<Schools />} />
         <Route path="ratings" element={<Ratings />} />
         <Route path="payments" element={<Payments />} />
-        <Route path="stats" element={<Stats />} />
       </Route>
 
       <Route path="/" element={<Navigate to={isAuthenticated && isGovernment ? "/government" : "/login"} replace />} />

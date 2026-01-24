@@ -8,7 +8,6 @@ import {
   GraduationCap,
   Star,
   DollarSign,
-  BarChart3,
   Shield,
   LogOut,
 } from 'lucide-react';
@@ -28,7 +27,6 @@ const Sidebar = ({ onClose }) => {
     { name: 'Maktablar', href: '/government/schools', icon: Building2 },
     { name: 'Reytinglar', href: '/government/ratings', icon: Star },
     { name: 'To\'lovlar', href: '/government/payments', icon: DollarSign },
-    { name: 'Statistika', href: '/government/stats', icon: BarChart3 },
   ];
 
   const isActive = (path) => location.pathname === path;
