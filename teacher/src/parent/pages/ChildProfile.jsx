@@ -446,7 +446,7 @@ const ChildProfile = () => {
                 }`}
                 loading="eager"
                 decoding="async"
-                fetchPriority="high"
+                fetchpriority="high"
                 onLoad={(e) => {
                   setImageLoading(false);
                   e.target.style.opacity = '1';
