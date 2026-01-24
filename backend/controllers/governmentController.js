@@ -26,47 +26,86 @@ export const getOverview = async (req, res) => {
     }
 
     // Get schools count
-    const schoolsCount = await School.count({
-      where: { isActive: true },
-    });
+    let schoolsCount = 0;
+    try {
+      schoolsCount = await School.count({
+        where: { isActive: true },
+      });
+    } catch (error) {
+      logger.warn('Failed to count schools', { error: error.message });
+    }
 
     // Get total students
-    const studentsCount = await Child.count();
+    let studentsCount = 0;
+    try {
+      studentsCount = await Child.count();
+    } catch (error) {
+      logger.warn('Failed to count students', { error: error.message });
+    }
 
     // Get total teachers
-    const teachersCount = await User.count({
-      where: { role: 'teacher' },
-    });
+    let teachersCount = 0;
+    try {
+      teachersCount = await User.count({
+        where: { role: 'teacher' },
+      });
+    } catch (error) {
+      logger.warn('Failed to count teachers', { error: error.message });
+    }
 
     // Get total parents
-    const parentsCount = await User.count({
-      where: { role: 'parent' },
-    });
+    let parentsCount = 0;
+    try {
+      parentsCount = await User.count({
+        where: { role: 'parent' },
+      });
+    } catch (error) {
+      logger.warn('Failed to count parents', { error: error.message });
+    }
 
     // Get average school rating
-    const ratings = await SchoolRating.findAll();
-    const avgRating = ratings.length > 0
-      ? (ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length).toFixed(2)
-      : 0;
+    let avgRating = 0;
+    try {
+      const ratings = await SchoolRating.findAll({
+        attributes: ['stars'],
+      });
+      if (ratings.length > 0) {
+        const sum = ratings.reduce((acc, r) => acc + (r.stars || 0), 0);
+        avgRating = parseFloat((sum / ratings.length).toFixed(2));
+      }
+    } catch (error) {
+      logger.warn('Failed to calculate average rating', { error: error.message });
+    }
 
     // Get total payments
-    const paymentsWhere = {};
-    if (startDate) {
-      paymentsWhere.paidAt = { [Op.gte]: new Date(startDate) };
-    }
-    if (endDate) {
-      paymentsWhere.paidAt = { ...paymentsWhere.paidAt, [Op.lte]: new Date(endDate) };
-    }
+    let totalRevenue = 0;
+    try {
+      const paymentsWhere = {};
+      if (startDate) {
+        paymentsWhere.paidAt = { [Op.gte]: new Date(startDate) };
+      }
+      if (endDate) {
+        paymentsWhere.paidAt = { ...paymentsWhere.paidAt, [Op.lte]: new Date(endDate) };
+      }
 
-    const payments = await Payment.findAll({
-      where: { ...paymentsWhere, status: 'completed' },
-    });
-    const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+      const payments = await Payment.findAll({
+        where: { ...paymentsWhere, status: 'completed' },
+        attributes: ['amount'],
+      });
+      totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+    } catch (error) {
+      logger.warn('Failed to calculate total revenue', { error: error.message });
+    }
 
     // Get active warnings
-    const warningsCount = await AIWarning.count({
-      where: { isResolved: false },
-    });
+    let warningsCount = 0;
+    try {
+      warningsCount = await AIWarning.count({
+        where: { isResolved: false },
+      });
+    } catch (error) {
+      logger.warn('Failed to count warnings', { error: error.message });
+    }
 
     res.json({
       success: true,
@@ -75,14 +114,21 @@ export const getOverview = async (req, res) => {
         students: studentsCount,
         teachers: teachersCount,
         parents: parentsCount,
-        averageRating: parseFloat(avgRating),
+        averageRating: avgRating,
         totalRevenue,
         activeWarnings: warningsCount,
       },
     });
   } catch (error) {
-    logger.error('Get government overview error', { error: error.message, stack: error.stack });
-    res.status(500).json({ error: 'Failed to fetch overview statistics' });
+    logger.error('Get government overview error', { 
+      error: error.message, 
+      stack: error.stack,
+      userId: req.user?.id,
+    });
+    res.status(500).json({ 
+      error: 'Failed to fetch overview statistics',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 };
 
@@ -98,38 +144,81 @@ export const getSchoolsStats = async (req, res) => {
     // Note: School model doesn't have region/district fields yet
     // This would need to be added to the School model
 
-    const schools = await School.findAndCountAll({
-      where,
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      include: [
-        {
-          model: SchoolRating,
-          as: 'ratings',
-          required: false,
-        },
-        {
-          model: Child,
-          as: 'schoolChildren',
-          required: false,
-        },
-      ],
-    });
+    let schools;
+    try {
+      schools = await School.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        include: [
+          {
+            model: SchoolRating,
+            as: 'ratings',
+            required: false,
+          },
+          {
+            model: Child,
+            as: 'schoolChildren',
+            required: false,
+          },
+        ],
+      });
+    } catch (includeError) {
+      // Fallback: get schools without includes if association fails
+      logger.warn('School include failed, using fallback', { error: includeError.message });
+      schools = await School.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      });
+    }
 
-    const schoolsWithStats = schools.rows.map(school => {
-      const ratings = school.ratings || [];
-      const avgRating = ratings.length > 0
-        ? (ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length).toFixed(2)
-        : 0;
-      const studentsCount = school.schoolChildren?.length || 0;
+    const schoolsWithStats = await Promise.all(schools.rows.map(async (school) => {
+      try {
+        const ratings = school.ratings || [];
+        const avgRating = ratings.length > 0
+          ? (ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / ratings.length).toFixed(2)
+          : 0;
+        const studentsCount = school.schoolChildren?.length || 0;
 
-      return {
-        ...school.toJSON(),
-        averageRating: parseFloat(avgRating),
-        ratingsCount: ratings.length,
-        studentsCount,
-      };
-    });
+        return {
+          ...school.toJSON(),
+          averageRating: parseFloat(avgRating),
+          ratingsCount: ratings.length,
+          studentsCount,
+        };
+      } catch (mapError) {
+        // Fallback: get stats separately if map fails
+        try {
+          const [ratings, children] = await Promise.all([
+            SchoolRating.findAll({ where: { schoolId: school.id } }),
+            Child.findAll({ where: { schoolId: school.id } }),
+          ]);
+          
+          const avgRating = ratings.length > 0
+            ? (ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / ratings.length).toFixed(2)
+            : 0;
+
+          return {
+            ...school.toJSON(),
+            averageRating: parseFloat(avgRating),
+            ratingsCount: ratings.length,
+            studentsCount: children.length,
+          };
+        } catch (fallbackError) {
+          logger.error('Fallback stats fetch failed', { 
+            schoolId: school.id, 
+            error: fallbackError.message 
+          });
+          return {
+            ...school.toJSON(),
+            averageRating: 0,
+            ratingsCount: 0,
+            studentsCount: 0,
+          };
+        }
+      }
+    }));
 
     res.json({
       success: true,
@@ -141,8 +230,15 @@ export const getSchoolsStats = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Get schools stats error', { error: error.message, stack: error.stack });
-    res.status(500).json({ error: 'Failed to fetch schools statistics' });
+    logger.error('Get schools stats error', { 
+      error: error.message, 
+      stack: error.stack,
+      userId: req.user?.id,
+    });
+    res.status(500).json({ 
+      error: 'Failed to fetch schools statistics',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 };
 
