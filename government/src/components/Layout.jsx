@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import GovernmentBackground from './GovernmentBackground';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Government Background - Professional theme */}
+      <GovernmentBackground />
       {/* Desktop Sidebar */}
       <div className="hidden lg:block fixed inset-y-0 left-0 w-64 bg-white shadow-lg z-40">
         <Sidebar />

@@ -14,9 +14,9 @@ import {
 } from 'lucide-react';
 
 const COLORS = {
-  softNavy: '#1e3a8a',
+  softNavy: '#7C3AED',
   textTertiary: '#64748b',
-  powderBlue: '#dbeafe',
+  powderBlue: '#EDE9FE',
 };
 
 const Sidebar = ({ onClose }) => {
