@@ -18,7 +18,9 @@ const Payments = () => {
     try {
       setLoading(true);
       const res = await api.get('/government/payments');
-      setPayments(res.data?.data || []);
+      // Ensure payments is always an array
+      const paymentsData = res.data?.data?.payments || res.data?.data || [];
+      setPayments(Array.isArray(paymentsData) ? paymentsData : []);
     } catch (error) {
       console.error('Error loading payments:', error);
       setPayments([]);
@@ -35,9 +37,11 @@ const Payments = () => {
     );
   }
 
-  const totalRevenue = payments
-    .filter(p => p.status === 'completed')
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalRevenue = Array.isArray(payments)
+    ? payments
+        .filter(p => p.status === 'completed')
+        .reduce((sum, p) => sum + (p.amount || 0), 0)
+    : 0;
 
   return (
     <div className="space-y-8">
@@ -63,7 +67,7 @@ const Payments = () => {
         </div>
       </Card>
 
-      {payments.length === 0 ? (
+      {(!Array.isArray(payments) || payments.length === 0) ? (
         <Card className="p-12">
           <div className="text-center">
             <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
