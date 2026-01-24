@@ -27,6 +27,9 @@ import Help from './parent/pages/Help';
 import AIChat from './parent/pages/AIChat';
 import TeacherRating from './parent/pages/TeacherRating';
 import ParentSettings from './parent/pages/Settings';
+import Therapy from './parent/pages/Therapy';
+import AIWarnings from './parent/pages/AIWarnings';
+import Payments from './parent/pages/Payments';
 
 function App() {
   return (
@@ -58,6 +61,9 @@ function App() {
                 <Route path="help" element={<Help />} />
                 <Route path="rating" element={<TeacherRating />} />
                 <Route path="settings" element={<ParentSettings />} />
+                <Route path="therapy" element={<Therapy />} />
+                <Route path="ai-warnings" element={<AIWarnings />} />
+                <Route path="payments" element={<Payments />} />
               </Route>
 
               {/* Teacher routes */}

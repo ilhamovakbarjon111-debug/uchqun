@@ -1,53 +1,33 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTranslation } from 'react-i18next';
 import {
   Home,
-  Users,
-  UserCheck,
-  Shield,
-  UsersRound,
-  Crown,
   Building2,
-  User,
-  Settings,
-  LayoutDashboard,
-  BarChart3,
+  Users,
+  GraduationCap,
+  Star,
   DollarSign,
-  Activity,
-  TrendingUp,
-  Music,
-  CreditCard
+  BarChart3,
+  Shield,
+  LogOut,
 } from 'lucide-react';
 
-// Color scheme per Mobile-icons.md
 const COLORS = {
-  softNavy: '#2E3A59',
-  textTertiary: '#8F9BB3',
-  powderBlue: '#E8F4FD',
-  mintMist: '#E5F7F0',
+  softNavy: '#1e3a8a',
+  textTertiary: '#64748b',
+  powderBlue: '#dbeafe',
 };
 
 const Sidebar = ({ onClose }) => {
   const location = useLocation();
-  const { user } = useAuth();
-  const { t } = useTranslation();
+  const { user, logout } = useAuth();
 
-  // Icon mapping per Mobile-icons.md
   const navigation = [
-    { name: t('nav.dashboard'), href: '/admin', icon: Home },
-    { name: t('nav.receptions'), href: '/admin/receptions', icon: Shield },
-    { name: t('nav.parents'), href: '/admin/parents', icon: Users },
-    { name: t('nav.teachers'), href: '/admin/teachers', icon: UserCheck },
-    { name: t('nav.groups'), href: '/admin/groups', icon: UsersRound },
-    { name: t('nav.schoolRatings'), href: '/admin/school-ratings', icon: Building2 },
-    { name: t('nav.therapy', { defaultValue: 'Terapiya' }), href: '/admin/therapy', icon: Music },
-    { name: t('nav.payments', { defaultValue: 'To\'lovlar' }), href: '/admin/payments', icon: CreditCard },
-    { name: t('nav.statistics', { defaultValue: 'Statistics' }), href: '/admin/statistics', icon: BarChart3 },
-    { name: t('nav.revenue', { defaultValue: 'Revenue' }), href: '/admin/revenue', icon: DollarSign },
-    { name: t('nav.usage', { defaultValue: 'Usage' }), href: '/admin/usage', icon: Activity },
-    { name: t('nav.profile', { defaultValue: 'Profile' }), href: '/admin/profile', icon: User },
-    { name: t('nav.settings', { defaultValue: 'Sozlamalar' }), href: '/admin/settings', icon: Settings },
+    { name: 'Dashboard', href: '/government', icon: Home },
+    { name: 'Maktablar', href: '/government/schools', icon: Building2 },
+    { name: 'Reytinglar', href: '/government/ratings', icon: Star },
+    { name: 'To\'lovlar', href: '/government/payments', icon: DollarSign },
+    { name: 'Statistika', href: '/government/stats', icon: BarChart3 },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -56,16 +36,16 @@ const Sidebar = ({ onClose }) => {
     <div className="flex flex-col h-screen w-64 bg-white border-r border-gray-100 shadow-sm">
       <div className="flex items-center gap-3 px-6 h-20" style={{ backgroundColor: COLORS.softNavy }}>
         <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-          <Crown className="w-5 h-5 text-yellow-300" strokeWidth={1.5} />
+          <Shield className="w-5 h-5 text-white" strokeWidth={1.5} />
         </div>
         <h1 className="text-lg font-bold text-white tracking-tight">
-          Uchqun Business
+          Davlat Panel
         </h1>
       </div>
 
       <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
         <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: COLORS.textTertiary }}>
-          System Menu
+          Menu
         </p>
         {navigation.map((item) => {
           const Active = isActive(item.href);
@@ -97,7 +77,7 @@ const Sidebar = ({ onClose }) => {
       </nav>
 
       <div className="p-4 border-t border-gray-100" style={{ backgroundColor: COLORS.powderBlue + '40' }}>
-        <div className="flex items-center gap-3 px-2">
+        <div className="flex items-center gap-3 px-2 mb-3">
           <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm"
             style={{ backgroundColor: COLORS.powderBlue, color: COLORS.softNavy }}>
             {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
@@ -107,9 +87,15 @@ const Sidebar = ({ onClose }) => {
               {user?.firstName} {user?.lastName}
             </p>
             <p className="text-xs truncate" style={{ color: COLORS.textTertiary }}>{user?.email}</p>
-            <p className="text-xs font-semibold mt-0.5" style={{ color: COLORS.softNavy }}>{t('role.admin')}</p>
           </div>
         </div>
+        <button
+          onClick={logout}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          Chiqish
+        </button>
       </div>
     </div>
   );

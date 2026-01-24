@@ -22,22 +22,19 @@ export const AuthProvider = ({ children }) => {
       
       if (token && storedUser) {
         try {
-          // Verify token is still valid
           const response = await api.get('/auth/me');
           const userData = response.data;
           
-          // Only allow Business role
-          if (userData.role === 'business') {
+          // Only allow Government role
+          if (userData.role === 'government') {
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
           } else {
-            // Not a business user, clear auth
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             localStorage.removeItem('user');
           }
         } catch (error) {
-          // Token invalid, clear auth
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
@@ -54,12 +51,11 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/login', { email, password });
       const { accessToken, refreshToken, user: userData } = response.data;
 
-      // Only allow Business role
-      if (userData.role !== 'business') {
-        return { success: false, error: 'Access denied. Business role required.' };
+      // Only allow Government role
+      if (userData.role !== 'government') {
+        return { success: false, error: 'Access denied. Government role required.' };
       }
 
-      // Store tokens and user data
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(userData));
@@ -87,9 +83,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!user,
-    isBusiness: user?.role === 'business',
+    isGovernment: user?.role === 'government',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

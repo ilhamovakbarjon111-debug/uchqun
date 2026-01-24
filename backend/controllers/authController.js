@@ -30,8 +30,19 @@ export const login = async (req, res) => {
     });
 
     if (!email || !password) {
-      logger.warn('Login attempt with missing credentials', { email: email ? 'provided' : 'missing' });
-      return res.status(400).json({ error: 'Email and password are required' });
+      logger.warn('Login attempt with missing credentials', { 
+        email: email ? 'provided' : 'missing',
+        hasPassword: !!password,
+        bodyKeys: Object.keys(req.body || {})
+      });
+      return res.status(400).json({ 
+        error: 'Email and password are required',
+        details: process.env.NODE_ENV === 'development' ? {
+          receivedEmail: !!email,
+          receivedPassword: !!password,
+          bodyKeys: Object.keys(req.body || {})
+        } : undefined
+      });
     }
 
     // Email already normalized by validator, but ensure it's lowercase and trimmed
@@ -56,7 +67,10 @@ export const login = async (req, res) => {
         normalizedEmail,
         searchedWith: 'exact and case-insensitive'
       });
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ 
+        error: 'Invalid email or password',
+        message: 'The email address or password you entered is incorrect. Please check and try again.'
+      });
     }
 
     logger.info('User found', { 
@@ -108,7 +122,10 @@ export const login = async (req, res) => {
         directCompare,
         methodCompare
       });
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ 
+        error: 'Invalid email or password',
+        message: 'The email address or password you entered is incorrect. Please check and try again.'
+      });
     }
 
     // Business Logic: Reception cannot log in until documents are approved by Admin
@@ -131,6 +148,18 @@ export const login = async (req, res) => {
           requiresApproval: true,
         });
       }
+    }
+
+    // Check if JWT_SECRET is configured
+    if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+      logger.error('JWT secrets not configured', {
+        hasJWT_SECRET: !!process.env.JWT_SECRET,
+        hasJWT_REFRESH_SECRET: !!process.env.JWT_REFRESH_SECRET,
+      });
+      return res.status(500).json({ 
+        error: 'Server configuration error',
+        message: 'Authentication service is not properly configured. Please contact support.'
+      });
     }
 
     const { accessToken, refreshToken } = generateTokens(user.id);

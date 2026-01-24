@@ -52,7 +52,14 @@ const SuperAdmin = () => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [replying, setReplying] = useState(false);
-  const [activeTab, setActiveTab] = useState('admins'); // 'admins', 'schools', 'messages', 'registrations'
+  const [activeTab, setActiveTab] = useState('admins'); // 'admins', 'schools', 'messages', 'registrations', 'government', 'payments'
+  const [payments, setPayments] = useState([]);
+  const [loadingPayments, setLoadingPayments] = useState(true);
+  const [govFirstName, setGovFirstName] = useState('');
+  const [govLastName, setGovLastName] = useState('');
+  const [govEmail, setGovEmail] = useState('');
+  const [govPassword, setGovPassword] = useState('');
+  const [govLoading, setGovLoading] = useState(false);
   const [registrationRequests, setRegistrationRequests] = useState([]);
   const [loadingRegistrations, setLoadingRegistrations] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -136,6 +143,26 @@ const SuperAdmin = () => {
 
     if (activeTab === 'registrations') {
       loadRegistrationRequests();
+    }
+  }, [activeTab]);
+
+  // Load payments
+  useEffect(() => {
+    const loadPayments = async () => {
+      try {
+        setLoadingPayments(true);
+        const res = await api.get('/super-admin/payments?limit=50');
+        setPayments(res.data?.data?.payments || []);
+      } catch (error) {
+        console.error('Failed to load payments', error);
+        setPayments([]);
+      } finally {
+        setLoadingPayments(false);
+      }
+    };
+
+    if (activeTab === 'payments') {
+      loadPayments();
     }
   }, [activeTab]);
 
@@ -256,6 +283,35 @@ const SuperAdmin = () => {
     }
   };
 
+  const handleCreateGovernment = async (e) => {
+    e.preventDefault();
+    
+    if (!govFirstName || !govLastName || !govEmail || !govPassword) {
+      showError('Barcha maydonlar to\'ldirilishi kerak');
+      return;
+    }
+
+    try {
+      setGovLoading(true);
+      await api.post('/super-admin/government', {
+        firstName: govFirstName,
+        lastName: govLastName,
+        email: govEmail,
+        password: govPassword,
+      });
+      
+      success('Government foydalanuvchisi muvaffaqiyatli yaratildi');
+      setGovFirstName('');
+      setGovLastName('');
+      setGovEmail('');
+      setGovPassword('');
+    } catch (error) {
+      showError(error.response?.data?.error || 'Government foydalanuvchisini yaratishda xatolik');
+    } finally {
+      setGovLoading(false);
+    }
+  };
+
   const handleApproveRequest = async (id) => {
     if (!confirm('Bu so\'rovni tasdiqlaysizmi? Login ma\'lumotlari emailga yuboriladi.')) return;
     
@@ -368,6 +424,26 @@ const SuperAdmin = () => {
                 {messages.filter(m => !m.isRead).length}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setActiveTab('government')}
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+              activeTab === 'government'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {t('superAdmin.tabs.government', { defaultValue: 'Davlat' })}
+          </button>
+          <button
+            onClick={() => setActiveTab('payments')}
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+              activeTab === 'payments'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {t('superAdmin.tabs.payments', { defaultValue: 'To\'lovlar' })}
           </button>
         </div>
       </div>
@@ -555,39 +631,79 @@ const SuperAdmin = () => {
                 ) : schools.length === 0 ? (
                   <p className="text-sm text-gray-600">{t('superAdmin.schoolsEmpty')}</p>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {schools.map((school) => (
-                      <div key={school.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
-                        <div className="flex items-start gap-3">
-                          <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
-                            <Building2 className="w-6 h-6" />
-                          </div>
-                          <div className="flex-1 space-y-1">
-                            <p className="text-sm font-semibold text-gray-900">{school.name}</p>
-                            {school.address && (
-                              <p className="text-xs text-gray-600">{school.address}</p>
-                            )}
-                            {school.type && (
-                              <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded bg-green-100 text-green-700">
-                                {school.type === 'school' ? t('superAdmin.schoolTypeSchool') :
-                                 school.type === 'kindergarten' ? t('superAdmin.schoolTypeKindergarten') :
-                                 t('superAdmin.schoolTypeBoth')}
-                              </span>
-                            )}
-                            <div className="flex items-center gap-2 mt-2">
-                              <Star className="w-4 h-4 fill-green-500 text-green-500" />
-                              <span className="text-sm font-bold text-gray-900">
-                                {school.summary?.average?.toFixed(1) || '0.0'}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                ({school.summary?.count || 0} {t('superAdmin.ratings')})
-                              </span>
+                  <>
+                    {/* Statistics Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-blue-50 rounded-xl p-4">
+                        <p className="text-sm text-blue-600 font-medium mb-1">Jami Maktablar</p>
+                        <p className="text-2xl font-bold text-blue-900">{schools.length}</p>
+                      </div>
+                      <div className="bg-green-50 rounded-xl p-4">
+                        <p className="text-sm text-green-600 font-medium mb-1">O'rtacha Reyting</p>
+                        <p className="text-2xl font-bold text-green-900">
+                          {schools.length > 0 
+                            ? (schools.reduce((sum, s) => sum + (s.summary?.average || 0), 0) / schools.length).toFixed(1)
+                            : '0.0'}
+                        </p>
+                      </div>
+                      <div className="bg-purple-50 rounded-xl p-4">
+                        <p className="text-sm text-purple-600 font-medium mb-1">Jami Baholar</p>
+                        <p className="text-2xl font-bold text-purple-900">
+                          {schools.reduce((sum, s) => sum + (s.summary?.count || 0), 0)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Schools List */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {schools
+                        .sort((a, b) => (b.summary?.average || 0) - (a.summary?.average || 0))
+                        .map((school) => (
+                        <div key={school.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-md transition-all bg-white">
+                          <div className="flex items-start gap-3">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-100 to-green-200 text-green-700 flex items-center justify-center shadow-sm">
+                              <Building2 className="w-6 h-6" />
+                            </div>
+                            <div className="flex-1 space-y-2">
+                              <p className="text-sm font-bold text-gray-900">{school.name}</p>
+                              {school.address && (
+                                <p className="text-xs text-gray-600 line-clamp-1">{school.address}</p>
+                              )}
+                              {school.type && (
+                                <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                                  {school.type === 'school' ? t('superAdmin.schoolTypeSchool') :
+                                   school.type === 'kindergarten' ? t('superAdmin.schoolTypeKindergarten') :
+                                   t('superAdmin.schoolTypeBoth')}
+                                </span>
+                              )}
+                              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                                <div className="flex items-center gap-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                      key={star}
+                                      className={`w-4 h-4 ${
+                                        star <= Math.round(school.summary?.average || 0)
+                                          ? 'fill-yellow-400 text-yellow-400'
+                                          : 'fill-gray-200 text-gray-200'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <div className="flex-1">
+                                  <span className="text-sm font-bold text-gray-900 ml-1">
+                                    {school.summary?.average?.toFixed(1) || '0.0'}
+                                  </span>
+                                  <span className="text-xs text-gray-500 ml-1">
+                                    ({school.summary?.count || 0} {t('superAdmin.ratings', { defaultValue: 'baholar' })})
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </Card>
             </>
@@ -738,6 +854,102 @@ const SuperAdmin = () => {
                   </div>
                 </div>
               )}
+            </>
+          )}
+
+          {activeTab === 'government' && (
+            <>
+              <div className="text-center">
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-2">
+                  Davlat Foydalanuvchisini Yaratish
+                </h2>
+                <p className="text-gray-600 font-medium">Government panel uchun yangi foydalanuvchi yarating</p>
+              </div>
+
+              <Card className="p-8">
+                <form onSubmit={handleCreateGovernment} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-400" />
+                        Ism
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={govFirstName}
+                        onChange={(e) => setGovFirstName(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Ism"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-400" />
+                        Familiya
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={govLastName}
+                        onChange={(e) => setGovLastName(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Familiya"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-gray-400" />
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={govEmail}
+                      onChange={(e) => setGovEmail(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="email@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-gray-400" />
+                      Parol
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={govPassword}
+                      onChange={(e) => setGovPassword(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="••••••••"
+                      minLength={6}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Parol kamida 6 belgidan iborat bo'lishi kerak</p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={govLoading}
+                    className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {govLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Yaratilmoqda...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-5 h-5" />
+                        <span>Government Foydalanuvchisini Yaratish</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </Card>
             </>
           )}
 
