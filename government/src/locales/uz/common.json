@@ -4,7 +4,9 @@
     "schools": "Maktablar",
     "ratings": "Reytinglar",
     "payments": "To'lovlar",
-    "profile": "Profil"
+    "profile": "Profil",
+    "menu": "Menu",
+    "logout": "Chiqish"
   },
   "login": {
     "title": "Davlat Nazorat Paneli",
@@ -12,15 +14,59 @@
     "email": "Email",
     "password": "Parol",
     "button": "Kirish",
-    "loading": "Kirilmoqda..."
+    "loading": "Kirilmoqda...",
+    "error": "Email yoki parol noto'g'ri"
   },
   "dashboard": {
     "title": "Davlat Nazorat Paneli",
     "welcome": "Xush kelibsiz, {{name}}",
     "adminList": "Adminlar",
     "adminListDesc": "Barcha adminlar ro'yxati ({{count}})",
+    "adminNotFound": "Adminlar topilmadi",
     "schoolsList": "Maktablar va Baholari",
-    "schoolsListDesc": "Maktablar reytinglari va statistikasi"
+    "schoolsListDesc": "Maktablar reytinglari va statistikasi",
+    "schoolsNotFound": "Maktablar topilmadi",
+    "totalSchools": "Jami Maktablar",
+    "totalStudents": "Jami O'quvchilar",
+    "totalTeachers": "Jami O'qituvchilar",
+    "totalParents": "Jami Ota-onalar",
+    "averageRating": "O'rtacha Reyting",
+    "totalRevenue": "Jami Daromad",
+    "activeWarnings": "Faol Ogohlantirishlar",
+    "students": "O'quvchilar",
+    "ratings": "Baholar"
+  },
+  "schools": {
+    "title": "Maktablar",
+    "subtitle": "Barcha maktablar ro'yxati",
+    "notFound": "Maktablar topilmadi",
+    "students": "O'quvchilar",
+    "ratings": "Baholar",
+    "averageRating": "O'rtacha reyting"
+  },
+  "ratings": {
+    "title": "Reytinglar",
+    "subtitle": "Maktablar reytinglari",
+    "notFound": "Reytinglar topilmadi",
+    "school": "Maktab",
+    "student": "O'quvchi",
+    "parent": "Ota-ona",
+    "unknown": "Noma'lum"
+  },
+  "payments": {
+    "title": "To'lovlar",
+    "subtitle": "Barcha to'lovlar ro'yxati",
+    "totalRevenue": "Jami daromad",
+    "notFound": "To'lovlar topilmadi",
+    "parent": "Ota-ona",
+    "school": "Maktab",
+    "date": "Sana",
+    "status": {
+      "completed": "To'langan",
+      "pending": "Kutilmoqda",
+      "rejected": "Rad etilgan"
+    },
+    "unknown": "Noma'lum"
   },
   "profile": {
     "title": "Profil",
@@ -33,18 +79,37 @@
     "active": "Faol",
     "inactive": "Nofaol",
     "createdAt": "Yaratilgan sana",
-    "logout": "Chiqish"
+    "logout": "Chiqish",
+    "logoutDesc": "Tizimdan chiqish uchun quyidagi tugmani bosing"
   },
   "adminDetails": {
     "title": "Admin ma'lumotlari",
+    "notFound": "Admin topilmadi",
+    "back": "Orqaga qaytish",
     "statistics": "Statistika",
     "receptions": "Receptionlar",
+    "receptionsDesc": "Jami receptionlar soni",
     "schools": "Maktablar",
+    "schoolsDesc": "Jami maktablar soni",
     "teachers": "O'qituvchilar",
+    "teachersDesc": "Jami o'qituvchilar soni",
     "parents": "Ota-onalar",
+    "parentsDesc": "Jami ota-onalar soni",
     "students": "O'quvchilar",
+    "studentsDesc": "Jami o'quvchilar soni",
     "averageRating": "O'rtacha Reyting",
+    "averageRatingDesc": "Maktablar o'rtacha reytingi",
     "totalRevenue": "Jami Daromad",
-    "back": "Orqaga qaytish"
+    "totalRevenueDesc": "Jami to'langan summa",
+    "email": "Email",
+    "phone": "Telefon",
+    "status": "Holati",
+    "createdAt": "Yaratilgan sana"
+  },
+  "common": {
+    "loading": "Yuklanmoqda...",
+    "error": "Xatolik yuz berdi",
+    "notFound": "Topilmadi",
+    "unknown": "Noma'lum"
   }
 }

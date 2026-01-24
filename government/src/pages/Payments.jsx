@@ -3,8 +3,10 @@ import api from '../services/api';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { DollarSign, CheckCircle, XCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Payments = () => {
+  const { t } = useTranslation();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,15 +42,21 @@ const Payments = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">To'lovlar</h1>
-        <p className="text-gray-600">Barcha to'lovlar ro'yxati</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          {t('payments.title', { defaultValue: 'To\'lovlar' })}
+        </h1>
+        <p className="text-gray-600">
+          {t('payments.subtitle', { defaultValue: 'Barcha to\'lovlar ro\'yxati' })}
+        </p>
       </div>
 
       {/* Summary Card */}
       <Card className="p-6 bg-gradient-to-r from-primary-500 to-primary-600 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm opacity-90 mb-1">Jami daromad</p>
+            <p className="text-sm opacity-90 mb-1">
+              {t('payments.totalRevenue', { defaultValue: 'Jami daromad' })}
+            </p>
             <p className="text-3xl font-bold">{totalRevenue.toLocaleString()} UZS</p>
           </div>
           <DollarSign className="w-12 h-12 opacity-80" />
@@ -59,7 +67,9 @@ const Payments = () => {
         <Card className="p-12">
           <div className="text-center">
             <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">To'lovlar topilmadi</p>
+            <p className="text-gray-600">
+              {t('payments.notFound', { defaultValue: 'To\'lovlar topilmadi' })}
+            </p>
           </div>
         </Card>
       ) : (
@@ -70,7 +80,7 @@ const Payments = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-bold text-gray-900">
-                      {payment.parentName || 'Noma\'lum ota-ona'}
+                      {payment.parentName || t('payments.unknown', { defaultValue: 'Noma\'lum ota-ona' })}
                     </h3>
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -81,15 +91,18 @@ const Payments = () => {
                           : 'bg-red-100 text-red-700'
                       }`}
                     >
-                      {payment.status === 'completed' ? 'To\'langan' : 
-                       payment.status === 'pending' ? 'Kutilmoqda' : 'Rad etilgan'}
+                      {payment.status === 'completed' 
+                        ? t('payments.status.completed', { defaultValue: 'To\'langan' })
+                        : payment.status === 'pending'
+                        ? t('payments.status.pending', { defaultValue: 'Kutilmoqda' })
+                        : t('payments.status.rejected', { defaultValue: 'Rad etilgan' })}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 mb-2">
-                    Maktab: {payment.schoolName || 'Noma\'lum'}
+                    {t('payments.school', { defaultValue: 'Maktab' })}: {payment.schoolName || t('payments.unknown', { defaultValue: 'Noma\'lum' })}
                   </p>
                   <p className="text-sm text-gray-600">
-                    Sana: {payment.createdAt ? new Date(payment.createdAt).toLocaleDateString('uz-UZ') : '—'}
+                    {t('payments.date', { defaultValue: 'Sana' })}: {payment.createdAt ? new Date(payment.createdAt).toLocaleDateString('uz-UZ') : '—'}
                   </p>
                 </div>
                 <div className="text-right">

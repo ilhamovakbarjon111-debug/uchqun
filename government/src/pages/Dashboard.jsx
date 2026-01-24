@@ -63,43 +63,43 @@ const Dashboard = () => {
 
   const overviewCards = [
     {
-      title: 'Jami Maktablar',
+      title: t('dashboard.totalSchools', { defaultValue: 'Jami Maktablar' }),
       value: stats?.schools || 0,
       icon: Building2,
       color: 'bg-blue-500',
     },
     {
-      title: 'Jami O\'quvchilar',
+      title: t('dashboard.totalStudents', { defaultValue: 'Jami O\'quvchilar' }),
       value: stats?.students || 0,
       icon: Users,
       color: 'bg-green-500',
     },
     {
-      title: 'Jami O\'qituvchilar',
+      title: t('dashboard.totalTeachers', { defaultValue: 'Jami O\'qituvchilar' }),
       value: stats?.teachers || 0,
       icon: GraduationCap,
       color: 'bg-purple-500',
     },
     {
-      title: 'Jami Ota-onalar',
+      title: t('dashboard.totalParents', { defaultValue: 'Jami Ota-onalar' }),
       value: stats?.parents || 0,
       icon: Users,
       color: 'bg-orange-500',
     },
     {
-      title: 'O\'rtacha Reyting',
+      title: t('dashboard.averageRating', { defaultValue: 'O\'rtacha Reyting' }),
       value: (stats?.averageRating || 0).toFixed(1),
       icon: Star,
       color: 'bg-yellow-500',
     },
     {
-      title: 'Jami Daromad',
+      title: t('dashboard.totalRevenue', { defaultValue: 'Jami Daromad' }),
       value: `${(stats?.totalRevenue || 0).toLocaleString()} UZS`,
       icon: DollarSign,
       color: 'bg-emerald-500',
     },
     {
-      title: 'Faol Ogohlantirishlar',
+      title: t('dashboard.activeWarnings', { defaultValue: 'Faol Ogohlantirishlar' }),
       value: stats?.activeWarnings || 0,
       icon: AlertTriangle,
       color: 'bg-red-500',
@@ -160,7 +160,9 @@ const Dashboard = () => {
         {admins.length === 0 ? (
           <div className="text-center py-12">
             <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Adminlar topilmadi</p>
+            <p className="text-gray-600">
+              {t('dashboard.adminNotFound', { defaultValue: 'Adminlar topilmadi' })}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -210,7 +212,9 @@ const Dashboard = () => {
         {schools.length === 0 ? (
           <div className="text-center py-12">
             <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Maktablar topilmadi</p>
+            <p className="text-gray-600">
+              {t('dashboard.schoolsNotFound', { defaultValue: 'Maktablar topilmadi' })}
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -231,8 +235,12 @@ const Dashboard = () => {
                         <p className="text-sm text-gray-600 mb-2">{school.address}</p>
                       )}
                       <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span>O'quvchilar: {school.studentsCount || 0}</span>
-                        <span>Baholar: {school.ratingsCount || 0}</span>
+                        <span>
+                          {t('dashboard.students', { defaultValue: 'O\'quvchilar' })}: {school.studentsCount || 0}
+                        </span>
+                        <span>
+                          {t('dashboard.ratings', { defaultValue: 'Baholar' })}: {school.ratingsCount || 0}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

@@ -3,8 +3,10 @@ import api from '../services/api';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Building2, Star, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Schools = () => {
+  const { t } = useTranslation();
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,15 +38,21 @@ const Schools = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Maktablar</h1>
-        <p className="text-gray-600">Barcha maktablar ro'yxati</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          {t('schools.title', { defaultValue: 'Maktablar' })}
+        </h1>
+        <p className="text-gray-600">
+          {t('schools.subtitle', { defaultValue: 'Barcha maktablar ro\'yxati' })}
+        </p>
       </div>
 
       {schools.length === 0 ? (
         <Card className="p-12">
           <div className="text-center">
             <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Maktablar topilmadi</p>
+            <p className="text-gray-600">
+              {t('schools.notFound', { defaultValue: 'Maktablar topilmadi' })}
+            </p>
           </div>
         </Card>
       ) : (
@@ -66,15 +74,21 @@ const Schools = () => {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">O'quvchilar:</span>
+                  <span className="text-gray-600">
+                    {t('schools.students', { defaultValue: 'O\'quvchilar' })}:
+                  </span>
                   <span className="font-semibold text-gray-900">{school.studentsCount || 0}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Baholar:</span>
+                  <span className="text-gray-600">
+                    {t('schools.ratings', { defaultValue: 'Baholar' })}:
+                  </span>
                   <span className="font-semibold text-gray-900">{school.ratingsCount || 0}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">O'rtacha reyting:</span>
+                  <span className="text-gray-600">
+                    {t('schools.averageRating', { defaultValue: 'O\'rtacha reyting' })}:
+                  </span>
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                     <span className="font-semibold text-gray-900">

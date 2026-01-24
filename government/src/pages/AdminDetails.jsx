@@ -15,10 +15,12 @@ import {
   User,
   Baby,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const AdminDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -49,12 +51,14 @@ const AdminDetails = () => {
   if (!data) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Admin topilmadi</p>
+        <p className="text-gray-600">
+          {t('adminDetails.notFound', { defaultValue: 'Admin topilmadi' })}
+        </p>
         <button
           onClick={() => navigate('/government')}
           className="mt-4 text-primary-600 hover:text-primary-700"
         >
-          Orqaga qaytish
+          {t('adminDetails.back', { defaultValue: 'Orqaga qaytish' })}
         </button>
       </div>
     );
@@ -64,53 +68,53 @@ const AdminDetails = () => {
 
   const statCards = [
     {
-      title: 'O\'quvchilar',
+      title: t('adminDetails.students', { defaultValue: 'O\'quvchilar' }),
       value: stats.students || 0,
       icon: Baby,
       color: 'bg-pink-500',
-      description: 'Jami o\'quvchilar soni',
+      description: t('adminDetails.studentsDesc', { defaultValue: 'Jami o\'quvchilar soni' }),
     },
     {
-      title: 'Ota-onalar',
+      title: t('adminDetails.parents', { defaultValue: 'Ota-onalar' }),
       value: stats.parents || 0,
       icon: Users,
       color: 'bg-orange-500',
-      description: 'Jami ota-onalar soni',
+      description: t('adminDetails.parentsDesc', { defaultValue: 'Jami ota-onalar soni' }),
     },
     {
-      title: 'O\'qituvchilar',
+      title: t('adminDetails.teachers', { defaultValue: 'O\'qituvchilar' }),
       value: stats.teachers || 0,
       icon: GraduationCap,
       color: 'bg-purple-500',
-      description: 'Jami o\'qituvchilar soni',
+      description: t('adminDetails.teachersDesc', { defaultValue: 'Jami o\'qituvchilar soni' }),
     },
     {
-      title: 'Receptionlar',
+      title: t('adminDetails.receptions', { defaultValue: 'Receptionlar' }),
       value: stats.receptions || 0,
       icon: UserCheck,
       color: 'bg-blue-500',
-      description: 'Jami receptionlar soni',
+      description: t('adminDetails.receptionsDesc', { defaultValue: 'Jami receptionlar soni' }),
     },
     {
-      title: 'Maktablar',
+      title: t('adminDetails.schools', { defaultValue: 'Maktablar' }),
       value: stats.schools || 0,
       icon: Building2,
       color: 'bg-green-500',
-      description: 'Jami maktablar soni',
+      description: t('adminDetails.schoolsDesc', { defaultValue: 'Jami maktablar soni' }),
     },
     {
-      title: 'O\'rtacha Reyting',
+      title: t('adminDetails.averageRating', { defaultValue: 'O\'rtacha Reyting' }),
       value: (stats.averageRating || 0).toFixed(1),
       icon: Star,
       color: 'bg-yellow-500',
-      description: 'Maktablar o\'rtacha reytingi',
+      description: t('adminDetails.averageRatingDesc', { defaultValue: 'Maktablar o\'rtacha reytingi' }),
     },
     {
-      title: 'Jami Daromad',
+      title: t('adminDetails.totalRevenue', { defaultValue: 'Jami Daromad' }),
       value: `${(stats.totalRevenue || 0).toLocaleString()} UZS`,
       icon: DollarSign,
       color: 'bg-emerald-500',
-      description: 'Jami to\'langan summa',
+      description: t('adminDetails.totalRevenueDesc', { defaultValue: 'Jami to\'langan summa' }),
     },
   ];
 
@@ -141,27 +145,38 @@ const AdminDetails = () => {
           <div className="flex-1">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Email</p>
+                <p className="text-sm text-gray-600 mb-1">
+                  {t('adminDetails.email', { defaultValue: 'Email' })}
+                </p>
                 <p className="font-semibold text-gray-900">{admin.email}</p>
               </div>
               {admin.phone && (
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Telefon</p>
+                  <p className="text-sm text-gray-600 mb-1">
+                    {t('adminDetails.phone', { defaultValue: 'Telefon' })}
+                  </p>
                   <p className="font-semibold text-gray-900">{admin.phone}</p>
                 </div>
               )}
               <div>
-                <p className="text-sm text-gray-600 mb-1">Yaratilgan sana</p>
+                <p className="text-sm text-gray-600 mb-1">
+                  {t('adminDetails.createdAt', { defaultValue: 'Yaratilgan sana' })}
+                </p>
                 <p className="font-semibold text-gray-900">
                   {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString('uz-UZ') : '—'}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Holati</p>
+                <p className="text-sm text-gray-600 mb-1">
+                  {t('adminDetails.status', { defaultValue: 'Holati' })}
+                </p>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                   admin.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                 }`}>
-                  {admin.isActive ? 'Faol' : 'Nofaol'}
+                  {admin.isActive 
+                    ? t('profile.active', { defaultValue: 'Faol' })
+                    : t('profile.inactive', { defaultValue: 'Nofaol' })
+                  }
                 </span>
               </div>
             </div>
@@ -171,7 +186,9 @@ const AdminDetails = () => {
 
       {/* Statistics Cards */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Statistika</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          {t('adminDetails.statistics', { defaultValue: 'Statistika' })}
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statCards.map((card, index) => {
             const Icon = card.icon;
@@ -198,7 +215,9 @@ const AdminDetails = () => {
       {/* Receptions */}
       {receptions.length > 0 && (
         <Card>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Receptionlar ({receptions.length})</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {t('adminDetails.receptions', { defaultValue: 'Receptionlar' })} ({receptions.length})
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {receptions.map((reception) => (
               <div key={reception.id} className="border border-gray-200 rounded-lg p-4">
@@ -218,7 +237,9 @@ const AdminDetails = () => {
       {/* Schools */}
       {schools.length > 0 && (
         <Card>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Maktablar ({schools.length})</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {t('adminDetails.schools', { defaultValue: 'Maktablar' })} ({schools.length})
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {schools.map((school) => (
               <div key={school.id} className="border border-gray-200 rounded-lg p-4">
@@ -238,7 +259,9 @@ const AdminDetails = () => {
       {/* Teachers */}
       {teachers.length > 0 && (
         <Card>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">O'qituvchilar ({teachers.length})</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {t('adminDetails.teachers', { defaultValue: 'O\'qituvchilar' })} ({teachers.length})
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {teachers.map((teacher) => (
               <div key={teacher.id} className="border border-gray-200 rounded-lg p-4">
@@ -258,7 +281,9 @@ const AdminDetails = () => {
       {/* Parents */}
       {parents.length > 0 && (
         <Card>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Ota-onalar ({parents.length})</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {t('adminDetails.parents', { defaultValue: 'Ota-onalar' })} ({parents.length})
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {parents.map((parent) => (
               <div key={parent.id} className="border border-gray-200 rounded-lg p-4">
@@ -278,7 +303,9 @@ const AdminDetails = () => {
       {/* Children */}
       {children.length > 0 && (
         <Card>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">O'quvchilar ({children.length})</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {t('adminDetails.students', { defaultValue: 'O\'quvchilar' })} ({children.length})
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {children.map((child) => (
               <div key={child.id} className="border border-gray-200 rounded-lg p-4">

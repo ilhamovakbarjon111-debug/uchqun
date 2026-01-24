@@ -48,7 +48,7 @@ const Sidebar = ({ onClose }) => {
 
       <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
         <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: COLORS.textTertiary }}>
-          Menu
+          {t('nav.menu', { defaultValue: 'Menu' })}
         </p>
         {navigation.map((item) => {
           const Active = isActive(item.href);
@@ -97,7 +97,7 @@ const Sidebar = ({ onClose }) => {
           className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
         >
           <LogOut className="w-4 h-4" />
-          Chiqish
+          {t('nav.logout', { defaultValue: 'Chiqish' })}
         </button>
       </div>
     </div>

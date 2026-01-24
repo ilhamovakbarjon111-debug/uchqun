@@ -3,8 +3,10 @@ import api from '../services/api';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Star, Building2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Ratings = () => {
+  const { t } = useTranslation();
   const [ratings, setRatings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,15 +38,21 @@ const Ratings = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Reytinglar</h1>
-        <p className="text-gray-600">Maktablar reytinglari</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          {t('ratings.title', { defaultValue: 'Reytinglar' })}
+        </h1>
+        <p className="text-gray-600">
+          {t('ratings.subtitle', { defaultValue: 'Maktablar reytinglari' })}
+        </p>
       </div>
 
       {ratings.length === 0 ? (
         <Card className="p-12">
           <div className="text-center">
             <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Reytinglar topilmadi</p>
+            <p className="text-gray-600">
+              {t('ratings.notFound', { defaultValue: 'Reytinglar topilmadi' })}
+            </p>
           </div>
         </Card>
       ) : (
@@ -55,14 +63,20 @@ const Ratings = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <Building2 className="w-5 h-5 text-primary-600" />
-                    <h3 className="font-bold text-gray-900">{rating.schoolName || 'Noma\'lum maktab'}</h3>
+                    <h3 className="font-bold text-gray-900">
+                      {rating.schoolName || t('ratings.unknown', { defaultValue: 'Noma\'lum maktab' })}
+                    </h3>
                   </div>
                   {rating.comment && (
                     <p className="text-sm text-gray-600 mb-3">{rating.comment}</p>
                   )}
                   <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <span>O'quvchi: {rating.studentName || 'Noma\'lum'}</span>
-                    <span>Ota-ona: {rating.parentName || 'Noma\'lum'}</span>
+                    <span>
+                      {t('ratings.student', { defaultValue: 'O\'quvchi' })}: {rating.studentName || t('ratings.unknown', { defaultValue: 'Noma\'lum' })}
+                    </span>
+                    <span>
+                      {t('ratings.parent', { defaultValue: 'Ota-ona' })}: {rating.parentName || t('ratings.unknown', { defaultValue: 'Noma\'lum' })}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

@@ -4,7 +4,9 @@
     "schools": "Schools",
     "ratings": "Ratings",
     "payments": "Payments",
-    "profile": "Profile"
+    "profile": "Profile",
+    "menu": "Menu",
+    "logout": "Logout"
   },
   "login": {
     "title": "Government Control Panel",
@@ -12,15 +14,59 @@
     "email": "Email",
     "password": "Password",
     "button": "Sign In",
-    "loading": "Signing in..."
+    "loading": "Signing in...",
+    "error": "Invalid email or password"
   },
   "dashboard": {
     "title": "Government Control Panel",
     "welcome": "Welcome, {{name}}",
     "adminList": "Admins",
     "adminListDesc": "List of all admins ({{count}})",
+    "adminNotFound": "No admins found",
     "schoolsList": "Schools and Ratings",
-    "schoolsListDesc": "School ratings and statistics"
+    "schoolsListDesc": "School ratings and statistics",
+    "schoolsNotFound": "No schools found",
+    "totalSchools": "Total Schools",
+    "totalStudents": "Total Students",
+    "totalTeachers": "Total Teachers",
+    "totalParents": "Total Parents",
+    "averageRating": "Average Rating",
+    "totalRevenue": "Total Revenue",
+    "activeWarnings": "Active Warnings",
+    "students": "Students",
+    "ratings": "Ratings"
+  },
+  "schools": {
+    "title": "Schools",
+    "subtitle": "List of all schools",
+    "notFound": "No schools found",
+    "students": "Students",
+    "ratings": "Ratings",
+    "averageRating": "Average Rating"
+  },
+  "ratings": {
+    "title": "Ratings",
+    "subtitle": "School ratings",
+    "notFound": "No ratings found",
+    "school": "School",
+    "student": "Student",
+    "parent": "Parent",
+    "unknown": "Unknown"
+  },
+  "payments": {
+    "title": "Payments",
+    "subtitle": "List of all payments",
+    "totalRevenue": "Total Revenue",
+    "notFound": "No payments found",
+    "parent": "Parent",
+    "school": "School",
+    "date": "Date",
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "rejected": "Rejected"
+    },
+    "unknown": "Unknown"
   },
   "profile": {
     "title": "Profile",
@@ -33,18 +79,37 @@
     "active": "Active",
     "inactive": "Inactive",
     "createdAt": "Created Date",
-    "logout": "Logout"
+    "logout": "Logout",
+    "logoutDesc": "Click the button below to logout"
   },
   "adminDetails": {
     "title": "Admin Details",
+    "notFound": "Admin not found",
+    "back": "Back",
     "statistics": "Statistics",
     "receptions": "Receptions",
+    "receptionsDesc": "Total number of receptions",
     "schools": "Schools",
+    "schoolsDesc": "Total number of schools",
     "teachers": "Teachers",
+    "teachersDesc": "Total number of teachers",
     "parents": "Parents",
+    "parentsDesc": "Total number of parents",
     "students": "Students",
+    "studentsDesc": "Total number of students",
     "averageRating": "Average Rating",
+    "averageRatingDesc": "Average school rating",
     "totalRevenue": "Total Revenue",
-    "back": "Back"
+    "totalRevenueDesc": "Total paid amount",
+    "email": "Email",
+    "phone": "Phone",
+    "status": "Status",
+    "createdAt": "Created Date"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "notFound": "Not found",
+    "unknown": "Unknown"
   }
 }
