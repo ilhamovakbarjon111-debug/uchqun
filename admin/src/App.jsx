@@ -6,18 +6,19 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import AdminRegister from './pages/AdminRegister';
 import Dashboard from './pages/Dashboard';
-import ReceptionManagement from './pages/ReceptionManagement';
-import ParentManagement from './pages/ParentManagement';
-import TeacherManagement from './pages/TeacherManagement';
-import GroupManagement from './pages/GroupManagement';
-import SchoolRatings from './pages/SchoolRatings';
+import BusinessStats from './pages/BusinessStats';
+import RevenueStats from './pages/RevenueStats';
+import UsageStats from './pages/UsageStats';
+import UsersStats from './pages/UsersStats';
+import TherapyManagement from './pages/TherapyManagement';
+import PaymentManagement from './pages/PaymentManagement';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import { ToastContainer } from './components/Toast';
 import LoadingSpinner from './components/LoadingSpinner';
 
 const AppRoutes = () => {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
+  const { isAuthenticated, isBusiness, loading } = useAuth();
 
   if (loading) {
     return (
@@ -41,16 +42,17 @@ const AppRoutes = () => {
         }
       >
         <Route index element={<Dashboard />} />
-        <Route path="receptions" element={<ReceptionManagement />} />
-        <Route path="parents" element={<ParentManagement />} />
-        <Route path="teachers" element={<TeacherManagement />} />
-        <Route path="groups" element={<GroupManagement />} />
-        <Route path="school-ratings" element={<SchoolRatings />} />
+        <Route path="statistics" element={<BusinessStats />} />
+        <Route path="revenue" element={<RevenueStats />} />
+        <Route path="users" element={<UsersStats />} />
+        <Route path="usage" element={<UsageStats />} />
+        <Route path="therapy" element={<TherapyManagement />} />
+        <Route path="payments" element={<PaymentManagement />} />
         <Route path="profile" element={<Profile />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 
-      <Route path="/" element={<Navigate to={isAuthenticated && isAdmin ? "/admin" : "/login"} replace />} />
+      <Route path="/" element={<Navigate to={isAuthenticated && isBusiness ? "/admin" : "/login"} replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

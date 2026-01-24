@@ -21,6 +21,13 @@ import SchoolRating from './SchoolRating.js';
 import SuperAdminMessage from './SuperAdminMessage.js';
 import AdminRegistrationRequest from './AdminRegistrationRequest.js';
 import EmotionalMonitoring from './EmotionalMonitoring.js';
+import Therapy from './Therapy.js';
+import TherapyUsage from './TherapyUsage.js';
+import AIWarning from './AIWarning.js';
+import PushNotification from './PushNotification.js';
+import Payment from './Payment.js';
+import GovernmentStats from './GovernmentStats.js';
+import BusinessStats from './BusinessStats.js';
 
 // Initialize all models
 const models = {
@@ -46,6 +53,13 @@ const models = {
   SuperAdminMessage,
   AdminRegistrationRequest,
   EmotionalMonitoring,
+  Therapy,
+  TherapyUsage,
+  AIWarning,
+  PushNotification,
+  Payment,
+  GovernmentStats,
+  BusinessStats,
   sequelize,
 };
 
@@ -141,6 +155,50 @@ Child.hasMany(EmotionalMonitoring, { foreignKey: 'childId', as: 'emotionalMonito
 EmotionalMonitoring.belongsTo(Child, { foreignKey: 'childId', as: 'child' });
 User.hasMany(EmotionalMonitoring, { foreignKey: 'teacherId', as: 'emotionalMonitoringRecords' });
 EmotionalMonitoring.belongsTo(User, { foreignKey: 'teacherId', as: 'teacher' });
+
+// Therapy relationships
+User.hasMany(Therapy, { foreignKey: 'createdBy', as: 'createdTherapies' });
+Therapy.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+
+// Therapy Usage relationships
+Therapy.hasMany(TherapyUsage, { foreignKey: 'therapyId', as: 'usages' });
+TherapyUsage.belongsTo(Therapy, { foreignKey: 'therapyId', as: 'therapy' });
+User.hasMany(TherapyUsage, { foreignKey: 'parentId', as: 'therapyUsages' });
+TherapyUsage.belongsTo(User, { foreignKey: 'parentId', as: 'parent' });
+User.hasMany(TherapyUsage, { foreignKey: 'teacherId', as: 'assignedTherapyUsages' });
+TherapyUsage.belongsTo(User, { foreignKey: 'teacherId', as: 'teacher' });
+Child.hasMany(TherapyUsage, { foreignKey: 'childId', as: 'therapyUsages' });
+TherapyUsage.belongsTo(Child, { foreignKey: 'childId', as: 'child' });
+
+// AI Warning relationships
+School.hasMany(AIWarning, { foreignKey: 'schoolId', as: 'warnings' });
+AIWarning.belongsTo(School, { foreignKey: 'schoolId', as: 'school' });
+User.hasMany(AIWarning, { foreignKey: 'parentId', as: 'parentWarnings' });
+AIWarning.belongsTo(User, { foreignKey: 'parentId', as: 'parent' });
+User.hasMany(AIWarning, { foreignKey: 'resolvedBy', as: 'resolvedWarnings' });
+AIWarning.belongsTo(User, { foreignKey: 'resolvedBy', as: 'resolver' });
+
+// Push Notification relationships
+User.hasMany(PushNotification, { foreignKey: 'userId', as: 'pushNotifications' });
+PushNotification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Payment relationships
+User.hasMany(Payment, { foreignKey: 'parentId', as: 'payments' });
+Payment.belongsTo(User, { foreignKey: 'parentId', as: 'parent' });
+Child.hasMany(Payment, { foreignKey: 'childId', as: 'payments' });
+Payment.belongsTo(Child, { foreignKey: 'childId', as: 'child' });
+School.hasMany(Payment, { foreignKey: 'schoolId', as: 'payments' });
+Payment.belongsTo(School, { foreignKey: 'schoolId', as: 'school' });
+
+// Government Stats relationships
+School.hasMany(GovernmentStats, { foreignKey: 'schoolId', as: 'governmentStats' });
+GovernmentStats.belongsTo(School, { foreignKey: 'schoolId', as: 'school' });
+User.hasMany(GovernmentStats, { foreignKey: 'generatedBy', as: 'generatedStats' });
+GovernmentStats.belongsTo(User, { foreignKey: 'generatedBy', as: 'generator' });
+
+// Business Stats relationships
+User.hasMany(BusinessStats, { foreignKey: 'businessId', as: 'businessStats' });
+BusinessStats.belongsTo(User, { foreignKey: 'businessId', as: 'business' });
 
 // Sync database (use with caution in production)
 export const syncDatabase = async (force = false) => {

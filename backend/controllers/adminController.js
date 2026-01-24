@@ -1256,6 +1256,53 @@ export const createAdmin = async (req, res) => {
 };
 
 /**
+ * Create government user (Super Admin only)
+ * POST /api/super-admin/government
+ */
+export const createGovernment = async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ 
+        error: 'First name, last name, email and password are required' 
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ where: { email: email.toLowerCase() } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+
+    // Create government user
+    const government = await User.create({
+      email: email.toLowerCase(),
+      password,
+      firstName,
+      lastName,
+      role: 'government',
+      isActive: true,
+    });
+
+    logger.info('Government account created', {
+      governmentId: government.id,
+      email: government.email,
+      createdBy: req.user?.id || 'unknown',
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Government account created successfully',
+      data: government.toJSON(),
+    });
+  } catch (error) {
+    logger.error('Create government error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to create government account' });
+  }
+};
+
+/**
  * Get admin's messages to super-admin
  * GET /api/admin/messages
  * 

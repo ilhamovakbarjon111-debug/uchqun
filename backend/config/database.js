@@ -15,7 +15,7 @@ if (process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL) {
     pool: {
       max: 5,
       min: 0,
-      acquire: 30000,
+      acquire: 60000, // Increased to 60 seconds
       idle: 10000,
     },
     dialectOptions: {
@@ -26,7 +26,18 @@ if (process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL) {
       } : (process.env.NODE_ENV === 'production' ? {
         require: true,
         rejectUnauthorized: false
-      } : false)
+      } : false),
+      connectTimeout: 60000, // 60 seconds connection timeout
+    },
+    retry: {
+      max: 3, // Retry up to 3 times
+      match: [
+        /ETIMEDOUT/,
+        /EHOSTUNREACH/,
+        /ECONNREFUSED/,
+        /ETIMEDOUT/,
+        /SequelizeConnectionError/,
+      ],
     }
   });
 } else {
@@ -43,8 +54,21 @@ if (process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL) {
       pool: {
         max: 5,
         min: 0,
-        acquire: 30000,
+        acquire: 60000, // Increased to 60 seconds
         idle: 10000,
+      },
+      dialectOptions: {
+        connectTimeout: 60000, // 60 seconds connection timeout
+      },
+      retry: {
+        max: 3, // Retry up to 3 times
+        match: [
+          /ETIMEDOUT/,
+          /EHOSTUNREACH/,
+          /ECONNREFUSED/,
+          /ETIMEDOUT/,
+          /SequelizeConnectionError/,
+        ],
       },
     }
   );

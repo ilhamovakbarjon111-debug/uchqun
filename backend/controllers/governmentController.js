@@ -1,0 +1,496 @@
+import GovernmentStats from '../models/GovernmentStats.js';
+import School from '../models/School.js';
+import SchoolRating from '../models/SchoolRating.js';
+import User from '../models/User.js';
+import Child from '../models/Child.js';
+import Payment from '../models/Payment.js';
+import TherapyUsage from '../models/TherapyUsage.js';
+import AIWarning from '../models/AIWarning.js';
+import { Op } from 'sequelize';
+import logger from '../utils/logger.js';
+
+/**
+ * Get overview statistics
+ * GET /api/government/overview
+ */
+export const getOverview = async (req, res) => {
+  try {
+    const { region, district, startDate, endDate } = req.query;
+
+    const where = {};
+    if (region) {
+      where.region = region;
+    }
+    if (district) {
+      where.district = district;
+    }
+
+    // Get schools count
+    const schoolsCount = await School.count({
+      where: { isActive: true },
+    });
+
+    // Get total students
+    const studentsCount = await Child.count();
+
+    // Get total teachers
+    const teachersCount = await User.count({
+      where: { role: 'teacher' },
+    });
+
+    // Get total parents
+    const parentsCount = await User.count({
+      where: { role: 'parent' },
+    });
+
+    // Get average school rating
+    const ratings = await SchoolRating.findAll();
+    const avgRating = ratings.length > 0
+      ? (ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length).toFixed(2)
+      : 0;
+
+    // Get total payments
+    const paymentsWhere = {};
+    if (startDate) {
+      paymentsWhere.paidAt = { [Op.gte]: new Date(startDate) };
+    }
+    if (endDate) {
+      paymentsWhere.paidAt = { ...paymentsWhere.paidAt, [Op.lte]: new Date(endDate) };
+    }
+
+    const payments = await Payment.findAll({
+      where: { ...paymentsWhere, status: 'completed' },
+    });
+    const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+
+    // Get active warnings
+    const warningsCount = await AIWarning.count({
+      where: { isResolved: false },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        schools: schoolsCount,
+        students: studentsCount,
+        teachers: teachersCount,
+        parents: parentsCount,
+        averageRating: parseFloat(avgRating),
+        totalRevenue,
+        activeWarnings: warningsCount,
+      },
+    });
+  } catch (error) {
+    logger.error('Get government overview error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch overview statistics' });
+  }
+};
+
+/**
+ * Get schools statistics
+ * GET /api/government/schools
+ */
+export const getSchoolsStats = async (req, res) => {
+  try {
+    const { region, district, limit = 50, offset = 0 } = req.query;
+
+    const where = { isActive: true };
+    // Note: School model doesn't have region/district fields yet
+    // This would need to be added to the School model
+
+    const schools = await School.findAndCountAll({
+      where,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      include: [
+        {
+          model: SchoolRating,
+          as: 'ratings',
+          required: false,
+        },
+        {
+          model: Child,
+          as: 'schoolChildren',
+          required: false,
+        },
+      ],
+    });
+
+    const schoolsWithStats = schools.rows.map(school => {
+      const ratings = school.ratings || [];
+      const avgRating = ratings.length > 0
+        ? (ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length).toFixed(2)
+        : 0;
+      const studentsCount = school.schoolChildren?.length || 0;
+
+      return {
+        ...school.toJSON(),
+        averageRating: parseFloat(avgRating),
+        ratingsCount: ratings.length,
+        studentsCount,
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        schools: schoolsWithStats,
+        total: schools.count,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      },
+    });
+  } catch (error) {
+    logger.error('Get schools stats error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch schools statistics' });
+  }
+};
+
+/**
+ * Get students statistics
+ * GET /api/government/students
+ */
+export const getStudentsStats = async (req, res) => {
+  try {
+    const { schoolId, region, district } = req.query;
+
+    const where = {};
+    if (schoolId) {
+      where.schoolId = schoolId;
+    }
+
+    const students = await Child.findAll({
+      where,
+      include: [
+        {
+          model: School,
+          as: 'childSchool',
+          required: false,
+        },
+      ],
+    });
+
+    // Group by school
+    const bySchool = {};
+    students.forEach(student => {
+      const schoolName = student.childSchool?.name || 'Unknown';
+      if (!bySchool[schoolName]) {
+        bySchool[schoolName] = 0;
+      }
+      bySchool[schoolName]++;
+    });
+
+    res.json({
+      success: true,
+      data: {
+        total: students.length,
+        bySchool,
+        students: students.slice(0, 100), // Limit response size
+      },
+    });
+  } catch (error) {
+    logger.error('Get students stats error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch students statistics' });
+  }
+};
+
+/**
+ * Get ratings statistics
+ * GET /api/government/ratings
+ */
+export const getRatingsStats = async (req, res) => {
+  try {
+    const { schoolId, startDate, endDate } = req.query;
+
+    const where = {};
+    if (schoolId) {
+      where.schoolId = schoolId;
+    }
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt[Op.gte] = new Date(startDate);
+      }
+      if (endDate) {
+        where.createdAt[Op.lte] = new Date(endDate);
+      }
+    }
+
+    const ratings = await SchoolRating.findAll({
+      where,
+      include: [
+        {
+          model: School,
+          as: 'school',
+          required: false,
+        },
+      ],
+    });
+
+    // Calculate statistics
+    const totalRatings = ratings.length;
+    const avgRating = totalRatings > 0
+      ? (ratings.reduce((sum, r) => sum + r.stars, 0) / totalRatings).toFixed(2)
+      : 0;
+
+    const ratingDistribution = {
+      5: ratings.filter(r => r.stars === 5).length,
+      4: ratings.filter(r => r.stars === 4).length,
+      3: ratings.filter(r => r.stars === 3).length,
+      2: ratings.filter(r => r.stars === 2).length,
+      1: ratings.filter(r => r.stars === 1).length,
+    };
+
+    res.json({
+      success: true,
+      data: {
+        total: totalRatings,
+        average: parseFloat(avgRating),
+        distribution: ratingDistribution,
+        ratings: ratings.slice(0, 100), // Limit response size
+      },
+    });
+  } catch (error) {
+    logger.error('Get ratings stats error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch ratings statistics' });
+  }
+};
+
+/**
+ * Get payments statistics
+ * GET /api/government/payments
+ */
+export const getPaymentsStats = async (req, res) => {
+  try {
+    const { startDate, endDate, schoolId } = req.query;
+
+    const where = { status: 'completed' };
+    if (schoolId) {
+      where.schoolId = schoolId;
+    }
+    if (startDate || endDate) {
+      where.paidAt = {};
+      if (startDate) {
+        where.paidAt[Op.gte] = new Date(startDate);
+      }
+      if (endDate) {
+        where.paidAt[Op.lte] = new Date(endDate);
+      }
+    }
+
+    const payments = await Payment.findAll({
+      where,
+      include: [
+        {
+          model: School,
+          as: 'school',
+          required: false,
+        },
+      ],
+    });
+
+    const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+    const byType = {};
+    payments.forEach(p => {
+      const type = p.paymentType;
+      if (!byType[type]) {
+        byType[type] = { count: 0, amount: 0 };
+      }
+      byType[type].count++;
+      byType[type].amount += parseFloat(p.amount || 0);
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalRevenue,
+        totalPayments: payments.length,
+        byType,
+        payments: payments.slice(0, 100), // Limit response size
+      },
+    });
+  } catch (error) {
+    logger.error('Get payments stats error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch payments statistics' });
+  }
+};
+
+/**
+ * Generate and save statistics
+ * POST /api/government/stats/generate
+ */
+export const generateStats = async (req, res) => {
+  try {
+    const {
+      statType,
+      period,
+      periodStart,
+      periodEnd,
+      region,
+      district,
+      schoolId,
+    } = req.body;
+
+    if (!statType || !period || !periodStart || !periodEnd) {
+      return res.status(400).json({ error: 'Stat type, period, and dates are required' });
+    }
+
+    let data = {};
+
+    switch (statType) {
+      case 'overview':
+        // Get overview data
+        const overview = await getOverviewData(region, district, periodStart, periodEnd);
+        data = overview;
+        break;
+      case 'schools':
+        const schools = await getSchoolsData(region, district);
+        data = schools;
+        break;
+      case 'ratings':
+        const ratings = await getRatingsData(schoolId, periodStart, periodEnd);
+        data = ratings;
+        break;
+      case 'payments':
+        const payments = await getPaymentsData(schoolId, periodStart, periodEnd);
+        data = payments;
+        break;
+      default:
+        return res.status(400).json({ error: 'Invalid stat type' });
+    }
+
+    const stats = await GovernmentStats.create({
+      region: region || null,
+      district: district || null,
+      schoolId: schoolId || null,
+      statType,
+      period,
+      periodStart: new Date(periodStart),
+      periodEnd: new Date(periodEnd),
+      data,
+      generatedBy: req.user.id,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    logger.error('Generate stats error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to generate statistics' });
+  }
+};
+
+/**
+ * Get saved statistics
+ * GET /api/government/stats
+ */
+export const getSavedStats = async (req, res) => {
+  try {
+    const {
+      statType,
+      period,
+      region,
+      district,
+      schoolId,
+      limit = 20,
+      offset = 0,
+    } = req.query;
+
+    const where = {};
+    if (statType) {
+      where.statType = statType;
+    }
+    if (period) {
+      where.period = period;
+    }
+    if (region) {
+      where.region = region;
+    }
+    if (district) {
+      where.district = district;
+    }
+    if (schoolId) {
+      where.schoolId = schoolId;
+    }
+
+    const stats = await GovernmentStats.findAndCountAll({
+      where,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['generatedAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'generator',
+          required: false,
+          attributes: ['id', 'firstName', 'lastName'],
+        },
+      ],
+    });
+
+    res.json({
+      success: true,
+      data: {
+        stats: stats.rows,
+        total: stats.count,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      },
+    });
+  } catch (error) {
+    logger.error('Get saved stats error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch saved statistics' });
+  }
+};
+
+// Helper functions
+async function getOverviewData(region, district, startDate, endDate) {
+  const schoolsCount = await School.count({ where: { isActive: true } });
+  const studentsCount = await Child.count();
+  const teachersCount = await User.count({ where: { role: 'teacher' } });
+  const parentsCount = await User.count({ where: { role: 'parent' } });
+  
+  const ratings = await SchoolRating.findAll();
+  const avgRating = ratings.length > 0
+    ? (ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length).toFixed(2)
+    : 0;
+
+  return {
+    schools: schoolsCount,
+    students: studentsCount,
+    teachers: teachersCount,
+    parents: parentsCount,
+    averageRating: parseFloat(avgRating),
+  };
+}
+
+async function getSchoolsData(region, district) {
+  const schools = await School.findAll({ where: { isActive: true } });
+  return { schools: schools.length, data: schools };
+}
+
+async function getRatingsData(schoolId, startDate, endDate) {
+  const where = {};
+  if (schoolId) where.schoolId = schoolId;
+  if (startDate || endDate) {
+    where.createdAt = {};
+    if (startDate) where.createdAt[Op.gte] = new Date(startDate);
+    if (endDate) where.createdAt[Op.lte] = new Date(endDate);
+  }
+  const ratings = await SchoolRating.findAll({ where });
+  return { ratings: ratings.length, data: ratings };
+}
+
+async function getPaymentsData(schoolId, startDate, endDate) {
+  const where = { status: 'completed' };
+  if (schoolId) where.schoolId = schoolId;
+  if (startDate || endDate) {
+    where.paidAt = {};
+    if (startDate) where.paidAt[Op.gte] = new Date(startDate);
+    if (endDate) where.paidAt[Op.lte] = new Date(endDate);
+  }
+  const payments = await Payment.findAll({ where });
+  const total = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+  return { totalRevenue: total, payments: payments.length, data: payments };
+}

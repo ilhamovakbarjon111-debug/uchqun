@@ -36,6 +36,13 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import progressRoutes from './routes/progressRoutes.js';
 import groupRoutes from './routes/groupRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
+// New feature routes
+import therapyRoutes from './routes/therapyRoutes.js';
+import aiWarningRoutes from './routes/aiWarningRoutes.js';
+import pushNotificationRoutes from './routes/pushNotificationRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import governmentRoutes from './routes/governmentRoutes.js';
+import businessRoutes from './routes/businessRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -188,6 +195,14 @@ app.use('/api/chat', chatRoutes);
 // Legacy routes (kept for backward compatibility if needed)
 app.use('/api/progress', progressRoutes);
 app.use('/api/groups', groupRoutes);
+
+// New feature routes
+app.use('/api/therapy', therapyRoutes);
+app.use('/api/ai-warnings', aiWarningRoutes);
+app.use('/api/push-notifications', pushNotificationRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/government', governmentRoutes);
+app.use('/api/business', businessRoutes);
 
 // Error handling
 app.use(notFound);

@@ -97,3 +97,12 @@ export const requireParent = requireRole('parent');
  */
 export const requireAdminOrReception = requireRole('admin', 'reception');
 
+/**
+ * Government-only Middleware
+ * Ensures only Government role can access
+ */
+export const requireGovernment = requireRole('government');/**
+ * Business-only Middleware
+ * Ensures only Business role can access
+ */
+export const requireBusiness = requireRole('business');

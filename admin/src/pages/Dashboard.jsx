@@ -7,15 +7,14 @@ import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Users,
-  UserCheck,
-  Shield,
-  UsersRound,
-  BarChart3,
+  Building2,
+  DollarSign,
+  Activity,
+  TrendingUp,
   Crown,
   Trophy,
-  FileText,
-  Clock,
-  CheckCircle,
+  BarChart3,
+  Shield,
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -30,56 +29,60 @@ const Dashboard = () => {
       try {
         // Fetch statistics and receptions from backend API
         const [statsResponse, receptionsResponse] = await Promise.all([
-          api.get('/admin/statistics'),
-          api.get('/admin/receptions'),
+          api.get('/admin/statistics').catch(() => null),
+          api.get('/admin/receptions').catch(() => ({ data: { data: [] } })),
         ]);
-        const statsData = statsResponse.data.data;
-        const receptionsData = receptionsResponse.data.data || [];
+        
+        const receptionsData = receptionsResponse?.data?.data || [];
+        
+        if (statsResponse?.data?.data) {
+          const statsData = statsResponse.data.data;
+          setStats({
+            totalUsers: statsData.totalUsers,
+            totalSchools: statsData.totalSchools,
+            totalRevenue: statsData.totalRevenue,
+            therapyUsages: statsData.therapyUsages,
+            activeSubscriptions: statsData.activeSubscriptions,
+            receptions: receptionsData.length,
+            pendingReceptions: receptionsData.filter(r => !r.isActive || !r.documentsApproved).length,
+            parents: statsData.parents,
+            teachers: statsData.teachers,
+            groups: statsData.groups,
+            pendingDocuments: statsData.pendingDocuments,
+          });
+        } else {
+          // Fallback to individual API calls if statistics endpoint fails
+          try {
+            const [receptionsRes, parentsRes, teachersRes, groupsRes, pendingDocsRes] = await Promise.all([
+              api.get('/admin/receptions').catch(() => ({ data: { data: [] } })),
+              api.get('/admin/parents').catch(() => ({ data: { data: [] } })),
+              api.get('/admin/teachers').catch(() => ({ data: { data: [] } })),
+              api.get('/admin/groups').catch(() => ({ data: { groups: [] } })),
+              api.get('/admin/documents/pending').catch(() => ({ data: { data: [] } })),
+            ]);
 
-        setStats({
-          receptions: statsData.receptions.total,
-          pendingReceptions: statsData.receptions.pending,
-          parents: statsData.users.parents,
-          teachers: statsData.users.teachers,
-          groups: statsData.groups.total,
-          pendingDocuments: statsData.documents.pending,
-          totalUsers: statsData.users.total,
-          activeReceptions: statsData.receptions.active,
-          inactiveReceptions: statsData.receptions.inactive,
-          totalContent: statsData.content.total,
-          recentActivity: statsData.recentActivity,
-        });
+            const receptionsData = receptionsRes.data.data || [];
+            const parents = parentsRes.data.data || [];
+            const teachers = teachersRes.data.data || [];
+            const groups = groupsRes.data.groups || [];
+            const pendingDocs = pendingDocsRes.data.data || [];
+
+            setStats({
+              receptions: receptionsData.length,
+              pendingReceptions: receptionsData.filter(r => !r.isActive || !r.documentsApproved).length,
+              parents: parents.length,
+              teachers: teachers.length,
+              groups: groups.length,
+              pendingDocuments: pendingDocs.length,
+            });
+            setReceptions(receptionsData);
+          } catch (fallbackError) {
+            console.error('Error loading fallback data:', fallbackError);
+          }
+        }
         setReceptions(receptionsData);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
-        // Fallback to individual API calls if statistics endpoint fails
-        try {
-          const [receptionsRes, parentsRes, teachersRes, groupsRes, pendingDocsRes] = await Promise.all([
-            api.get('/admin/receptions').catch(() => ({ data: { data: [] } })),
-            api.get('/admin/parents').catch(() => ({ data: { data: [] } })),
-            api.get('/admin/teachers').catch(() => ({ data: { data: [] } })),
-            api.get('/admin/groups').catch(() => ({ data: { groups: [] } })),
-            api.get('/admin/documents/pending').catch(() => ({ data: { data: [] } })),
-          ]);
-
-          const receptionsData = receptionsRes.data.data || [];
-          const parents = parentsRes.data.data || [];
-          const teachers = teachersRes.data.data || [];
-          const groups = groupsRes.data.groups || [];
-          const pendingDocs = pendingDocsRes.data.data || [];
-
-          setStats({
-            receptions: receptionsData.length,
-            pendingReceptions: receptionsData.filter(r => !r.isActive || !r.documentsApproved).length,
-            parents: parents.length,
-            teachers: teachers.length,
-            groups: groups.length,
-            pendingDocuments: pendingDocs.length,
-          });
-          setReceptions(receptionsData);
-        } catch (fallbackError) {
-          console.error('Error loading fallback data:', fallbackError);
-        }
       } finally {
         setLoading(false);
       }
@@ -98,33 +101,32 @@ const Dashboard = () => {
 
   const overviewCards = [
     { 
-      title: t('dashboard.receptionCard'), 
-      value: stats?.receptions || 0, 
-      icon: Shield, 
-      color: 'bg-purple-50 text-purple-600', 
-      link: '/admin/receptions',
-      subtitle: `${stats?.pendingReceptions || 0} ${t('dashboard.pending').toLowerCase()}`
-    },
-    { 
-      title: t('dashboard.parentsCard'), 
-      value: stats?.parents || 0, 
+      title: t('dashboard.totalUsers', { defaultValue: 'Total Users' }), 
+      value: stats?.totalUsers || 0, 
       icon: Users, 
-      color: 'bg-green-50 text-green-600', 
-      link: '/admin/parents' 
-    },
-    { 
-      title: t('dashboard.teachersCard'), 
-      value: stats?.teachers || 0, 
-      icon: UserCheck, 
       color: 'bg-blue-50 text-blue-600', 
-      link: '/admin/teachers' 
+      link: '/admin/users' 
     },
     { 
-      title: t('dashboard.groupsCard'), 
-      value: stats?.groups || 0, 
-      icon: UsersRound, 
-      color: 'bg-primary-50 text-primary-600', 
-      link: '/admin/groups' 
+      title: t('dashboard.totalSchools', { defaultValue: 'Total Schools' }), 
+      value: stats?.totalSchools || 0, 
+      icon: Building2, 
+      color: 'bg-green-50 text-green-600', 
+      link: '/admin/statistics' 
+    },
+    { 
+      title: t('dashboard.totalRevenue', { defaultValue: 'Total Revenue' }), 
+      value: `$${(stats?.totalRevenue || 0).toLocaleString()}`, 
+      icon: DollarSign, 
+      color: 'bg-yellow-50 text-yellow-600', 
+      link: '/admin/revenue' 
+    },
+    { 
+      title: t('dashboard.therapyUsages', { defaultValue: 'Therapy Usages' }), 
+      value: stats?.therapyUsages || 0, 
+      icon: Activity, 
+      color: 'bg-purple-50 text-purple-600', 
+      link: '/admin/usage' 
     },
   ];
 
@@ -136,9 +138,9 @@ const Dashboard = () => {
           <p className="text-white/90 text-sm font-medium">{t('dashboard.role')}</p>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-white">
-          {t('dashboard.welcome', { name: user?.firstName || 'Admin' })}
+          {t('dashboard.welcome', { name: user?.firstName || 'Business', defaultValue: `Welcome, ${user?.firstName || 'Business'}` })}
         </h1>
-        <p className="text-white/80 text-sm mt-2">{t('dashboard.subtitle')}</p>
+        <p className="text-white/80 text-sm mt-2">{t('dashboard.subtitle', { defaultValue: 'Business Statistics & Analytics Dashboard' })}</p>
       </div>
 
       <div>
@@ -165,79 +167,26 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* My Assignments - Pending Tasks */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.pending')}</h2>
-        <div className="space-y-4 mb-6">
-          {stats?.pendingDocuments > 0 && (
-            <Card className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-white/20 rounded-xl">
-                  <FileText className="w-8 h-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold mb-1">{t('dashboard.pendingDocuments')}</h3>
-                  <p className="text-white/90 text-sm mb-4">
-                    {t('dashboard.pendingDocumentsDesc', { count: stats.pendingDocuments })}
-                  </p>
-                  <Link 
-                    to="/admin/receptions"
-                    className="inline-block px-4 py-2 bg-white text-yellow-600 rounded-lg font-semibold hover:bg-yellow-50 transition-colors"
-                  >
-                    {t('dashboard.reviewDocuments')}
-                  </Link>
-                </div>
-              </div>
-            </Card>
-          )}
-          {stats?.pendingReceptions > 0 && (
-            <Card className="bg-gradient-to-r from-primary-500 to-primary-600 text-white p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-white/20 rounded-xl">
-                  <Shield className="w-8 h-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold mb-1">{t('dashboard.pendingReceptions')}</h3>
-                  <p className="text-white/90 text-sm mb-4">
-                    {t('dashboard.pendingReceptionsDesc', { count: stats.pendingReceptions })}
-                  </p>
-                  <Link 
-                    to="/admin/receptions"
-                    className="inline-block px-4 py-2 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors"
-                  >
-                    {t('dashboard.reviewReceptions')}
-                  </Link>
-                </div>
-              </div>
-            </Card>
-          )}
-          {(!stats?.pendingDocuments && !stats?.pendingReceptions) && (
-            <Card className="p-6 bg-green-50 border border-green-200">
-              <div className="flex items-center gap-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-                <div>
-                  <h3 className="text-lg font-bold text-green-900 mb-1">{t('dashboard.allClear')}</h3>
-                  <p className="text-green-700 text-sm">{t('dashboard.noPending')}</p>
-                </div>
-              </div>
-            </Card>
-          )}
-        </div>
-      </div>
-
       <Card className="bg-gradient-to-r from-primary-500 to-primary-600 text-white p-6">
         <div className="flex items-start gap-4">
           <div className="p-3 bg-white/20 rounded-xl">
-            <Trophy className="w-8 h-8 text-white" />
+            <TrendingUp className="w-8 h-8 text-white" />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-bold mb-1">{t('dashboard.systemStats')}</h3>
+            <h3 className="text-lg font-bold mb-1">{t('dashboard.systemStats', { defaultValue: 'System Overview' })}</h3>
             <p className="text-white/90 text-sm mb-4">
-              {t('dashboard.totalUsers', {
-                count: (stats?.parents || 0) + (stats?.teachers || 0) + (stats?.receptions || 0),
-                active: stats?.receptions - (stats?.pendingReceptions || 0),
-                groups: stats?.groups || 0
-              })}
+              {stats?.totalUsers !== undefined 
+                ? t('dashboard.totalUsers', { 
+                    count: stats?.totalUsers || 0,
+                    defaultValue: `Total Users: ${stats?.totalUsers || 0} | Schools: ${stats?.totalSchools || 0} | Revenue: $${(stats?.totalRevenue || 0).toLocaleString()}`
+                  })
+                : t('dashboard.totalUsers', {
+                    count: (stats?.parents || 0) + (stats?.teachers || 0) + (stats?.receptions || 0),
+                    active: (stats?.receptions || 0) - (stats?.pendingReceptions || 0),
+                    groups: stats?.groups || 0,
+                    defaultValue: `Users: ${(stats?.parents || 0) + (stats?.teachers || 0) + (stats?.receptions || 0)} | Active Receptions: ${(stats?.receptions || 0) - (stats?.pendingReceptions || 0)} | Groups: ${stats?.groups || 0}`
+                  })
+              }
             </p>
           </div>
         </div>
