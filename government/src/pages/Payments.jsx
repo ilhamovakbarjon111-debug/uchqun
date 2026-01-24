@@ -114,7 +114,11 @@ const Payments = () => {
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 mb-2">
-                    {t('payments.school', { defaultValue: 'Maktab' })}: {payment.schoolName || (payment.school?.name) || t('payments.unknown', { defaultValue: 'Noma\'lum' })}
+                    {t('payments.school', { defaultValue: 'Maktab' })}: {
+                      payment.schoolName || 
+                      (payment.school && payment.school.name) || 
+                      (payment.schoolId ? 'Loading...' : t('payments.unknown', { defaultValue: 'Noma\'lum' }))
+                    }
                   </p>
                   <p className="text-sm text-gray-600">
                     {t('payments.date', { defaultValue: 'Sana' })}: {payment.createdAt ? new Date(payment.createdAt).toLocaleDateString('uz-UZ') : '—'}

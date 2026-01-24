@@ -442,10 +442,20 @@ export const getPaymentsStats = async (req, res) => {
       const school = payment.school || (payment.schoolId ? schoolsMap.get(payment.schoolId) : null);
       const schoolName = school?.name || null;
       
+      // Debug logging
+      if (!schoolName && payment.schoolId) {
+        logger.warn('School not found for payment', {
+          paymentId: payment.id,
+          schoolId: payment.schoolId,
+          schoolFromInclude: !!payment.school,
+          schoolFromMap: !!schoolsMap.get(payment.schoolId),
+        });
+      }
+      
       return {
         ...paymentData,
         parentName: parentName,
-        schoolName: schoolName,
+        schoolName: schoolName || (school?.name) || null,
         // Also include parent and school objects for fallback
         parent: parent ? {
           id: parent.id,
