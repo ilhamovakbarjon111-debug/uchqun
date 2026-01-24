@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Card from '../components/Card';
@@ -12,12 +13,15 @@ import {
   AlertTriangle,
   TrendingUp,
   BarChart3,
+  Shield,
 } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [schools, setSchools] = useState([]);
+  const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,16 +31,19 @@ const Dashboard = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [overviewRes, schoolsRes] = await Promise.all([
+      const [overviewRes, schoolsRes, adminsRes] = await Promise.all([
         api.get('/government/overview'),
         api.get('/government/schools?limit=10'),
+        api.get('/government/admins'),
       ]);
 
       const overviewData = overviewRes.data.data;
       const schoolsData = schoolsRes.data.data?.schools || [];
+      const adminsData = adminsRes.data?.data || [];
 
       setStats(overviewData);
       setSchools(schoolsData);
+      setAdmins(adminsData);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -127,6 +134,54 @@ const Dashboard = () => {
           );
         })}
       </div>
+
+      {/* Admins List */}
+      <Card>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Adminlar</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Barcha adminlar ro'yxati ({admins.length})
+            </p>
+          </div>
+          <Shield className="w-6 h-6 text-gray-400" />
+        </div>
+
+        {admins.length === 0 ? (
+          <div className="text-center py-12">
+            <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-600">Adminlar topilmadi</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {admins.map((admin) => (
+              <div
+                key={admin.id}
+                onClick={() => navigate(`/government/admin/${admin.id}`)}
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-6 h-6 text-primary-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 mb-1">
+                      {admin.firstName} {admin.lastName}
+                    </h3>
+                    <p className="text-sm text-gray-600 truncate">{admin.email}</p>
+                    {admin.phone && (
+                      <p className="text-xs text-gray-500 mt-1">{admin.phone}</p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString('uz-UZ') : '—'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
       {/* Schools with Ratings */}
       <Card>

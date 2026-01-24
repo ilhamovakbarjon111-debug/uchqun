@@ -494,3 +494,160 @@ async function getPaymentsData(schoolId, startDate, endDate) {
   const total = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
   return { totalRevenue: total, payments: payments.length, data: payments };
 }
+
+/**
+ * Get all Admin accounts (Government view)
+ * GET /api/government/admins
+ */
+export const getAdmins = async (req, res) => {
+  try {
+    const admins = await User.findAll({
+      where: { role: 'admin' },
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+    });
+
+    logger.info('Government fetched admins', {
+      count: admins.length,
+      userId: req.user?.id,
+    });
+
+    res.json({
+      success: true,
+      data: admins.map(a => a.toJSON()),
+      count: admins.length,
+    });
+  } catch (error) {
+    logger.error('Get admins error (government)', { 
+      error: error.message, 
+      stack: error.stack,
+      userId: req.user?.id,
+    });
+    res.status(500).json({ 
+      error: 'Failed to fetch admin accounts',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+/**
+ * Get admin details with all related data
+ * GET /api/government/admins/:id
+ */
+export const getAdminDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const admin = await User.findOne({
+      where: { id, role: 'admin' },
+      attributes: { exclude: ['password'] },
+    });
+
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    // Get all receptions created by this admin
+    const receptions = await User.findAll({
+      where: { role: 'reception', createdBy: id },
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+    });
+
+    const receptionIds = receptions.map(r => r.id);
+
+    // Get schools created by these receptions
+    const schools = await School.findAll({
+      where: { createdBy: { [Op.in]: receptionIds } },
+      order: [['createdAt', 'DESC']],
+    });
+
+    // Get teachers created by these receptions
+    const teachers = await User.findAll({
+      where: { 
+        role: 'teacher',
+        createdBy: { [Op.in]: receptionIds }
+      },
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+    });
+
+    // Get parents created by these receptions
+    const parents = await User.findAll({
+      where: { 
+        role: 'parent',
+        createdBy: { [Op.in]: receptionIds }
+      },
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+    });
+
+    // Get children of these parents
+    const parentIds = parents.map(p => p.id);
+    const children = await Child.findAll({
+      where: { parentId: { [Op.in]: parentIds } },
+      order: [['createdAt', 'DESC']],
+    });
+
+    // Get total students count
+    const studentsCount = children.length;
+
+    // Get total revenue from payments
+    const payments = await Payment.findAll({
+      where: { parentId: { [Op.in]: parentIds } },
+    });
+    const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+
+    // Get school ratings
+    const schoolIds = schools.map(s => s.id);
+    const ratings = await SchoolRating.findAll({
+      where: { schoolId: { [Op.in]: schoolIds } },
+    });
+    const avgRating = ratings.length > 0
+      ? (ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length).toFixed(1)
+      : 0;
+
+    logger.info('Government fetched admin details', {
+      adminId: id,
+      receptionsCount: receptions.length,
+      schoolsCount: schools.length,
+      teachersCount: teachers.length,
+      parentsCount: parents.length,
+      studentsCount: studentsCount,
+      userId: req.user?.id,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        admin: admin.toJSON(),
+        stats: {
+          receptions: receptions.length,
+          schools: schools.length,
+          teachers: teachers.length,
+          parents: parents.length,
+          students: studentsCount,
+          totalRevenue,
+          averageRating: parseFloat(avgRating),
+          ratingsCount: ratings.length,
+        },
+        receptions: receptions.map(r => r.toJSON()),
+        schools: schools.map(s => s.toJSON()),
+        teachers: teachers.map(t => t.toJSON()),
+        parents: parents.map(p => p.toJSON()),
+        children: children.map(c => c.toJSON()),
+      },
+    });
+  } catch (error) {
+    logger.error('Get admin details error (government)', { 
+      error: error.message, 
+      stack: error.stack,
+      adminId: req.params.id,
+      userId: req.user?.id,
+    });
+    res.status(500).json({ 
+      error: 'Failed to fetch admin details',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};

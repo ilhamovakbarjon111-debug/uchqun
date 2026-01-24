@@ -7,6 +7,8 @@ import {
   getPaymentsStats,
   generateStats,
   getSavedStats,
+  getAdmins,
+  getAdminDetails,
 } from '../controllers/governmentController.js';
 import { authenticate, requireGovernment } from '../middleware/auth.js';
 
@@ -35,5 +37,11 @@ router.post('/stats/generate', generateStats);
 
 // Get saved statistics
 router.get('/stats', getSavedStats);
+
+// Get all admins
+router.get('/admins', getAdmins);
+
+// Get admin details with all related data
+router.get('/admins/:id', getAdminDetails);
 
 export default router;
