@@ -61,7 +61,7 @@ const Payments = () => {
             <p className="text-sm opacity-90 mb-1">
               {t('payments.totalRevenue', { defaultValue: 'Jami daromad' })}
             </p>
-            <p className="text-3xl font-bold">{totalRevenue.toLocaleString()} UZS</p>
+            <p className="text-3xl font-bold">{totalRevenue.toLocaleString('uz-UZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} UZS</p>
           </div>
           <DollarSign className="w-12 h-12 opacity-80" />
         </div>
@@ -84,7 +84,9 @@ const Payments = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-bold text-gray-900">
-                      {payment.parentName || t('payments.unknown', { defaultValue: 'Noma\'lum ota-ona' })}
+                      {payment.parentName || (payment.parent 
+                        ? `${payment.parent?.firstName || ''} ${payment.parent?.lastName || ''}`.trim() || t('payments.unknown', { defaultValue: 'Noma\'lum ota-ona' })
+                        : t('payments.unknown', { defaultValue: 'Noma\'lum ota-ona' }))}
                     </h3>
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -103,7 +105,7 @@ const Payments = () => {
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 mb-2">
-                    {t('payments.school', { defaultValue: 'Maktab' })}: {payment.schoolName || t('payments.unknown', { defaultValue: 'Noma\'lum' })}
+                    {t('payments.school', { defaultValue: 'Maktab' })}: {payment.schoolName || payment.school?.name || t('payments.unknown', { defaultValue: 'Noma\'lum' })}
                   </p>
                   <p className="text-sm text-gray-600">
                     {t('payments.date', { defaultValue: 'Sana' })}: {payment.createdAt ? new Date(payment.createdAt).toLocaleDateString('uz-UZ') : '—'}
@@ -111,7 +113,7 @@ const Payments = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-gray-900">
-                    {(payment.amount || 0).toLocaleString()} UZS
+                    {parseFloat(payment.amount || 0).toLocaleString('uz-UZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} UZS
                   </p>
                   {payment.status === 'completed' ? (
                     <CheckCircle className="w-5 h-5 text-green-500 mt-2 mx-auto" />

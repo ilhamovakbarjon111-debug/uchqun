@@ -378,11 +378,20 @@ export const getPaymentsStats = async (req, res) => {
       where,
       include: [
         {
+          model: User,
+          as: 'parent',
+          required: false,
+          attributes: ['id', 'firstName', 'lastName', 'email'],
+        },
+        {
           model: School,
           as: 'school',
           required: false,
+          attributes: ['id', 'name'],
         },
       ],
+      order: [['createdAt', 'DESC']],
+      limit: 100,
     });
 
     const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
@@ -396,13 +405,22 @@ export const getPaymentsStats = async (req, res) => {
       byType[type].amount += parseFloat(p.amount || 0);
     });
 
+    // Format payments with parent and school names
+    const formattedPayments = payments.map(payment => ({
+      ...payment.toJSON(),
+      parentName: payment.parent 
+        ? `${payment.parent.firstName || ''} ${payment.parent.lastName || ''}`.trim()
+        : null,
+      schoolName: payment.school?.name || null,
+    }));
+
     res.json({
       success: true,
       data: {
         totalRevenue,
         totalPayments: payments.length,
         byType,
-        payments: payments.slice(0, 100), // Limit response size
+        payments: formattedPayments,
       },
     });
   } catch (error) {
