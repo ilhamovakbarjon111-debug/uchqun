@@ -59,7 +59,7 @@ const Sidebar = ({ onClose }) => {
           <Crown className="w-5 h-5 text-yellow-300" strokeWidth={1.5} />
         </div>
         <h1 className="text-lg font-bold text-white tracking-tight">
-          Uchqun Business
+          Uchqun Admin
         </h1>
       </div>
 

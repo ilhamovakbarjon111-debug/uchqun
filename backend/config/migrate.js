@@ -12,13 +12,28 @@ dotenv.config();
 // Use DATABASE_URL if available (Railway), otherwise use individual env vars
 let sequelize;
 
+// Determine if we should use SSL
+const isProduction = process.env.NODE_ENV === 'production';
+const useSSL = isProduction && (process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL);
+
 if (process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL) {
   const dbUrl = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL;
+  
+  // Check if it's a local database (localhost or 127.0.0.1)
+  const isLocalDatabase = dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1');
+  
   sequelize = new Sequelize(dbUrl, {
     dialect: 'postgres',
     logging: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 60000,
+      idle: 10000,
+    },
     dialectOptions: {
-      ssl: process.env.NODE_ENV === 'production' ? {
+      // Only use SSL in production and not for local databases
+      ssl: useSSL && !isLocalDatabase ? {
         require: true,
         rejectUnauthorized: false
       } : false
@@ -34,6 +49,16 @@ if (process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL) {
       port: process.env.DB_PORT || 5432,
       dialect: 'postgres',
       logging: false,
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 60000,
+        idle: 10000,
+      },
+      dialectOptions: {
+        // No SSL for local development
+        ssl: false
+      }
     }
   );
 }
@@ -43,8 +68,29 @@ if (process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL) {
  */
 async function runMigrations() {
   try {
-    await sequelize.authenticate();
-    console.log('✓ Database connection established');
+    // Test connection with retry logic
+    let retries = 3;
+    let connected = false;
+    
+    while (retries > 0 && !connected) {
+      try {
+        await sequelize.authenticate();
+        console.log('✓ Database connection established');
+        connected = true;
+      } catch (authError) {
+        retries--;
+        if (retries > 0) {
+          console.log(`⚠ Database connection failed, retrying... (${3 - retries}/3)`);
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        } else {
+          throw authError;
+        }
+      }
+    }
+    
+    if (!connected) {
+      throw new Error('Failed to connect to database after 3 retries');
+    }
 
     const migrationsDir = path.join(__dirname, '../migrations');
     
@@ -122,8 +168,26 @@ async function runMigrations() {
     console.log('✓ All migrations completed');
     return { success: true, message: 'All migrations completed' };
   } catch (error) {
-    console.error('✗ Migration error:', error);
-    console.error('Error stack:', error.stack);
+    console.error('✗ Migration error:', error.message || error);
+    if (error.stack) {
+      console.error('Error stack:', error.stack);
+    }
+    
+    // Provide helpful error messages
+    if (error.message && error.message.includes('Connection terminated')) {
+      console.error('\n💡 Tip: Make sure PostgreSQL server is running');
+      console.error('   On Windows: Check if PostgreSQL service is running in Services');
+      console.error('   Or try: net start postgresql-x64-XX (replace XX with version)');
+    } else if (error.message && error.message.includes('ECONNREFUSED')) {
+      console.error('\n💡 Tip: PostgreSQL server is not accepting connections');
+      console.error('   Check if PostgreSQL is running on the correct host and port');
+    } else if (error.message && error.message.includes('password authentication failed')) {
+      console.error('\n💡 Tip: Database password is incorrect');
+      console.error('   Check your .env file DB_PASSWORD setting');
+    } else if (error.message && error.message.includes('database') && error.message.includes('does not exist')) {
+      console.error('\n💡 Tip: Database does not exist');
+      console.error('   Run: npm run create:db to create the database');
+    }
     // Don't close connection if called from API route
     const isDirectCall = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
     if (isDirectCall) {

@@ -60,11 +60,7 @@ const MonitoringJournal = () => {
       const response = await api.get('/teacher/parents');
       const parentsList = Array.isArray(response.data.parents) ? response.data.parents : [];
       setParents(parentsList);
-<<<<<<< HEAD
-      
-=======
 
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
       // Collect all children
       const allChildren = [];
       parentsList.forEach(parent => {
@@ -77,11 +73,7 @@ const MonitoringJournal = () => {
       setChildren(allChildren);
     } catch (error) {
       console.error('Error loading parents:', error);
-<<<<<<< HEAD
-      showError('Failed to load parents');
-=======
       showError(t('monitoring.toastLoadParentsError'));
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
     }
   };
 
@@ -93,11 +85,7 @@ const MonitoringJournal = () => {
       setMonitoringRecords(records);
     } catch (error) {
       console.error('Error loading monitoring records:', error);
-<<<<<<< HEAD
-      showError('Failed to load monitoring records');
-=======
       showError(t('monitoring.toastLoadError'));
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
     } finally {
       setLoading(false);
     }
@@ -148,69 +136,40 @@ const MonitoringJournal = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-<<<<<<< HEAD
-    
-    if (!formData.childId || !formData.date) {
-      showError('Please select a child and date');
-=======
 
     if (!formData.childId || !formData.date) {
       showError(t('monitoring.selectChildError'));
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
       return;
     }
 
     try {
       if (editingRecord) {
         await api.put(`/teacher/emotional-monitoring/${editingRecord.id}`, formData);
-<<<<<<< HEAD
-        success('Monitoring record updated successfully');
-      } else {
-        await api.post('/teacher/emotional-monitoring', formData);
-        success('Monitoring record created successfully');
-=======
         success(t('monitoring.toastUpdate'));
       } else {
         await api.post('/teacher/emotional-monitoring', formData);
         success(t('monitoring.toastCreate'));
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
       }
       handleCloseModal();
       loadMonitoringRecords();
     } catch (error) {
       console.error('Error saving monitoring record:', error);
-<<<<<<< HEAD
-      showError(error.response?.data?.error || 'Failed to save monitoring record');
-=======
       showError(error.response?.data?.error || t('monitoring.toastError'));
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
     }
   };
 
   const handleDelete = async (id) => {
-<<<<<<< HEAD
-    if (!confirm('Are you sure you want to delete this monitoring record?')) {
-=======
     if (!confirm(t('monitoring.confirmDelete'))) {
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
       return;
     }
 
     try {
       await api.delete(`/teacher/emotional-monitoring/${id}`);
-<<<<<<< HEAD
-      success('Monitoring record deleted successfully');
-      loadMonitoringRecords();
-    } catch (error) {
-      console.error('Error deleting monitoring record:', error);
-      showError('Failed to delete monitoring record');
-=======
       success(t('monitoring.toastDelete'));
       loadMonitoringRecords();
     } catch (error) {
       console.error('Error deleting monitoring record:', error);
       showError(t('monitoring.toastError'));
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
     }
   };
 
@@ -224,19 +183,6 @@ const MonitoringJournal = () => {
     }));
   };
 
-<<<<<<< HEAD
-  const emotionalStateLabels = {
-    stable: 'Боланинг ҳиссий ҳолати барқарор',
-    positiveEmotions: 'Бола ижобий ҳис-туйғуларни намоён этади (табассум, қувонч, қизиқиш)',
-    noAnxiety: 'Хавотирланиш белгилари йўқ (тортинчоқлик, йиғлоқилик, ўзини четга олиш)',
-    noHostility: 'Болалар ва катталарга нисбатан душманлик муносабати кузатилмайди',
-    calmResponse: 'Танбеҳ ва илтимосларга хотиржам муносабат билдиради',
-    showsEmpathy: 'Бошқа болаларга ҳамдардлик кўрсатади',
-    quickRecovery: 'Стрессли вазиятдан кейин тезда ўзини ўнглаб олади',
-    stableMood: 'Кайфияти кун давомида барқарор туради',
-    trustingRelationship: 'Тарбиячи билан муносабати ишончли ва мустаҳкам',
-  };
-=======
   const emotionalStateKeys = [
     'stable',
     'positiveEmotions',
@@ -248,7 +194,6 @@ const MonitoringJournal = () => {
     'stableMood',
     'trustingRelationship',
   ];
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
 
   const getRecordForChild = (childId, date) => {
     return monitoringRecords.find(r => r.childId === childId && r.date === date);
@@ -267,17 +212,10 @@ const MonitoringJournal = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-sm">
-<<<<<<< HEAD
-            Ҳафталик мониторинг журнали
-          </h1>
-          <p className="text-white/90 font-medium mt-1 drop-shadow-sm">
-            Болаларнинг эмоционал ҳолатини мониторинг қилиш
-=======
             {t('monitoring.title')}
           </h1>
           <p className="text-white/90 font-medium mt-1 drop-shadow-sm">
             {t('monitoring.subtitle')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
           </p>
         </div>
       </div>
@@ -307,20 +245,12 @@ const MonitoringJournal = () => {
                 {todayRecord ? (
                   <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
                     <CheckCircle2 className="w-4 h-4" />
-<<<<<<< HEAD
-                    <span>Бугун учун баҳоланди</span>
-=======
                     <span>{t('monitoring.assessedToday')}</span>
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-sm text-gray-400">
                     <FileX className="w-4 h-4" />
-<<<<<<< HEAD
-                    <span>Бугун учун баҳоланмади</span>
-=======
                     <span>{t('monitoring.notAssessedToday')}</span>
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                   </div>
                 )}
 
@@ -332,20 +262,12 @@ const MonitoringJournal = () => {
                     {todayRecord ? (
                       <>
                         <Edit2 className="w-4 h-4" />
-<<<<<<< HEAD
-                        Тахрирлаш
-=======
                         {t('monitoring.edit')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                       </>
                     ) : (
                       <>
                         <Plus className="w-4 h-4" />
-<<<<<<< HEAD
-                        Баҳолаш
-=======
                         {t('monitoring.assess')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                       </>
                     )}
                   </button>
@@ -362,11 +284,7 @@ const MonitoringJournal = () => {
           <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-<<<<<<< HEAD
-                {editingRecord ? 'Мониторинг журналини тахрирлаш' : 'Янги мониторинг жумласи'}
-=======
                 {editingRecord ? t('monitoring.editModal') : t('monitoring.createModal')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -393,11 +311,7 @@ const MonitoringJournal = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-<<<<<<< HEAD
-                  Сана
-=======
                   {t('monitoring.date')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                 </label>
                 <input
                   type="date"
@@ -410,17 +324,10 @@ const MonitoringJournal = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-4">
-<<<<<<< HEAD
-                  Болаларнинг эмоционал ҳолати
-                </label>
-                <div className="space-y-3">
-                  {Object.entries(emotionalStateLabels).map(([key, label]) => (
-=======
                   {t('monitoring.emotionalState')}
                 </label>
                 <div className="space-y-3">
                   {emotionalStateKeys.map((key) => (
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                     <label
                       key={key}
                       className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
@@ -431,11 +338,7 @@ const MonitoringJournal = () => {
                         onChange={() => toggleEmotionalState(key)}
                         className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
-<<<<<<< HEAD
-                      <span className="text-sm text-gray-700 flex-1">{label}</span>
-=======
                       <span className="text-sm text-gray-700 flex-1">{t(`monitoring.emotionalStates.${key}`)}</span>
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                     </label>
                   ))}
                 </div>
@@ -443,43 +346,27 @@ const MonitoringJournal = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-<<<<<<< HEAD
-                  Изоҳ / бошқа
-=======
                   {t('monitoring.notes')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                 </label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                   rows={4}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-<<<<<<< HEAD
-                  placeholder="Қўшимча изоҳлар..."
-=======
                   placeholder={t('monitoring.notesPlaceholder')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-<<<<<<< HEAD
-                  Масъул тарбиячи ФИШ ва имзоси
-=======
                   {t('monitoring.teacherSignature')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                 </label>
                 <input
                   type="text"
                   value={formData.teacherSignature}
                   onChange={(e) => setFormData(prev => ({ ...prev, teacherSignature: e.target.value }))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-<<<<<<< HEAD
-                  placeholder="ФИШ ва имзо"
-=======
                   placeholder={t('monitoring.teacherSignaturePlaceholder')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                 />
               </div>
 
@@ -489,22 +376,14 @@ const MonitoringJournal = () => {
                   className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
                 >
                   <Save className="w-5 h-5" />
-<<<<<<< HEAD
-                  Сақлаш
-=======
                   {t('monitoring.save')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                 </button>
                 <button
                   type="button"
                   onClick={handleCloseModal}
                   className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                 >
-<<<<<<< HEAD
-                  Бекор қилиш
-=======
                   {t('monitoring.cancel')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                 </button>
                 {editingRecord && (
                   <button
@@ -513,11 +392,7 @@ const MonitoringJournal = () => {
                     className="px-6 py-3 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium flex items-center gap-2"
                   >
                     <Trash2 className="w-5 h-5" />
-<<<<<<< HEAD
-                    Ўчириш
-=======
                     {t('monitoring.delete')}
->>>>>>> 5963708c97ac0e677e2213d4c11535b5b13ef28e
                   </button>
                 )}
               </div>

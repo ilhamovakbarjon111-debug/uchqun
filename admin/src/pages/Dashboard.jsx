@@ -138,16 +138,16 @@ const Dashboard = () => {
           <p className="text-white/90 text-sm font-medium">{t('dashboard.role')}</p>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-white">
-          {t('dashboard.welcome', { name: user?.firstName || 'Business', defaultValue: `Welcome, ${user?.firstName || 'Business'}` })}
+          {t('dashboard.welcome', { name: user?.firstName || 'Admin', defaultValue: `Welcome, ${user?.firstName || 'Admin'}` })}
         </h1>
-        <p className="text-white/80 text-sm mt-2">{t('dashboard.subtitle', { defaultValue: 'Business Statistics & Analytics Dashboard' })}</p>
+        <p className="text-white/80 text-sm mt-2">{t('dashboard.subtitle', { defaultValue: 'Admin Statistics & Analytics Dashboard' })}</p>
       </div>
 
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.overview')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {overviewCards.map((card) => (
-            <Link key={card.title} to={card.link}>
+          {overviewCards.map((card, index) => (
+            <Link key={card.link || `card-${index}`} to={card.link}>
               <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-xl ${card.color}`}>
@@ -203,8 +203,8 @@ const Dashboard = () => {
         {receptions.length > 0 ? (
           <Card className="overflow-hidden">
             <div className="divide-y divide-gray-100">
-              {receptions.slice(0, 5).map((reception) => (
-                <div key={reception._id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+              {receptions.slice(0, 5).map((reception, index) => (
+                <div key={reception.id || reception._id || `reception-${index}`} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-semibold">
                       {reception.firstName?.charAt(0)}{reception.lastName?.charAt(0)}
@@ -223,7 +223,7 @@ const Dashboard = () => {
                       {reception.isActive ? t('common.active', { defaultValue: 'Active' }) : t('common.pending', { defaultValue: 'Pending' })}
                     </span>
                     <Link
-                      to={`/admin/receptions/${reception._id}`}
+                      to={`/admin/receptions/${reception.id || reception._id}`}
                       className="text-primary-600 hover:text-primary-700"
                     >
                       <BarChart3 className="w-5 h-5" />

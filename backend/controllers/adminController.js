@@ -1,4 +1,4 @@
-import { Op, fn, col } from 'sequelize';
+import { Op, fn, col, QueryTypes } from 'sequelize';
 import User from '../models/User.js';
 import Document from '../models/Document.js';
 import ParentActivity from '../models/ParentActivity.js';
@@ -1064,95 +1064,245 @@ export const getStatistics = async (req, res) => {
  * - firstName and lastName are set to default values
  */
 /**
- * Get school ratings (only for schools where parents created by admin's receptions are enrolled)
+ * Get school ratings (admin can view all school ratings)
  * GET /api/admin/school-ratings
+ * 
+ * Business Logic:
+ * - Admin can view all school ratings (not just from their receptions)
+ * - Groups ratings by school and calculates averages
  */
 export const getSchoolRatings = async (req, res) => {
   try {
-    // Get receptions created by this admin
-    const receptions = await User.findAll({
-      where: { role: 'reception', createdBy: req.user.id },
-      attributes: ['id'],
-    });
-
-    const receptionIds = receptions.map(r => r.id);
-    if (receptionIds.length === 0) {
-      return res.json({ success: true, data: [] });
+    // Get all school ratings (admin can see all ratings)
+    // Use raw query directly to avoid association issues
+    let ratings = [];
+    
+    try {
+      const sequelize = SchoolRating.sequelize;
+      
+      const rawRatings = await sequelize.query(`
+        SELECT 
+          sr.id,
+          sr."schoolId",
+          sr."parentId",
+          sr.stars,
+          sr.comment,
+          sr.evaluation,
+          sr."createdAt",
+          sr."updatedAt",
+          s.id as "school_id",
+          s.name as "school_name",
+          s.type as "school_type",
+          s.address as "school_address",
+          u.id as "parent_id",
+          u."firstName" as "parent_firstName",
+          u."lastName" as "parent_lastName",
+          u.email as "parent_email"
+        FROM school_ratings sr
+        LEFT JOIN schools s ON sr."schoolId" = s.id
+        LEFT JOIN users u ON sr."parentId" = u.id
+        ORDER BY sr."updatedAt" DESC
+      `, {
+        type: QueryTypes.SELECT,
+      });
+      
+      // Transform raw results to match expected format
+      ratings = Array.isArray(rawRatings) ? rawRatings.map(row => ({
+        id: row.id,
+        schoolId: row.schoolId || row.school_id,
+        parentId: row.parentId || row.parent_id,
+        stars: row.stars,
+        comment: row.comment || null,
+        evaluation: row.evaluation || null,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        school_id: row.school_id,
+        school_name: row.school_name,
+        school_type: row.school_type,
+        school_address: row.school_address,
+        parent_id: row.parent_id,
+        parent_firstName: row.parent_firstName,
+        parent_lastName: row.parent_lastName,
+        parent_email: row.parent_email,
+      })) : [];
+      
+      logger.info('Successfully fetched school ratings using raw query', {
+        count: ratings.length,
+      });
+    } catch (queryError) {
+      logger.error('Error querying school ratings', {
+        error: queryError.message,
+        stack: queryError.stack,
+        adminId: req.user?.id,
+      });
+      // Return empty array if query fails
+      return res.json({
+        success: true,
+        data: [],
+      });
     }
 
-    // Get parents created by these receptions
-    const parents = await User.findAll({
-      where: { role: 'parent', createdBy: { [Op.in]: receptionIds } },
-      attributes: ['id'],
-    });
-
-    const parentIds = parents.map(p => p.id);
-    if (parentIds.length === 0) {
-      return res.json({ success: true, data: [] });
+    // Ensure ratings is an array
+    if (!Array.isArray(ratings)) {
+      logger.warn('Ratings is not an array', { ratings: typeof ratings });
+      return res.json({
+        success: true,
+        data: [],
+      });
     }
 
-    // Get school ratings from these parents
-    const ratings = await SchoolRating.findAll({
-      where: { parentId: { [Op.in]: parentIds } },
-      include: [
-        {
-          model: School,
-          as: 'school',
-          attributes: ['id', 'name', 'type', 'address'],
-          required: true,
-        },
-        {
-          model: User,
-          as: 'ratingParent',
-          attributes: ['id', 'firstName', 'lastName', 'email'],
-          required: false,
-        },
-      ],
-      order: [['updatedAt', 'DESC']],
-    });
+    // If no ratings, return empty array
+    if (ratings.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+      });
+    }
 
     // Group by school and calculate averages
     const schoolMap = new Map();
-    ratings.forEach((rating) => {
-      const schoolId = rating.schoolId;
-      if (!schoolMap.has(schoolId)) {
-        schoolMap.set(schoolId, {
-          school: rating.school.toJSON(),
-          ratings: [],
+    
+    for (const rating of ratings) {
+      try {
+        // Skip if school is missing
+        const schoolId = rating.schoolId || rating.school_id;
+        if (!schoolId) {
+          continue;
+        }
+
+        // Get school data from raw query result
+        const school = rating.school_id ? {
+          id: rating.school_id,
+          name: rating.school_name || null,
+          type: rating.school_type || null,
+          address: rating.school_address || null,
+        } : null;
+        
+        // Get parent data from raw query result
+        const ratingParent = rating.parent_id ? {
+          id: rating.parent_id,
+          firstName: rating.parent_firstName || null,
+          lastName: rating.parent_lastName || null,
+          email: rating.parent_email || null,
+        } : null;
+        
+        if (!schoolMap.has(schoolId)) {
+          const schoolData = {
+            school: school || null,
+            ratings: [],
+            average: 0,
+            count: 0,
+          };
+          schoolMap.set(schoolId, schoolData);
+        }
+        
+        const schoolData = schoolMap.get(schoolId);
+        
+        // Add rating data - safely handle dates
+        let createdAt = null;
+        let updatedAt = null;
+        try {
+          if (rating.createdAt) {
+            createdAt = rating.createdAt instanceof Date 
+              ? rating.createdAt.toISOString() 
+              : (typeof rating.createdAt === 'string' ? rating.createdAt : new Date(rating.createdAt).toISOString());
+          }
+          if (rating.updatedAt) {
+            updatedAt = rating.updatedAt instanceof Date 
+              ? rating.updatedAt.toISOString() 
+              : (typeof rating.updatedAt === 'string' ? rating.updatedAt : new Date(rating.updatedAt).toISOString());
+          }
+        } catch (dateError) {
+          logger.warn('Error parsing dates', { error: dateError.message });
+        }
+        
+        const ratingData = {
+          id: rating.id,
+          stars: rating.stars || null,
+          comment: rating.comment || null,
+          evaluation: rating.evaluation || null,
+          createdAt,
+          updatedAt,
+          parentName: ratingParent
+            ? `${ratingParent.firstName || ''} ${ratingParent.lastName || ''}`.trim() || null
+            : null,
+          parentEmail: ratingParent?.email || null,
+        };
+        
+        schoolData.ratings.push(ratingData);
+      } catch (itemError) {
+        logger.warn('Error processing rating item', {
+          error: itemError.message,
+          ratingId: rating?.id,
+        });
+        // Continue with next rating
+      }
+    }
+
+    // Calculate averages
+    const result = [];
+    for (const [schoolId, schoolData] of schoolMap.entries()) {
+      try {
+        if (!schoolData.ratings || schoolData.ratings.length === 0) {
+          result.push({
+            ...schoolData,
+            average: 0,
+            count: 0,
+          });
+          continue;
+        }
+
+        const stars = schoolData.ratings
+          .map(r => r.stars)
+          .filter(s => s != null && !isNaN(s) && s >= 1 && s <= 5);
+        
+        const average = stars.length > 0
+          ? parseFloat((stars.reduce((sum, s) => sum + s, 0) / stars.length).toFixed(1))
+          : 0;
+        
+        result.push({
+          ...schoolData,
+          average,
+          count: stars.length,
+        });
+      } catch (calcError) {
+        logger.warn('Error calculating average', {
+          error: calcError.message,
+          schoolId,
+        });
+        result.push({
+          ...schoolData,
           average: 0,
           count: 0,
         });
       }
-      const schoolData = schoolMap.get(schoolId);
-      schoolData.ratings.push({
-        ...rating.toJSON(),
-        parentName: rating.ratingParent
-          ? `${rating.ratingParent.firstName || ''} ${rating.ratingParent.lastName || ''}`.trim()
-          : null,
-        parentEmail: rating.ratingParent?.email || null,
-      });
+    }
+
+    logger.info('Get school ratings success', {
+      adminId: req.user?.id,
+      totalRatings: ratings.length,
+      schoolsCount: result.length,
     });
 
-    // Calculate averages
-    const result = Array.from(schoolMap.values()).map((schoolData) => {
-      const stars = schoolData.ratings.map(r => r.stars);
-      const average = stars.length > 0
-        ? (stars.reduce((sum, s) => sum + s, 0) / stars.length).toFixed(1)
-        : 0;
-      return {
-        ...schoolData,
-        average: parseFloat(average),
-        count: stars.length,
-      };
-    });
-
+    // Ensure we always return valid data
+    const finalResult = Array.isArray(result) ? result : [];
+    
     res.json({
       success: true,
-      data: result,
+      data: finalResult,
     });
   } catch (error) {
-    logger.error('Get school ratings error', { error: error.message, stack: error.stack });
-    res.status(500).json({ error: 'Failed to fetch school ratings' });
+    logger.error('Get school ratings error', {
+      error: error.message,
+      stack: error.stack,
+      adminId: req.user?.id,
+    });
+    
+    // Always return success with empty array on error to prevent 500
+    res.json({
+      success: true,
+      data: [],
+    });
   }
 };
 

@@ -7,12 +7,12 @@ import {
   generateStats,
   getSavedStats,
 } from '../controllers/businessController.js';
-import { authenticate, requireBusiness } from '../middleware/auth.js';
+import { authenticate, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.use(authenticate);
-router.use(requireBusiness);
+router.use(requireAdmin);
 
 // Overview statistics
 router.get('/overview', getOverview);

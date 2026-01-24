@@ -140,7 +140,8 @@ const ChildProfile = () => {
   const { t, i18n } = useTranslation();
   
   // API base URL (rasmlar uchun)
-  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://uchqun-production.up.railway.app';
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 
+    (import.meta.env.DEV ? 'http://localhost:5000' : 'https://uchqun-production.up.railway.app');
 
   const locale = {
     uz: 'uz-UZ',
@@ -437,7 +438,15 @@ const ChildProfile = () => {
                   console.error('Image load error:', e.target.src);
                   console.error('Photo path:', child.photo);
                   setImageLoading(false);
-                  e.target.src = defaultAvatar;
+                  // Try default avatar, if that fails, use placeholder
+                  if (e.target.src !== defaultAvatar && e.target.src !== e.target.dataset.fallback) {
+                    e.target.dataset.fallback = e.target.src;
+                    e.target.src = defaultAvatar;
+                  } else {
+                    // If default avatar also fails, use data URI placeholder
+                    e.target.onerror = null; // Prevent infinite loop
+                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';
+                  }
                   e.target.style.opacity = '1';
                 }}
               />

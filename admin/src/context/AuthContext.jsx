@@ -26,18 +26,22 @@ export const AuthProvider = ({ children }) => {
           const response = await api.get('/auth/me');
           const userData = response.data;
           
-          // Only allow Business role
-          if (userData.role === 'business') {
+          // Only allow Admin role
+          if (userData.role === 'admin') {
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
           } else {
-            // Not a business user, clear auth
+            // Not an admin user, clear auth
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             localStorage.removeItem('user');
           }
         } catch (error) {
-          // Token invalid, clear auth
+          // Token invalid or expired, clear auth silently
+          // Don't log 401 errors as they're expected when token expires
+          if (error.response?.status !== 401) {
+            console.error('Auth check error:', error);
+          }
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
@@ -54,9 +58,9 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/login', { email, password });
       const { accessToken, refreshToken, user: userData } = response.data;
 
-      // Only allow Business role
-      if (userData.role !== 'business') {
-        return { success: false, error: 'Access denied. Business role required.' };
+      // Only allow Admin role
+      if (userData.role !== 'admin') {
+        return { success: false, error: 'Access denied. Admin role required.' };
       }
 
       // Store tokens and user data
@@ -87,7 +91,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!user,
-    isBusiness: user?.role === 'business',
+    isAdmin: user?.role === 'admin',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

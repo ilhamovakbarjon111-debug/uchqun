@@ -10,6 +10,7 @@ export const tokens = {
       primary: "#1E293B",
       secondary: "#64748B",
       muted: "#8F9BB3",    // Updated to match Mobile-icons.md Text Tertiary
+      tertiary: "#8F9BB3", // Alias for muted
       white: "#FFFFFF",
       inverse: "#F8FAFC",
     },
@@ -27,6 +28,20 @@ export const tokens = {
       elevated: "rgba(255, 255, 255, 0.95)",
       border: "rgba(255, 255, 255, 0.6)",
       borderLight: "rgba(255, 255, 255, 0.3)",
+    },
+
+    // Surface colors (for modals, overlays, etc.)
+    surface: {
+      card: "rgba(255, 255, 255, 0.95)",
+      secondary: "#F9FAFB",
+      tertiary: "#F3F4F6",
+    },
+
+    // Border colors
+    border: {
+      light: "#E5E7EB",
+      medium: "#D1D5DB",
+      dark: "#9CA3AF",
     },
 
     // Primary accent - vibrant blue

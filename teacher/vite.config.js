@@ -8,8 +8,14 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: 'https://uchqun-production-4f83.up.railway.app',
+        target: process.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000',
         changeOrigin: true,
+        secure: false,
+      },
+      '/uploads': {
+        target: process.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
       },
     },
   },

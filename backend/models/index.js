@@ -203,13 +203,51 @@ BusinessStats.belongsTo(User, { foreignKey: 'businessId', as: 'business' });
 // Sync database (use with caution in production)
 export const syncDatabase = async (force = false) => {
   try {
-    await sequelize.authenticate();
-    console.log('Database connection established successfully.');
+    // Test connection with retry logic
+    let retries = 3;
+    let connected = false;
+    
+    while (retries > 0 && !connected) {
+      try {
+        await sequelize.authenticate();
+        console.log('Database connection established successfully.');
+        connected = true;
+      } catch (authError) {
+        retries--;
+        if (retries > 0) {
+          console.log(`⚠ Database connection failed, retrying... (${3 - retries}/3)`);
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        } else {
+          throw authError;
+        }
+      }
+    }
+    
+    if (!connected) {
+      throw new Error('Failed to connect to database after 3 retries');
+    }
     
     await sequelize.sync({ force });
     console.log('Database synchronized successfully.');
   } catch (error) {
-    console.error('Unable to connect to the database:', error);
+    console.error('Unable to connect to the database:', error.message || error);
+    
+    // Provide helpful error messages
+    if (error.message && error.message.includes('Connection terminated')) {
+      console.error('\n💡 Tip: Make sure PostgreSQL server is running');
+      console.error('   On Windows: Check if PostgreSQL service is running in Services');
+      console.error('   Or try: net start postgresql-x64-XX (replace XX with version)');
+    } else if (error.message && error.message.includes('ECONNREFUSED')) {
+      console.error('\n💡 Tip: PostgreSQL server is not accepting connections');
+      console.error('   Check if PostgreSQL is running on the correct host and port');
+    } else if (error.message && error.message.includes('password authentication failed')) {
+      console.error('\n💡 Tip: Database password is incorrect');
+      console.error('   Check your .env file DB_PASSWORD setting');
+    } else if (error.message && error.message.includes('database') && error.message.includes('does not exist')) {
+      console.error('\n💡 Tip: Database does not exist');
+      console.error('   Run: npm run create:db to create the database');
+    }
+    
     throw error;
   }
 };
