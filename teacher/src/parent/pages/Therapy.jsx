@@ -39,9 +39,12 @@ const Therapy = () => {
         params.therapyType = filter;
       }
       const response = await api.get('/therapy', { params });
-      setTherapies(response.data.data || []);
+      // Handle different response structures
+      const therapiesData = response.data.data?.therapies || response.data.data || response.data.therapies || [];
+      setTherapies(Array.isArray(therapiesData) ? therapiesData : []);
     } catch (error) {
       console.error('Error loading therapies:', error);
+      setTherapies([]);
     } finally {
       setLoading(false);
     }
@@ -228,10 +231,10 @@ const Therapy = () => {
                     <span>{therapy.duration} {t('therapy.min', { defaultValue: 'min' })}</span>
                   </div>
                 )}
-                {therapy.rating && (
+                {therapy.rating != null && !isNaN(Number(therapy.rating)) && (
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                    <span>{therapy.rating.toFixed(1)}</span>
+                    <span>{Number(therapy.rating).toFixed(1)}</span>
                   </div>
                 )}
               </div>
