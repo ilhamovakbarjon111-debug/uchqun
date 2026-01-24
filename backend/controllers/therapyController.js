@@ -204,16 +204,41 @@ export const createTherapy = async (req, res) => {
       return res.status(400).json({ error: 'Title and therapy type are required' });
     }
 
+    // Safely process tags
+    let processedTags = [];
+    if (tags) {
+      if (Array.isArray(tags)) {
+        processedTags = tags;
+      } else if (typeof tags === 'string') {
+        processedTags = tags.split(',').map(t => t.trim()).filter(t => t);
+      }
+    }
+
+    // Safely process duration
+    let processedDuration = null;
+    if (duration) {
+      const parsed = parseInt(duration);
+      if (!isNaN(parsed) && parsed > 0) {
+        processedDuration = parsed;
+      }
+    }
+
     const therapy = await Therapy.create({
-      title,
-      description,
+      title: title.trim(),
+      description: description?.trim() || null,
       therapyType,
-      contentUrl,
-      contentType,
-      duration,
+      contentUrl: contentUrl?.trim() || null,
+      contentType: contentType || null,
+      duration: processedDuration,
       ageGroup: ageGroup || 'all',
       difficultyLevel: difficultyLevel || 'all',
-      tags: tags || [],
+      tags: processedTags,
+      createdBy: req.user.id,
+    });
+
+    logger.info('Therapy created successfully', {
+      therapyId: therapy.id,
+      title: therapy.title,
       createdBy: req.user.id,
     });
 
@@ -222,8 +247,32 @@ export const createTherapy = async (req, res) => {
       data: therapy,
     });
   } catch (error) {
-    logger.error('Create therapy error', { error: error.message, stack: error.stack });
-    res.status(500).json({ error: 'Failed to create therapy' });
+    logger.error('Create therapy error', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      body: req.body,
+    });
+    
+    // Provide more specific error messages
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        error: 'Validation error',
+        details: error.errors?.map(e => e.message) || [error.message],
+      });
+    }
+    
+    if (error.name === 'SequelizeDatabaseError') {
+      return res.status(400).json({
+        error: 'Database error',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      });
+    }
+
+    res.status(500).json({
+      error: 'Failed to create therapy',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 };
 
