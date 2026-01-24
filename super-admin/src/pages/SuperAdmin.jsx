@@ -1006,99 +1006,54 @@ const SuperAdmin = () => {
 
               {/* Governments List */}
               <div className="mt-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-2xl font-black text-gray-900 mb-1">
-                      Qo'shilgan Government Foydalanuvchilar
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Jami: <span className="font-semibold text-primary-600">{governments.length}</span> ta foydalanuvchi
-                    </p>
-                  </div>
-                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  Qo'shilgan Government Foydalanuvchilar ({governments.length})
+                </h3>
                 {loadingGovernments ? (
-                  <Card className="p-12">
-                    <div className="flex flex-col items-center justify-center min-h-[200px]">
-                      <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin mb-4" />
-                      <p className="text-sm text-gray-600">Yuklanmoqda...</p>
+                  <Card className="p-8">
+                    <div className="flex items-center justify-center min-h-[120px]">
+                      <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
                     </div>
                   </Card>
                 ) : governments.length === 0 ? (
-                  <Card className="p-12">
-                    <div className="flex flex-col items-center justify-center min-h-[200px] text-center">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                        <User className="w-8 h-8 text-gray-400" />
-                      </div>
-                      <p className="text-base font-medium text-gray-700 mb-1">
-                        Hozircha government foydalanuvchilar yo'q
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Yuqoridagi formadan yangi foydalanuvchi yarating
-                      </p>
-                    </div>
+                  <Card className="p-8">
+                    <p className="text-sm text-gray-600 text-center py-8">
+                      Hozircha government foydalanuvchilar yo'q
+                    </p>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {governments.map((gov, index) => (
-                      <Card 
-                        key={gov.id} 
-                        className="p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-100 hover:border-indigo-200 relative overflow-hidden group"
-                        style={{
-                          animationDelay: `${index * 50}ms`,
-                        }}
-                      >
-                        {/* Decorative gradient overlay */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-100/50 to-purple-100/50 rounded-full -mr-16 -mt-16 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        
-                        <div className="relative z-10">
-                          <div className="flex items-start justify-between mb-5">
-                            <div className="flex items-center gap-4">
-                              <div className="relative">
-                                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg transform group-hover:scale-110 transition-transform duration-300">
-                                  {gov.firstName?.charAt(0)}{gov.lastName?.charAt(0)}
-                                </div>
-                                {gov.isActive && (
-                                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-4 border-white shadow-sm" />
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-black text-gray-900 text-lg mb-1 truncate">
-                                  {gov.firstName} {gov.lastName}
-                                </h4>
-                                <p className="text-sm text-gray-600 truncate" title={gov.email}>
-                                  {gov.email}
-                                </p>
-                              </div>
-                            </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {governments.map((gov) => (
+                      <Card key={gov.id} className="p-6 hover:shadow-md transition-shadow">
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">
+                            {gov.firstName?.charAt(0)}{gov.lastName?.charAt(0)}
                           </div>
-                          
-                          <div className="flex items-center gap-2 mb-4 flex-wrap">
-                            <span className={`px-3 py-1.5 rounded-lg font-semibold text-xs shadow-sm ${
-                              gov.isActive 
-                                ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' 
-                                : 'bg-gray-200 text-gray-700'
-                            }`}>
-                              {gov.isActive ? '✓ Faol' : '○ Nofaol'}
-                            </span>
-                            <span className="px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-semibold text-xs shadow-sm">
-                              🏛️ Government
-                            </span>
-                          </div>
-                          
-                          {gov.createdAt && (
-                            <div className="flex items-center gap-2 text-xs text-gray-500 pt-4 border-t border-gray-100">
-                              <Calendar className="w-4 h-4" />
-                              <span>
-                                Yaratilgan: <span className="font-medium text-gray-700">
-                                  {new Date(gov.createdAt).toLocaleDateString('uz-UZ', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                  })}
-                                </span>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-gray-900 mb-1 truncate">
+                              {gov.firstName} {gov.lastName}
+                            </h4>
+                            <p className="text-sm text-gray-600 truncate mb-2" title={gov.email}>
+                              {gov.email}
+                            </p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                gov.isActive 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {gov.isActive ? 'Faol' : 'Nofaol'}
+                              </span>
+                              <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
+                                Government
                               </span>
                             </div>
-                          )}
+                            {gov.createdAt && (
+                              <p className="text-xs text-gray-500 mt-2">
+                                {new Date(gov.createdAt).toLocaleDateString('uz-UZ')}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </Card>
                     ))}
