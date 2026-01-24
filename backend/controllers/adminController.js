@@ -1151,12 +1151,87 @@ export const getSchoolRatings = async (req, res) => {
       });
     }
 
-    // If no ratings, return empty array
+    // If no ratings, try to get all schools (even without ratings)
     if (ratings.length === 0) {
-      return res.json({
-        success: true,
-        data: [],
-      });
+      logger.info('No ratings found, fetching all schools');
+      try {
+        const sequelize = SchoolRating.sequelize;
+        
+        // Try to get all schools, even if isActive column doesn't exist
+        let allSchools = [];
+        try {
+          allSchools = await sequelize.query(`
+            SELECT 
+              s.id,
+              s.name,
+              s.type,
+              s.address
+            FROM schools s
+            WHERE s."isActive" = true
+            ORDER BY s.name ASC
+          `, {
+            type: QueryTypes.SELECT,
+          });
+        } catch (activeError) {
+          // If isActive column doesn't exist, try without it
+          logger.warn('Error with isActive filter, trying without it', {
+            error: activeError.message,
+          });
+          try {
+            allSchools = await sequelize.query(`
+              SELECT 
+                s.id,
+                s.name,
+                s.type,
+                s.address
+              FROM schools s
+              ORDER BY s.name ASC
+            `, {
+              type: QueryTypes.SELECT,
+            });
+          } catch (allError) {
+            logger.error('Error fetching all schools', {
+              error: allError.message,
+            });
+            allSchools = [];
+          }
+        }
+        
+        logger.info('Fetched schools from database', {
+          schoolsCount: Array.isArray(allSchools) ? allSchools.length : 0,
+          firstSchool: Array.isArray(allSchools) && allSchools.length > 0 ? allSchools[0] : null,
+        });
+        
+        const schoolsWithNoRatings = Array.isArray(allSchools) && allSchools.length > 0 ? allSchools.map(school => ({
+          school: {
+            id: school.id,
+            name: school.name || 'Unknown School',
+            type: school.type || 'both',
+            address: school.address || null,
+          },
+          ratings: [],
+          average: 0,
+          count: 0,
+        })) : [];
+        
+        logger.info('No ratings found, returning all schools', {
+          schoolsCount: schoolsWithNoRatings.length,
+        });
+        
+        return res.json({
+          success: true,
+          data: schoolsWithNoRatings,
+        });
+      } catch (schoolsError) {
+        logger.error('Error fetching schools', {
+          error: schoolsError.message,
+          stack: schoolsError.stack,
+        });
+        return res.json({
+          success: true,
+          data: [],
+        });
+      }
     }
 
     // Group by school and calculate averages

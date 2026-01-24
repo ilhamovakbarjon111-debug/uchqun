@@ -20,6 +20,7 @@ const SchoolRatings = () => {
     setError('');
     try {
       const response = await api.get('/admin/school-ratings');
+      console.log('School ratings response:', response.data);
       setSchoolRatings(response.data.data || []);
     } catch (err) {
       console.error('Error loading school ratings:', err);
@@ -74,19 +75,19 @@ const SchoolRatings = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {schoolRatings.map((schoolData) => (
-          <Card key={schoolData.school.id} className="p-6">
+        {schoolRatings.map((schoolData, index) => (
+          <Card key={schoolData.school?.id || `school-${index}`} className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-green-100 text-green-700 flex items-center justify-center">
                   <Building2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">{schoolData.school.name}</h2>
-                  {schoolData.school.address && (
+                  <h2 className="text-xl font-bold text-gray-900">{schoolData.school?.name || 'Unknown School'}</h2>
+                  {schoolData.school?.address && (
                     <p className="text-sm text-gray-500 mt-1">{schoolData.school.address}</p>
                   )}
-                  {schoolData.school.type && (
+                  {schoolData.school?.type && (
                     <span className="inline-block mt-2 px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700">
                       {schoolData.school.type === 'school' ? t('schoolRatings.typeSchool') :
                        schoolData.school.type === 'kindergarten' ? t('schoolRatings.typeKindergarten') :
