@@ -106,6 +106,11 @@ export const getPayments = async (req, res) => {
 
     const where = {};
 
+    // Check if user is authenticated
+    if (!req.user || !req.user.role) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     // Role-based filtering
     if (req.user.role === 'parent') {
       where.parentId = req.user.id;
@@ -179,26 +184,45 @@ export const getPayments = async (req, res) => {
       }
     }
 
-    const payments = await Payment.findAndCountAll({
-      where,
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      order: [['createdAt', 'DESC']],
-      include: [
-        {
-          model: Child,
-          as: 'child',
-          required: false,
-          attributes: ['id', 'firstName', 'lastName'],
+    let payments;
+    try {
+      payments = await Payment.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']],
+        include: [
+          {
+            model: Child,
+            as: 'child',
+            required: false,
+            attributes: ['id', 'firstName', 'lastName'],
+          },
+          {
+            model: School,
+            as: 'school',
+            required: false,
+            attributes: ['id', 'name'],
+          },
+        ],
+      });
+    } catch (dbError) {
+      // If table doesn't exist or other DB error, return empty result
+      logger.warn('Payments table may not exist or query failed', {
+        error: dbError.message,
+        userId: req.user?.id,
+      });
+      return res.json({
+        success: true,
+        data: {
+          payments: [],
+          total: 0,
+          totalAmount: 0,
+          limit: parseInt(limit),
+          offset: parseInt(offset),
         },
-        {
-          model: School,
-          as: 'school',
-          required: false,
-          attributes: ['id', 'name'],
-        },
-      ],
-    });
+      });
+    }
 
     // Calculate totals
     const totalAmount = payments.rows.reduce((sum, p) => {
@@ -216,8 +240,16 @@ export const getPayments = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Get payments error', { error: error.message, stack: error.stack });
-    res.status(500).json({ error: 'Failed to fetch payments' });
+    logger.error('Get payments error', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      role: req.user?.role,
+    });
+    res.status(500).json({
+      error: 'Failed to fetch payments',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 };
 
