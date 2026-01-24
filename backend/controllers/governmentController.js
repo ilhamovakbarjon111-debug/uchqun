@@ -653,55 +653,108 @@ export const getAdminDetails = async (req, res) => {
     const receptionIds = receptions.map(r => r.id);
 
     // Get schools created by these receptions
-    const schools = await School.findAll({
-      where: { createdBy: { [Op.in]: receptionIds } },
-      order: [['createdAt', 'DESC']],
-    });
+    let schools = [];
+    if (receptionIds.length > 0) {
+      try {
+        schools = await School.findAll({
+          where: { createdBy: { [Op.in]: receptionIds } },
+          order: [['createdAt', 'DESC']],
+        });
+      } catch (error) {
+        logger.warn('Failed to fetch schools for admin', { error: error.message, adminId: id });
+        schools = [];
+      }
+    }
 
     // Get teachers created by these receptions
-    const teachers = await User.findAll({
-      where: { 
-        role: 'teacher',
-        createdBy: { [Op.in]: receptionIds }
-      },
-      attributes: { exclude: ['password'] },
-      order: [['createdAt', 'DESC']],
-    });
+    let teachers = [];
+    if (receptionIds.length > 0) {
+      try {
+        teachers = await User.findAll({
+          where: { 
+            role: 'teacher',
+            createdBy: { [Op.in]: receptionIds }
+          },
+          attributes: { exclude: ['password'] },
+          order: [['createdAt', 'DESC']],
+        });
+      } catch (error) {
+        logger.warn('Failed to fetch teachers for admin', { error: error.message, adminId: id });
+        teachers = [];
+      }
+    }
 
     // Get parents created by these receptions
-    const parents = await User.findAll({
-      where: { 
-        role: 'parent',
-        createdBy: { [Op.in]: receptionIds }
-      },
-      attributes: { exclude: ['password'] },
-      order: [['createdAt', 'DESC']],
-    });
+    let parents = [];
+    if (receptionIds.length > 0) {
+      try {
+        parents = await User.findAll({
+          where: { 
+            role: 'parent',
+            createdBy: { [Op.in]: receptionIds }
+          },
+          attributes: { exclude: ['password'] },
+          order: [['createdAt', 'DESC']],
+        });
+      } catch (error) {
+        logger.warn('Failed to fetch parents for admin', { error: error.message, adminId: id });
+        parents = [];
+      }
+    }
 
     // Get children of these parents
     const parentIds = parents.map(p => p.id);
-    const children = await Child.findAll({
-      where: { parentId: { [Op.in]: parentIds } },
-      order: [['createdAt', 'DESC']],
-    });
+    let children = [];
+    if (parentIds.length > 0) {
+      try {
+        children = await Child.findAll({
+          where: { parentId: { [Op.in]: parentIds } },
+          order: [['createdAt', 'DESC']],
+        });
+      } catch (error) {
+        logger.warn('Failed to fetch children for admin', { error: error.message, adminId: id });
+        children = [];
+      }
+    }
 
     // Get total students count
     const studentsCount = children.length;
 
     // Get total revenue from payments
-    const payments = await Payment.findAll({
-      where: { parentId: { [Op.in]: parentIds } },
-    });
-    const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+    let totalRevenue = 0;
+    if (parentIds.length > 0) {
+      try {
+        const payments = await Payment.findAll({
+          where: { parentId: { [Op.in]: parentIds } },
+          attributes: ['amount'],
+        });
+        totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+      } catch (error) {
+        logger.warn('Failed to fetch payments for admin', { error: error.message, adminId: id });
+        totalRevenue = 0;
+      }
+    }
 
     // Get school ratings
     const schoolIds = schools.map(s => s.id);
-    const ratings = await SchoolRating.findAll({
-      where: { schoolId: { [Op.in]: schoolIds } },
-    });
-    const avgRating = ratings.length > 0
-      ? (ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length).toFixed(1)
-      : 0;
+    let ratings = [];
+    let avgRating = 0;
+    if (schoolIds.length > 0) {
+      try {
+        ratings = await SchoolRating.findAll({
+          where: { schoolId: { [Op.in]: schoolIds } },
+          attributes: ['stars'],
+        });
+        if (ratings.length > 0) {
+          const sum = ratings.reduce((acc, r) => acc + (r.stars || 0), 0);
+          avgRating = parseFloat((sum / ratings.length).toFixed(1));
+        }
+      } catch (error) {
+        logger.warn('Failed to fetch ratings for admin', { error: error.message, adminId: id });
+        ratings = [];
+        avgRating = 0;
+      }
+    }
 
     logger.info('Government fetched admin details', {
       adminId: id,
