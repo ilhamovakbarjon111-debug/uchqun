@@ -8,8 +8,6 @@ import {
   Building2,
   Users,
   GraduationCap,
-  Star,
-  DollarSign,
   ArrowLeft,
   UserCheck,
   User,
@@ -64,59 +62,7 @@ const AdminDetails = () => {
     );
   }
 
-  const { admin, stats, receptions, schools, teachers, parents, children } = data;
-
-  const statCards = [
-    {
-      title: t('adminDetails.students', { defaultValue: 'O\'quvchilar' }),
-      value: stats.students || 0,
-      icon: Baby,
-      color: 'bg-pink-500',
-      description: t('adminDetails.studentsDesc', { defaultValue: 'Jami o\'quvchilar soni' }),
-    },
-    {
-      title: t('adminDetails.parents', { defaultValue: 'Ota-onalar' }),
-      value: stats.parents || 0,
-      icon: Users,
-      color: 'bg-orange-500',
-      description: t('adminDetails.parentsDesc', { defaultValue: 'Jami ota-onalar soni' }),
-    },
-    {
-      title: t('adminDetails.teachers', { defaultValue: 'O\'qituvchilar' }),
-      value: stats.teachers || 0,
-      icon: GraduationCap,
-      color: 'bg-purple-500',
-      description: t('adminDetails.teachersDesc', { defaultValue: 'Jami o\'qituvchilar soni' }),
-    },
-    {
-      title: t('adminDetails.receptions', { defaultValue: 'Receptionlar' }),
-      value: stats.receptions || 0,
-      icon: UserCheck,
-      color: 'bg-blue-500',
-      description: t('adminDetails.receptionsDesc', { defaultValue: 'Jami receptionlar soni' }),
-    },
-    {
-      title: t('adminDetails.schools', { defaultValue: 'Maktablar' }),
-      value: stats.schools || 0,
-      icon: Building2,
-      color: 'bg-green-500',
-      description: t('adminDetails.schoolsDesc', { defaultValue: 'Jami maktablar soni' }),
-    },
-    {
-      title: t('adminDetails.averageRating', { defaultValue: 'O\'rtacha Reyting' }),
-      value: (stats.averageRating || 0).toFixed(1),
-      icon: Star,
-      color: 'bg-yellow-500',
-      description: t('adminDetails.averageRatingDesc', { defaultValue: 'Maktablar o\'rtacha reytingi' }),
-    },
-    {
-      title: t('adminDetails.totalRevenue', { defaultValue: 'Jami Daromad' }),
-      value: `${(stats.totalRevenue || 0).toLocaleString()} UZS`,
-      icon: DollarSign,
-      color: 'bg-emerald-500',
-      description: t('adminDetails.totalRevenueDesc', { defaultValue: 'Jami to\'langan summa' }),
-    },
-  ];
+  const { admin, receptions, schools, teachers, parents, children } = data;
 
   return (
     <div className="space-y-8">
@@ -183,34 +129,6 @@ const AdminDetails = () => {
           </div>
         </div>
       </Card>
-
-      {/* Statistics Cards */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          {t('adminDetails.statistics', { defaultValue: 'Statistika' })}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statCards.map((card, index) => {
-            const Icon = card.icon;
-            return (
-              <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-600 mb-1">{card.title}</p>
-                    <p className="text-3xl font-bold text-gray-900 mb-1">{card.value}</p>
-                    {card.description && (
-                      <p className="text-xs text-gray-500">{card.description}</p>
-                    )}
-                  </div>
-                  <div className={`${card.color} p-3 rounded-lg shadow-sm`}>
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Receptions */}
       {receptions.length > 0 && (
