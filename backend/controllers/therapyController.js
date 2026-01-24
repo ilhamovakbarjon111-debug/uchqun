@@ -2,6 +2,7 @@ import Therapy from '../models/Therapy.js';
 import TherapyUsage from '../models/TherapyUsage.js';
 import Child from '../models/Child.js';
 import User from '../models/User.js';
+import Group from '../models/Group.js';
 import { Op } from 'sequelize';
 import logger from '../utils/logger.js';
 
@@ -198,6 +199,7 @@ export const createTherapy = async (req, res) => {
       ageGroup,
       difficultyLevel,
       tags,
+      childId, // Optional: assign to child immediately
     } = req.body;
 
     if (!title || !therapyType) {
@@ -236,10 +238,44 @@ export const createTherapy = async (req, res) => {
       createdBy: req.user.id,
     });
 
+    // If childId is provided, automatically create therapy usage
+    if (childId) {
+      try {
+        const child = await Child.findByPk(childId);
+        if (child) {
+          let parentId = child.parentId;
+          let teacherId = null;
+
+          if (req.user.role === 'teacher') {
+            teacherId = req.user.id;
+          }
+
+          await TherapyUsage.create({
+            therapyId: therapy.id,
+            childId,
+            parentId,
+            teacherId,
+            startTime: new Date(),
+          });
+
+          // Increment usage count
+          await therapy.increment('usageCount');
+        }
+      } catch (usageError) {
+        logger.warn('Failed to create therapy usage during therapy creation', {
+          error: usageError.message,
+          therapyId: therapy.id,
+          childId,
+        });
+        // Don't fail the whole request if usage creation fails
+      }
+    }
+
     logger.info('Therapy created successfully', {
       therapyId: therapy.id,
       title: therapy.title,
       createdBy: req.user.id,
+      childId: childId || null,
     });
 
     res.status(201).json({
@@ -284,20 +320,65 @@ export const startTherapy = async (req, res) => {
   try {
     const { id } = req.params;
     const { childId } = req.body;
-    const parentId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
 
     const therapy = await Therapy.findByPk(id);
     if (!therapy) {
       return res.status(404).json({ error: 'Therapy not found' });
     }
 
-    // Verify child belongs to parent
+    let parentId = null;
+    let teacherId = null;
+
+    // Verify child access based on user role
     if (childId) {
-      const child = await Child.findOne({
-        where: { id: childId, parentId },
-      });
+      const child = await Child.findByPk(childId);
       if (!child) {
-        return res.status(403).json({ error: 'Child not found or access denied' });
+        return res.status(404).json({ error: 'Child not found' });
+      }
+
+      if (userRole === 'parent') {
+        // Parent can only access their own children
+        if (child.parentId !== userId) {
+          return res.status(403).json({ error: 'Child not found or access denied' });
+        }
+        parentId = userId;
+      } else if (userRole === 'teacher') {
+        // Teacher can access children from their assigned parents
+        const teacherGroups = await Group.findAll({
+          where: { teacherId: userId },
+          attributes: ['id'],
+        });
+        const groupIds = teacherGroups.map(g => g.id);
+        
+        const parent = await User.findOne({
+          where: { 
+            id: child.parentId,
+            [Op.or]: [
+              { teacherId: userId },
+              ...(groupIds.length > 0 ? [{ groupId: { [Op.in]: groupIds } }] : [])
+            ],
+          },
+        });
+        
+        if (!parent) {
+          return res.status(403).json({ error: 'You do not have access to this child' });
+        }
+        teacherId = userId;
+        parentId = child.parentId;
+      } else if (userRole === 'admin') {
+        // Admin can access any child
+        parentId = child.parentId;
+      } else {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+    } else {
+      // No childId specified
+      if (userRole === 'parent') {
+        parentId = userId;
+      } else if (userRole === 'teacher') {
+        teacherId = userId;
       }
     }
 
@@ -305,7 +386,7 @@ export const startTherapy = async (req, res) => {
       therapyId: id,
       childId: childId || null,
       parentId,
-      teacherId: req.user.role === 'teacher' ? req.user.id : null,
+      teacherId,
       startTime: new Date(),
     });
 
@@ -317,7 +398,12 @@ export const startTherapy = async (req, res) => {
       data: usage,
     });
   } catch (error) {
-    logger.error('Start therapy error', { error: error.message, stack: error.stack });
+    logger.error('Start therapy error', { 
+      error: error.message, 
+      stack: error.stack,
+      userId: req.user?.id,
+      role: req.user?.role,
+    });
     res.status(500).json({ error: 'Failed to start therapy' });
   }
 };

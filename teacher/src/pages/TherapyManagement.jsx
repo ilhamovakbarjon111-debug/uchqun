@@ -50,6 +50,7 @@ const TherapyManagement = () => {
     ageGroup: 'all',
     difficultyLevel: 'all',
     tags: '',
+    childId: '', // Optional: assign to child when creating
   });
   const [assignFormData, setAssignFormData] = useState({
     childId: '',
@@ -121,6 +122,7 @@ const TherapyManagement = () => {
       ageGroup: 'all',
       difficultyLevel: 'all',
       tags: '',
+      childId: '',
     });
     setShowModal(true);
   };
@@ -133,10 +135,12 @@ const TherapyManagement = () => {
       therapyType: therapy.therapyType || 'music',
       contentUrl: therapy.contentUrl || '',
       contentType: therapy.contentType || 'audio',
+      childId: '', // Don't pre-fill childId when editing
       duration: therapy.duration || '',
       ageGroup: therapy.ageGroup || 'all',
       difficultyLevel: therapy.difficultyLevel || 'all',
       tags: therapy.tags?.join(', ') || '',
+      childId: '', // Don't pre-fill childId when editing
     });
     setShowModal(true);
   };
@@ -162,6 +166,7 @@ const TherapyManagement = () => {
         ...formData,
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(t => t) : [],
         duration: formData.duration ? parseInt(formData.duration) : null,
+        childId: formData.childId || undefined, // Include childId if provided
       };
 
       if (editingTherapy) {
@@ -587,6 +592,27 @@ const TherapyManagement = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="tag1, tag2, tag3"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('therapy.assignChild', { defaultValue: 'Bolaga tayinlash (ixtiyoriy)' })}
+                </label>
+                <select
+                  value={formData.childId}
+                  onChange={(e) => setFormData({ ...formData, childId: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="">{t('therapy.noAssignment', { defaultValue: 'Tayinlamaslik' })}</option>
+                  {children.map((child) => (
+                    <option key={child.id} value={child.id}>
+                      {child.firstName} {child.lastName} {child.parentName ? `(${child.parentName})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  {t('therapy.assignChildHint', { defaultValue: 'Agar bolani tanlasangiz, terapiya avtomatik ravishda unga tayinlanadi' })}
+                </p>
               </div>
 
               <div className="flex gap-3 pt-4">
