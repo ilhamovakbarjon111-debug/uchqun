@@ -15,10 +15,12 @@ import {
   BarChart3,
   Shield,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [schools, setSchools] = useState([]);
   const [admins, setAdmins] = useState([]);
@@ -108,10 +110,13 @@ const Dashboard = () => {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Davlat Nazorat Paneli
+          {t('dashboard.title', { defaultValue: 'Davlat Nazorat Paneli' })}
         </h1>
         <p className="text-gray-600">
-          Xush kelibsiz, {user?.firstName} {user?.lastName}
+          {t('dashboard.welcome', { 
+            defaultValue: 'Xush kelibsiz, {{name}}',
+            name: `${user?.firstName} ${user?.lastName}`
+          })}
         </p>
       </div>
 
@@ -139,9 +144,14 @@ const Dashboard = () => {
       <Card>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Adminlar</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              {t('dashboard.adminList', { defaultValue: 'Adminlar' })}
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Barcha adminlar ro'yxati ({admins.length})
+              {t('dashboard.adminListDesc', { 
+                defaultValue: 'Barcha adminlar ro\'yxati ({{count}})',
+                count: admins.length
+              })}
             </p>
           </div>
           <Shield className="w-6 h-6 text-gray-400" />
@@ -187,9 +197,11 @@ const Dashboard = () => {
       <Card>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Maktablar va Baholari</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              {t('dashboard.schoolsList', { defaultValue: 'Maktablar va Baholari' })}
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Maktablar reytinglari va statistikasi
+              {t('dashboard.schoolsListDesc', { defaultValue: 'Maktablar reytinglari va statistikasi' })}
             </p>
           </div>
           <BarChart3 className="w-6 h-6 text-gray-400" />

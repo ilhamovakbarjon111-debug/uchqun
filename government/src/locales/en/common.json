@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "schools": "Schools",
+    "ratings": "Ratings",
+    "payments": "Payments",
+    "profile": "Profile"
+  },
+  "login": {
+    "title": "Government Control Panel",
+    "subtitle": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "button": "Sign In",
+    "loading": "Signing in..."
+  },
+  "dashboard": {
+    "title": "Government Control Panel",
+    "welcome": "Welcome, {{name}}",
+    "adminList": "Admins",
+    "adminListDesc": "List of all admins ({{count}})",
+    "schoolsList": "Schools and Ratings",
+    "schoolsListDesc": "School ratings and statistics"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Your account information",
+    "personalInfo": "Personal Information",
+    "email": "Email",
+    "phone": "Phone",
+    "role": "Role",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "createdAt": "Created Date",
+    "logout": "Logout"
+  },
+  "adminDetails": {
+    "title": "Admin Details",
+    "statistics": "Statistics",
+    "receptions": "Receptions",
+    "schools": "Schools",
+    "teachers": "Teachers",
+    "parents": "Parents",
+    "students": "Students",
+    "averageRating": "Average Rating",
+    "totalRevenue": "Total Revenue",
+    "back": "Back"
+  }
+}

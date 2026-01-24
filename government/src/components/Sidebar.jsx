@@ -10,7 +10,9 @@ import {
   DollarSign,
   Shield,
   LogOut,
+  User,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const COLORS = {
   softNavy: '#7C3AED',
@@ -21,12 +23,14 @@ const COLORS = {
 const Sidebar = ({ onClose }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
 
   const navigation = [
-    { name: 'Dashboard', href: '/government', icon: Home },
-    { name: 'Maktablar', href: '/government/schools', icon: Building2 },
-    { name: 'Reytinglar', href: '/government/ratings', icon: Star },
-    { name: 'To\'lovlar', href: '/government/payments', icon: DollarSign },
+    { name: t('nav.dashboard', { defaultValue: 'Dashboard' }), href: '/government', icon: Home },
+    { name: t('nav.schools', { defaultValue: 'Maktablar' }), href: '/government/schools', icon: Building2 },
+    { name: t('nav.ratings', { defaultValue: 'Reytinglar' }), href: '/government/ratings', icon: Star },
+    { name: t('nav.payments', { defaultValue: 'To\'lovlar' }), href: '/government/payments', icon: DollarSign },
+    { name: t('nav.profile', { defaultValue: 'Profil' }), href: '/government/profile', icon: User },
   ];
 
   const isActive = (path) => location.pathname === path;

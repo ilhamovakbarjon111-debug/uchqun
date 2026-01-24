@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "dashboard": "Панель управления",
+    "schools": "Школы",
+    "ratings": "Рейтинги",
+    "payments": "Платежи",
+    "profile": "Профиль"
+  },
+  "login": {
+    "title": "Панель государственного контроля",
+    "subtitle": "Вход в систему",
+    "email": "Email",
+    "password": "Пароль",
+    "button": "Войти",
+    "loading": "Вход..."
+  },
+  "dashboard": {
+    "title": "Панель государственного контроля",
+    "welcome": "Добро пожаловать, {{name}}",
+    "adminList": "Администраторы",
+    "adminListDesc": "Список всех администраторов ({{count}})",
+    "schoolsList": "Школы и рейтинги",
+    "schoolsListDesc": "Рейтинги и статистика школ"
+  },
+  "profile": {
+    "title": "Профиль",
+    "subtitle": "Информация о вашем аккаунте",
+    "personalInfo": "Личная информация",
+    "email": "Email",
+    "phone": "Телефон",
+    "role": "Роль",
+    "status": "Статус",
+    "active": "Активен",
+    "inactive": "Неактивен",
+    "createdAt": "Дата создания",
+    "logout": "Выйти"
+  },
+  "adminDetails": {
+    "title": "Детали администратора",
+    "statistics": "Статистика",
+    "receptions": "Рецепции",
+    "schools": "Школы",
+    "teachers": "Учителя",
+    "parents": "Родители",
+    "students": "Ученики",
+    "averageRating": "Средний рейтинг",
+    "totalRevenue": "Общий доход",
+    "back": "Назад"
+  }
+}

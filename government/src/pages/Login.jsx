@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Shield, Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -12,6 +13,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,8 +38,12 @@ const Login = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
             <Shield className="w-8 h-8 text-primary-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Davlat Nazorat Paneli</h1>
-          <p className="text-gray-600">Tizimga kirish</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {t('login.title', { defaultValue: 'Davlat Nazorat Paneli' })}
+          </h1>
+          <p className="text-gray-600">
+            {t('login.subtitle', { defaultValue: 'Tizimga kirish' })}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -49,7 +55,7 @@ const Login = () => {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email
+              {t('login.email', { defaultValue: 'Email' })}
             </label>
             <input
               id="email"
@@ -64,7 +70,7 @@ const Login = () => {
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Parol
+              {t('login.password', { defaultValue: 'Parol' })}
             </label>
             <div className="relative">
               <input
@@ -96,11 +102,11 @@ const Login = () => {
             {loading ? (
               <>
                 <LoadingSpinner size="sm" className="text-white" />
-                <span>Kirilmoqda...</span>
+                <span>{t('login.loading', { defaultValue: 'Kirilmoqda...' })}</span>
               </>
             ) : (
               <>
-                <span>Kirish</span>
+                <span>{t('login.button', { defaultValue: 'Kirish' })}</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>

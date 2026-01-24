@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "dashboard": "Bosh sahifa",
+    "schools": "Maktablar",
+    "ratings": "Reytinglar",
+    "payments": "To'lovlar",
+    "profile": "Profil"
+  },
+  "login": {
+    "title": "Davlat Nazorat Paneli",
+    "subtitle": "Tizimga kirish",
+    "email": "Email",
+    "password": "Parol",
+    "button": "Kirish",
+    "loading": "Kirilmoqda..."
+  },
+  "dashboard": {
+    "title": "Davlat Nazorat Paneli",
+    "welcome": "Xush kelibsiz, {{name}}",
+    "adminList": "Adminlar",
+    "adminListDesc": "Barcha adminlar ro'yxati ({{count}})",
+    "schoolsList": "Maktablar va Baholari",
+    "schoolsListDesc": "Maktablar reytinglari va statistikasi"
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Hisobingiz ma'lumotlari",
+    "personalInfo": "Shaxsiy ma'lumotlar",
+    "email": "Email",
+    "phone": "Telefon",
+    "role": "Rol",
+    "status": "Holati",
+    "active": "Faol",
+    "inactive": "Nofaol",
+    "createdAt": "Yaratilgan sana",
+    "logout": "Chiqish"
+  },
+  "adminDetails": {
+    "title": "Admin ma'lumotlari",
+    "statistics": "Statistika",
+    "receptions": "Receptionlar",
+    "schools": "Maktablar",
+    "teachers": "O'qituvchilar",
+    "parents": "Ota-onalar",
+    "students": "O'quvchilar",
+    "averageRating": "O'rtacha Reyting",
+    "totalRevenue": "Jami Daromad",
+    "back": "Orqaga qaytish"
+  }
+}
