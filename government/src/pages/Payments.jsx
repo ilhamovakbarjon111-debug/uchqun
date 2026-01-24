@@ -40,8 +40,16 @@ const Payments = () => {
   const totalRevenue = Array.isArray(payments)
     ? payments
         .filter(p => p.status === 'completed')
-        .reduce((sum, p) => sum + (p.amount || 0), 0)
+        .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
     : 0;
+  
+  // Format total revenue nicely
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('uz-UZ', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   return (
     <div className="space-y-8">
@@ -61,7 +69,7 @@ const Payments = () => {
             <p className="text-sm opacity-90 mb-1">
               {t('payments.totalRevenue', { defaultValue: 'Jami daromad' })}
             </p>
-            <p className="text-3xl font-bold">{totalRevenue.toLocaleString('uz-UZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} UZS</p>
+            <p className="text-3xl font-bold">{formatCurrency(totalRevenue)} UZS</p>
           </div>
           <DollarSign className="w-12 h-12 opacity-80" />
         </div>
@@ -114,7 +122,7 @@ const Payments = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-gray-900">
-                    {parseFloat(payment.amount || 0).toLocaleString('uz-UZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} UZS
+                    {formatCurrency(parseFloat(payment.amount || 0))} UZS
                   </p>
                   {payment.status === 'completed' ? (
                     <CheckCircle className="w-5 h-5 text-green-500 mt-2 mx-auto" />
