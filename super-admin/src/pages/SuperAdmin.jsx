@@ -1022,40 +1022,36 @@ const SuperAdmin = () => {
                     </p>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {governments.map((gov) => (
-                      <Card key={gov.id} className="p-6 hover:shadow-md transition-shadow">
-                        <div className="flex items-start gap-4">
-                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                      <div key={gov.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-700 font-bold flex items-center justify-center flex-shrink-0">
                             {gov.firstName?.charAt(0)}{gov.lastName?.charAt(0)}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-gray-900 mb-1 text-base">
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm font-semibold text-gray-900">
                               {gov.firstName} {gov.lastName}
-                            </h4>
-                            <p className="text-sm text-gray-600 mb-3 break-words" title={gov.email}>
-                              {gov.email}
                             </p>
-                            <div className="flex items-center gap-2 flex-wrap mb-2">
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            <p className="text-sm text-gray-600">{gov.email}</p>
+                            <p className="text-xs text-gray-500">
+                              {gov.createdAt ? new Date(gov.createdAt).toLocaleDateString() : '—'}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 gov.isActive 
                                   ? 'bg-green-100 text-green-700' 
                                   : 'bg-gray-100 text-gray-600'
                               }`}>
                                 {gov.isActive ? 'Faol' : 'Nofaol'}
                               </span>
-                              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
+                              <span className="px-2 py-1 bg-primary-100 text-primary-700 rounded-full text-xs font-medium">
                                 Government
                               </span>
                             </div>
-                            {gov.createdAt && (
-                              <p className="text-xs text-gray-500 mt-2">
-                                Yaratilgan: {new Date(gov.createdAt).toLocaleDateString('uz-UZ')}
-                              </p>
-                            )}
                           </div>
                         </div>
-                      </Card>
+                      </div>
                     ))}
                   </div>
                 )}
