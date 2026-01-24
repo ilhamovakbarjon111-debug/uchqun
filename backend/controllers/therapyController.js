@@ -52,11 +52,12 @@ export const getTherapies = async (req, res) => {
 
     let therapies;
     try {
+      // Try with full query first
       therapies = await Therapy.findAndCountAll({
         where,
         limit: parseInt(limit) || 20,
         offset: parseInt(offset) || 0,
-        order: [['usageCount', 'DESC'], ['rating', 'DESC']],
+        order: [['createdAt', 'DESC']], // Use createdAt instead of usageCount/rating to avoid potential issues
         include: [
           {
             model: User,
@@ -73,12 +74,13 @@ export const getTherapies = async (req, res) => {
       });
       // Try without isActive filter if it fails
       try {
-        delete where.isActive;
+        const whereWithoutActive = { ...where };
+        delete whereWithoutActive.isActive;
         therapies = await Therapy.findAndCountAll({
-          where,
+          where: whereWithoutActive,
           limit: parseInt(limit) || 20,
           offset: parseInt(offset) || 0,
-          order: [['usageCount', 'DESC'], ['rating', 'DESC']],
+          order: [['createdAt', 'DESC']],
           include: [
             {
               model: User,
@@ -91,16 +93,32 @@ export const getTherapies = async (req, res) => {
       } catch (fallbackError) {
         logger.error('Error with fallback query', {
           error: fallbackError.message,
+          stack: fallbackError.stack,
         });
-        return res.json({
-          success: true,
-          data: {
-            therapies: [],
-            total: 0,
+        // Try simplest query without include
+        try {
+          const whereSimple = { ...where };
+          delete whereSimple.isActive;
+          therapies = await Therapy.findAndCountAll({
+            where: whereSimple,
             limit: parseInt(limit) || 20,
             offset: parseInt(offset) || 0,
-          },
-        });
+            order: [['createdAt', 'DESC']],
+          });
+        } catch (simpleError) {
+          logger.error('Error with simple query', {
+            error: simpleError.message,
+          });
+          return res.json({
+            success: true,
+            data: {
+              therapies: [],
+              total: 0,
+              limit: parseInt(limit) || 20,
+              offset: parseInt(offset) || 0,
+            },
+          });
+        }
       }
     }
 
