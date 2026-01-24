@@ -410,11 +410,32 @@ export const getPaymentsStats = async (req, res) => {
     }
     
     if (schoolIds.length > 0) {
-      const schools = await School.findAll({
-        where: { id: { [Op.in]: schoolIds } },
-        attributes: ['id', 'name'],
+      try {
+        const schools = await School.findAll({
+          where: { id: { [Op.in]: schoolIds } },
+          attributes: ['id', 'name'],
+        });
+        schools.forEach(s => {
+          schoolsMap.set(s.id, s);
+          logger.debug('Added school to map', { schoolId: s.id, schoolName: s.name });
+        });
+        logger.info('Fetched schools for payments', {
+          schoolIdsCount: schoolIds.length,
+          schoolsFound: schools.length,
+          schoolIds: schoolIds.slice(0, 5), // Log first 5 for debugging
+        });
+      } catch (error) {
+        logger.error('Error fetching schools for payments', {
+          error: error.message,
+          stack: error.stack,
+          schoolIds: schoolIds,
+        });
+      }
+    } else {
+      logger.warn('No schoolIds found in payments', {
+        paymentsCount: payments.length,
+        paymentsWithSchoolId: payments.filter(p => p.schoolId).length,
       });
-      schools.forEach(s => schoolsMap.set(s.id, s));
     }
 
     const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
@@ -442,6 +463,24 @@ export const getPaymentsStats = async (req, res) => {
       let school = payment.school;
       if (!school && payment.schoolId) {
         school = schoolsMap.get(payment.schoolId);
+        if (!school) {
+          // Try to fetch school directly if not in map
+          try {
+            const directSchool = await School.findByPk(payment.schoolId, {
+              attributes: ['id', 'name'],
+            });
+            if (directSchool) {
+              school = directSchool;
+              schoolsMap.set(payment.schoolId, directSchool);
+            }
+          } catch (error) {
+            logger.warn('Error fetching school directly', {
+              paymentId: payment.id,
+              schoolId: payment.schoolId,
+              error: error.message,
+            });
+          }
+        }
       }
       
       const schoolName = school?.name || null;
@@ -454,6 +493,7 @@ export const getPaymentsStats = async (req, res) => {
           schoolFromInclude: !!payment.school,
           schoolFromMap: !!schoolsMap.get(payment.schoolId),
           schoolsMapSize: schoolsMap.size,
+          allSchoolIds: Array.from(schoolsMap.keys()),
         });
       }
       
