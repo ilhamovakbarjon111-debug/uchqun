@@ -63,6 +63,12 @@ const SuperAdmin = () => {
   const [govLoading, setGovLoading] = useState(false);
   const [governments, setGovernments] = useState([]);
   const [loadingGovernments, setLoadingGovernments] = useState(true);
+  const [editingGovernment, setEditingGovernment] = useState(null);
+  const [editGovFirstName, setEditGovFirstName] = useState('');
+  const [editGovLastName, setEditGovLastName] = useState('');
+  const [editGovEmail, setEditGovEmail] = useState('');
+  const [editGovPassword, setEditGovPassword] = useState('');
+  const [editGovSaving, setEditGovSaving] = useState(false);
   const [registrationRequests, setRegistrationRequests] = useState([]);
   const [loadingRegistrations, setLoadingRegistrations] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -1051,6 +1057,20 @@ const SuperAdmin = () => {
                             </div>
                           </div>
                         </div>
+                        <div className="flex gap-2 mt-3">
+                          <button
+                            onClick={() => startEditGovernment(gov)}
+                            className="px-3 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+                          >
+                            {t('superAdmin.form.update')}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteGovernment(gov.id)}
+                            className="px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                          >
+                            {t('superAdmin.toastDelete')}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1236,6 +1256,106 @@ const SuperAdmin = () => {
                 </div>
               )}
             </>
+          )}
+
+          {/* Edit Government modal */}
+          {editingGovernment && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Tahrirlash</h3>
+                    <p className="text-sm text-gray-500">{editingGovernment.email}</p>
+                  </div>
+                  <button
+                    onClick={() => setEditingGovernment(null)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ×
+                  </button>
+                </div>
+                <form onSubmit={handleUpdateGovernment} className="p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ism</label>
+                      <input
+                        type="text"
+                        required
+                        value={editGovFirstName}
+                        onChange={(e) => setEditGovFirstName(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Familiya</label>
+                      <input
+                        type="text"
+                        required
+                        value={editGovLastName}
+                        onChange={(e) => setEditGovLastName(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={editGovEmail}
+                      onChange={(e) => setEditGovEmail(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Yangi parol (ixtiyoriy)</label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords.edit ? 'text' : 'password'}
+                        value={editGovPassword}
+                        onChange={(e) => setEditGovPassword(e.target.value)}
+                        placeholder="Parolni o'zgartirmasangiz bo'sh qoldiring"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords({ ...showPasswords, edit: !showPasswords.edit })}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPasswords.edit ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setEditingGovernment(null)}
+                      className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold transition-colors"
+                      disabled={editGovSaving}
+                    >
+                      Bekor qilish
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={editGovSaving}
+                      className="flex-1 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {editGovSaving ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Saqlanmoqda...</span>
+                        </>
+                      ) : (
+                        <span>Saqlash</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           )}
 
           {/* Edit modal */}

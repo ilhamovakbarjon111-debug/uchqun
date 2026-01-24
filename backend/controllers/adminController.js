@@ -1613,6 +1613,88 @@ export const getGovernments = async (req, res) => {
 };
 
 /**
+ * Update a Government account (Super Admin only)
+ * PUT /api/super-admin/government/:id
+ */
+export const updateGovernmentBySuper = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { firstName, lastName, email, password } = req.body;
+
+    const government = await User.findOne({ where: { id, role: 'government' } });
+    if (!government) {
+      return res.status(404).json({ error: 'Government user not found' });
+    }
+
+    if (email && email.toLowerCase() !== government.email) {
+      const existing = await User.findOne({ where: { email: email.toLowerCase() } });
+      if (existing) {
+        return res.status(400).json({ error: 'Email already in use' });
+      }
+      government.email = email.toLowerCase();
+    }
+
+    if (firstName) government.firstName = firstName.trim();
+    if (lastName) government.lastName = lastName.trim();
+    if (password) government.password = password.trim(); // hashed by model hook
+
+    await government.save();
+
+    const governmentData = government.toJSON();
+    delete governmentData.password;
+
+    logger.info('Government account updated', {
+      governmentId: government.id,
+      updatedBy: req.user?.id,
+    });
+
+    res.json({
+      success: true,
+      message: 'Government account updated successfully',
+      data: governmentData,
+    });
+  } catch (error) {
+    logger.error('Update government error', { error: error.message, stack: error.stack, userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to update government account' });
+  }
+};
+
+/**
+ * Delete a Government account (Super Admin only)
+ * DELETE /api/super-admin/government/:id
+ */
+export const deleteGovernmentBySuper = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const government = await User.findOne({ where: { id, role: 'government' } });
+    if (!government) {
+      return res.status(404).json({ error: 'Government user not found' });
+    }
+
+    // Prevent deleting self
+    if (req.user?.id === government.id) {
+      return res.status(400).json({ error: 'You cannot delete your own account' });
+    }
+
+    await government.destroy();
+
+    logger.info('Government account deleted', {
+      governmentId: id,
+      deletedBy: req.user?.id,
+    });
+
+    res.json({
+      success: true,
+      message: 'Government account deleted successfully',
+    });
+  } catch (error) {
+    logger.error('Delete government error', { error: error.message, stack: error.stack, userId: req.user?.id });
+    res.status(500).json({ error: 'Failed to delete government account' });
+  }
+};
+
+/**
  * Get admin's messages to super-admin
  * GET /api/admin/messages
  * 

@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
-import { createAdmin, createGovernment, getGovernments, getAdmins, updateAdminBySuper, deleteAdminBySuper, getAllSchools } from '../controllers/adminController.js';
+import { createAdmin, createGovernment, getGovernments, updateGovernmentBySuper, deleteGovernmentBySuper, getAdmins, updateAdminBySuper, deleteAdminBySuper, getAllSchools } from '../controllers/adminController.js';
 import { sendMessage, getMessages, getMessageById, replyToMessage, markMessageRead, deleteMessage, getAllPayments } from '../controllers/superAdminController.js';
 import { getRegistrationRequests, getRegistrationRequestById, approveRegistrationRequest, rejectRegistrationRequest } from '../controllers/adminRegistrationController.js';
 import User from '../models/User.js';
@@ -181,6 +181,8 @@ router.use(requireAdmin);
 // Government account management (Super Admin only)
 router.get('/government', getGovernments);
 router.post('/government', createGovernment);
+router.put('/government/:id', updateGovernmentBySuper);
+router.delete('/government/:id', deleteGovernmentBySuper);
 
 // List admin accounts (super admin view)
 router.get('/admins', getAdmins);
