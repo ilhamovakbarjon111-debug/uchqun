@@ -1494,21 +1494,36 @@ export const createGovernment = async (req, res) => {
       });
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
     // Check if user already exists
-    const existingUser = await User.findOne({ where: { email: email.toLowerCase() } });
+    const existingUser = await User.findOne({ where: { email: email.toLowerCase().trim() } });
     if (existingUser) {
       return res.status(400).json({ error: 'User with this email already exists' });
     }
 
     // Create government user
     const government = await User.create({
-      email: email.toLowerCase(),
-      password,
-      firstName,
-      lastName,
+      email: email.toLowerCase().trim(),
+      password: password.trim(),
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
       role: 'government',
       isActive: true,
     });
+
+    // Remove password from response
+    const governmentData = government.toJSON();
+    delete governmentData.password;
 
     logger.info('Government account created', {
       governmentId: government.id,
@@ -1519,11 +1534,76 @@ export const createGovernment = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Government account created successfully',
-      data: government.toJSON(),
+      data: governmentData,
     });
   } catch (error) {
-    logger.error('Create government error', { error: error.message, stack: error.stack });
-    res.status(500).json({ error: 'Failed to create government account' });
+    logger.error('Create government error', { 
+      error: error.message, 
+      stack: error.stack,
+      body: req.body,
+      userId: req.user?.id,
+    });
+    
+    // Provide more specific error messages
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        error: 'Validation error',
+        details: error.errors?.map(e => e.message) || [error.message],
+      });
+    }
+    
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({
+        error: 'User with this email already exists',
+      });
+    }
+    
+    if (error.name === 'SequelizeDatabaseError') {
+      return res.status(400).json({
+        error: 'Database error',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      });
+    }
+
+    res.status(500).json({ 
+      error: 'Failed to create government account',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+/**
+ * Get all government accounts
+ * GET /api/super-admin/government
+ */
+export const getGovernments = async (req, res) => {
+  try {
+    const governments = await User.findAll({
+      where: { role: 'government' },
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+    });
+
+    logger.info('Government accounts fetched', {
+      count: governments.length,
+      userId: req.user?.id,
+    });
+
+    res.json({
+      success: true,
+      data: governments.map(g => g.toJSON()),
+      count: governments.length,
+    });
+  } catch (error) {
+    logger.error('Get governments error', { 
+      error: error.message, 
+      stack: error.stack,
+      userId: req.user?.id,
+    });
+    res.status(500).json({ 
+      error: 'Failed to fetch government accounts',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 };
 
