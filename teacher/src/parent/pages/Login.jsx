@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
@@ -12,6 +13,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,15 +23,19 @@ const Login = () => {
     const result = await login(email, password);
 
     if (result.success) {
-      // Redirect based on role
+      // Only allow parent role
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (user.role === 'teacher' || user.role === 'admin') {
-        navigate('/teacher');
-      } else {
+      if (user.role === 'parent') {
         navigate('/');
+      } else {
+        // Clear tokens if wrong role
+        localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        setError(t('login.invalidRole', { defaultValue: 'Faqat ota-ona kirishi mumkin. Iltimos, to\'g\'ri login sahifasidan kirishga harakat qiling.' }));
       }
     } else {
-      setError(result.error || 'Invalid email or password');
+      setError(result.error || t('login.invalid', { defaultValue: 'Invalid email or password' }));
     }
 
     setLoading(false);
@@ -42,8 +48,8 @@ const Login = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
             <span className="text-3xl">🎓</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Uchqun Platform</h1>
-          <p className="text-gray-600">Special Education School Management</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('login.title', { defaultValue: 'Uchqun Platform' })}</h1>
+          <p className="text-gray-600">{t('login.subtitle', { defaultValue: 'Special Education School Management' })}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -55,7 +61,7 @@ const Login = () => {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
+              {t('login.email', { defaultValue: 'Email Address' })}
             </label>
             <input
               id="email"
@@ -64,13 +70,13 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-              placeholder="Enter your email"
+              placeholder={t('login.email', { defaultValue: 'Enter your email' })}
             />
           </div>
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Password
+              {t('login.password', { defaultValue: 'Password' })}
             </label>
             <div className="relative">
               <input
@@ -80,13 +86,13 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                placeholder="Enter your password"
+                placeholder={t('login.password', { defaultValue: 'Enter your password' })}
                 autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? t('login.hidePassword', { defaultValue: 'Hide password' }) : t('login.showPassword', { defaultValue: 'Show password' })}
                 className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -102,16 +108,16 @@ const Login = () => {
             {loading ? (
               <>
                 <LoadingSpinner size="sm" className="mr-2" />
-                Logging in...
+                {t('login.loading', { defaultValue: 'Logging in...' })}
               </>
             ) : (
-              'Login'
+              t('login.submit', { defaultValue: 'Login' })
             )}
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-500">
-          <p>Please contact your teacher for login credentials</p>
+          <p>{t('login.contactTeacher', { defaultValue: 'Please contact your teacher for login credentials' })}</p>
         </div>
       </div>
     </div>

@@ -294,6 +294,19 @@
     },
     "monthlyPaymentLabel": "Monthly payment"
   },
+  "login": {
+    "title": "Uchqun Platform",
+    "subtitle": "Special Education School Management",
+    "email": "Email Address",
+    "password": "Password",
+    "submit": "Login",
+    "loading": "Logging in...",
+    "invalid": "Invalid email or password",
+    "invalidRole": "Only parents can login. Please try logging in from the correct login page.",
+    "contactTeacher": "Please contact your teacher for login credentials",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
   "language": "Language"
 }
 

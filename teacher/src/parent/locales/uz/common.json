@@ -299,6 +299,19 @@
     },
     "monthlyPaymentLabel": "Oylik to'lov"
   },
+  "login": {
+    "title": "Uchqun Platform",
+    "subtitle": "Maxsus ta'lim maktabi boshqaruvi",
+    "email": "Email manzil",
+    "password": "Parol",
+    "submit": "Kirish",
+    "loading": "Kirilmoqda...",
+    "invalid": "Email yoki parol noto'g'ri",
+    "invalidRole": "Faqat ota-ona kirishi mumkin. Iltimos, to'g'ri login sahifasidan kirishga harakat qiling.",
+    "contactTeacher": "Kirish ma'lumotlari uchun o'qituvchiga murojaat qiling",
+    "showPassword": "Parolni ko'rsatish",
+    "hidePassword": "Parolni yashirish"
+  },
   "language": "Til"
 }
 

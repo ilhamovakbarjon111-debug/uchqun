@@ -26,7 +26,7 @@
     "submit": "Kirish",
     "loading": "Kirish...",
     "invalid": "Email yoki parol noto'g'ri",
-    "invalidRole": "Noto'g'ri foydalanuvchi roli"
+    "invalidRole": "Faqat o'qituvchi va ota-ona kirishi mumkin. Boshqa rollar kirishi mumkin emas."
   },
   "dashboard": {
     "role": "Mening rolim: O'qituvchi",

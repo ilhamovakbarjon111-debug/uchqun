@@ -26,7 +26,7 @@
     "submit": "Login",
     "loading": "Logging in...",
     "invalid": "Invalid email or password",
-    "invalidRole": "Invalid user role"
+    "invalidRole": "Only teachers and parents can login. Other roles are not allowed."
   },
   "dashboard": {
     "role": "My Role: Teacher",
