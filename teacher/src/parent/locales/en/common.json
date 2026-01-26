@@ -302,7 +302,7 @@
     "submit": "Login",
     "loading": "Logging in...",
     "invalid": "Invalid email or password",
-    "invalidRole": "Only parents can login. Please try logging in from the correct login page.",
+    "invalidRole": "Only teachers and parents can login. Other roles are not allowed.",
     "contactTeacher": "Please contact your teacher for login credentials",
     "showPassword": "Show password",
     "hidePassword": "Hide password"

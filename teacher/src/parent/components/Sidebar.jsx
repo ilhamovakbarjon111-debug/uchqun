@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../context/NotificationContext';
+import uzParent from '../locales/uz/common.json';
+import ruParent from '../locales/ru/common.json';
+import enParent from '../locales/en/common.json';
 
 // Color scheme per Mobile-icons.md
 const COLORS = {
@@ -30,8 +33,24 @@ const COLORS = {
 const Sidebar = ({ onClose }) => {
   const location = useLocation();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { count, refreshNotifications } = useNotification();
+  
+  // Get parent translations directly to avoid merge conflicts
+  const parentTranslations = {
+    uz: uzParent,
+    ru: ruParent,
+    en: enParent,
+  };
+  const currentLang = i18n.language || 'uz';
+  const parentT = (key, defaultValue) => {
+    const keys = key.split('.');
+    let value = parentTranslations[currentLang];
+    for (const k of keys) {
+      value = value?.[k];
+    }
+    return value || defaultValue || key;
+  };
 
   // Icon mapping per Mobile-icons.md
   const navigation = [
@@ -57,7 +76,7 @@ const Sidebar = ({ onClose }) => {
           <span className="text-white font-bold text-xl">U</span>
         </div>
         <h1 className="text-lg font-bold text-white tracking-tight">
-          {t('sidebar.title', { defaultValue: 'Uchqun Parent' })}
+          {parentT('sidebar.title', 'Uchqun Parent')}
         </h1>
       </div>
 

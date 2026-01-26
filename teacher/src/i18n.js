@@ -11,10 +11,27 @@ import uzParent from './parent/locales/uz/common.json';
 import ruParent from './parent/locales/ru/common.json';
 
 // Deep merge helper to combine teacher + parent dictionaries
+// Exclude sidebar.title from parent to prevent override of teacher sidebar title
 const mergeDeep = (base, extra) => {
   const result = { ...base };
   Object.entries(extra).forEach(([key, value]) => {
-    if (
+    // Special handling for sidebar to prevent parent's title from overriding teacher's title
+    if (key === 'sidebar' && value && typeof value === 'object' && !Array.isArray(value)) {
+      // If teacher already has sidebar.title, keep it and don't override with parent's
+      if (result[key] && result[key].title) {
+        const sidebarResult = { ...result[key] };
+        // Only merge non-title fields from parent
+        Object.entries(value).forEach(([sidebarKey, sidebarValue]) => {
+          if (sidebarKey !== 'title') {
+            sidebarResult[sidebarKey] = sidebarValue;
+          }
+        });
+        result[key] = sidebarResult;
+      } else {
+        // If teacher doesn't have sidebar.title, use parent's
+        result[key] = { ...result[key], ...value };
+      }
+    } else if (
       value &&
       typeof value === 'object' &&
       !Array.isArray(value) &&

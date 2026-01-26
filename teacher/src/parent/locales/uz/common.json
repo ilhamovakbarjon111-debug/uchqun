@@ -17,7 +17,7 @@
     "settings": "Sozlamalar"
   },
   "sidebar": {
-    "title": "Uchqun Parent",
+    "title": "Uchqun Ota-ona",
     "menu": "Asosiy menyu"
   },
   "profile": {
@@ -307,7 +307,7 @@
     "submit": "Kirish",
     "loading": "Kirilmoqda...",
     "invalid": "Email yoki parol noto'g'ri",
-    "invalidRole": "Faqat ota-ona kirishi mumkin. Iltimos, to'g'ri login sahifasidan kirishga harakat qiling.",
+    "invalidRole": "Faqat o'qituvchi va ota-ona kirishi mumkin. Boshqa rollar kirishi mumkin emas.",
     "contactTeacher": "Kirish ma'lumotlari uchun o'qituvchiga murojaat qiling",
     "showPassword": "Parolni ko'rsatish",
     "hidePassword": "Parolni yashirish"
