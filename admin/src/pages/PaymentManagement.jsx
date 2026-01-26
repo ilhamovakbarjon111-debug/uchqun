@@ -4,6 +4,7 @@ import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import {
   DollarSign,
   Plus,
@@ -15,6 +16,11 @@ import {
   Save,
   X,
   Search,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  XCircle,
+  BarChart3,
 } from 'lucide-react';
 
 /**
@@ -44,6 +50,10 @@ const PaymentManagement = () => {
     paymentProvider: '',
     description: '',
   });
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [cardName, setCardName] = useState('');
   const [saving, setSaving] = useState(false);
   const { success, error: showError } = useToast();
   const { t } = useTranslation();
@@ -103,12 +113,64 @@ const PaymentManagement = () => {
       paymentProvider: '',
       description: '',
     });
+    setCardNumber('');
+    setCardExpiry('');
+    setCardCvv('');
+    setCardName('');
     setShowModal(true);
   };
 
+  const formatCardNumber = (value) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    if (parts.length) {
+      return parts.join(' ');
+    } else {
+      return v;
+    }
+  };
+
+  const formatExpiry = (value) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    if (v.length >= 2) {
+      return v.substring(0, 2) + '/' + v.substring(2, 4);
+    }
+    return v;
+  };
+
   const handleSave = async () => {
-    if (!formData.parentId || !formData.amount || !formData.paymentType || !formData.paymentMethod) {
+    if (!formData.parentId || !formData.amount) {
       showError(t('payment.validation.required', { defaultValue: 'Barcha majburiy maydonlar to\'ldirilishi kerak' }));
+      return;
+    }
+
+    if (!cardNumber || !cardExpiry || !cardCvv || !cardName) {
+      showError(t('payment.card.validation.allFieldsRequired', { defaultValue: 'Iltimos, barcha karta ma\'lumotlarini kiriting' }));
+      return;
+    }
+
+    // Validate card number
+    const cleanCardNumber = cardNumber.replace(/\s/g, '');
+    if (cleanCardNumber.length < 16) {
+      showError(t('payment.card.validation.cardNumberInvalid', { defaultValue: 'Karta raqami noto\'g\'ri. Iltimos, 16 raqam kiriting' }));
+      return;
+    }
+
+    // Validate expiry date
+    const [month, year] = cardExpiry.split('/');
+    if (!month || !year || month.length !== 2 || year.length !== 2) {
+      showError(t('payment.card.validation.expiryInvalid', { defaultValue: 'Muddati noto\'g\'ri. Format: MM/YY' }));
+      return;
+    }
+
+    // Validate CVV
+    if (cardCvv.length < 3) {
+      showError(t('payment.card.validation.cvvInvalid', { defaultValue: 'CVV noto\'g\'ri. Iltimos, 3 raqam kiriting' }));
       return;
     }
 
@@ -118,9 +180,19 @@ const PaymentManagement = () => {
         ...formData,
         parentId: formData.parentId,
         amount: parseFloat(formData.amount),
+        paymentMethod: 'card',
+        paymentProvider: 'card',
+        metadata: {
+          cardLast4: cleanCardNumber.slice(-4),
+          cardName: cardName,
+        },
       });
-      success(t('payment.createSuccess', { defaultValue: 'To\'lov yaratildi' }));
+      success(t('payment.createSuccess', { defaultValue: 'To\'lov muvaffaqiyatli amalga oshirildi' }));
       setShowModal(false);
+      setCardNumber('');
+      setCardExpiry('');
+      setCardCvv('');
+      setCardName('');
       loadData();
     } catch (error) {
       showError(error.response?.data?.error || t('payment.saveError', { defaultValue: 'Saqlashda xatolik' }));
@@ -138,6 +210,89 @@ const PaymentManagement = () => {
       payment.description?.toLowerCase().includes(query)
     );
   }) : [];
+
+  // Calculate statistics from payments
+  const calculateStats = () => {
+    if (!Array.isArray(payments) || payments.length === 0) {
+      return {
+        totalRevenue: 0,
+        totalPayments: 0,
+        completedPayments: 0,
+        pendingPayments: 0,
+        failedPayments: 0,
+        averagePayment: 0,
+        byType: {},
+        byStatus: {
+          completed: { count: 0, amount: 0 },
+          pending: { count: 0, amount: 0 },
+          failed: { count: 0, amount: 0 },
+        },
+        byMonth: {},
+      };
+    }
+
+    let totalRevenue = 0;
+    let completedRevenue = 0;
+    const byType = {};
+    const byStatus = {
+      completed: { count: 0, amount: 0 },
+      pending: { count: 0, amount: 0 },
+      failed: { count: 0, amount: 0 },
+    };
+    const byMonth = {};
+
+    payments.forEach((payment) => {
+      const amount = parseFloat(payment.amount || 0);
+      totalRevenue += amount;
+
+      // By status
+      const status = payment.status || 'pending';
+      if (byStatus[status]) {
+        byStatus[status].count++;
+        byStatus[status].amount += amount;
+      }
+
+      if (status === 'completed') {
+        completedRevenue += amount;
+      }
+
+      // By type
+      const type = payment.paymentType || 'other';
+      if (!byType[type]) {
+        byType[type] = { count: 0, amount: 0 };
+      }
+      byType[type].count++;
+      byType[type].amount += amount;
+
+      // By month
+      if (payment.paidAt || payment.createdAt) {
+        const date = new Date(payment.paidAt || payment.createdAt);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (!byMonth[monthKey]) {
+          byMonth[monthKey] = { count: 0, amount: 0 };
+        }
+        byMonth[monthKey].count++;
+        byMonth[monthKey].amount += amount;
+      }
+    });
+
+    const completedPayments = byStatus.completed.count;
+    const averagePayment = completedPayments > 0 ? completedRevenue / completedPayments : 0;
+
+    return {
+      totalRevenue: completedRevenue,
+      totalPayments: payments.length,
+      completedPayments: byStatus.completed.count,
+      pendingPayments: byStatus.pending.count,
+      failedPayments: byStatus.failed.count,
+      averagePayment,
+      byType,
+      byStatus,
+      byMonth,
+    };
+  };
+
+  const stats = calculateStats();
 
   if (loading) {
     return (
@@ -166,6 +321,165 @@ const PaymentManagement = () => {
           {t('payment.create', { defaultValue: 'Yangi To\'lov' })}
         </button>
       </div>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-6 bg-gradient-to-br from-green-500 to-green-600 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <DollarSign className="w-8 h-8" />
+            <TrendingUp className="w-6 h-6" />
+          </div>
+          <p className="text-3xl font-bold mb-1">
+            {stats.totalRevenue.toLocaleString()} UZS
+          </p>
+          <p className="text-green-100 text-sm">{t('payment.stats.totalRevenue', { defaultValue: 'Jami Daromad' })}</p>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <CreditCard className="w-8 h-8 text-primary-600" />
+          </div>
+          <p className="text-3xl font-bold text-gray-900 mb-1">{stats.totalPayments}</p>
+          <p className="text-gray-600 text-sm">{t('payment.stats.totalPayments', { defaultValue: 'Jami To\'lovlar' })}</p>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <CheckCircle className="w-8 h-8 text-green-600" />
+          </div>
+          <p className="text-3xl font-bold text-gray-900 mb-1">{stats.completedPayments}</p>
+          <p className="text-gray-600 text-sm">{t('payment.stats.completed', { defaultValue: 'Yakunlangan' })}</p>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <BarChart3 className="w-8 h-8 text-blue-600" />
+          </div>
+          <p className="text-3xl font-bold text-gray-900 mb-1">
+            {stats.averagePayment.toLocaleString()} UZS
+          </p>
+          <p className="text-gray-600 text-sm">{t('payment.stats.averagePayment', { defaultValue: 'O\'rtacha To\'lov' })}</p>
+        </Card>
+      </div>
+
+      {/* Status Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">{t('payment.stats.completed', { defaultValue: 'Yakunlangan' })}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.completedPayments}</p>
+            </div>
+          </div>
+          <p className="text-lg font-semibold text-green-600">
+            {stats.byStatus.completed.amount.toLocaleString()} UZS
+          </p>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <Clock className="w-6 h-6 text-yellow-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">{t('payment.stats.pending', { defaultValue: 'Kutilmoqda' })}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.pendingPayments}</p>
+            </div>
+          </div>
+          <p className="text-lg font-semibold text-yellow-600">
+            {stats.byStatus.pending.amount.toLocaleString()} UZS
+          </p>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-red-100 rounded-lg">
+              <XCircle className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">{t('payment.stats.failed', { defaultValue: 'Bekor qilingan' })}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.failedPayments}</p>
+            </div>
+          </div>
+          <p className="text-lg font-semibold text-red-600">
+            {(stats.byStatus.failed?.amount || 0).toLocaleString()} UZS
+          </p>
+        </Card>
+      </div>
+
+      {/* Payment Type Statistics */}
+      {Object.keys(stats.byType).length > 0 && (
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-primary-600" />
+            {t('payment.stats.byType', { defaultValue: 'To\'lov Turi Bo\'yicha' })}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(stats.byType).map(([type, data]) => (
+              <div key={type} className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-gray-900 capitalize">
+                    {type === 'tuition' ? 'Ta\'lim' :
+                     type === 'therapy' ? 'Terapiya' :
+                     type === 'meal' ? 'Ovqat' :
+                     type === 'activity' ? 'Faoliyat' : 'Boshqa'}
+                  </span>
+                  <span className="text-lg font-bold text-primary-600">
+                    {data.amount.toLocaleString()} UZS
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>{data.count} {t('payment.stats.taTolov', { defaultValue: 'ta to\'lov' })}</span>
+                  <span>{t('payment.stats.ortacha', { defaultValue: 'O\'rtacha' })}: {(data.amount / data.count).toLocaleString()} UZS</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Monthly Statistics */}
+      {Object.keys(stats.byMonth).length > 0 && (
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary-600" />
+            {t('payment.stats.byMonth', { defaultValue: 'Oylik Daromad' })}
+          </h2>
+          <div className="space-y-3">
+            {Object.entries(stats.byMonth)
+              .sort(([a], [b]) => b.localeCompare(a))
+              .slice(0, 6)
+              .map(([month, data]) => {
+                const [year, monthNum] = month.split('-');
+                const monthNames = {
+                  uz: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'],
+                  ru: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+                  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+                };
+                const currentLang = i18n.language || 'uz';
+                return (
+                  <div key={month} className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-gray-900">
+                        {monthNames[currentLang]?.[parseInt(monthNum) - 1] || monthNames.uz[parseInt(monthNum) - 1]} {year}
+                      </span>
+                      <span className="text-lg font-bold text-primary-600">
+                        {data.amount.toLocaleString()} UZS
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>{data.count} {t('payment.stats.taTolov', { defaultValue: 'ta to\'lov' })}</span>
+                      <span>{t('payment.stats.ortacha', { defaultValue: 'O\'rtacha' })}: {(data.amount / data.count).toLocaleString()} UZS</span>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </Card>
+      )}
 
       {/* Search */}
       <Card className="p-6">
@@ -270,7 +584,13 @@ const PaymentManagement = () => {
                 {t('payment.create', { defaultValue: 'Yangi To\'lov' })}
               </h3>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setCardNumber('');
+                  setCardExpiry('');
+                  setCardCvv('');
+                  setCardName('');
+                }}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-gray-500" />
@@ -318,88 +638,119 @@ const PaymentManagement = () => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('payment.amount', { defaultValue: 'Summa' })} *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('payment.amount', { defaultValue: 'To\'lov Summasi (UZS)' })} *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg font-semibold"
+                  placeholder="0"
+                  required
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('payment.currency', { defaultValue: 'Valyuta' })}
-                  </label>
-                  <select
-                    value={formData.currency}
-                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option value="UZS">UZS</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                  </select>
+              {/* Card Preview */}
+              <div className="bg-gradient-to-br from-primary-600 to-primary-500 rounded-xl p-6 text-white">
+                <div className="flex items-center justify-between mb-4">
+                  <CreditCard className="w-8 h-8" />
+                  <div className="text-sm opacity-90">VISA</div>
+                </div>
+                <div className="mb-4">
+                  <p className="text-sm opacity-90 mb-1">{t('payment.card.cardNumber', { defaultValue: 'Karta raqami' })}</p>
+                  <p className="text-xl font-mono tracking-wider">
+                    {cardNumber || '**** **** **** ****'}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm opacity-90 mb-1">{t('payment.card.cardName', { defaultValue: 'Karta egasi' })}</p>
+                    <p className="font-semibold">
+                      {cardName || t('payment.card.cardNamePlaceholder', { defaultValue: 'KARTA EGASI' })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm opacity-90 mb-1">{t('payment.card.cardExpiry', { defaultValue: 'Muddati' })}</p>
+                    <p className="font-semibold">
+                      {cardExpiry || t('payment.card.expiryPlaceholder', { defaultValue: 'MM/YY' })}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('payment.type', { defaultValue: 'To\'lov Turi' })} *
-                  </label>
-                  <select
-                    value={formData.paymentType}
-                    onChange={(e) => setFormData({ ...formData, paymentType: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="tuition">{t('payment.tuition', { defaultValue: 'Ta\'lim' })}</option>
-                    <option value="therapy">{t('payment.therapy', { defaultValue: 'Terapiya' })}</option>
-                    <option value="meal">{t('payment.meal', { defaultValue: 'Ovqat' })}</option>
-                    <option value="activity">{t('payment.activity', { defaultValue: 'Faoliyat' })}</option>
-                    <option value="other">{t('payment.other', { defaultValue: 'Boshqa' })}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('payment.method', { defaultValue: 'To\'lov Usuli' })} *
-                  </label>
-                  <select
-                    value={formData.paymentMethod}
-                    onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="card">{t('payment.card', { defaultValue: 'Karta' })}</option>
-                    <option value="bank_transfer">{t('payment.bankTransfer', { defaultValue: 'Bank o\'tkazmasi' })}</option>
-                    <option value="cash">{t('payment.cash', { defaultValue: 'Naqd' })}</option>
-                    <option value="mobile_payment">{t('payment.mobilePayment', { defaultValue: 'Mobil to\'lov' })}</option>
-                    <option value="online">{t('payment.online', { defaultValue: 'Onlayn' })}</option>
-                    <option value="other">{t('payment.other', { defaultValue: 'Boshqa' })}</option>
-                  </select>
-                </div>
+              {/* Card Form */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('payment.card.cardName', { defaultValue: 'Karta Egasi' })}
+                </label>
+                <input
+                  type="text"
+                  value={cardName}
+                  onChange={(e) => setCardName(e.target.value.toUpperCase())}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder={t('payment.card.cardNamePlaceholder', { defaultValue: 'JOHN DOE' })}
+                  maxLength={50}
+                  required
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('payment.provider', { defaultValue: 'To\'lov Provayderi' })}
+                  {t('payment.card.cardNumber', { defaultValue: 'Karta Raqami' })}
                 </label>
                 <input
                   type="text"
-                  value={formData.paymentProvider}
-                  onChange={(e) => setFormData({ ...formData, paymentProvider: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Payme, Click, Uzcard..."
+                  value={cardNumber}
+                  onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono"
+                  placeholder={t('payment.card.cardNumberPlaceholder', { defaultValue: '1234 5678 9012 3456' })}
+                  maxLength={19}
+                  required
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('payment.card.cardExpiry', { defaultValue: 'Muddati' })}
+                  </label>
+                  <input
+                    type="text"
+                    value={cardExpiry}
+                    onChange={(e) => {
+                      const formatted = formatExpiry(e.target.value);
+                      if (formatted.length <= 5) {
+                        setCardExpiry(formatted);
+                      }
+                    }}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono"
+                    placeholder={t('payment.card.expiryPlaceholder', { defaultValue: 'MM/YY' })}
+                    maxLength={5}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('payment.card.cvv', { defaultValue: 'CVV' })}
+                  </label>
+                  <input
+                    type="text"
+                    value={cardCvv}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '');
+                      if (v.length <= 3) {
+                        setCardCvv(v);
+                      }
+                    }}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono"
+                    placeholder={t('payment.card.cvvPlaceholder', { defaultValue: '123' })}
+                    maxLength={3}
+                    required
+                  />
+                </div>
               </div>
 
               <div>
@@ -415,9 +766,21 @@ const PaymentManagement = () => {
                 />
               </div>
 
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>{t('payment.card.security', { defaultValue: 'Xavfsizlik' })}:</strong> {t('payment.card.security', { defaultValue: 'Barcha ma\'lumotlar xavfsiz tarzda qayta ishlanadi. Karta ma\'lumotlari saqlanmaydi.' })}
+                </p>
+              </div>
+
               <div className="flex gap-3 pt-4">
                 <button
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setCardNumber('');
+                    setCardExpiry('');
+                    setCardCvv('');
+                    setCardName('');
+                  }}
                   className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold transition-colors"
                   disabled={saving}
                 >

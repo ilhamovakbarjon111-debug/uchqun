@@ -6,9 +6,6 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import AdminRegister from './pages/AdminRegister';
 import Dashboard from './pages/Dashboard';
-import BusinessStats from './pages/BusinessStats';
-import RevenueStats from './pages/RevenueStats';
-import UsageStats from './pages/UsageStats';
 import UsersStats from './pages/UsersStats';
 import PaymentManagement from './pages/PaymentManagement';
 import ReceptionManagement from './pages/ReceptionManagement';
@@ -51,10 +48,7 @@ const AppRoutes = () => {
         <Route path="teachers" element={<TeacherManagement />} />
         <Route path="groups" element={<GroupManagement />} />
         <Route path="school-ratings" element={<SchoolRatings />} />
-        <Route path="statistics" element={<BusinessStats />} />
-        <Route path="revenue" element={<RevenueStats />} />
         <Route path="users" element={<UsersStats />} />
-        <Route path="usage" element={<UsageStats />} />
         <Route path="payments" element={<PaymentManagement />} />
         <Route path="profile" element={<Profile />} />
         <Route path="settings" element={<Settings />} />

@@ -12,6 +12,12 @@
     "schoolRating": "Оценка школы",
     "notifications": "Уведомления",
     "exit": "Выход",
+    "menu": "Главное меню",
+    "therapy": "Терапия",
+    "settings": "Настройки"
+  },
+  "sidebar": {
+    "title": "Uchqun Parent",
     "menu": "Главное меню"
   },
   "profile": {
@@ -266,6 +272,27 @@
     "yourMessage": "Ваше сообщение",
     "superAdminReply": "Ответ супер-админа",
     "replied": "Получен ответ"
+  },
+  "payments": {
+    "title": "Платежи",
+    "subtitle": "Ежемесячные платежи и история платежей",
+    "monthlyPayment": "Ежемесячный платеж",
+    "nextPayment": "Следующий платеж",
+    "daysRemaining": "Осталось {{count}} дней",
+    "daysOverdue": "Просрочено на {{count}} дней",
+    "amountNotSet": "Сумма не установлена",
+    "note": "Примечание",
+    "noteText": "Для оплаты свяжитесь с администратором или произведите оплату через панель администратора.",
+    "history": "История платежей",
+    "noPayments": "Нет платежей",
+    "noPaymentsDesc": "Пока нет платежей",
+    "paymentProvider": {
+      "payme": "Payme",
+      "click": "Click",
+      "card": "Карта",
+      "other": "Платеж"
+    },
+    "monthlyPaymentLabel": "Ежемесячный платеж"
   },
   "language": "Язык"
 }

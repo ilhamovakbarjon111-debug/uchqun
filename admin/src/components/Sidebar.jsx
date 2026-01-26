@@ -11,12 +11,6 @@ import {
   Building2,
   User,
   Settings,
-  LayoutDashboard,
-  BarChart3,
-  DollarSign,
-  Activity,
-  TrendingUp,
-  Music,
   CreditCard
 } from 'lucide-react';
 
@@ -42,9 +36,6 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.groups'), href: '/admin/groups', icon: UsersRound },
     { name: t('nav.schoolRatings'), href: '/admin/school-ratings', icon: Building2 },
     { name: t('nav.payments', { defaultValue: 'To\'lovlar' }), href: '/admin/payments', icon: CreditCard },
-    { name: t('nav.statistics', { defaultValue: 'Statistics' }), href: '/admin/statistics', icon: BarChart3 },
-    { name: t('nav.revenue', { defaultValue: 'Revenue' }), href: '/admin/revenue', icon: DollarSign },
-    { name: t('nav.usage', { defaultValue: 'Usage' }), href: '/admin/usage', icon: Activity },
     { name: t('nav.profile', { defaultValue: 'Profile' }), href: '/admin/profile', icon: User },
     { name: t('nav.settings', { defaultValue: 'Sozlamalar' }), href: '/admin/settings', icon: Settings },
   ];
@@ -58,13 +49,13 @@ const Sidebar = ({ onClose }) => {
           <Crown className="w-5 h-5 text-yellow-300" strokeWidth={1.5} />
         </div>
         <h1 className="text-lg font-bold text-white tracking-tight">
-          Uchqun Admin
+          {t('sidebar.title', { defaultValue: 'Uchqun Admin' })}
         </h1>
       </div>
 
       <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
         <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: COLORS.textTertiary }}>
-          System Menu
+          {t('sidebar.menu', { defaultValue: 'System Menu' })}
         </p>
         {navigation.map((item) => {
           const Active = isActive(item.href);

@@ -12,6 +12,12 @@
     "schoolRating": "School Rating",
     "notifications": "Notifications",
     "exit": "Exit",
+    "menu": "Main menu",
+    "therapy": "Therapy",
+    "settings": "Settings"
+  },
+  "sidebar": {
+    "title": "Uchqun Parent",
     "menu": "Main menu"
   },
   "profile": {
@@ -266,6 +272,27 @@
     "yourMessage": "Your message",
     "superAdminReply": "Super-admin reply",
     "replied": "Replied"
+  },
+  "payments": {
+    "title": "Payments",
+    "subtitle": "Monthly payments and payment history",
+    "monthlyPayment": "Monthly Payment",
+    "nextPayment": "Next Payment",
+    "daysRemaining": "{{count}} days remaining",
+    "daysOverdue": "{{count}} days overdue",
+    "amountNotSet": "Amount not set",
+    "note": "Note",
+    "noteText": "To make a payment, contact the admin or make a payment through the admin panel.",
+    "history": "Payment History",
+    "noPayments": "No payments",
+    "noPaymentsDesc": "No payments yet",
+    "paymentProvider": {
+      "payme": "Payme",
+      "click": "Click",
+      "card": "Card",
+      "other": "Payment"
+    },
+    "monthlyPaymentLabel": "Monthly payment"
   },
   "language": "Language"
 }

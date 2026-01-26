@@ -7,6 +7,11 @@
     "groups": "Guruhlar",
     "settings": "Sozlamalar",
     "logout": "Chiqish",
+    "menu": "Tizim menyu",
+    "profile": "Profil"
+  },
+  "sidebar": {
+    "title": "Uchqun Reception",
     "menu": "Tizim menyu"
   },
   "login": {

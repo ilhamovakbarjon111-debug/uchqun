@@ -9,7 +9,14 @@
     "chat": "Chat",
     "logout": "Logout",
     "profile": "Profile",
-    "menu": "Menu"
+    "menu": "Menu",
+    "monitoring": "Monitoring",
+    "therapy": "Therapy",
+    "settings": "Settings"
+  },
+  "sidebar": {
+    "title": "Uchqun Teacher",
+    "menu": "Main menu"
   },
   "login": {
     "title": "Uchqun Portal",

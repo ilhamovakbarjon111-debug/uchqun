@@ -3,7 +3,7 @@ import { changeLanguage } from '../i18n';
 
 const LanguageSwitcher = () => {
   const { i18n, t } = useTranslation();
-  const current = i18n.language || 'en';
+  const current = i18n.language || 'uz';
 
   const handleChange = (e) => {
     changeLanguage(e.target.value);
@@ -17,9 +17,9 @@ const LanguageSwitcher = () => {
         className="bg-transparent text-sm font-semibold focus:outline-none cursor-pointer"
         aria-label={t('language')}
       >
-        <option value="en">EN</option>
         <option value="uz">UZ</option>
         <option value="ru">RU</option>
+        <option value="en">EN</option>
       </select>
     </div>
   );

@@ -9,7 +9,14 @@
     "chat": "Chat",
     "logout": "Chiqish",
     "profile": "Profil",
-    "menu": "Menyu"
+    "menu": "Menyu",
+    "monitoring": "Monitoring",
+    "therapy": "Terapiya",
+    "settings": "Sozlamalar"
+  },
+  "sidebar": {
+    "title": "Uchqun Teacher",
+    "menu": "Asosiy menyu"
   },
   "login": {
     "title": "Uchqun Portal",

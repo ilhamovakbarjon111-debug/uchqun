@@ -12,6 +12,12 @@
     "schoolRating": "Maktab bahosi",
     "notifications": "Bildirishnomalar",
     "exit": "Chiqish",
+    "menu": "Asosiy menyu",
+    "therapy": "Terapiya",
+    "settings": "Sozlamalar"
+  },
+  "sidebar": {
+    "title": "Uchqun Parent",
     "menu": "Asosiy menyu"
   },
   "profile": {
@@ -271,6 +277,27 @@
     "imageTooLarge": "Rasm hajmi 5MB dan katta bo'lmasligi kerak",
     "avatarUpdated": "Rasm muvaffaqiyatli yuklandi",
     "uploadError": "Rasm yuklashda xatolik yuz berdi"
+  },
+  "payments": {
+    "title": "To'lovlar",
+    "subtitle": "Oylik to'lovlar va to'lov tarixi",
+    "monthlyPayment": "Oylik To'lov",
+    "nextPayment": "Keyingi to'lov",
+    "daysRemaining": "{{count}} kun qoldi",
+    "daysOverdue": "{{count}} kun kechikdi",
+    "amountNotSet": "Summa belgilanmagan",
+    "note": "Eslatma",
+    "noteText": "To'lov qilish uchun admin bilan bog'laning yoki admin panel orqali to'lov qiling.",
+    "history": "To'lov Tarixi",
+    "noPayments": "To'lovlar yo'q",
+    "noPaymentsDesc": "Hozircha to'lovlar mavjud emas",
+    "paymentProvider": {
+      "payme": "Payme",
+      "click": "Click",
+      "card": "Karta",
+      "other": "To'lov"
+    },
+    "monthlyPaymentLabel": "Oylik to'lov"
   },
   "language": "Til"
 }

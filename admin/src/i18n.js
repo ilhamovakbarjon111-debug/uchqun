@@ -10,14 +10,15 @@ const resources = {
   ru: { translation: ru },
 };
 
-const savedLang = localStorage.getItem('lang') || 'en';
+const savedLang = localStorage.getItem('lang') || 'uz';
 
 i18n
   .use(initReactI18next)
   .init({
     resources,
     lng: savedLang,
-    fallbackLng: 'en',
+    fallbackLng: 'uz',
+    supportedLngs: ['uz', 'ru', 'en'],
     interpolation: {
       escapeValue: false,
     },

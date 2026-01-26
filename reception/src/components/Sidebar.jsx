@@ -43,7 +43,7 @@ const Sidebar = ({ onClose }) => {
           <Shield className="w-5 h-5 text-white" strokeWidth={1.5} />
         </div>
         <h1 className="text-lg font-bold text-white tracking-tight">
-          Uchqun Reception
+          {t('sidebar.title', { defaultValue: 'Uchqun Reception' })}
         </h1>
       </div>
 

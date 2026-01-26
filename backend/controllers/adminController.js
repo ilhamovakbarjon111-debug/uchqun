@@ -8,6 +8,8 @@ import Child from '../models/Child.js';
 import Group from '../models/Group.js';
 import School from '../models/School.js';
 import SchoolRating from '../models/SchoolRating.js';
+import Payment from '../models/Payment.js';
+import TherapyUsage from '../models/TherapyUsage.js';
 import SuperAdminMessage from '../models/SuperAdminMessage.js';
 import logger from '../utils/logger.js';
 
@@ -879,6 +881,16 @@ export const getStatistics = async (req, res) => {
         : Promise.resolve(0),
     ]);
 
+    logger.info('Statistics calculated', {
+      adminId: req.user.id,
+      receptions,
+      teachers,
+      parents,
+      groups,
+      receptionIds: receptionIds.length,
+      teacherIds: teacherIds.length,
+    });
+
     // Get active vs inactive receptions
     const [activeReceptions, inactiveReceptions, pendingReceptions] = await Promise.all([
       User.count({ 
@@ -937,6 +949,35 @@ export const getStatistics = async (req, res) => {
       }
     }
 
+    // Get children count (children of parents created by admin's receptions)
+    let childrenCount = 0;
+    try {
+      if (parentIds.length > 0) {
+        childrenCount = await Child.count({
+          where: { parentId: { [Op.in]: parentIds } }
+        });
+        logger.info('Children count calculated', { 
+          childrenCount, 
+          parentIdsCount: parentIds.length,
+          adminId: req.user.id 
+        });
+      } else {
+        logger.info('No parent IDs found, children count will be 0', { 
+          adminId: req.user.id,
+          receptionIdsCount: receptionIds.length
+        });
+        childrenCount = 0;
+      }
+    } catch (error) {
+      logger.error('Error fetching children count', { 
+        error: error.message, 
+        adminId: req.user.id,
+        parentIdsCount: parentIds.length,
+        stack: error.stack 
+      });
+      childrenCount = 0;
+    }
+
     const [totalActivities, totalMeals, totalMedia] = await Promise.all([
       parentIds.length > 0
         ? ParentActivity.count({ where: { parentId: { [Op.in]: parentIds } } }).catch(() => 0)
@@ -981,16 +1022,37 @@ export const getStatistics = async (req, res) => {
         : Promise.resolve(0),
     ]);
 
+    // Get additional statistics: schools, revenue, therapy usages
+    const [totalSchools, totalRevenue, therapyUsages] = await Promise.all([
+      School.count({ where: { isActive: true } }).catch(() => 0),
+      Payment.findAll({ 
+        where: { status: 'completed' },
+        attributes: ['amount']
+      }).then(payments => {
+        return payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+      }).catch(() => 0),
+      TherapyUsage.count().catch(() => 0),
+    ]);
+
+    const totalUsers = receptions + teachers + parents;
+
     res.json({
       success: true,
       data: {
+        // Frontend expected format
+        receptions,
+        teachers,
+        parents,
+        children: childrenCount,
+        groups: groups,
+        // Detailed format (for backward compatibility)
         users: {
           receptions,
           teachers,
           parents,
-          total: receptions + teachers + parents,
+          total: totalUsers,
         },
-        receptions: {
+        receptionsDetail: {
           total: receptions,
           active: activeReceptions,
           inactive: inactiveReceptions,

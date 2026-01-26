@@ -8,6 +8,10 @@
     "menu": "Menu",
     "logout": "Logout"
   },
+  "sidebar": {
+    "title": "Government Panel",
+    "menu": "Menu"
+  },
   "login": {
     "title": "Government Control Panel",
     "subtitle": "Sign in",

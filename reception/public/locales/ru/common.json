@@ -7,6 +7,11 @@
     "groups": "Группы",
     "settings": "Настройки",
     "logout": "Выход",
+    "menu": "Системное меню",
+    "profile": "Профиль"
+  },
+  "sidebar": {
+    "title": "Uchqun Reception",
     "menu": "Системное меню"
   },
   "login": {

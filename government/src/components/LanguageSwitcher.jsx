@@ -21,8 +21,8 @@ const LanguageSwitcher = () => {
         aria-label="Select language"
       >
         <option value="uz">UZ</option>
-        <option value="en">EN</option>
         <option value="ru">RU</option>
+        <option value="en">EN</option>
       </select>
     </div>
   );

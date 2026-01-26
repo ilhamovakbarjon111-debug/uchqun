@@ -7,7 +7,13 @@
     "groups": "Группы",
     "schoolRatings": "Оценки школ",
     "profile": "Профиль",
-    "settings": "Настройки"
+    "settings": "Настройки",
+    "payments": "Платежи",
+    "menu": "Главное меню"
+  },
+  "sidebar": {
+    "title": "Uchqun Admin",
+    "menu": "Системное меню"
   },
   "role.admin": "Администратор",
   "logout": "Выход",
@@ -184,6 +190,60 @@
     "yourMessage": "Ваше сообщение",
     "superAdminReply": "Ответ супер-админа",
     "replied": "Получен ответ"
+  },
+  "payment": {
+    "management": "Управление платежами",
+    "managementDesc": "Создавайте и управляйте платежами для родителей",
+    "create": "Новый платеж",
+    "parent": "Родитель",
+    "selectParent": "Выберите родителя",
+    "child": "Ребенок",
+    "selectChild": "Выберите ребенка (необязательно)",
+    "amount": "Сумма платежа (UZS)",
+    "currency": "Валюта",
+    "description": "Описание",
+    "descriptionPlaceholder": "Описание платежа...",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "saving": "Сохранение...",
+    "createSuccess": "Платеж успешно выполнен",
+    "saveError": "Ошибка сохранения",
+    "loadError": "Ошибка загрузки платежей",
+    "search": "Поиск...",
+    "noPayments": "Платежи не найдены",
+    "noPaymentsDesc": "Пока нет платежей",
+    "validation": {
+      "required": "Все обязательные поля должны быть заполнены"
+    },
+    "stats": {
+      "totalRevenue": "Общий доход",
+      "totalPayments": "Всего платежей",
+      "completed": "Завершено",
+      "pending": "В ожидании",
+      "failed": "Отменено",
+      "averagePayment": "Средний платеж",
+      "byType": "По типу платежа",
+      "byMonth": "Месячный доход",
+      "taTolov": "платежей",
+      "ortacha": "Среднее"
+    },
+    "card": {
+      "cardNumber": "Номер карты",
+      "cardName": "Владелец карты",
+      "cardExpiry": "Срок действия",
+      "cvv": "CVV",
+      "cardNumberPlaceholder": "1234 5678 9012 3456",
+      "cardNamePlaceholder": "ИВАН ИВАНОВ",
+      "expiryPlaceholder": "ММ/ГГ",
+      "cvvPlaceholder": "123",
+      "security": "Безопасность: Все данные обрабатываются безопасно. Данные карты не сохраняются.",
+      "validation": {
+        "cardNumberInvalid": "Неверный номер карты. Пожалуйста, введите 16 цифр",
+        "expiryInvalid": "Неверный срок действия. Формат: ММ/ГГ",
+        "cvvInvalid": "Неверный CVV. Пожалуйста, введите 3 цифры",
+        "allFieldsRequired": "Пожалуйста, введите все данные карты"
+      }
+    }
   }
 }
 

@@ -8,6 +8,10 @@
     "menu": "Menu",
     "logout": "Chiqish"
   },
+  "sidebar": {
+    "title": "Davlat Panel",
+    "menu": "Menu"
+  },
   "login": {
     "title": "Davlat Nazorat Paneli",
     "subtitle": "Tizimga kirish",

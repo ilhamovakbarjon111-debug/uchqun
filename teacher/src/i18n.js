@@ -40,9 +40,9 @@ const resources = {
 // and use the default "translation" namespace to match useTranslation().
 i18n.use(initReactI18next).init({
   resources,
-  lng: ['en', 'uz', 'ru'].includes(localStorage.getItem('lang')) ? localStorage.getItem('lang') : 'en',
-  fallbackLng: 'en',
-  supportedLngs: ['en', 'uz', 'ru'],
+  lng: ['uz', 'ru', 'en'].includes(localStorage.getItem('lang')) ? localStorage.getItem('lang') : 'uz',
+  fallbackLng: 'uz',
+  supportedLngs: ['uz', 'ru', 'en'],
   defaultNS: 'translation',
   interpolation: {
     escapeValue: false,

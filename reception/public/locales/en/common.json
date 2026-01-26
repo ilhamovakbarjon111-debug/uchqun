@@ -7,6 +7,11 @@
     "groups": "Groups",
     "settings": "Settings",
     "logout": "Logout",
+    "menu": "System Menu",
+    "profile": "Profile"
+  },
+  "sidebar": {
+    "title": "Uchqun Reception",
     "menu": "System Menu"
   },
   "login": {

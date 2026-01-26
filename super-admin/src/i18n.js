@@ -6,9 +6,9 @@ i18n
   .use(HttpBackend)
   .use(initReactI18next)
   .init({
-    lng: localStorage.getItem('lang') || 'en',
-    fallbackLng: 'en',
-    supportedLngs: ['en', 'uz', 'ru'],
+    lng: localStorage.getItem('lang') || 'uz',
+    fallbackLng: 'uz',
+    supportedLngs: ['uz', 'ru', 'en'],
     interpolation: {
       escapeValue: false,
     },
