@@ -10,12 +10,14 @@ import { ActivitiesScreen } from '../screens/parent/ActivitiesScreen';
 import { MealsScreen } from '../screens/parent/MealsScreen';
 import { MediaScreen } from '../screens/parent/MediaScreen';
 import { ChatScreen } from '../screens/parent/ChatScreen';
-import { AIChatScreen } from '../screens/parent/AIChatScreen';
-import { NotificationsScreen } from '../screens/parent/NotificationsScreen';
 import { TeacherRatingScreen } from '../screens/parent/TeacherRatingScreen';
 import { SchoolRatingScreen } from '../screens/parent/SchoolRatingScreen';
 import { SettingsScreen } from '../screens/parent/SettingsScreen';
-import { ParentsListScreen } from '../screens/parent/ParentsListScreen';
+import { NotificationsScreen } from '../screens/parent/NotificationsScreen';
+import { TherapyScreen } from '../screens/parent/TherapyScreen';
+import { PaymentsScreen } from '../screens/parent/PaymentsScreen';
+import { HelpScreen } from '../screens/parent/HelpScreen';
+import { AIWarningsScreen } from '../screens/parent/AIWarningsScreen';
 import { DiagnosticsScreen } from '../screens/parent/DiagnosticsScreen';
 import tokens from '../styles/tokens';
 import { useTranslation } from 'react-i18next';
@@ -32,17 +34,13 @@ const TAB_CONFIG = {
     icon: 'home',
     label: 'Dashboard',
   },
-  Children: {
-    icon: 'people',
-    label: 'Children',
-  },
   Rating: {
     icon: 'star',
     label: 'Rating',
   },
-  AIChat: {
+  Chat: {
     icon: 'chatbubble-ellipses',
-    label: 'AI Chat',
+    label: 'Chat',
   },
   Settings: {
     icon: 'settings',
@@ -91,9 +89,8 @@ function ParentTabs() {
   const getTabLabel = (routeName) => {
     const labelMap = {
       Dashboard: t('nav.dashboard'),
-      Children: t('nav.parents'),
       Rating: t('nav.rating'),
-      AIChat: t('nav.aiChat'),
+      Chat: t('nav.chat'),
       Settings: t('nav.menu'),
     };
     return labelMap[routeName] || routeName;
@@ -124,9 +121,8 @@ function ParentTabs() {
       })}
     >
       <Tab.Screen name="Dashboard" component={ParentDashboardScreen} />
-      <Tab.Screen name="Children" component={ParentsListScreen} />
       <Tab.Screen name="Rating" component={TeacherRatingScreen} />
-      <Tab.Screen name="AIChat" component={AIChatScreen} />
+      <Tab.Screen name="Chat" component={ChatScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
@@ -141,9 +137,13 @@ export function ParentNavigator() {
       <Stack.Screen name="Meals" component={MealsScreen} />
       <Stack.Screen name="Media" component={MediaScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
-      <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="TeacherRating" component={TeacherRatingScreen} />
       <Stack.Screen name="SchoolRating" component={SchoolRatingScreen} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
+      <Stack.Screen name="Therapy" component={TherapyScreen} />
+      <Stack.Screen name="Payments" component={PaymentsScreen} />
+      <Stack.Screen name="Help" component={HelpScreen} />
+      <Stack.Screen name="AIWarnings" component={AIWarningsScreen} />
       {__DEV__ && (
         <Stack.Screen name="Diagnostics" component={DiagnosticsScreen} />
       )}

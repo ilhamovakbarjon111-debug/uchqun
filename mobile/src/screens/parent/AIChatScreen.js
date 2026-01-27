@@ -16,15 +16,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
+import { useTranslation } from 'react-i18next';
 import tokens from '../../styles/tokens';
 import Screen from '../../components/layout/Screen';
 
 const CHAT_STORAGE_KEY = '@uchqun/ai-chat-messages';
-const DEFAULT_MESSAGE = {
+const getDefaultMessage = (t) => ({
   role: 'assistant',
-  content: "Salom! Men sizning AI yordamchingizman. Farzandingiz ta'limi haqida savollaringiz bo'lsa, bemalol so'rang! 🎓",
+  content: t('aiChat.welcomeMessage', { defaultValue: "Salom! Men sizning AI yordamchingizman. Farzandingiz ta'limi haqida savollaringiz bo'lsa, bemalol so'rang! 🎓" }),
   timestamp: new Date().toISOString(),
-};
+});
 
 const QUICK_PROMPTS = [
   { emoji: '📚', text: "Uy vazifasi maslahatlar" },
@@ -102,6 +103,7 @@ function TypingIndicator() {
 
 export function AIChatScreen() {
   const navigation = useNavigation();
+  const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState([DEFAULT_MESSAGE]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -125,10 +127,15 @@ export function AIChatScreen() {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setMessages(parsed);
+          } else {
+            setMessages([getDefaultMessage(t)]);
           }
+        } else {
+          setMessages([getDefaultMessage(t)]);
         }
       } catch (e) {
         console.warn('Failed to load saved AI chat:', e);
+        setMessages([getDefaultMessage(t)]);
       } finally {
         setInitialLoading(false);
       }
@@ -170,19 +177,29 @@ export function AIChatScreen() {
     setLoading(true);
 
     try {
-      const response = await parentService.aiChat(messageText);
+      const currentMessages = [
+        ...messages,
+        {
+          role: 'user',
+          content: messageText,
+          timestamp: new Date().toISOString(),
+        },
+      ];
+      const response = await parentService.aiChat(messageText, i18n.language, currentMessages);
       const assistantMessage =
+        response?.response ||
         response?.advice ||
         response?.message ||
+        response?.data?.response ||
         response?.data?.advice ||
         response?.data?.message ||
-        'No response';
+        t('aiChat.errorMessage', { defaultValue: "Kechirasiz, xatolik yuz berdi. Qaytadan urinib ko'ring." });
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
           content: assistantMessage,
-          timestamp: new Date().toISOString(),
+          timestamp: response?.timestamp || new Date().toISOString(),
         },
       ]);
     } catch (error) {
@@ -190,12 +207,12 @@ export function AIChatScreen() {
         error?.response?.data?.error ||
         error?.response?.data?.message ||
         error?.message ||
-        "Kechirasiz, xatolik yuz berdi. Qaytadan urinib ko'ring.";
+        t('aiChat.errorMessage', { defaultValue: "Kechirasiz, xatolik yuz berdi. Qaytadan urinib ko'ring." });
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `😕 ${errorMessage}`,
+          content: errorMessage,
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -205,7 +222,7 @@ export function AIChatScreen() {
   };
 
   const clearChat = async () => {
-    setMessages([DEFAULT_MESSAGE]);
+    setMessages([getDefaultMessage(t)]);
     try {
       await AsyncStorage.removeItem(CHAT_STORAGE_KEY);
     } catch (e) {

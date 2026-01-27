@@ -91,8 +91,17 @@ export const parentService = {
   },
 
   // AI Chat
-  aiChat: async (message) => {
-    const response = await api.post('/parent/ai/chat', { message });
+  aiChat: async (message, lang = 'uz', messages = []) => {
+    const historyForRequest = messages.slice(-8);
+    const response = await api.post('/parent/ai/chat', {
+      message,
+      lang,
+      messages: historyForRequest.map((m) => ({
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp,
+      })),
+    });
     return extractResponseData(response);
   },
 

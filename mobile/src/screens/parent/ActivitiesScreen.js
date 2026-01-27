@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
+import { useTranslation } from 'react-i18next';
 import tokens from '../../styles/tokens';
 import Screen from '../../components/layout/Screen';
 import Card from '../../components/common/Card';
@@ -90,6 +91,7 @@ function AnimatedProgress({ progress, delay = 0 }) {
 
 export function ActivitiesScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activities, setActivities] = useState([]);
@@ -188,7 +190,7 @@ export function ActivitiesScreen() {
   const header = (
     <View style={styles.headerContainer}>
       <LinearGradient
-        colors={['#667EEA', '#764BA2']}
+        colors={[tokens.colors.semantic.success, '#34D399']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.headerGradient}
@@ -201,9 +203,11 @@ export function ActivitiesScreen() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </Pressable>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerEmoji}>🎯</Text>
-          <View>
-            <Text style={styles.headerTitle}>Faoliyatlar</Text>
+          <View style={styles.headerEmojiContainer}>
+            <Text style={styles.headerEmoji}>🎯</Text>
+          </View>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>{t('activities.title') || t('activitiesPage.title') || 'Individual reja'}</Text>
             <Text style={styles.headerSubtitle}>
               {filteredActivities.length} ta faoliyat
             </Text>
@@ -250,7 +254,7 @@ export function ActivitiesScreen() {
           </>
         ) : (
           <Animated.View style={{ opacity: fadeAnim }}>
-            {/* Filter Pills */}
+            {/* Filter Pills - Enhanced Design */}
             <View style={styles.filterRow}>
               {filters.map((f) => (
                 <Pressable
@@ -296,11 +300,14 @@ export function ActivitiesScreen() {
                   const progress = item.progress || 0;
 
                   return (
-                    <Card key={item.id || index} style={styles.activityCard}>
+                    <Card key={item.id || index} style={styles.activityCard} variant="elevated" shadow="soft">
                       <View style={styles.activityHeader}>
-                        <View style={styles.activityIconContainer}>
+                        <LinearGradient
+                          colors={[tokens.colors.joy.lavenderSoft, tokens.colors.joy.skySoft]}
+                          style={styles.activityIconContainer}
+                        >
                           <Text style={styles.activityEmoji}>{emoji}</Text>
-                        </View>
+                        </LinearGradient>
                         <View style={styles.activityInfo}>
                           <Text style={styles.activityTitle} numberOfLines={2}>
                             {item.title || item.skill || item.description || "Faoliyat"}
@@ -312,13 +319,19 @@ export function ActivitiesScreen() {
                           )}
                         </View>
                         <View style={styles.activityMeta}>
-                          <Text style={styles.activityDate}>
-                            {formatDate(item.date || item.createdAt)}
-                          </Text>
-                          {item.createdAt && (
-                            <Text style={styles.activityTime}>
-                              {formatTime(item.createdAt)}
+                          <View style={styles.dateTimeContainer}>
+                            <Ionicons name="calendar-outline" size={12} color={tokens.colors.accent.blue} />
+                            <Text style={styles.activityDate}>
+                              {formatDate(item.date || item.createdAt)}
                             </Text>
+                          </View>
+                          {item.createdAt && (
+                            <View style={styles.dateTimeContainer}>
+                              <Ionicons name="time-outline" size={12} color={tokens.colors.text.muted} />
+                              <Text style={styles.activityTime}>
+                                {formatTime(item.createdAt)}
+                              </Text>
+                            </View>
                           )}
                         </View>
                       </View>
@@ -378,38 +391,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: tokens.space.lg,
     paddingVertical: tokens.space.md,
-    paddingTop: tokens.space.lg,
+    paddingTop: tokens.space.xl,
+    paddingBottom: tokens.space.lg,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    ...tokens.shadow.sm,
   },
   headerTitleContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: tokens.space.md,
-    gap: tokens.space.sm,
+    gap: tokens.space.md,
+  },
+  headerEmojiContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerEmoji: {
-    fontSize: 28,
+    fontSize: 24,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h2.fontWeight,
     color: '#fff',
+    marginBottom: 2,
   },
   headerSubtitle: {
     fontSize: tokens.type.caption.fontSize,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 2,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: tokens.type.sub.fontWeight,
   },
   headerRight: {
-    width: 40,
+    width: 44,
   },
   filterRow: {
     flexDirection: 'row',
@@ -419,21 +446,22 @@ const styles = StyleSheet.create({
   filterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: tokens.space.md,
-    paddingVertical: tokens.space.sm,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: tokens.space.lg,
+    paddingVertical: tokens.space.md,
+    backgroundColor: tokens.colors.card.base,
     borderRadius: tokens.radius.pill,
-    gap: tokens.space.xs,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-    ...tokens.shadow.xs,
+    gap: tokens.space.sm,
+    borderWidth: 2,
+    borderColor: tokens.colors.border.light,
+    ...tokens.shadow.sm,
   },
   filterPillActive: {
-    backgroundColor: tokens.colors.accent.blue,
-    borderColor: tokens.colors.accent.blue,
+    backgroundColor: tokens.colors.semantic.success,
+    borderColor: tokens.colors.semantic.success,
+    ...tokens.shadow.soft,
   },
   filterPillPressed: {
-    transform: [{ scale: 0.97 }],
+    transform: [{ scale: 0.96 }],
   },
   filterEmoji: {
     fontSize: 14,
@@ -451,33 +479,34 @@ const styles = StyleSheet.create({
     paddingBottom: tokens.space.xl,
   },
   activityCard: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    ...tokens.shadow.soft,
+    marginBottom: tokens.space.md,
   },
   activityHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    gap: tokens.space.md,
   },
   activityIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: tokens.colors.joy.lavenderSoft,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: tokens.space.md,
+    ...tokens.shadow.sm,
   },
   activityEmoji: {
-    fontSize: 24,
+    fontSize: 28,
   },
   activityInfo: {
     flex: 1,
+    minWidth: 0,
   },
   activityTitle: {
     fontSize: tokens.type.h3.fontSize,
     fontWeight: tokens.type.h3.fontWeight,
     color: tokens.colors.text.primary,
     marginBottom: tokens.space.xs,
+    lineHeight: 22,
   },
   activityDescription: {
     fontSize: tokens.type.sub.fontSize,
@@ -486,16 +515,21 @@ const styles = StyleSheet.create({
   },
   activityMeta: {
     alignItems: 'flex-end',
+    gap: tokens.space.xs / 2,
+  },
+  dateTimeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.space.xs / 2,
   },
   activityDate: {
     fontSize: tokens.type.caption.fontSize,
-    fontWeight: '600',
+    fontWeight: tokens.type.h3.fontWeight,
     color: tokens.colors.accent.blue,
   },
   activityTime: {
     fontSize: tokens.type.caption.fontSize,
     color: tokens.colors.text.muted,
-    marginTop: 2,
   },
   progressSection: {
     marginTop: tokens.space.md,

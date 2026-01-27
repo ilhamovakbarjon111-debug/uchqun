@@ -4,6 +4,7 @@
     "slug": "uchqun",
     "owner": "owl_wilde",
     "version": "1.1.0",
+    "sdkVersion": "55.0.0",
     "orientation": "portrait",
     "icon": "./assets/Uchqun logo.png",
     "userInterfaceStyle": "light",
@@ -46,24 +47,16 @@
     "web": {
       "favicon": "./assets/Uchqun logo.png"
     },
-    "plugins": [
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "usesCleartextTraffic": false,
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34
-          }
-        }
-      ]
-    ],
     "extra": {
       "apiUrl": "${EXPO_PUBLIC_API_URL}",
       "webUrl": "${EXPO_PUBLIC_WEB_URL}",
       "eas": {
         "projectId": "3564d21e-75a3-4401-8b9d-932b25b0c9ab"
       }
-    }
+    },
+    "plugins": [
+      "expo-build-properties",
+      "@react-native-community/datetimepicker"
+    ]
   }
 }

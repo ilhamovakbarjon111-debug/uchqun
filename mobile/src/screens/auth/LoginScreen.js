@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import { clearAuth } from '../../storage/authStorage';
+import { API_URL } from '../../config';
 import theme from '../../styles/theme';
 
 export function LoginScreen() {
@@ -21,6 +23,14 @@ export function LoginScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Clear any stale auth data when LoginScreen mounts
+  useEffect(() => {
+    clearAuth().catch(() => {});
+    if (__DEV__) {
+      console.log('[LoginScreen] API URL:', API_URL);
+    }
+  }, []);
+
   const onSubmit = async () => {
     if (submitting) return;
     if (!email.trim() || !password) {
@@ -30,16 +40,28 @@ export function LoginScreen() {
     setError('');
     setSubmitting(true);
     try {
-      await login(email.trim(), password);
+      // Clear any old tokens before fresh login
+      await clearAuth();
+      await login(email.trim().toLowerCase(), password);
       // Navigation will happen via useEffect when isAuthenticated changes
     } catch (e) {
-      const msg =
-        e?.response?.data?.error ||
-        e?.response?.data?.message ||
-        e?.message ||
-        'Login failed. Email/parolni tekshirib qayta urinib ko\'ring.';
+      // Extract error message from response or error object
+      let msg = 'Login failed. Email/parolni tekshirib qayta urinib ko\'ring.';
+      
+      if (e?.response?.data?.error) {
+        msg = e.response.data.error;
+      } else if (e?.response?.data?.message) {
+        msg = e.response.data.message;
+      } else if (e?.message && !e.message.includes('Network')) {
+        msg = e.message;
+      } else if (e?.message?.includes('Network')) {
+        msg = 'Server bilan bog\'lanib bo\'lmadi. Internet aloqangizni tekshiring.';
+      }
+      
       setError(msg);
-      console.error('[LoginScreen] Login error:', e);
+      if (__DEV__) {
+        console.error('[LoginScreen] Login error:', e?.response?.data || e?.message || e);
+      }
     } finally {
       setSubmitting(false);
     }

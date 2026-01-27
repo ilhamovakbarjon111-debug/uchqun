@@ -15,9 +15,7 @@ import { ActivitiesScreen } from '../screens/teacher/ActivitiesScreen';
 import { MealsScreen } from '../screens/teacher/MealsScreen';
 import { MediaScreen } from '../screens/teacher/MediaScreen';
 import { ChatScreen } from '../screens/teacher/ChatScreen';
-import { NotificationsScreen } from '../screens/parent/NotificationsScreen';
 import { SettingsScreen } from '../screens/teacher/SettingsScreen';
-import { AIChatScreen } from '../screens/parent/AIChatScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -45,7 +43,7 @@ function TeacherTabs() {
           const iconMap = {
             Dashboard: 'home',      // Home icon
             Parents: 'people',      // Users icon
-            AIChat: 'chatbubble-ellipses', // Chat icon
+            Chat: 'chatbubble-ellipses', // Chat icon
             Settings: 'settings',   // Settings icon
           };
 
@@ -91,7 +89,7 @@ function TeacherTabs() {
     >
       <Tab.Screen name="Dashboard" component={TeacherDashboardScreen} />
       <Tab.Screen name="Parents" component={ParentsListScreen} />
-      <Tab.Screen name="AIChat" component={AIChatScreen} />
+      <Tab.Screen name="Chat" component={ChatScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );

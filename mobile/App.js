@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
+import { NotificationProvider } from './src/context/NotificationContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 import './src/i18n/config'; // Initialize i18n
@@ -22,10 +23,12 @@ export default function App() {
     <ErrorBoundary>
       <SafeAreaProvider>
         <AuthProvider>
-          <ErrorBoundary>
-            <RootNavigator />
-          </ErrorBoundary>
-          <StatusBar style="auto" />
+          <NotificationProvider>
+            <ErrorBoundary>
+              <RootNavigator />
+            </ErrorBoundary>
+            <StatusBar style="auto" />
+          </NotificationProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </ErrorBoundary>

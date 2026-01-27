@@ -24,7 +24,7 @@
     "invalidRole": "Invalid user role"
   },
   "dashboard": {
-    "role": "My Role: Teacher",
+    "role": "My Role",
     "roleTeacher": "My Role: Teacher",
     "roleAdmin": "My Role: Admin",
     "roleParent": "My Role: Parent",
@@ -353,13 +353,17 @@
     "commentLabel": "Comment",
     "commentPlaceholder": "Leave a comment (optional)",
     "submit": "Submit rating",
+    "update": "Update rating",
     "success": "Teacher rated",
     "errorLoad": "Error loading rating data",
     "errorSave": "Error rating teacher",
     "errorRequired": "Please select stars",
     "yourRating": "Your rating",
     "noComment": "No comment left",
-    "lastUpdated": "Last updated: {{date}}"
+    "lastUpdated": "Last updated: {{date}}",
+    "optional": "Optional",
+    "summaryTitle": "Summary",
+    "noPhone": "No phone number"
   },
   "schoolRatingPage": {
     "title": "Rate School",
@@ -372,13 +376,19 @@
     "commentLabel": "Comment",
     "commentPlaceholder": "Leave a comment (optional)",
     "submit": "Submit rating",
+    "update": "Update rating",
     "success": "School rated",
     "errorLoad": "Error loading rating data",
     "errorSave": "Error rating school",
     "errorRequired": "Please select stars",
     "yourRating": "Your rating",
     "noComment": "No comment left",
-    "lastUpdated": "Last updated: {{date}}"
+    "lastUpdated": "Last updated: {{date}}",
+    "optional": "Optional",
+    "summaryTitle": "Summary",
+    "evaluationLabel": "Evaluation Criteria",
+    "evaluationSubtitle": "Select the criteria that apply",
+    "rateCta": "Rate the school"
   },
   "notifications": {
     "title": "Notifications",
@@ -406,13 +416,132 @@
     "no": "No",
     "error": "Error",
     "success": "Success",
-    "notFound": "Not found"
+    "notFound": "Not found",
+    "more": "more"
   },
   "settings": {
     "title": "Settings",
+    "subtitle": "Manage your profile and account settings",
     "language": "Language",
     "account": "Account",
     "languageChanged": "Language Changed",
-    "languageChangedDesc": "Language has been changed successfully"
+    "languageChangedDesc": "Language has been changed successfully",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password",
+    "about": "About",
+    "fillAllFields": "Please fill all fields",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordChanged": "Password changed successfully",
+    "passwordChangeFailed": "Failed to change password",
+    "profileUpdated": "Profile updated successfully",
+    "profileUpdateFailed": "Failed to update profile",
+    "nameRequired": "First and last name are required",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phone": "Phone",
+    "email": "Email",
+    "emailReadOnly": "Email cannot be changed",
+    "save": "Save",
+    "saveProfile": "Save Profile",
+    "savePreferences": "Save Preferences",
+    "updatePassword": "Update Password",
+    "passwordRequirements": "Password must be at least 8 characters",
+    "notifications": "Notifications",
+    "emailNotifications": "Email Notifications",
+    "emailNotificationsDesc": "Receive updates via email",
+    "pushNotifications": "Push Notifications",
+    "pushNotificationsDesc": "Receive push notifications",
+    "profileInfo": "Profile Information",
+    "selectLanguage": "Select interface language"
+  },
+  "therapy": {
+    "title": "Terapiya",
+    "subtitle": "Musiqa, video va content terapiyalar",
+    "search": "Qidirish...",
+    "all": "Barchasi",
+    "music": "Musiqa",
+    "video": "Video",
+    "content": "Content",
+    "activeSession": "Faol sessiya",
+    "start": "Boshlash",
+    "end": "Yakunlash",
+    "min": "min",
+    "noTherapies": "Terapiyalar topilmadi",
+    "noTherapiesDesc": "Qidiruv natijalari bo'sh",
+    "started": "Therapy session started",
+    "startError": "Failed to start therapy",
+    "ended": "Therapy session ended",
+    "endError": "Failed to end therapy"
+  },
+  "payments": {
+    "title": "To'lovlar",
+    "subtitle": "Oylik to'lovlar va to'lov tarixi",
+    "monthlyPayment": "Oylik To'lov",
+    "nextPayment": "Keyingi to'lov",
+    "daysRemaining": "{{count}} kun qoldi",
+    "daysOverdue": "{{count}} kun kechikdi",
+    "amountNotSet": "Summa belgilanmagan",
+    "note": "Eslatma",
+    "noteText": "To'lov qilish uchun admin bilan bog'laning yoki admin panel orqali to'lov qiling.",
+    "history": "To'lov Tarixi",
+    "noPayments": "To'lovlar yo'q",
+    "noPaymentsDesc": "Hozircha to'lovlar mavjud emas",
+    "paymentProvider": {
+      "payme": "Payme",
+      "click": "Click",
+      "card": "Karta",
+      "other": "To'lov"
+    },
+    "monthlyPaymentLabel": "Oylik to'lov"
+  },
+  "help": {
+    "title": "Help & Support",
+    "subtitle": "Find answers to common questions and get support",
+    "contactUs": "Contact Us",
+    "faq": "Frequently Asked Questions",
+    "quickLinks": "Quick Links",
+    "viewActivities": "View Activities",
+    "browseMedia": "Browse Media",
+    "checkMeals": "Check Meals",
+    "accountSettings": "Account Settings",
+    "faq1": {
+      "question": "How do I view my child's daily activities?",
+      "answer": "Navigate to the Activities page from the bottom navigation or dashboard to see all daily activities and updates from teachers."
+    },
+    "faq2": {
+      "question": "Where can I see photos and videos?",
+      "answer": "Go to the Media page to browse all photos and videos shared by teachers from school activities."
+    },
+    "faq3": {
+      "question": "How do I track my child's meals?",
+      "answer": "Visit the Meals page to see daily meal records, including what your child ate and any special dietary notes."
+    },
+    "faq4": {
+      "question": "Can I update my profile information?",
+      "answer": "Yes, go to Settings from the top menu or Profile page to update your contact information and preferences."
+    }
+  },
+  "warnings": {
+    "title": "AI Ogohlantirishlar",
+    "subtitle": "Reytinglar asosida yaratilgan ogohlantirishlar",
+    "all": "Barchasi",
+    "unresolved": "Yechilmagan",
+    "resolved": "Yechilgan",
+    "lowRating": "Past reyting",
+    "decliningRating": "Reyting pasayishi",
+    "negativeFeedback": "Salbiy fikr",
+    "complaint": "Shikoyat",
+    "safetyConcern": "Xavfsizlik muammosi",
+    "qualityIssue": "Sifat muammosi",
+    "other": "Boshqa",
+    "aiAnalysis": "AI Tahlil",
+    "resolve": "Yechildi deb belgilash",
+    "noWarnings": "Ogohlantirishlar yo'q",
+    "noWarningsDesc": "Hozircha ogohlantirishlar mavjud emas",
+    "resolveError": "Failed to resolve warning"
   }
 }

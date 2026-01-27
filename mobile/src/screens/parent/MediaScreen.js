@@ -20,6 +20,7 @@ import Card from '../../components/common/Card';
 import Skeleton from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
 import { ImageViewer } from '../../components/common/ImageViewer';
+import { API_URL } from '../../config';
 
 const { width } = Dimensions.get('window');
 const GRID_GAP = tokens.space.sm;
@@ -69,8 +70,25 @@ export function MediaScreen() {
     setRefreshing(false);
   };
 
+  const getImageUrl = (item) => {
+    const url = item.url || item.photoUrl || item.thumbnailUrl;
+    if (!url) return null;
+    // If URL is already absolute, return as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    // If URL starts with /, it's a relative path - prepend API base URL
+    if (url.startsWith('/')) {
+      const API_BASE = API_URL.replace('/api', '');
+      return `${API_BASE}${url}`;
+    }
+    // Otherwise, assume it's a relative path
+    const API_BASE = API_URL.replace('/api', '');
+    return `${API_BASE}/${url}`;
+  };
+
   const openImageViewer = (item, index) => {
-    const imageUrl = item.url || item.photoUrl || item.thumbnailUrl;
+    const imageUrl = getImageUrl(item);
     if (imageUrl) {
       setSelectedImage(imageUrl);
       setSelectedIndex(index);
@@ -101,7 +119,7 @@ export function MediaScreen() {
   const header = (
     <View style={styles.headerContainer}>
       <LinearGradient
-        colors={['#EC4899', '#F472B6']}
+        colors={[tokens.colors.joy.rose, tokens.colors.joy.coral]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.headerGradient}
@@ -114,8 +132,10 @@ export function MediaScreen() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </Pressable>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerEmoji}>📸</Text>
-          <View>
+          <View style={styles.headerEmojiContainer}>
+            <Text style={styles.headerEmoji}>📸</Text>
+          </View>
+          <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>Galereya</Text>
             <Text style={styles.headerSubtitle}>
               {media.length} ta rasm
@@ -176,7 +196,7 @@ export function MediaScreen() {
                 </View>
                 <View style={styles.grid}>
                   {dateMedia.map((item, index) => {
-                    const imageUrl = item.url || item.photoUrl || item.thumbnailUrl;
+                    const imageUrl = getImageUrl(item);
                     if (!imageUrl) return null;
 
                     const globalIndex = media.findIndex((m) => m.id === item.id);
@@ -195,6 +215,9 @@ export function MediaScreen() {
                           source={{ uri: imageUrl }}
                           style={styles.image}
                           resizeMode="cover"
+                          onError={(e) => {
+                            console.warn('[MediaScreen] Image load error:', imageUrl, e.nativeEvent.error);
+                          }}
                         />
                         {isVideo && (
                           <View style={styles.videoOverlay}>
@@ -246,35 +269,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: tokens.space.lg,
     paddingVertical: tokens.space.md,
-    paddingTop: tokens.space.lg,
+    paddingTop: tokens.space.xl,
+    paddingBottom: tokens.space.lg,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    ...tokens.shadow.sm,
   },
   headerTitleContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: tokens.space.md,
-    gap: tokens.space.sm,
+    gap: tokens.space.md,
+  },
+  headerEmojiContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerEmoji: {
-    fontSize: 28,
+    fontSize: 24,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h2.fontWeight,
     color: '#fff',
+    marginBottom: 2,
   },
   headerSubtitle: {
     fontSize: tokens.type.caption.fontSize,
-    color: 'rgba(255,255,255,0.85)',
-    marginTop: 2,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: tokens.type.sub.fontWeight,
   },
   headerRight: {
     width: 40,
@@ -306,19 +343,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: GRID_PADDING,
-    paddingVertical: tokens.space.md,
-    gap: tokens.space.sm,
+    paddingVertical: tokens.space.lg,
+    gap: tokens.space.md,
+    marginBottom: tokens.space.sm,
   },
   dateIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: tokens.colors.joy.roseSoft,
     alignItems: 'center',
     justifyContent: 'center',
+    ...tokens.shadow.sm,
   },
   dateEmoji: {
-    fontSize: 16,
+    fontSize: 18,
   },
   dateLabel: {
     flex: 1,
@@ -328,11 +367,14 @@ const styles = StyleSheet.create({
   },
   dateCount: {
     fontSize: tokens.type.caption.fontSize,
-    color: tokens.colors.text.muted,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    paddingHorizontal: tokens.space.sm,
-    paddingVertical: 2,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.secondary,
+    backgroundColor: tokens.colors.surface.secondary,
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.xs,
     borderRadius: tokens.radius.pill,
+    borderWidth: 1,
+    borderColor: tokens.colors.border.light,
   },
   grid: {
     flexDirection: 'row',
@@ -343,13 +385,14 @@ const styles = StyleSheet.create({
   mediaItem: {
     width: itemSize,
     height: itemSize,
-    borderRadius: tokens.radius.md,
+    borderRadius: tokens.radius.lg,
     overflow: 'hidden',
     backgroundColor: tokens.colors.joy.skySoft,
+    ...tokens.shadow.sm,
   },
   mediaItemPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.96 }],
   },
   image: {
     width: '100%',

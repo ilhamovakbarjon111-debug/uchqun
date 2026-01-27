@@ -3,6 +3,9 @@
  * Based on Mobile-icons.md design specification
  */
 
+// Import tokens first (must be at top for proper module initialization)
+import tokens from './tokens';
+
 export const Colors = {
   // Primary Colors (Updated per Mobile-icons.md)
   primary: {
@@ -245,11 +248,193 @@ export const CommonStyles = {
   },
 };
 
-export default {
-  Colors,
-  Typography,
-  Spacing,
-  BorderRadius,
-  Layout,
-  CommonStyles,
+// Create theme object compatible with old code
+const ThemeColors = {
+  primary: {
+    navy: tokens.colors.nav.active,
+    blue: tokens.colors.accent.blue,
+    blueLight: tokens.colors.accent.blueSoft,
+    blueDark: tokens.colors.accent.blueVibrant,
+    blueBg: tokens.colors.accent[50],
+  },
+  design: {
+    softNavy: tokens.colors.nav.active,
+    textTertiary: tokens.colors.text.tertiary,
+    powderBlue: tokens.colors.joy.skySoft,
+    mintMist: tokens.colors.joy.mintSoft,
+    blushPeach: tokens.colors.joy.peachSoft,
+    glassBackground: tokens.colors.card.base,
+    glassBorder: tokens.colors.card.border,
+  },
+  cards: {
+    parents: tokens.colors.accent.blue,
+    activities: tokens.colors.semantic.success,
+    meals: tokens.colors.semantic.warning,
+    media: tokens.colors.joy.lavender,
+  },
+  status: {
+    success: tokens.colors.semantic.success,
+    warning: tokens.colors.semantic.warning,
+    error: tokens.colors.semantic.error,
+    info: tokens.colors.semantic.info,
+  },
+  background: {
+    primary: tokens.colors.surface.card,
+    secondary: tokens.colors.surface.secondary,
+    tertiary: tokens.colors.surface.tertiary,
+    card: tokens.colors.card.base,
+  },
+  text: {
+    primary: tokens.colors.text.primary,
+    secondary: tokens.colors.text.secondary,
+    tertiary: tokens.colors.text.tertiary,
+    inverse: tokens.colors.text.white,
+    disabled: tokens.colors.text.muted,
+  },
+  border: {
+    light: tokens.colors.border.light,
+    medium: tokens.colors.border.medium,
+    dark: tokens.colors.border.dark,
+  },
+  progress: {
+    background: tokens.colors.border.light,
+    fill: tokens.colors.accent.blue,
+    success: tokens.colors.semantic.success,
+  },
+  navigation: {
+    active: tokens.colors.nav.active,
+    inactive: tokens.colors.nav.inactive,
+    background: tokens.colors.nav.background,
+    activeBackground: tokens.colors.nav.active,
+  },
+  shadow: {
+    sm: tokens.shadow.sm,
+    md: tokens.shadow.md,
+    lg: tokens.shadow.lg,
+  },
 };
+
+const ThemeTypography = {
+  sizes: {
+    xs: tokens.type.caption.fontSize,
+    sm: tokens.type.sub.fontSize,
+    base: tokens.type.body.fontSize,
+    lg: tokens.type.bodyLarge.fontSize,
+    xl: tokens.type.h3.fontSize,
+    '2xl': tokens.type.h2.fontSize,
+    '3xl': tokens.type.h1.fontSize,
+  },
+  weights: {
+    normal: '400',
+    medium: '500',
+    semibold: '600',
+    bold: '700',
+  },
+  lineHeights: {
+    tight: 1.25,
+    normal: 1.5,
+    relaxed: 1.75,
+  },
+};
+
+const ThemeSpacing = {
+  xs: tokens.space.xs,
+  sm: tokens.space.sm,
+  md: tokens.space.md,
+  lg: tokens.space.lg,
+  xl: tokens.space.xl,
+  '2xl': tokens.space['2xl'],
+};
+
+const ThemeBorderRadius = {
+  sm: tokens.radius.sm,
+  md: tokens.radius.md,
+  lg: tokens.radius.lg,
+  xl: tokens.radius.xl,
+  full: tokens.radius.full,
+};
+
+const ThemeLayout = {
+  headerHeight: 60,
+  headerPadding: tokens.space.md,
+  cardPadding: tokens.space.md,
+  cardMargin: tokens.space.md,
+  cardBorderRadius: tokens.radius.md,
+  bottomNavHeight: 70,
+  screenPadding: tokens.space.md,
+  sectionSpacing: tokens.space.lg,
+};
+
+// Common Styles using theme values
+const ThemeCommonStyles = {
+  container: {
+    flex: 1,
+    backgroundColor: ThemeColors.background.tertiary,
+  },
+  screenContainer: {
+    flex: 1,
+    backgroundColor: ThemeColors.background.secondary,
+  },
+  card: {
+    backgroundColor: ThemeColors.background.card,
+    borderRadius: ThemeBorderRadius.md,
+    padding: ThemeLayout.cardPadding,
+    ...ThemeColors.shadow.sm,
+  },
+  header: {
+    backgroundColor: ThemeColors.primary.blue,
+    paddingTop: 40,
+    paddingBottom: ThemeLayout.headerPadding,
+    paddingHorizontal: ThemeLayout.screenPadding,
+  },
+  heading1: {
+    fontSize: ThemeTypography.sizes['2xl'],
+    fontWeight: ThemeTypography.weights.bold,
+    color: ThemeColors.text.primary,
+  },
+  heading2: {
+    fontSize: ThemeTypography.sizes.xl,
+    fontWeight: ThemeTypography.weights.semibold,
+    color: ThemeColors.text.primary,
+  },
+  heading3: {
+    fontSize: ThemeTypography.sizes.lg,
+    fontWeight: ThemeTypography.weights.semibold,
+    color: ThemeColors.text.primary,
+  },
+  bodyText: {
+    fontSize: ThemeTypography.sizes.base,
+    fontWeight: ThemeTypography.weights.normal,
+    color: ThemeColors.text.primary,
+  },
+  caption: {
+    fontSize: ThemeTypography.sizes.sm,
+    fontWeight: ThemeTypography.weights.normal,
+    color: ThemeColors.text.secondary,
+  },
+  primaryButton: {
+    backgroundColor: ThemeColors.primary.blue,
+    borderRadius: ThemeBorderRadius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButtonText: {
+    color: ThemeColors.text.inverse,
+    fontSize: ThemeTypography.sizes.base,
+    fontWeight: ThemeTypography.weights.semibold,
+  },
+};
+
+// Create theme object compatible with old code
+const theme = {
+  Colors: ThemeColors,
+  Typography: ThemeTypography,
+  Spacing: ThemeSpacing,
+  BorderRadius: ThemeBorderRadius,
+  Layout: ThemeLayout,
+  CommonStyles: ThemeCommonStyles,
+};
+
+export default theme;

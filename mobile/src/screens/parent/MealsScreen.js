@@ -170,7 +170,7 @@ export function MealsScreen() {
   const header = (
     <View style={styles.headerContainer}>
       <LinearGradient
-        colors={['#F59E0B', '#FB923C']}
+        colors={[tokens.colors.semantic.warning, tokens.colors.joy.peach]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.headerGradient}
@@ -183,8 +183,10 @@ export function MealsScreen() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </Pressable>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerEmoji}>🍽️</Text>
-          <View>
+          <View style={styles.headerEmojiContainer}>
+            <Text style={styles.headerEmoji}>🍽️</Text>
+          </View>
+          <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>Ovqatlanish</Text>
             <Text style={styles.headerSubtitle}>
               {filteredMeals.length} ta yozuv
@@ -284,16 +286,16 @@ export function MealsScreen() {
                         <Card
                           key={item.id || index}
                           style={styles.mealCard}
+                          variant="elevated"
+                          shadow="soft"
                         >
                           <View style={styles.mealRow}>
-                            <View
-                              style={[
-                                styles.mealIconContainer,
-                                { backgroundColor: config.bgColor },
-                              ]}
+                            <LinearGradient
+                              colors={[config.bgColor, config.bgColor + 'CC']}
+                              style={styles.mealIconContainer}
                             >
                               <Text style={styles.mealEmoji}>{config.emoji}</Text>
-                            </View>
+                            </LinearGradient>
                             <View style={styles.mealInfo}>
                               <Text style={styles.mealType}>
                                 {item.mealType || config.label}
@@ -373,35 +375,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: tokens.space.lg,
     paddingVertical: tokens.space.md,
-    paddingTop: tokens.space.lg,
+    paddingTop: tokens.space.xl,
+    paddingBottom: tokens.space.lg,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    ...tokens.shadow.sm,
   },
   headerTitleContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: tokens.space.md,
-    gap: tokens.space.sm,
+    gap: tokens.space.md,
+  },
+  headerEmojiContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerEmoji: {
-    fontSize: 28,
+    fontSize: 24,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h2.fontWeight,
     color: '#fff',
+    marginBottom: 2,
   },
   headerSubtitle: {
     fontSize: tokens.type.caption.fontSize,
-    color: 'rgba(255,255,255,0.85)',
-    marginTop: 2,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: tokens.type.sub.fontWeight,
   },
   headerRight: {
     width: 40,
@@ -414,21 +430,22 @@ const styles = StyleSheet.create({
   filterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: tokens.space.md,
-    paddingVertical: tokens.space.sm,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: tokens.space.lg,
+    paddingVertical: tokens.space.md,
+    backgroundColor: tokens.colors.card.base,
     borderRadius: tokens.radius.pill,
-    gap: tokens.space.xs,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-    ...tokens.shadow.xs,
+    gap: tokens.space.sm,
+    borderWidth: 2,
+    borderColor: tokens.colors.border.light,
+    ...tokens.shadow.sm,
   },
   filterPillActive: {
     backgroundColor: tokens.colors.semantic.warning,
     borderColor: tokens.colors.semantic.warning,
+    ...tokens.shadow.soft,
   },
   filterPillPressed: {
-    transform: [{ scale: 0.97 }],
+    transform: [{ scale: 0.96 }],
   },
   filterEmoji: {
     fontSize: 14,
@@ -455,32 +472,32 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontSize: tokens.type.sub.fontSize,
-    fontWeight: '700',
-    color: tokens.colors.text.secondary,
+    fontWeight: tokens.type.h1.fontWeight,
+    color: tokens.colors.text.primary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   dateLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    height: 2,
+    backgroundColor: tokens.colors.border.light,
+    borderRadius: 1,
   },
   mealCard: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    marginBottom: tokens.space.sm,
-    ...tokens.shadow.soft,
+    marginBottom: tokens.space.md,
   },
   mealRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    gap: tokens.space.md,
   },
   mealIconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: tokens.space.md,
+    ...tokens.shadow.sm,
   },
   mealEmoji: {
     fontSize: 26,

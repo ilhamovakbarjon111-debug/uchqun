@@ -6,10 +6,13 @@ import { activityService } from '../../services/activityService';
 import { Card } from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
+import TeacherBackground from '../../components/layout/TeacherBackground';
+import { useTranslation } from 'react-i18next';
 import theme from '../../styles/theme';
 
 export function ActivitiesScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -113,12 +116,13 @@ export function ActivitiesScreen() {
 
   return (
     <View style={styles.container}>
+      <TeacherBackground />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={theme.Colors.text.inverse} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Activities</Text>
+        <Text style={styles.headerTitle}>{t('activitiesPage.title') || t('activities.title') || 'Individual reja'}</Text>
         <TouchableOpacity onPress={handleCreate} style={styles.headerAction}>
           <Ionicons name="add" size={24} color={theme.Colors.text.inverse} />
         </TouchableOpacity>

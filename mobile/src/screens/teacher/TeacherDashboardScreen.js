@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { teacherService } from '../../services/teacherService';
+import { api } from '../../services/api';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import DecorativeBackground from '../../components/common/DecorativeBackground';
+import Screen from '../../components/layout/Screen';
+import tokens from '../../styles/tokens';
 import theme from '../../styles/theme';
 
 export function TeacherDashboardScreen() {
@@ -51,53 +53,67 @@ export function TeacherDashboardScreen() {
   const loadData = async () => {
     try {
       setLoading(true);
-      // CRITICAL FIX: Wrap all service calls in try-catch
-      // Admin/Reception might not have access to these endpoints
-      const [dashboardData, tasksData, parentsData] = await Promise.all([
-        teacherService.getDashboard().catch((err) => {
-          console.warn('[TeacherDashboard] getDashboard error:', err);
-          return null;
-        }),
-        teacherService.getTasks().catch((err) => {
-          console.warn('[TeacherDashboard] getTasks error:', err);
-          return [];
-        }),
-        teacherService.getParents().catch((err) => {
-          console.warn('[TeacherDashboard] getParents error:', err);
-          return [];
-        }),
-      ]);
-      setStats(dashboardData);
-      
-      // Filter today's tasks
-      const today = new Date().toISOString().split('T')[0];
-      const todayTasks = Array.isArray(tasksData) ? tasksData.filter(task => {
-        if (task.dueDate) {
-          return task.dueDate.startsWith(today);
-        }
-        return false;
-      }).slice(0, 4) : [];
-      setTasks(todayTasks);
-      setParentsData(parentsData);
+      // Load data like website: get parents, then count activities, meals, media for their children
+      const parentsRes = await teacherService.getParents().catch(() => []);
+      const allParents = Array.isArray(parentsRes) ? parentsRes : [];
+      const parents = user?.id ? allParents.filter((p) => p.teacherId === user.id) : allParents;
+      const childIds = parents.flatMap((p) => Array.isArray(p.children) ? p.children.map(c => c.id) : []).filter(Boolean);
 
-      // Extract children from parents data
-      const allChildren = [];
-      if (Array.isArray(parentsData)) {
-        parentsData.forEach(parent => {
-          if (parent.children && Array.isArray(parent.children)) {
-            allChildren.push(...parent.children);
+      // Fetch counts for activities, meals, media (like website)
+      const fetchCount = async (path) => {
+        try {
+          if (childIds.length > 0) {
+            const requests = childIds.map((id) => 
+              api.get(`${path}?childId=${id}`).catch(() => ({ data: [] }))
+            );
+            const responses = await Promise.all(requests);
+            return responses.reduce((acc, res) => {
+              const data = res.data;
+              if (Array.isArray(data)) return acc + data.length;
+              if (Array.isArray(data?.activities)) return acc + data.activities.length;
+              if (Array.isArray(data?.meals)) return acc + data.meals.length;
+              if (Array.isArray(data?.media)) return acc + data.media.length;
+              return acc;
+            }, 0);
+          } else {
+            const res = await api.get(path).catch(() => ({ data: [] }));
+            const data = res.data;
+            if (Array.isArray(data)) return data.length;
+            if (Array.isArray(data?.activities)) return data.activities.length;
+            if (Array.isArray(data?.meals)) return data.meals.length;
+            if (Array.isArray(data?.media)) return data.media.length;
+            return 0;
           }
-        });
-      }
-      // Sort by name for ranking display
-      allChildren.sort((a, b) => {
-        const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim();
-        const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim();
-        return nameA.localeCompare(nameB);
+        } catch (err) {
+          console.warn(`[TeacherDashboard] Error fetching ${path}:`, err);
+          return 0;
+        }
+      };
+
+      const [activitiesCount, mealsCount, mediaCount] = await Promise.all([
+        fetchCount('/activities'),
+        fetchCount('/meals'),
+        fetchCount('/media'),
+      ]);
+
+      setStats({
+        parents: parents.length,
+        activities: activitiesCount,
+        meals: mealsCount,
+        media: mediaCount,
       });
-      setChildren(allChildren.slice(0, 5)); // Show top 5
+      
+      setParentsData(allParents);
+      setTasks([]); // Remove tasks section
+      setChildren([]); // Remove children ranking section
     } catch (error) {
       console.error('Error loading dashboard:', error);
+      setStats({
+        parents: 0,
+        activities: 0,
+        meals: 0,
+        media: 0,
+      });
     } finally {
       setLoading(false);
     }
@@ -127,292 +143,222 @@ export function TeacherDashboardScreen() {
     return <LoadingSpinner />;
   }
 
-  // Calculate progress percentage (example: based on completed tasks)
-  const completedTasks = tasks.filter(t => t.status === 'completed' || t.isCompleted).length;
-  const totalTasks = tasks.length || 4;
-  const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 65;
-
-  // Get greeting based on time
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t('dashboard.goodMorning');
-    if (hour < 17) return t('dashboard.goodAfternoon');
-    return t('dashboard.goodEvening');
+  // Get role display text based on user role (like website)
+  const getRoleText = () => {
+    if (user?.role === 'admin') {
+      return t('dashboard.roleAdmin') || 'My Role: Admin';
+    } else if (user?.role === 'teacher') {
+      return t('dashboard.roleTeacher') || 'My Role: Teacher';
+    }
+    return t('dashboard.role') || 'My Role: Teacher';
   };
 
   const statCards = [
     {
       title: t('dashboard.parents'),
-      value: stats?.parents || stats?.parentsCount || 0,
+      value: stats?.parents || 0,
       icon: 'people',
-      color: theme.Colors.cards.parents,
+      color: tokens.colors.accent.blue,
       onPress: () => safeNavigateToTab('Parents'),
     },
     {
       title: t('dashboard.activities'),
-      value: stats?.activities || stats?.activitiesCount || 0,
+      value: stats?.activities || 0,
       icon: 'checkmark-circle',
-      color: theme.Colors.cards.activities,
+      color: tokens.colors.semantic.success,
       onPress: () => safeNavigateToTab('Activities'),
     },
     {
       title: t('dashboard.meals'),
-      value: stats?.meals || stats?.mealsCount || 0,
+      value: stats?.meals || 0,
       icon: 'restaurant',
-      color: theme.Colors.cards.meals,
+      color: tokens.colors.semantic.warning,
       onPress: () => safeNavigateToTab('Meals'),
+    },
+    {
+      title: t('dashboard.media'),
+      value: stats?.media || 0,
+      icon: 'images',
+      color: '#8b5cf6',
+      onPress: () => safeNavigate('Media'),
     },
   ];
 
+  const header = (
+    <View style={styles.topBar}>
+      <View style={styles.placeholder} />
+      <Text style={styles.topBarTitle} allowFontScaling={true}>{t('dashboard.title') || 'Dashboard'}</Text>
+      <View style={styles.placeholder} />
+    </View>
+  );
+
   return (
-    <View style={styles.container}>
-      <DecorativeBackground />
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View style={styles.placeholder} />
-            <View style={styles.headerRight}>
-              <TouchableOpacity 
-                style={styles.notificationButton}
-                onPress={() => safeNavigate('Notifications')}
-              >
-                <Ionicons name="notifications-outline" size={24} color={theme.Colors.text.inverse} />
-                <View style={styles.notificationBadge} />
-              </TouchableOpacity>
-            </View>
-          </View>
-          
-          <Text style={styles.greetingText}>{getGreeting()}</Text>
-          <Text style={styles.nameText}>
-            {user?.firstName ?? '—'} {user?.lastName ?? ''}
-          </Text>
-          <View style={styles.motivationalContainer}>
-            <Text style={styles.motivationalText}>
-              {t('dashboard.motivationalMessage')} ☀️
+    <Screen scroll={true} padded={false} header={header} background="teacher">
+      {/* Welcome Header Card - Like website (Gradient Blue) */}
+      <Card 
+        variant="gradient" 
+        gradientColors={['#3B82F6', '#2563EB']}
+        style={styles.headerCard}
+        padding="lg"
+      >
+        <View style={styles.headerContent}>
+          <View style={styles.roleBadge}>
+            <Ionicons name="people" size={16} color={tokens.colors.text.white} />
+            <Text style={styles.roleText}>
+              {user?.role === 'admin' ? t('dashboard.roleAdmin') : t('dashboard.roleTeacher')}
             </Text>
           </View>
+          <Text style={styles.greetingText}>{t('dashboard.welcome')}</Text>
+          <Text style={styles.nameText} allowFontScaling={true}>
+            {user?.firstName ?? '—'} {user?.lastName ?? ''}
+          </Text>
         </View>
+      </Card>
 
-        {/* Stats Cards Section */}
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>{t('dashboard.quickActions')}</Text>
-          <View style={styles.statsContainer}>
-            {statCards.map((stat, index) => (
-              <Pressable 
-                key={index} 
-                onPress={stat.onPress} 
-                style={[styles.statCard, { backgroundColor: stat.color }]}
-              >
-                <Ionicons name={stat.icon} size={28} color={theme.Colors.text.inverse} />
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statTitle}>{stat.title}</Text>
-              </Pressable>
-            ))}
-          </View>
+      {/* Overview Section - Like website */}
+      <View style={styles.overviewSection}>
+        <Text style={styles.sectionTitle} allowFontScaling={true}>{t('dashboard.overview') || 'Overview'}</Text>
+        <View style={styles.statsContainer}>
+          {statCards.map((stat, index) => (
+            <Pressable 
+              key={index} 
+              onPress={stat.onPress}
+              style={({ pressed }) => [
+                styles.statCard,
+                pressed && styles.statCardPressed,
+              ]}
+            >
+              <Card variant="elevated" style={styles.statCardInner} padding="md">
+                <View style={styles.statCardContent}>
+                  <View style={[styles.statIconContainer, { backgroundColor: stat.color + '15' }]}>
+                    <Ionicons name={stat.icon} size={24} color={stat.color} />
+                  </View>
+                  <View style={styles.statTextContainer}>
+                    <Text style={styles.statValue} allowFontScaling={true}>{stat.value}</Text>
+                    <Text style={styles.statTitle} allowFontScaling={true}>{stat.title}</Text>
+                  </View>
+                </View>
+              </Card>
+            </Pressable>
+          ))}
         </View>
-
-        {/* Children Ranking Section */}
-        {children.length > 0 && (
-          <View style={styles.rankingSection}>
-            <View style={styles.rankingHeader}>
-              <Text style={styles.sectionTitle}>{t('dashboard.myChildren')}</Text>
-              <Pressable onPress={() => safeNavigateToTab('Parents')}>
-                <Text style={styles.viewAllText}>{t('dashboard.viewAll')}</Text>
-              </Pressable>
-            </View>
-            <View style={styles.rankingList}>
-              {children.map((child, index) => (
-                <Pressable
-                  key={child.id || index}
-                  style={styles.rankingCard}
-                  onPress={() => {
-                    // Navigate to Parents tab to see all children
-                    safeNavigateToTab('Parents');
-                  }}
-                >
-                  <View style={styles.rankingNumber}>
-                    <Text style={styles.rankingNumberText}>{index + 1}</Text>
-                  </View>
-                  <View style={styles.rankingAvatar}>
-                    <Text style={styles.rankingAvatarText}>
-                      {child.firstName?.charAt(0)}{child.lastName?.charAt(0)}
-                    </Text>
-                  </View>
-                  <View style={styles.rankingInfo}>
-                    <Text style={styles.rankingName}>
-                      {child.firstName ?? '—'} {child.lastName ?? ''}
-                    </Text>
-                    {child.dateOfBirth && (
-                      <Text style={styles.rankingAge}>
-                        {new Date().getFullYear() - new Date(child.dateOfBirth).getFullYear()} years old
-                      </Text>
-                    )}
-                  </View>
-                  <Ionicons name="star" size={20} color={theme.Colors.status.warning} />
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Today's Tasks Section */}
-        {tasks.length > 0 && (
-          <View style={styles.tasksSection}>
-            <View style={styles.tasksHeader}>
-              <Text style={styles.sectionTitle}>Today's Tasks</Text>
-              <Text style={styles.tasksProgress}>
-                {completedTasks} of {totalTasks} done
-              </Text>
-            </View>
-            
-            <View style={styles.tasksList}>
-              {tasks.map((task, index) => {
-                const isCompleted = task.status === 'completed' || task.isCompleted;
-                return (
-                  <Pressable 
-                    key={task.id || index} 
-                    style={styles.taskCard}
-                    onPress={() => safeNavigate('Tasks')}
-                  >
-                    <View style={styles.taskIcon}>
-                      <Ionicons 
-                        name={isCompleted ? 'checkmark-circle' : 'time-outline'} 
-                        size={20} 
-                        color={isCompleted ? theme.Colors.status.success : theme.Colors.text.secondary} 
-                      />
-                    </View>
-                    <View style={styles.taskContent}>
-                      <Text style={[styles.taskTitle, isCompleted && styles.taskTitleCompleted]}>
-                        {task.title || task.name || `Task ${index + 1}`}
-                      </Text>
-                      {task.dueTime && (
-                        <Text style={styles.taskTime}>{task.dueTime}</Text>
-                      )}
-                    </View>
-                    {isCompleted && (
-                      <Ionicons 
-                        name="checkmark-circle" 
-                        size={24} 
-                        color={theme.Colors.status.success} 
-                      />
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        )}
-      </ScrollView>
-    </View>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#E3F2FD', // Och ko'k background
-  },
-  scrollView: {
-    flex: 1,
-    zIndex: 1,
-  },
-  content: {
-    paddingBottom: theme.Spacing.xl,
-  },
-  // Header Styles
-  header: {
-    backgroundColor: theme.Colors.primary.blue,
-    paddingTop: 50,
-    paddingBottom: theme.Spacing.lg,
-    paddingHorizontal: theme.Spacing.md,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  headerTop: {
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.Spacing.md,
+    paddingHorizontal: tokens.space.xl,
+    paddingTop: tokens.space.md,
+    paddingBottom: tokens.space.md,
+    backgroundColor: 'transparent',
   },
   placeholder: {
-    width: 40,
+    width: 44,
   },
-  headerRight: {
-    flex: 1,
-    alignItems: 'flex-end',
+  topBarTitle: {
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.text.primary,
   },
-  notificationButton: {
-    padding: theme.Spacing.xs,
-    position: 'relative',
+  // Header Card - Gradient Blue like website
+  headerCard: {
+    marginHorizontal: tokens.space.md,
+    marginTop: tokens.space.md,
+    marginBottom: tokens.space.lg,
+    borderRadius: tokens.radius.xl,
   },
-  notificationBadge: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.Colors.status.warning,
+  headerContent: {
+    width: '100%',
+  },
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: tokens.space.sm,
+    paddingVertical: tokens.space.xs,
+    borderRadius: tokens.radius.sm,
+    gap: tokens.space.xs / 2,
+    marginBottom: tokens.space.sm,
+    alignSelf: 'flex-start',
+  },
+  roleText: {
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.white,
+    fontWeight: tokens.type.h3.fontWeight,
   },
   greetingText: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.inverse,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.white,
     opacity: 0.9,
-    marginBottom: theme.Spacing.xs,
+    marginBottom: tokens.space.xs / 2,
   },
   nameText: {
-    fontSize: theme.Typography.sizes['2xl'],
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.inverse,
-    marginBottom: theme.Spacing.sm,
+    fontSize: tokens.type.h1.fontSize,
+    fontWeight: tokens.type.h1.fontWeight,
+    color: tokens.colors.text.white,
   },
-  motivationalContainer: {
-    marginTop: theme.Spacing.sm,
-  },
-  motivationalText: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.inverse,
-    opacity: 0.9,
-  },
-  // Stats Section
-  statsSection: {
-    paddingHorizontal: theme.Spacing.md,
-    paddingTop: theme.Spacing.lg,
+  // Overview Section
+  overviewSection: {
+    paddingHorizontal: tokens.space.md,
+    marginBottom: tokens.space.xl,
   },
   sectionTitle: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.md,
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.white,
+    marginBottom: tokens.space.md,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
-  // Stats Cards
   statsContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: theme.Spacing.md,
-    gap: theme.Spacing.sm,
+    gap: tokens.space.md,
   },
   statCard: {
-    flex: 1,
-    borderRadius: theme.BorderRadius.md,
-    padding: theme.Spacing.md,
+    width: '48%',
+  },
+  statCardPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+  statCardInner: {
+    width: '100%',
+    minHeight: 100,
+  },
+  statCardContent: {
+    flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 110,
+    width: '100%',
+  },
+  statIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: tokens.radius.md,
+    alignItems: 'center',
     justifyContent: 'center',
-    ...theme.Colors.shadow.md,
+    marginRight: tokens.space.md,
+  },
+  statTextContainer: {
+    flex: 1,
   },
   statValue: {
-    fontSize: theme.Typography.sizes['2xl'],
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.inverse,
-    marginTop: theme.Spacing.sm,
+    fontSize: tokens.type.h1.fontSize,
+    fontWeight: tokens.type.h1.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs / 2,
   },
   statTitle: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.inverse,
-    marginTop: theme.Spacing.xs,
-    opacity: 0.95,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
+    fontWeight: tokens.type.h3.fontWeight,
   },
   // Ranking Section
   rankingSection: {

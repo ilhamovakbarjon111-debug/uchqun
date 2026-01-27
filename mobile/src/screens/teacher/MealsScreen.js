@@ -7,6 +7,7 @@ import { Card } from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import TeacherBackground from '../../components/layout/TeacherBackground';
 import theme from '../../styles/theme';
 
 export function MealsScreen() {
@@ -113,6 +114,7 @@ export function MealsScreen() {
 
   return (
     <View style={styles.container}>
+      <TeacherBackground />
       <ScreenHeader title="Meals" rightAction={handleCreate} rightIcon="add" />
       {meals.length === 0 ? (
         <EmptyState icon="restaurant-outline" message="No meals found" />

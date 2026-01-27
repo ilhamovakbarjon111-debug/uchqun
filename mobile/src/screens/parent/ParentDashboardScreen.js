@@ -1,88 +1,117 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, AppState } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNotification } from '../../context/NotificationContext';
 import { parentService } from '../../services/parentService';
+import { api } from '../../services/api';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import DecorativeBackground from '../../components/common/DecorativeBackground';
-import theme from '../../styles/theme';
+import BackgroundScene from '../../components/layout/BackgroundScene';
+import Screen from '../../components/layout/Screen';
+import tokens from '../../styles/tokens';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export function ParentDashboardScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const { count = 0, refreshNotifications } = useNotification();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [children, setChildren] = useState([]);
   const [selectedChildId, setSelectedChildId] = useState(null);
 
+  // Real-time data loading - reload when screen is focused or child changes
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+      
+      // Set up auto-refresh every 30 seconds when screen is focused
+      const interval = setInterval(() => {
+        loadData();
+      }, 30000); // 30 seconds
+
+      return () => clearInterval(interval);
+    }, [selectedChildId])
+  );
+
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedChildId]); // Reload when child selection changes
+
+  // Auto-refresh when app comes to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        loadData(); // Refresh when app becomes active
+      }
+    });
+
+    return () => subscription?.remove();
+  }, [selectedChildId]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      // CRITICAL FIX: Wrap each API call in try-catch to prevent crashes
-      // Use Promise.allSettled instead of Promise.all to handle individual failures
-      const results = await Promise.allSettled([
-        parentService.getChildren().catch((e) => {
-          console.error('[ParentDashboard] Error loading children:', e);
-          return [];
-        }),
-        parentService.getActivities().catch((e) => {
-          console.error('[ParentDashboard] Error loading activities:', e);
-          return [];
-        }),
-        parentService.getMeals().catch((e) => {
-          console.error('[ParentDashboard] Error loading meals:', e);
-          return [];
-        }),
-        parentService.getMedia().catch((e) => {
-          console.error('[ParentDashboard] Error loading media:', e);
-          return [];
-        }),
-        parentService.getMessages().catch((e) => {
-          console.error('[ParentDashboard] Error loading messages/notifications:', e);
-          return [];
-        }),
-      ]);
-
-      // Extract data from settled promises
-      const childrenData = results[0].status === 'fulfilled' ? results[0].value : [];
-      const activitiesData = results[1].status === 'fulfilled' ? results[1].value : [];
-      const mealsData = results[2].status === 'fulfilled' ? results[2].value : [];
-      const mediaData = results[3].status === 'fulfilled' ? results[3].value : [];
-      const notificationsData = results[4].status === 'fulfilled' ? results[4].value : [];
-
-      setChildren(Array.isArray(childrenData) ? childrenData : []);
-      if (Array.isArray(childrenData) && childrenData.length > 0 && !selectedChildId) {
-        setSelectedChildId(childrenData[0].id);
+      // Load data like website: get children first, then load stats for selected child
+      const childrenData = await parentService.getChildren().catch(() => []);
+      const children = Array.isArray(childrenData) ? childrenData : [];
+      setChildren(children);
+      
+      // Select first child if available
+      if (children.length > 0 && !selectedChildId) {
+        setSelectedChildId(children[0].id);
       }
 
-      const activities = Array.isArray(activitiesData) ? activitiesData : [];
-      const meals = Array.isArray(mealsData) ? mealsData : [];
-      const media = Array.isArray(mediaData) ? mediaData : [];
+      // If we have a selected child, load REAL-TIME stats for that child (no limit for accurate count)
+      if (selectedChildId || (children.length > 0 && children[0].id)) {
+        const childId = selectedChildId || children[0].id;
+        
+        // Get full counts (no limit) for real-time statistics like website
+        const [activitiesRes, mealsRes, mediaRes, therapiesRes] = await Promise.all([
+          parentService.getActivities({ childId }).catch(() => []), // No limit = get all for accurate count
+          parentService.getMeals({ childId }).catch(() => []), // No limit = get all for accurate count
+          parentService.getMedia({ childId }).catch(() => []), // No limit = get all for accurate count
+          api.get('/therapy', { params: { isActive: true } }).catch(() => ({ data: { data: { therapies: [] } } })),
+        ]);
 
-      setStats({
-        activities: activities.length,
-        meals: meals.length,
-        media: media.length,
-        notifications: Array.isArray(notificationsData) ? notificationsData.length : 0,
-      });
+        const activities = Array.isArray(activitiesRes) ? activitiesRes : (activitiesRes?.activities || []);
+        const meals = Array.isArray(mealsRes) ? mealsRes : (mealsRes?.meals || []);
+        const media = Array.isArray(mediaRes) ? mediaRes : (mediaRes?.media || []);
+        const therapiesData = therapiesRes?.data?.data?.therapies || therapiesRes?.data?.data || therapiesRes?.data?.therapies || [];
+        const therapies = Array.isArray(therapiesData) ? therapiesData : [];
+
+        setStats({
+          activities: Array.isArray(activities) ? activities.length : 0,
+          meals: Array.isArray(meals) ? meals.length : 0,
+          media: Array.isArray(media) ? media.length : 0,
+          therapies: Array.isArray(therapies) ? therapies.length : 0,
+        });
+      } else {
+        setStats({
+          activities: 0,
+          meals: 0,
+          media: 0,
+          therapies: 0,
+        });
+      }
+      
+      // Refresh notifications after loading data
+      if (refreshNotifications) {
+        refreshNotifications();
+      }
     } catch (error) {
       console.error('[ParentDashboard] Fatal error loading dashboard:', error);
-      // Set safe defaults on error
       setChildren([]);
       setStats({
         activities: 0,
         meals: 0,
         media: 0,
-        notifications: 0,
+        therapies: 0,
       });
     } finally {
       setLoading(false);
@@ -93,355 +122,444 @@ export function ParentDashboardScreen() {
     return <LoadingSpinner />;
   }
 
-  // Calculate progress (example: based on activities viewed)
-  const totalItems = (stats?.activities || 0) + (stats?.meals || 0) + (stats?.media || 0);
-  const progressPercentage = totalItems > 0 ? Math.min(Math.round((totalItems / 50) * 100), 100) : 0;
-
-  // Get greeting based on time
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t('dashboard.goodMorning');
-    if (hour < 17) return t('dashboard.goodAfternoon');
-    return t('dashboard.goodEvening');
-  };
 
   const statCards = [
     {
-      title: t('dashboard.activities'),
+      title: t('dashboard.individualPlan') || t('dashboard.activities'),
       value: stats?.activities || 0,
       icon: 'checkmark-circle',
-      color: theme.Colors.cards.activities,
+      color: tokens.colors.semantic.success,
       onPress: () => navigation.navigate('Activities'),
     },
     {
       title: t('dashboard.meals'),
       value: stats?.meals || 0,
       icon: 'restaurant',
-      color: theme.Colors.cards.meals,
+      color: tokens.colors.semantic.warning,
       onPress: () => navigation.navigate('Meals'),
     },
     {
       title: t('dashboard.media'),
       value: stats?.media || 0,
       icon: 'images',
-      color: theme.Colors.cards.media,
+      color: '#8b5cf6',
       onPress: () => navigation.navigate('Media'),
+    },
+    {
+      title: t('therapy.title', { defaultValue: 'Terapiya' }),
+      value: stats?.therapies || 0,
+      icon: 'musical-notes',
+      color: tokens.colors.joy.lavender,
+      onPress: () => navigation.navigate('Therapy'),
     },
   ];
 
+  const header = (
+    <View style={styles.topBar}>
+      <View style={styles.placeholder} />
+      <Text style={styles.topBarTitle} allowFontScaling={true}>{t('dashboard.overview')}</Text>
+      <View style={styles.placeholder} />
+    </View>
+  );
+
   return (
-    <View style={styles.container}>
-      <DecorativeBackground />
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View style={styles.placeholder} />
-            <View style={styles.headerRight}>
-              <TouchableOpacity 
-                style={styles.notificationButton}
-                onPress={() => navigation.navigate('Notifications')}
-              >
-                <Ionicons name="notifications-outline" size={24} color={theme.Colors.text.inverse} />
-                {stats?.notifications > 0 && <View style={styles.notificationBadge} />}
-              </TouchableOpacity>
+    <Screen scroll={true} padded={false} header={null} background="parent">
+      {/* Welcome Header Card - Premium Gradient Design */}
+      <View style={styles.headerWrapper}>
+        <Card 
+          variant="gradient" 
+          gradientColors={['#3b82f6', '#2563eb']}
+          style={styles.headerCard}
+          padding="xl"
+        >
+          {/* Notifications Icon in Top Right Corner - Like Web */}
+          <Pressable
+            style={styles.notificationButton}
+            onPress={() => {
+              if (refreshNotifications) refreshNotifications();
+              navigation.navigate('Notifications');
+            }}
+          >
+            <View style={styles.notificationIconContainer}>
+              <Ionicons name="notifications" size={20} color="#fff" />
+              {count > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {count > 9 ? '9+' : count}
+                  </Text>
+                </View>
+              )}
             </View>
-          </View>
-          
-          <Text style={styles.greetingText}>{getGreeting()}</Text>
-          <Text style={styles.nameText}>
-            {user?.firstName || ''} {user?.lastName || ''}
-          </Text>
-          <View style={styles.motivationalContainer}>
-            <Text style={styles.motivationalText}>
-              {t('dashboard.motivationalMessage')} ☀️
+          </Pressable>
+
+          <View style={styles.headerContent}>
+            <View style={styles.headerTop}>
+              <Text style={styles.roleText}>{t('dashboard.role', { defaultValue: 'My Role: Parent' })}</Text>
+            </View>
+            <Text style={styles.greetingText}>{t('dashboard.welcome')}</Text>
+            <Text style={styles.nameText} allowFontScaling={true}>
+              {user?.firstName || ''} {user?.lastName || ''}
             </Text>
           </View>
-        </View>
+        </Card>
+      </View>
 
-        {/* Stats Cards Section */}
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>{t('dashboard.quickActions')}</Text>
-          <View style={styles.statsContainer}>
-            {statCards.map((stat, index) => (
-              <Pressable 
-                key={index} 
-                onPress={stat.onPress} 
-                style={[styles.statCard, { backgroundColor: stat.color }]}
+      {/* Overview Cards - Modern Grid Design */}
+      <View style={styles.statsSection}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle} allowFontScaling={true}>{t('dashboard.overview')}</Text>
+        </View>
+        <View style={styles.statsContainer}>
+          {statCards.map((stat, index) => (
+            <Pressable 
+              key={index} 
+              onPress={stat.onPress}
+              style={({ pressed }) => [
+                styles.statCard,
+                pressed && styles.statCardPressed,
+              ]}
+            >
+              <Card style={styles.statCardInner} variant="elevated" padding="lg" shadow="soft">
+                <View style={styles.statCardContent}>
+                  {/* Modern Icon Container with Gradient */}
+                  <LinearGradient
+                    colors={getIconGradientColors(stat.color)}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.statIconGradient}
+                  >
+                    <Ionicons name={stat.icon} size={26} color={stat.color} />
+                  </LinearGradient>
+                  
+                  <View style={styles.statTextContainer}>
+                    <Text style={styles.statValue} allowFontScaling={true}>{stat.value}</Text>
+                    <Text style={styles.statTitle} allowFontScaling={true} numberOfLines={2}>{stat.title}</Text>
+                  </View>
+                  
+                  <View style={styles.statChevronContainer}>
+                    <Ionicons 
+                      name="chevron-forward" 
+                      size={18} 
+                      color={tokens.colors.text.tertiary} 
+                    />
+                  </View>
+                </View>
+              </Card>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* Child Selector - Enhanced Design */}
+      {children.length > 0 && (
+        <View style={styles.childrenSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle} allowFontScaling={true}>{t('dashboard.myChildren')}</Text>
+            <Text style={styles.sectionSubtitle}>{children.length} {t('dashboard.children') || 'farzand'}</Text>
+          </View>
+          <View style={styles.childrenList}>
+            {children.map((child) => (
+              <Pressable
+                key={child.id}
+                style={({ pressed }) => [
+                  styles.childCard,
+                  selectedChildId === child.id && styles.childCardActive,
+                  pressed && styles.childCardPressed,
+                ]}
+                onPress={() => {
+                  setSelectedChildId(child.id);
+                  navigation.navigate('ChildProfile', { childId: child.id });
+                }}
               >
-                <Ionicons name={stat.icon} size={28} color={theme.Colors.text.inverse} />
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statTitle}>{stat.title}</Text>
+                <Card 
+                  style={[
+                    styles.childCardInner,
+                    selectedChildId === child.id && styles.childCardActiveInner
+                  ]} 
+                  variant="elevated"
+                  padding="md"
+                  shadow="soft"
+                >
+                  <View style={styles.childCardContent}>
+                    <LinearGradient
+                      colors={[tokens.colors.accent.blue + '20', tokens.colors.accent.blue + '10']}
+                      style={styles.childAvatar}
+                    >
+                      <Text style={styles.childAvatarText}>
+                        {child.firstName?.charAt(0) || ''}{child.lastName?.charAt(0) || ''}
+                      </Text>
+                    </LinearGradient>
+                    <View style={styles.childInfo}>
+                      <Text style={styles.childName} allowFontScaling={true} numberOfLines={1}>
+                        {child.firstName} {child.lastName}
+                      </Text>
+                      {child.dateOfBirth && (
+                        <View style={styles.childAgeContainer}>
+                          <Ionicons name="calendar-outline" size={12} color={tokens.colors.text.secondary} />
+                          <Text style={styles.childAge} allowFontScaling={true}>
+                            {new Date().getFullYear() - new Date(child.dateOfBirth).getFullYear()} {t('dashboard.yearsOld')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.childChevron}>
+                      <Ionicons 
+                        name="chevron-forward" 
+                        size={20} 
+                        color={selectedChildId === child.id ? tokens.colors.accent.blue : tokens.colors.text.tertiary} 
+                      />
+                    </View>
+                  </View>
+                </Card>
               </Pressable>
             ))}
           </View>
         </View>
-
-        {/* Child Selector */}
-        {children.length > 0 && (
-          <View style={styles.childrenSection}>
-            <Text style={styles.sectionTitle}>{t('dashboard.myChildren')}</Text>
-            <View style={styles.childrenList}>
-              {children.map((child) => (
-                <TouchableOpacity
-                  key={child.id}
-                  style={[
-                    styles.childCard,
-                    selectedChildId === child.id && styles.childCardActive,
-                  ]}
-                  onPress={() => {
-                    setSelectedChildId(child.id);
-                    navigation.navigate('ChildProfile', { childId: child.id });
-                  }}
-                >
-                  <View style={styles.childAvatar}>
-                    <Text style={styles.childAvatarText}>
-                      {child.firstName?.charAt(0)}{child.lastName?.charAt(0)}
-                    </Text>
-                  </View>
-                  <View style={styles.childInfo}>
-                    <Text style={styles.childName}>
-                      {child.firstName} {child.lastName}
-                    </Text>
-                    {child.dateOfBirth && (
-                      <Text style={styles.childAge}>
-                        {new Date().getFullYear() - new Date(child.dateOfBirth).getFullYear()} years old
-                      </Text>
-                    )}
-                  </View>
-                  <Ionicons 
-                    name="chevron-forward" 
-                    size={20} 
-                    color={theme.Colors.text.secondary} 
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Quick Actions */}
-        <View style={styles.actionsSection}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionsGrid}>
-            <Pressable
-              style={styles.actionCard}
-              onPress={() => navigation.navigate('AIChat')}
-            >
-              <Ionicons name="chatbubble-ellipses" size={28} color={theme.Colors.primary.blue} />
-              <Text style={styles.actionText}>AI Assistant</Text>
-            </Pressable>
-            <Pressable
-              style={styles.actionCard}
-              onPress={() => navigation.navigate('Notifications')}
-            >
-              <Ionicons name="notifications" size={28} color={theme.Colors.status.warning} />
-              <Text style={styles.actionText}>Notifications</Text>
-            </Pressable>
-            <Pressable
-              style={styles.actionCard}
-              onPress={() => navigation.navigate('TeacherRating')}
-            >
-              <Ionicons name="star" size={28} color={theme.Colors.status.warning} />
-              <Text style={styles.actionText}>Rate Teacher</Text>
-            </Pressable>
-            <Pressable
-              style={styles.actionCard}
-              onPress={() => navigation.navigate('SchoolRating')}
-            >
-              <Ionicons name="school" size={28} color={theme.Colors.primary.blue} />
-              <Text style={styles.actionText}>Rate School</Text>
-            </Pressable>
-          </View>
-        </View>
-      </ScrollView>
-    </View>
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#E3F2FD', // Och ko'k background
-  },
-  scrollView: {
-    flex: 1,
-    zIndex: 1,
-  },
-  content: {
-    paddingBottom: theme.Spacing.xl,
-  },
-  // Header Styles
-  header: {
-    backgroundColor: theme.Colors.primary.blue,
-    paddingTop: 50,
-    paddingBottom: theme.Spacing.lg,
-    paddingHorizontal: theme.Spacing.md,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  headerTop: {
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.Spacing.md,
+    paddingHorizontal: tokens.space.xl,
+    paddingTop: tokens.space.md,
+    paddingBottom: tokens.space.md,
+    backgroundColor: 'transparent',
   },
   placeholder: {
-    width: 40,
+    width: 44,
   },
-  headerRight: {
-    flex: 1,
-    alignItems: 'flex-end',
+  topBarTitle: {
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.text.primary,
+  },
+  // Header Wrapper
+  headerWrapper: {
+    paddingHorizontal: tokens.space.md,
+    paddingTop: tokens.space.md,
+    paddingBottom: tokens.space.lg,
+  },
+  // Header Card - Premium Gradient Design
+  headerCard: {
+    borderRadius: tokens.radius['2xl'],
+    ...tokens.shadow.elevated,
+  },
+  headerContent: {
+    width: '100%',
+  },
+  headerTop: {
+    marginBottom: tokens.space.sm,
+  },
+  roleText: {
+    fontSize: tokens.type.sub.fontSize,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: tokens.type.body.fontWeight,
   },
   notificationButton: {
-    padding: theme.Spacing.xs,
-    position: 'relative',
+    position: 'absolute',
+    top: tokens.space.lg,
+    right: tokens.space.lg,
+    zIndex: 10,
+  },
+  notificationIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...tokens.shadow.sm,
   },
   notificationBadge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.Colors.status.warning,
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  notificationBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '800',
+    lineHeight: 12,
   },
   greetingText: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.inverse,
-    opacity: 0.9,
-    marginBottom: theme.Spacing.xs,
+    fontSize: tokens.type.body.fontSize,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: tokens.space.xs,
+    fontWeight: tokens.type.body.fontWeight,
   },
   nameText: {
-    fontSize: theme.Typography.sizes['2xl'],
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.inverse,
-    marginBottom: theme.Spacing.sm,
-  },
-  motivationalContainer: {
-    marginTop: theme.Spacing.sm,
-  },
-  motivationalText: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.inverse,
-    opacity: 0.9,
+    fontSize: tokens.type.h1.fontSize,
+    fontWeight: tokens.type.h1.fontWeight,
+    color: tokens.colors.text.white,
+    letterSpacing: -0.5,
   },
   // Stats Section
   statsSection: {
-    paddingHorizontal: theme.Spacing.md,
-    paddingTop: theme.Spacing.lg,
+    paddingHorizontal: tokens.space.md,
+    marginBottom: tokens.space.xl,
+  },
+  sectionHeader: {
+    marginBottom: tokens.space.md,
   },
   sectionTitle: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.md,
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs,
   },
-  // Stats Cards
+  sectionSubtitle: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.text.secondary,
+  },
   statsContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: theme.Spacing.md,
-    gap: theme.Spacing.sm,
+    gap: tokens.space.md,
   },
   statCard: {
     flex: 1,
-    borderRadius: theme.BorderRadius.md,
-    padding: theme.Spacing.md,
+    minWidth: '30%',
+    maxWidth: '48%',
+  },
+  statCardPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.96 }],
+  },
+  statCardInner: {
+    width: '100%',
+    minHeight: 120,
+  },
+  statCardContent: {
+    flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 110,
+    width: '100%',
+    gap: tokens.space.md,
+  },
+  statIconGradient: {
+    width: 60,
+    height: 60,
+    borderRadius: tokens.radius.xl,
+    alignItems: 'center',
     justifyContent: 'center',
-    ...theme.Colors.shadow.md,
+    ...tokens.shadow.soft,
+  },
+  statTextContainer: {
+    flex: 1,
+    minWidth: 0,
   },
   statValue: {
-    fontSize: theme.Typography.sizes['2xl'],
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.inverse,
-    marginTop: theme.Spacing.sm,
+    fontSize: 30,
+    fontWeight: '800',
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs / 2,
+    letterSpacing: -0.8,
   },
   statTitle: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.inverse,
-    marginTop: theme.Spacing.xs,
-    opacity: 0.95,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
+    fontWeight: tokens.type.h3.fontWeight,
+    lineHeight: 18,
+  },
+  statChevronContainer: {
+    paddingLeft: tokens.space.xs,
   },
   // Children Section
   childrenSection: {
-    paddingHorizontal: theme.Spacing.md,
-    paddingTop: theme.Spacing.lg,
-    marginTop: theme.Spacing.md,
+    paddingHorizontal: tokens.space.md,
+    marginBottom: tokens.space['2xl'],
   },
   childrenList: {
-    gap: theme.Spacing.sm,
-    marginTop: theme.Spacing.md,
+    gap: tokens.space.md,
+    marginTop: tokens.space.md,
   },
   childCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.Colors.background.card,
-    borderRadius: theme.BorderRadius.md,
-    padding: theme.Spacing.md,
-    ...theme.Colors.shadow.sm,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    width: '100%',
   },
   childCardActive: {
-    borderColor: theme.Colors.primary.blue,
+    // Active state handled by border in childCardInner
+  },
+  childCardPressed: {
+    opacity: 0.95,
+    transform: [{ scale: 0.98 }],
+  },
+  childCardInner: {
+    width: '100%',
+    borderWidth: 2,
+    borderColor: tokens.colors.border.light,
+  },
+  childCardActiveInner: {
+    borderColor: tokens.colors.accent.blue,
+    backgroundColor: tokens.colors.accent[50] + '40',
+  },
+  childCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
   },
   childAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: theme.Colors.primary.blueBg,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
+    ...tokens.shadow.sm,
   },
   childAvatarText: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.primary.blue,
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h1.fontWeight,
+    color: tokens.colors.accent.blue,
   },
   childInfo: {
     flex: 1,
+    minWidth: 0,
   },
   childName: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs / 2,
+    fontSize: tokens.type.bodyLarge.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs / 2,
+  },
+  childAgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.space.xs / 2,
   },
   childAge: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
   },
-  // Actions Section
-  actionsSection: {
-    paddingHorizontal: theme.Spacing.md,
-    paddingTop: theme.Spacing.lg,
-    marginTop: theme.Spacing.md,
-  },
-  actionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.Spacing.md,
-    marginTop: theme.Spacing.md,
-  },
-  actionCard: {
-    width: '47%',
-    backgroundColor: theme.Colors.background.card,
-    borderRadius: theme.BorderRadius.md,
-    padding: theme.Spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 100,
-    ...theme.Colors.shadow.sm,
-  },
-  actionText: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.medium,
-    color: theme.Colors.text.primary,
-    marginTop: theme.Spacing.sm,
-    textAlign: 'center',
+  childChevron: {
+    paddingLeft: tokens.space.sm,
   },
 });
+
+// Helper function to get gradient colors for icon containers (like website)
+function getIconGradientColors(baseColor) {
+  // Map colors to gradient pairs like website (from-blue-50 to-blue-100)
+  const gradientMap = {
+    [tokens.colors.semantic.success]: ['#D1FAE5', '#A7F3D0'], // Green gradients
+    [tokens.colors.semantic.warning]: ['#FEF3C7', '#FDE68A'], // Orange/Amber gradients
+    '#8b5cf6': ['#EDE9FE', '#DDD6FE'], // Purple gradients
+  };
+  
+  // Default blue gradient (most common)
+  const defaultGradient = ['#DBEAFE', '#BFDBFE']; // from-blue-50 to-blue-200
+  
+  return gradientMap[baseColor] || defaultGradient;
+}

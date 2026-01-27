@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -7,8 +7,9 @@ import { useNavigation } from '@react-navigation/native';
 import { changeLanguage, getCurrentLanguage, getAvailableLanguages } from '../../i18n/config';
 import Card from '../../components/common/Card';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import TeacherBackground from '../../components/layout/TeacherBackground';
 import theme from '../../styles/theme';
-import api from '../../services/api';
+import { api } from '../../services/api';
 
 export function SettingsScreen() {
   const { user, logout, refreshUser } = useAuth();
@@ -16,17 +17,6 @@ export function SettingsScreen() {
   const { t } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState('en');
 
-  // Password change modal state
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Profile edit modal state
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -51,36 +41,6 @@ export function SettingsScreen() {
     }
   }, [user]);
 
-  const handlePasswordChange = async () => {
-    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('settings.fillAllFields', { defaultValue: 'Please fill all fields' }));
-      return;
-    }
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('settings.passwordMismatch', { defaultValue: 'Passwords do not match' }));
-      return;
-    }
-    if (passwordData.newPassword.length < 6) {
-      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('settings.passwordTooShort', { defaultValue: 'Password must be at least 6 characters' }));
-      return;
-    }
-
-    setPasswordLoading(true);
-    try {
-      await api.put('/user/password', {
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-      });
-      Alert.alert(t('common.success', { defaultValue: 'Success' }), t('settings.passwordChanged', { defaultValue: 'Password changed successfully' }));
-      setShowPasswordModal(false);
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (error) {
-      const message = error.response?.data?.message || t('settings.passwordChangeFailed', { defaultValue: 'Failed to change password' });
-      Alert.alert(t('common.error', { defaultValue: 'Error' }), message);
-    } finally {
-      setPasswordLoading(false);
-    }
-  };
 
   const handleProfileUpdate = async () => {
     if (!profileData.firstName || !profileData.lastName) {
@@ -145,11 +105,6 @@ export function SettingsScreen() {
       onPress: () => setShowProfileModal(true),
     },
     {
-      icon: 'key-outline',
-      title: t('settings.changePassword', { defaultValue: 'Change Password' }),
-      onPress: () => setShowPasswordModal(true),
-    },
-    {
       icon: 'list-outline',
       title: 'Responsibilities',
       onPress: () => safeNavigate('Responsibilities'),
@@ -179,6 +134,7 @@ export function SettingsScreen() {
 
   return (
     <View style={styles.container}>
+      <TeacherBackground />
       <ScreenHeader title="Settings" />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Card>
@@ -256,87 +212,6 @@ export function SettingsScreen() {
         </Card>
       </ScrollView>
 
-      {/* Password Change Modal */}
-      <Modal
-        visible={showPasswordModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowPasswordModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('settings.changePassword', { defaultValue: 'Change Password' })}</Text>
-              <TouchableOpacity onPress={() => setShowPasswordModal(false)}>
-                <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.currentPassword', { defaultValue: 'Current Password' })}</Text>
-              <View style={styles.passwordInputWrapper}>
-                <TextInput
-                  style={styles.passwordInput}
-                  value={passwordData.currentPassword}
-                  onChangeText={(text) => setPasswordData({ ...passwordData, currentPassword: text })}
-                  secureTextEntry={!showCurrentPassword}
-                  placeholder="••••••••"
-                  placeholderTextColor={theme.Colors.text.tertiary}
-                />
-                <TouchableOpacity onPress={() => setShowCurrentPassword(!showCurrentPassword)}>
-                  <Ionicons name={showCurrentPassword ? 'eye-off' : 'eye'} size={20} color={theme.Colors.text.secondary} />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.newPassword', { defaultValue: 'New Password' })}</Text>
-              <View style={styles.passwordInputWrapper}>
-                <TextInput
-                  style={styles.passwordInput}
-                  value={passwordData.newPassword}
-                  onChangeText={(text) => setPasswordData({ ...passwordData, newPassword: text })}
-                  secureTextEntry={!showNewPassword}
-                  placeholder="••••••••"
-                  placeholderTextColor={theme.Colors.text.tertiary}
-                />
-                <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
-                  <Ionicons name={showNewPassword ? 'eye-off' : 'eye'} size={20} color={theme.Colors.text.secondary} />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.confirmPassword', { defaultValue: 'Confirm Password' })}</Text>
-              <View style={styles.passwordInputWrapper}>
-                <TextInput
-                  style={styles.passwordInput}
-                  value={passwordData.confirmPassword}
-                  onChangeText={(text) => setPasswordData({ ...passwordData, confirmPassword: text })}
-                  secureTextEntry={!showConfirmPassword}
-                  placeholder="••••••••"
-                  placeholderTextColor={theme.Colors.text.tertiary}
-                />
-                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                  <Ionicons name={showConfirmPassword ? 'eye-off' : 'eye'} size={20} color={theme.Colors.text.secondary} />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.saveButton, passwordLoading && styles.saveButtonDisabled]}
-              onPress={handlePasswordChange}
-              disabled={passwordLoading}
-            >
-              {passwordLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.saveButtonText}>{t('settings.save', { defaultValue: 'Save' })}</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       {/* Profile Edit Modal */}
       <Modal
@@ -345,8 +220,13 @@ export function SettingsScreen() {
         transparent={true}
         onRequestClose={() => setShowProfileModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('settings.editProfile', { defaultValue: 'Edit Profile' })}</Text>
               <TouchableOpacity onPress={() => setShowProfileModal(false)}>
@@ -409,8 +289,9 @@ export function SettingsScreen() {
                 <Text style={styles.saveButtonText}>{t('settings.save', { defaultValue: 'Save' })}</Text>
               )}
             </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

@@ -356,7 +356,14 @@
     "selectPhoto": "Galeriyadan rasm tanlang",
     "photoFormat": "JPG, PNG (maks. 5MB)",
     "uploadSuccess": "Rasm muvaffaqiyatli yuklandi",
-    "uploadError": "Rasm yuklashda xatolik yuz berdi"
+    "uploadError": "Rasm yuklashda xatolik yuz berdi",
+    "uploadComingSoon": "Rasm yuklash funksiyasi tez orada mavjud bo'ladi. Hozircha web versiyasidan foydalaning.",
+    "imageTooLarge": "Rasm hajmi 5MB dan katta bo'lmasligi kerak",
+    "notFoundTitle": "Ma'lumot topilmadi",
+    "notFoundDesc": "Farzandingiz haqida ma'lumot topilmadi.",
+    "notFoundHelp": "Iltimos, o'qituvchiga yoki tizim administratoriga murojaat qiling.",
+    "totalChildren": "Jami: {{count}} ta farzand",
+    "monitoringJournal": "Monitoring jurnali"
   },
   "aiChat": {
     "title": "AI Yordamchi",
@@ -432,13 +439,132 @@
     "no": "Yo'q",
     "error": "Xatolik",
     "success": "Muvaffaqiyat",
-    "notFound": "Topilmadi"
+    "notFound": "Topilmadi",
+    "more": "yana"
   },
   "settings": {
     "title": "Sozlamalar",
+    "subtitle": "Profil va hisob sozlamalarini boshqarish",
     "language": "Til",
     "account": "Hisob",
     "languageChanged": "Til o'zgartirildi",
-    "languageChangedDesc": "Til muvaffaqiyatli o'zgartirildi"
+    "languageChangedDesc": "Til muvaffaqiyatli o'zgartirildi",
+    "editProfile": "Profilni tahrirlash",
+    "changePassword": "Parolni o'zgartirish",
+    "about": "Haqida",
+    "fillAllFields": "Barcha maydonlarni to'ldiring",
+    "passwordMismatch": "Parollar mos kelmadi",
+    "passwordTooShort": "Parol kamida 8 ta belgidan iborat bo'lishi kerak",
+    "passwordChanged": "Parol muvaffaqiyatli o'zgartirildi",
+    "passwordChangeFailed": "Parolni o'zgartirishda xatolik",
+    "profileUpdated": "Profil muvaffaqiyatli yangilandi",
+    "profileUpdateFailed": "Profilni yangilashda xatolik",
+    "nameRequired": "Ism va familiya kiritilishi shart",
+    "currentPassword": "Joriy parol",
+    "newPassword": "Yangi parol",
+    "confirmPassword": "Parolni tasdiqlash",
+    "firstName": "Ism",
+    "lastName": "Familiya",
+    "phone": "Telefon",
+    "email": "Email",
+    "emailReadOnly": "Email o'zgartirilmaydi",
+    "save": "Saqlash",
+    "saveProfile": "Profilni saqlash",
+    "savePreferences": "Sozlamalarni saqlash",
+    "updatePassword": "Parolni yangilash",
+    "passwordRequirements": "Parol kamida 8 ta belgidan iborat bo'lishi kerak",
+    "notifications": "Bildirishnomalar",
+    "emailNotifications": "Email bildirishnomalari",
+    "emailNotificationsDesc": "Email orqali yangiliklar olish",
+    "pushNotifications": "Push bildirishnomalari",
+    "pushNotificationsDesc": "Push bildirishnomalar olish",
+    "profileInfo": "Profil ma'lumotlari",
+    "selectLanguage": "Interfeys tilini tanlang"
+  },
+  "therapy": {
+    "title": "Terapiya",
+    "subtitle": "Musiqa, video va content terapiyalar",
+    "search": "Qidirish...",
+    "all": "Barchasi",
+    "music": "Musiqa",
+    "video": "Video",
+    "content": "Content",
+    "activeSession": "Faol sessiya",
+    "start": "Boshlash",
+    "end": "Yakunlash",
+    "min": "min",
+    "noTherapies": "Terapiyalar topilmadi",
+    "noTherapiesDesc": "Qidiruv natijalari bo'sh",
+    "started": "Terapiya sessiyasi boshlandi",
+    "startError": "Terapiyani boshlashda xatolik",
+    "ended": "Terapiya sessiyasi yakunlandi",
+    "endError": "Terapiyani yakunlashda xatolik"
+  },
+  "payments": {
+    "title": "To'lovlar",
+    "subtitle": "Oylik to'lovlar va to'lov tarixi",
+    "monthlyPayment": "Oylik To'lov",
+    "nextPayment": "Keyingi to'lov",
+    "daysRemaining": "{{count}} kun qoldi",
+    "daysOverdue": "{{count}} kun kechikdi",
+    "amountNotSet": "Summa belgilanmagan",
+    "note": "Eslatma",
+    "noteText": "To'lov qilish uchun admin bilan bog'laning yoki admin panel orqali to'lov qiling.",
+    "history": "To'lov Tarixi",
+    "noPayments": "To'lovlar yo'q",
+    "noPaymentsDesc": "Hozircha to'lovlar mavjud emas",
+    "paymentProvider": {
+      "payme": "Payme",
+      "click": "Click",
+      "card": "Karta",
+      "other": "To'lov"
+    },
+    "monthlyPaymentLabel": "Oylik to'lov"
+  },
+  "help": {
+    "title": "Yordam va qo'llab-quvvatlash",
+    "subtitle": "Ko'p beriladigan savollarga javob toping va yordam oling",
+    "contactUs": "Biz bilan bog'lanish",
+    "faq": "Ko'p beriladigan savollar",
+    "quickLinks": "Tezkor havolalar",
+    "viewActivities": "Faoliyatlarni ko'rish",
+    "browseMedia": "Mediani ko'rib chiqish",
+    "checkMeals": "Ovqatlanishni tekshirish",
+    "accountSettings": "Hisob sozlamalari",
+    "faq1": {
+      "question": "Farzandimning kunlik faoliyatlarini qanday ko'rish mumkin?",
+      "answer": "Kunlik faoliyatlar va o'qituvchilardan yangilanishlarni ko'rish uchun pastki navigatsiyadan yoki bosh sahifadan Faoliyatlar sahifasiga o'ting."
+    },
+    "faq2": {
+      "question": "Rasmlar va videolarni qayerda ko'rish mumkin?",
+      "answer": "O'qituvchilar tomonidan maktab faoliyatlaridan bahramand bo'lgan barcha rasmlar va videolarni ko'rish uchun Media sahifasiga o'ting."
+    },
+    "faq3": {
+      "question": "Farzandimning ovqatlanishini qanday kuzatish mumkin?",
+      "answer": "Kunlik ovqat yozuvlarini, shu jumladan farzandingiz nima yeganini va maxsus dietetik eslatmalarni ko'rish uchun Ovqatlar sahifasiga tashrif buyuring."
+    },
+    "faq4": {
+      "question": "Profil ma'lumotlarini yangilash mumkinmi?",
+      "answer": "Ha, aloqa ma'lumotlari va afzalliklarni yangilash uchun yuqori menyudan yoki Profil sahifasidan Sozlamalar'ga o'ting."
+    }
+  },
+  "warnings": {
+    "title": "AI Ogohlantirishlar",
+    "subtitle": "Reytinglar asosida yaratilgan ogohlantirishlar",
+    "all": "Barchasi",
+    "unresolved": "Yechilmagan",
+    "resolved": "Yechilgan",
+    "lowRating": "Past reyting",
+    "decliningRating": "Reyting pasayishi",
+    "negativeFeedback": "Salbiy fikr",
+    "complaint": "Shikoyat",
+    "safetyConcern": "Xavfsizlik muammosi",
+    "qualityIssue": "Sifat muammosi",
+    "other": "Boshqa",
+    "aiAnalysis": "AI Tahlil",
+    "resolve": "Yechildi deb belgilash",
+    "noWarnings": "Ogohlantirishlar yo'q",
+    "noWarningsDesc": "Hozircha ogohlantirishlar mavjud emas",
+    "resolveError": "Ogohlantirishni yechishda xatolik"
   }
 }

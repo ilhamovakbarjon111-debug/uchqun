@@ -7,6 +7,8 @@ import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { ImageViewer } from '../../components/common/ImageViewer';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import TeacherBackground from '../../components/layout/TeacherBackground';
+import { API_URL } from '../../config';
 import theme from '../../styles/theme';
 
 const { width } = Dimensions.get('window');
@@ -66,8 +68,25 @@ export function MediaScreen() {
     }
   };
 
+  const getImageUrl = (item) => {
+    const url = item.url || item.photoUrl || item.thumbnailUrl;
+    if (!url) return null;
+    // If URL is already absolute, return as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    // If URL starts with /, it's a relative path - prepend API base URL
+    if (url.startsWith('/')) {
+      const API_BASE = API_URL.replace('/api', '');
+      return `${API_BASE}${url}`;
+    }
+    // Otherwise, assume it's a relative path
+    const API_BASE = API_URL.replace('/api', '');
+    return `${API_BASE}/${url}`;
+  };
+
   const openImageViewer = (item) => {
-    const imageUrl = item.url || item.photoUrl || item.thumbnailUrl;
+    const imageUrl = getImageUrl(item);
     if (imageUrl) {
       setSelectedImage(imageUrl);
       setViewerVisible(true);
@@ -79,13 +98,19 @@ export function MediaScreen() {
   }
 
   const renderMediaItem = ({ item }) => {
-    const imageUrl = item.url || item.photoUrl || item.thumbnailUrl;
+    const imageUrl = getImageUrl(item);
     if (!imageUrl) return null;
 
     return (
       <View style={styles.mediaItemContainer}>
         <Pressable onPress={() => openImageViewer(item)}>
-          <Image source={{ uri: imageUrl }} style={styles.image} />
+          <Image 
+            source={{ uri: imageUrl }} 
+            style={styles.image}
+            onError={(e) => {
+              console.warn('[MediaScreen] Image load error:', imageUrl, e.nativeEvent.error);
+            }}
+          />
         </Pressable>
         <Pressable
           style={styles.deleteButton}
@@ -99,6 +124,7 @@ export function MediaScreen() {
 
   return (
     <View style={styles.container}>
+      <TeacherBackground />
       <ScreenHeader title="Media" rightAction={handleCreate} rightIcon="add" />
       {media.length === 0 ? (
         <EmptyState icon="images-outline" message="No media found" />

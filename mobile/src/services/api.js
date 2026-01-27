@@ -2,22 +2,37 @@ import axios from 'axios';
 import { API_URL } from '../config';
 import { getStoredAuth, storeAuth, clearAuth } from '../storage/authStorage';
 
+// Log API URL for debugging
+if (__DEV__) {
+  console.log('[API] Base URL:', API_URL);
+}
+
 export const api = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 30000, // 30 second timeout
 });
 
 // Request interceptor to add token and handle FormData
 api.interceptors.request.use(async (config) => {
-  const { accessToken } = await getStoredAuth();
-  if (accessToken) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${accessToken}`;
+  // Skip adding token for auth endpoints (login, refresh)
+  const isAuthEndpoint = config.url?.includes('/auth/login') || config.url?.includes('/auth/refresh');
+  
+  if (!isAuthEndpoint) {
+    const { accessToken } = await getStoredAuth();
+    if (accessToken) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
   }
   
   // If the request data is FormData, remove Content-Type to let React Native set it with boundary
   if (config.data instanceof FormData) {
     delete config.headers['Content-Type'];
+  }
+  
+  if (__DEV__) {
+    console.log('[API] Request:', config.method?.toUpperCase(), config.url);
   }
   
   return config;
@@ -27,21 +42,40 @@ api.interceptors.request.use(async (config) => {
 
 // Response interceptor to handle token refresh
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    if (__DEV__) {
+      console.log('[API] Response:', res.config.url, res.status);
+    }
+    return res;
+  },
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    
+    // Don't try to refresh for auth endpoints - just reject
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/login') || originalRequest?.url?.includes('/auth/refresh');
+    
+    if (__DEV__) {
+      console.log('[API] Error:', originalRequest?.url, error.response?.status, error.message);
+    }
+    
+    // Only try refresh for 401 errors on non-auth endpoints
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
         const { refreshToken } = await getStoredAuth();
-        if (!refreshToken) throw new Error('No refresh token');
+        if (!refreshToken) {
+          // No refresh token - user needs to login again
+          await clearAuth();
+          return Promise.reject(error);
+        }
 
         const resp = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
         // Backend returns { success: true, accessToken }
         const { accessToken, success } = resp.data || {};
         if (!success || !accessToken) {
-          throw new Error('Refresh did not return accessToken');
+          await clearAuth();
+          return Promise.reject(new Error('Session expired. Please login again.'));
         }
 
         const current = await getStoredAuth();
@@ -52,7 +86,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (e) {
         await clearAuth();
-        return Promise.reject(e);
+        return Promise.reject(error); // Return original error, not refresh error
       }
     }
     return Promise.reject(error);
