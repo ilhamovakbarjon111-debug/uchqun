@@ -56,7 +56,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try { await api.post('/auth/logout'); } catch { /* ignore */ }
     setUser(null);
     localStorage.removeItem('user');
   };

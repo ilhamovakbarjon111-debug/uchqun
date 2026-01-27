@@ -20,7 +20,7 @@
     "fix:varchar": "node scripts/fix-varchar-limits.js",
     "migrate": "node config/migrate.js",
     "migrate:undo": "echo 'Manual rollback required - check migrations directory'",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest --forceExit --detectOpenHandles"
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --forceExit --detectOpenHandles"
   },
   "keywords": [
     "education",
@@ -62,6 +62,8 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^10.2.0",
+    "eslint": "^8.55.0",
+    "sqlite3": "^5.1.7",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

@@ -14,22 +14,22 @@
   },
   "lint-staged": {
     "backend/**/*.js": [
-      "npx eslint --fix"
+      "npx eslint --fix --config backend/.eslintrc.cjs"
     ],
     "admin/src/**/*.{js,jsx}": [
-      "npx eslint --fix"
+      "npx eslint --fix --config admin/.eslintrc.cjs"
     ],
     "teacher/src/**/*.{js,jsx}": [
-      "npx eslint --fix"
+      "npx eslint --fix --config teacher/.eslintrc.cjs"
     ],
     "reception/src/**/*.{js,jsx}": [
-      "npx eslint --fix"
+      "npx eslint --fix --config reception/.eslintrc.cjs"
     ],
     "super-admin/src/**/*.{js,jsx}": [
-      "npx eslint --fix"
+      "npx eslint --fix --config super-admin/.eslintrc.cjs"
     ],
     "government/src/**/*.{js,jsx}": [
-      "npx eslint --fix"
+      "npx eslint --fix --config government/.eslintrc.cjs"
     ]
   },
   "keywords": [
@@ -47,6 +47,7 @@
     "npm": ">=9.0.0"
   },
   "devDependencies": {
+    "eslint": "^8.57.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7"
   }

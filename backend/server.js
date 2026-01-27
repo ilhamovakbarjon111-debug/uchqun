@@ -159,7 +159,8 @@ app.use(cors({
     'Origin',
     'Access-Control-Request-Method',
     'Access-Control-Request-Headers',
-    'x-migration-secret'
+    'x-migration-secret',
+    'X-CSRF-Token'
   ],
   exposedHeaders: [
     'Authorization',
@@ -182,6 +183,16 @@ app.use(cookieParser());
 
 // Sanitize request body strings (XSS prevention)
 app.use(sanitizeBody);
+
+// CSRF protection (double-submit cookie)
+import { verifyCsrfToken } from './middleware/csrf.js';
+app.use((req, res, next) => {
+  // Skip CSRF for auth and health paths
+  if (req.path.startsWith('/api/auth') || req.path.startsWith('/health')) {
+    return next();
+  }
+  verifyCsrfToken(req, res, next);
+});
 
 // Serve local uploads (works for both fallback and misconfigured remote storage)
 

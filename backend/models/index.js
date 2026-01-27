@@ -28,6 +28,7 @@ import PushNotification from './PushNotification.js';
 import Payment from './Payment.js';
 import GovernmentStats from './GovernmentStats.js';
 import BusinessStats from './BusinessStats.js';
+import RefreshToken from './RefreshToken.js';
 
 // Initialize all models
 const models = {
@@ -60,6 +61,7 @@ const models = {
   Payment,
   GovernmentStats,
   BusinessStats,
+  RefreshToken,
   sequelize,
 };
 
@@ -199,6 +201,10 @@ GovernmentStats.belongsTo(User, { foreignKey: 'generatedBy', as: 'generator' });
 // Business Stats relationships
 User.hasMany(BusinessStats, { foreignKey: 'businessId', as: 'businessStats' });
 BusinessStats.belongsTo(User, { foreignKey: 'businessId', as: 'business' });
+
+// Refresh Token relationships
+User.hasMany(RefreshToken, { foreignKey: 'userId', as: 'refreshTokens' });
+RefreshToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Sync database (use with caution in production)
 export const syncDatabase = async (force = false) => {

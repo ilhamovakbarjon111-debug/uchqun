@@ -11,5 +11,5 @@ export default {
     'utils/**/*.js',
   ],
   coverageDirectory: 'coverage',
-  setupFilesAfterSetup: [],
+  setupFiles: ['./__tests__/helpers/setup.js'],
 };

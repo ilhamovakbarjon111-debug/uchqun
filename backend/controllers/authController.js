@@ -1,16 +1,19 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User from '../models/User.js';
+import RefreshToken from '../models/RefreshToken.js';
+import { generateCsrfToken } from '../middleware/csrf.js';
 import logger from '../utils/logger.js';
 
 const generateTokens = (userId) => {
   const accessToken = jwt.sign(
-    { userId },
+    { userId, jti: crypto.randomUUID() },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRE || '15m' }
   );
-  
+
   const refreshToken = jwt.sign(
-    { userId },
+    { userId, jti: crypto.randomUUID() },
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d' }
   );
@@ -165,10 +168,28 @@ export const login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
+    // Store refresh token hash in DB
+    await RefreshToken.create({
+      tokenHash: RefreshToken.hashToken(refreshToken),
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
+    // Set CSRF token cookie (non-httpOnly so JS can read it)
+    const csrfToken = generateCsrfToken();
+    res.cookie('csrfToken', csrfToken, {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     res.json({
       success: true,
       accessToken,
       refreshToken,
+      csrfToken,
       user: user.toJSON(),
     });
   } catch (error) {
@@ -190,33 +211,70 @@ export const login = async (req, res) => {
 
 export const refreshToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    // Read from cookie first, fall back to body
+    const token = req.cookies?.refreshToken || req.body?.refreshToken;
 
-    if (!refreshToken) {
+    if (!token) {
       return res.status(400).json({ error: 'Refresh token is required' });
     }
 
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
     const user = await User.findByPk(decoded.userId);
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid refresh token' });
     }
 
-    const { accessToken } = generateTokens(user.id);
+    // Verify token against DB
+    const storedToken = await RefreshToken.verifyToken(token, user.id);
+    if (!storedToken) {
+      return res.status(401).json({ error: 'Refresh token revoked or expired' });
+    }
+
+    // Revoke old token (rotation)
+    await storedToken.update({ revoked: true, revokedAt: new Date() });
+
+    // Issue new tokens
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user.id);
+
+    // Store new refresh token hash
+    await RefreshToken.create({
+      tokenHash: RefreshToken.hashToken(newRefreshToken),
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
 
     const isProduction = process.env.NODE_ENV === 'production';
-    res.cookie('accessToken', accessToken, {
+    const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
       path: '/',
+    };
+
+    res.cookie('accessToken', accessToken, {
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refreshToken', newRefreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Refresh CSRF token
+    const csrfToken = generateCsrfToken();
+    res.cookie('csrfToken', csrfToken, {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.json({
       success: true,
       accessToken,
+      csrfToken,
     });
   } catch (error) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
@@ -224,6 +282,33 @@ export const refreshToken = async (req, res) => {
     }
     logger.error('Refresh token error', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Token refresh failed' });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    // Revoke all refresh tokens for this user
+    await RefreshToken.update(
+      { revoked: true, revokedAt: new Date() },
+      { where: { userId: req.user.id, revoked: false } }
+    );
+
+    // Clear all cookies
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+    };
+    res.clearCookie('accessToken', cookieOptions);
+    res.clearCookie('refreshToken', cookieOptions);
+    res.clearCookie('csrfToken', { ...cookieOptions, httpOnly: false });
+
+    res.json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    logger.error('Logout error', { error: error.message, userId: req.user?.id });
+    res.status(500).json({ error: 'Logout failed' });
   }
 };
 

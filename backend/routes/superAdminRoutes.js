@@ -5,6 +5,8 @@ import { createAdmin, createGovernment, getGovernments, updateGovernmentBySuper,
 import { sendMessage, getMessages, getMessageById, replyToMessage, markMessageRead, deleteMessage, getAllPayments } from '../controllers/superAdminController.js';
 import { getRegistrationRequests, getRegistrationRequestById, approveRegistrationRequest, rejectRegistrationRequest } from '../controllers/adminRegistrationController.js';
 import { passwordResetLimiter } from '../middleware/rateLimiter.js';
+import { createAdminValidator, updateAdminValidator, deleteAdminValidator, createGovernmentValidator, updateGovernmentValidator, deleteGovernmentValidator } from '../validators/superAdminValidator.js';
+import { handleValidationErrors } from '../middleware/validation.js';
 import User from '../models/User.js';
 
 const router = express.Router();
@@ -163,7 +165,7 @@ const conditionalAuth = async (req, res, next) => {
 };
 
 // Create admin account (conditional authentication)
-router.post('/admins', conditionalAuth, createAdmin);
+router.post('/admins', conditionalAuth, createAdminValidator, handleValidationErrors, createAdmin);
 
 // All other routes require Admin authentication
 router.use(authenticate);
@@ -171,16 +173,16 @@ router.use(requireAdmin);
 
 // Government account management (Super Admin only)
 router.get('/government', getGovernments);
-router.post('/government', createGovernment);
-router.put('/government/:id', updateGovernmentBySuper);
-router.delete('/government/:id', deleteGovernmentBySuper);
+router.post('/government', createGovernmentValidator, handleValidationErrors, createGovernment);
+router.put('/government/:id', updateGovernmentValidator, handleValidationErrors, updateGovernmentBySuper);
+router.delete('/government/:id', deleteGovernmentValidator, handleValidationErrors, deleteGovernmentBySuper);
 
 // List admin accounts (super admin view)
 router.get('/admins', getAdmins);
 // Update admin account
-router.put('/admins/:id', updateAdminBySuper);
+router.put('/admins/:id', updateAdminValidator, handleValidationErrors, updateAdminBySuper);
 // Delete admin account
-router.delete('/admins/:id', deleteAdminBySuper);
+router.delete('/admins/:id', deleteAdminValidator, handleValidationErrors, deleteAdminBySuper);
 
 // Get all schools with average ratings
 router.get('/schools', getAllSchools);
