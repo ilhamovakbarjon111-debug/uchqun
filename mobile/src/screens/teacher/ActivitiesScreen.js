@@ -3,9 +3,9 @@ import { FlatList, StyleSheet, Text, View, Pressable, Modal, TextInput, Touchabl
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { activityService } from '../../services/activityService';
-import Card from '../../components/common/Card';
+import { Card } from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import EmptyState from '../../components/common/EmptyState';
+import { EmptyState } from '../../components/common/EmptyState';
 import theme from '../../styles/theme';
 
 export function ActivitiesScreen() {

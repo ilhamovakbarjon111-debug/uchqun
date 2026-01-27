@@ -27,16 +27,40 @@ export function ParentDashboardScreen() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [childrenData, activitiesData, mealsData, mediaData, notificationsData] = await Promise.all([
-        parentService.getChildren().catch(() => []),
-        parentService.getActivities().catch(() => []),
-        parentService.getMeals().catch(() => []),
-        parentService.getMedia().catch(() => []),
-        parentService.getMessages().catch(() => []),
+      // CRITICAL FIX: Wrap each API call in try-catch to prevent crashes
+      // Use Promise.allSettled instead of Promise.all to handle individual failures
+      const results = await Promise.allSettled([
+        parentService.getChildren().catch((e) => {
+          console.error('[ParentDashboard] Error loading children:', e);
+          return [];
+        }),
+        parentService.getActivities().catch((e) => {
+          console.error('[ParentDashboard] Error loading activities:', e);
+          return [];
+        }),
+        parentService.getMeals().catch((e) => {
+          console.error('[ParentDashboard] Error loading meals:', e);
+          return [];
+        }),
+        parentService.getMedia().catch((e) => {
+          console.error('[ParentDashboard] Error loading media:', e);
+          return [];
+        }),
+        parentService.getMessages().catch((e) => {
+          console.error('[ParentDashboard] Error loading messages/notifications:', e);
+          return [];
+        }),
       ]);
 
+      // Extract data from settled promises
+      const childrenData = results[0].status === 'fulfilled' ? results[0].value : [];
+      const activitiesData = results[1].status === 'fulfilled' ? results[1].value : [];
+      const mealsData = results[2].status === 'fulfilled' ? results[2].value : [];
+      const mediaData = results[3].status === 'fulfilled' ? results[3].value : [];
+      const notificationsData = results[4].status === 'fulfilled' ? results[4].value : [];
+
       setChildren(Array.isArray(childrenData) ? childrenData : []);
-      if (childrenData.length > 0 && !selectedChildId) {
+      if (Array.isArray(childrenData) && childrenData.length > 0 && !selectedChildId) {
         setSelectedChildId(childrenData[0].id);
       }
 
@@ -51,7 +75,15 @@ export function ParentDashboardScreen() {
         notifications: Array.isArray(notificationsData) ? notificationsData.length : 0,
       });
     } catch (error) {
-      console.error('Error loading dashboard:', error);
+      console.error('[ParentDashboard] Fatal error loading dashboard:', error);
+      // Set safe defaults on error
+      setChildren([]);
+      setStats({
+        activities: 0,
+        meals: 0,
+        media: 0,
+        notifications: 0,
+      });
     } finally {
       setLoading(false);
     }

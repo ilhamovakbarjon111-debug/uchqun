@@ -15,7 +15,7 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk",
-        "credentialsSource": "remote"
+        "credentialsSource": "local"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://uchqun-production.up.railway.app/api",

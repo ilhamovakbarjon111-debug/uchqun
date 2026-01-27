@@ -15,66 +15,35 @@ const deviceLanguage = Localization.getLocales()[0]?.languageCode || 'en';
 
 // Initialize i18n
 const initI18n = async () => {
-  try {
-    // Try to get saved language
-    let savedLanguage = null;
-    try {
-      savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
-    } catch (storageError) {
-      console.warn('[i18n] Failed to read from AsyncStorage:', storageError);
-    }
-    const initialLanguage = savedLanguage || deviceLanguage || 'en';
+  // Try to get saved language
+  const savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
+  const initialLanguage = savedLanguage || deviceLanguage || 'en';
 
-    i18n
-      .use(initReactI18next)
-      .init({
-        compatibilityJSON: 'v3',
-        resources: {
-          en: { translation: en },
-          ru: { translation: ru },
-          uz: { translation: uz },
-        },
-        lng: initialLanguage,
-        fallbackLng: 'en',
-        interpolation: {
-          escapeValue: false,
-        },
-      });
-  } catch (error) {
-    console.error('[i18n] Initialization error:', error);
-    // Fallback initialization without async storage
-    i18n
-      .use(initReactI18next)
-      .init({
-        compatibilityJSON: 'v3',
-        resources: {
-          en: { translation: en },
-          ru: { translation: ru },
-          uz: { translation: uz },
-        },
-        lng: 'en',
-        fallbackLng: 'en',
-        interpolation: {
-          escapeValue: false,
-        },
-      });
-  }
+  i18n
+    .use(initReactI18next)
+    .init({
+      compatibilityJSON: 'v3',
+      resources: {
+        en: { translation: en },
+        ru: { translation: ru },
+        uz: { translation: uz },
+      },
+      lng: initialLanguage,
+      fallbackLng: 'en',
+      interpolation: {
+        escapeValue: false,
+      },
+    });
 };
 
 // Change language function
 export const changeLanguage = async (language) => {
-  try {
-    await AsyncStorage.setItem(LANGUAGE_KEY, language);
-    i18n.changeLanguage(language);
-  } catch (error) {
-    console.error('[i18n] Failed to change language:', error);
-    // Still change language even if storage fails
-    i18n.changeLanguage(language);
-  }
+  await AsyncStorage.setItem(LANGUAGE_KEY, language);
+  i18n.changeLanguage(language);
 };
 
 // Get current language
-export const getCurrentLanguage = () => i18n.language || 'en';
+export const getCurrentLanguage = () => i18n.language;
 
 // Get available languages
 export const getAvailableLanguages = () => [
@@ -83,9 +52,6 @@ export const getAvailableLanguages = () => [
   { code: 'ru', name: 'Russian', nativeName: 'Русский' },
 ];
 
-// Initialize i18n with error handling
-initI18n().catch((error) => {
-  console.error('[i18n] Failed to initialize:', error);
-});
+initI18n();
 
 export default i18n;

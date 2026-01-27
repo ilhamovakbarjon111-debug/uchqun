@@ -17,28 +17,35 @@ export default function Card({
   disabled = false,
   shadow = 'card',
 }) {
-  const paddingValue = typeof padding === 'number' ? padding : (tokens.space[padding] || tokens.space.lg);
-  const shadowStyle = tokens.shadow[shadow] || tokens.shadow.card;
+  // CRITICAL FIX: Add defensive checks to prevent crashes if tokens is undefined
+  if (!tokens) {
+    console.error('[Card] tokens is undefined!');
+    // Return a basic card as fallback
+    return <View style={[{ padding: 16, borderRadius: 12, backgroundColor: '#fff' }, style]}>{children}</View>;
+  }
+
+  const paddingValue = typeof padding === 'number' ? padding : (tokens?.space?.[padding] || tokens?.space?.lg || 16);
+  const shadowStyle = tokens?.shadow?.[shadow] || tokens?.shadow?.card || {};
 
   const getVariantStyle = () => {
     switch (variant) {
       case 'elevated':
         return {
-          backgroundColor: tokens.colors.card.elevated,
+          backgroundColor: tokens?.colors?.card?.elevated || 'rgba(255, 255, 255, 0.95)',
           borderColor: 'rgba(255, 255, 255, 0.8)',
         };
       case 'flat':
         return {
           backgroundColor: '#fff',
           borderColor: '#E2E8F0',
-          ...tokens.shadow.xs,
+          ...(tokens?.shadow?.xs || {}),
         };
       case 'gradient':
         return {};
       default: // glass
         return {
-          backgroundColor: tokens.colors.card.base,
-          borderColor: tokens.colors.card.border,
+          backgroundColor: tokens?.colors?.card?.base || 'rgba(255, 255, 255, 0.88)',
+          borderColor: tokens?.colors?.card?.border || 'rgba(255, 255, 255, 0.6)',
         };
     }
   };
@@ -52,7 +59,7 @@ export default function Card({
   ];
 
   if (variant === 'gradient') {
-    const colors = gradientColors || tokens.colors.gradients.primary;
+    const colors = gradientColors || tokens?.colors?.gradients?.primary || ['#3B82F6', '#8B5CF6'];
     const content = (
       <LinearGradient
         colors={colors}
@@ -121,7 +128,7 @@ export function FlatCard(props) {
 // Interactive stat card with gradient background
 export function HighlightCard({
   children,
-  gradientColors = tokens.colors.gradients.primary,
+  gradientColors = tokens?.colors?.gradients?.primary || ['#3B82F6', '#8B5CF6'],
   ...props
 }) {
   return (
@@ -133,7 +140,7 @@ export function HighlightCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: tokens.radius.xl,
+    borderRadius: tokens?.radius?.xl || 24,
     borderWidth: 1,
     overflow: 'hidden',
   },
@@ -141,7 +148,7 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   pressable: {
-    borderRadius: tokens.radius.xl,
+    borderRadius: tokens?.radius?.xl || 24,
     overflow: 'hidden',
   },
   pressed: {

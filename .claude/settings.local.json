@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(npm install)",
+      "Bash(npx expo export:*)",
+      "Bash(npx expo-doctor:*)",
+      "Bash(eas build:*)",
+      "Bash(ls:*)",
+      "Bash(eas credentials:*)",
+      "Bash(npx expo prebuild:*)",
+      "Bash(./gradlew assembleRelease)"
+    ]
+  }
+}

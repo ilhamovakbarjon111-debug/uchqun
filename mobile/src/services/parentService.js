@@ -99,9 +99,15 @@ export const parentService = {
   // Messages
   // Backend returns: { success: true, data: [...] }
   getMessages: async () => {
-    const response = await api.get('/parent/messages');
-    const data = extractResponseData(response);
-    return Array.isArray(data) ? data : [];
+    try {
+      const response = await api.get('/parent/messages');
+      const data = extractResponseData(response);
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('[parentService] Error getting messages:', error);
+      // Return empty array instead of throwing to prevent crashes
+      return [];
+    }
   },
 
   sendMessage: async (data) => {

@@ -47,6 +47,3 @@ temp/
 *.jks
 *.p12
 *.pfx
-
-# Duplicate uchqun folder
-uchqun/
