@@ -138,22 +138,14 @@ export function validateEnv() {
   return value;
 }
 
-// Validate on import
-// In production, don't exit on validation errors - log and continue
-// This allows Railway to start even if some optional env vars are missing
+// Validate on import — fail fast if required variables are missing
 try {
   validateEnv();
   console.log('✓ Environment variables validated successfully');
 } catch (error) {
-  console.error('⚠ Environment variable validation failed:');
+  console.error('✗ Environment variable validation failed:');
   console.error(error.message);
-  // Don't exit - allow server to start
-  // Missing optional variables won't break the server
-  // Log warning but continue
-  console.warn('⚠ Continuing despite validation errors');
-  console.warn('⚠ Some features may not work correctly');
-  // Don't exit in any environment - let the server start
-  // Railway healthcheck will catch if server doesn't respond
+  process.exit(1);
 }
 
 

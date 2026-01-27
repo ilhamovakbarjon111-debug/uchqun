@@ -17,31 +17,18 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('superAdminToken');
-      const storedUser = localStorage.getItem('superAdminUser');
-      
-      if (token && storedUser) {
-        try {
-          // Verify token is still valid
-          const response = await api.get('/auth/me');
-          const userData = response.data;
-          
-          // Only allow Admin role for Super Admin panel
-          if (userData.role === 'admin') {
-            setUser(userData);
-            localStorage.setItem('superAdminUser', JSON.stringify(userData));
-          } else {
-            // Not an admin, clear auth
-            localStorage.removeItem('superAdminToken');
-            localStorage.removeItem('superAdminRefreshToken');
-            localStorage.removeItem('superAdminUser');
-          }
-        } catch (error) {
-          // Token invalid, clear auth
-          localStorage.removeItem('superAdminToken');
-          localStorage.removeItem('superAdminRefreshToken');
+      try {
+        const response = await api.get('/auth/me');
+        const userData = response.data;
+
+        if (userData.role === 'admin') {
+          setUser(userData);
+          localStorage.setItem('superAdminUser', JSON.stringify(userData));
+        } else {
           localStorage.removeItem('superAdminUser');
         }
+      } catch {
+        localStorage.removeItem('superAdminUser');
       }
       setLoading(false);
     };
@@ -52,32 +39,25 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { accessToken, refreshToken, user: userData } = response.data;
+      const { user: userData } = response.data;
 
-      // Only allow Admin role
       if (userData.role !== 'admin') {
         return { success: false, error: 'Access denied. Admin role required.' };
       }
 
-      // Store tokens and user data with super admin prefix
-      localStorage.setItem('superAdminToken', accessToken);
-      localStorage.setItem('superAdminRefreshToken', refreshToken);
       localStorage.setItem('superAdminUser', JSON.stringify(userData));
-      
       setUser(userData);
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Login failed' 
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Login failed',
       };
     }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('superAdminToken');
-    localStorage.removeItem('superAdminRefreshToken');
     localStorage.removeItem('superAdminUser');
   };
 
@@ -92,5 +72,3 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
-

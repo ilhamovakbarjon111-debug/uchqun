@@ -17,35 +17,19 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('accessToken');
-      const storedUser = localStorage.getItem('user');
-      
-      if (token && storedUser) {
-        try {
-          // Verify token is still valid
-          const response = await api.get('/auth/me');
-          const userData = response.data;
-          
-          // Only allow Admin role
-          if (userData.role === 'admin') {
-            setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
-          } else {
-            // Not an admin user, clear auth
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
-          }
-        } catch (error) {
-          // Token invalid or expired, clear auth silently
-          // Don't log 401 errors as they're expected when token expires
-          if (error.response?.status !== 401) {
-            console.error('Auth check error:', error);
-          }
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+      try {
+        // Cookie-based auth — the HttpOnly cookie is sent automatically
+        const response = await api.get('/auth/me');
+        const userData = response.data;
+
+        if (userData.role === 'admin') {
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+        } else {
           localStorage.removeItem('user');
         }
+      } catch {
+        localStorage.removeItem('user');
       }
       setLoading(false);
     };
@@ -56,32 +40,25 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { accessToken, refreshToken, user: userData } = response.data;
+      const { user: userData } = response.data;
 
-      // Only allow Admin role
       if (userData.role !== 'admin') {
         return { success: false, error: 'Access denied. Admin role required.' };
       }
 
-      // Store tokens and user data
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(userData));
-      
       setUser(userData);
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Login failed' 
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Login failed',
       };
     }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
   };
 
@@ -96,4 +73,3 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

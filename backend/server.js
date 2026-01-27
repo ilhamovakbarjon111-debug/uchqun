@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,8 +9,11 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 // Import security middleware
 import { securityHeaders, enforceHTTPS } from './middleware/security.js';
+import { sanitizeBody } from './middleware/sanitize.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import logger from './utils/logger.js';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.js';
 
 // Validate environment variables
 import './config/env.js';
@@ -58,12 +62,26 @@ app.set('trust proxy', 1);
 // Simple health check endpoint (must be FIRST - before all middleware including HTTPS enforcement)
 // This allows Railway to check health even during server startup
 // Must be before enforceHTTPS to avoid redirects that break healthchecks
-app.get('/health', (req, res) => {
-  res.status(200).json({
+app.get('/health', async (req, res) => {
+  const health = {
     status: 'ok',
     timestamp: new Date().toISOString(),
     service: 'uchqun-backend',
-  });
+    version: process.env.npm_package_version || '1.0.0',
+    uptime: process.uptime(),
+  };
+
+  // Check DB connectivity
+  try {
+    const { default: sequelize } = await import('./config/database.js');
+    await sequelize.authenticate();
+    health.database = 'connected';
+  } catch {
+    health.database = 'disconnected';
+    health.status = 'degraded';
+  }
+
+  res.status(health.status === 'ok' ? 200 : 503).json(health);
 });
 
 // Security middleware (after health endpoint)
@@ -94,8 +112,10 @@ const allowedOrigins = process.env.FRONTEND_URL
     'https://uchqun-platform.vercel.app',
   ];
 
-// Default: allow all origins unless explicitly made strict
-const allowAllOrigins = process.env.CORS_STRICT === 'true' ? false : true;
+// In production, default to strict CORS; opt out with CORS_STRICT=false
+const allowAllOrigins = process.env.NODE_ENV === 'production'
+  ? process.env.CORS_STRICT === 'false'
+  : process.env.CORS_STRICT !== 'true' ? true : false;
 
 // Log allowed origins in development
 if (process.env.NODE_ENV === 'development') {
@@ -158,6 +178,10 @@ app.use(requestLogger);
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
+
+// Sanitize request body strings (XSS prevention)
+app.use(sanitizeBody);
 
 // Serve local uploads (works for both fallback and misconfigured remote storage)
 
@@ -203,6 +227,11 @@ app.use('/api/push-notifications', pushNotificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/government', governmentRoutes);
 app.use('/api/business', businessRoutes);
+
+// API Documentation (non-production only)
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
 
 // Error handling
 app.use(notFound);

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
@@ -17,28 +17,18 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('accessToken');
-      const storedUser = localStorage.getItem('user');
-      
-      if (token && storedUser) {
-        try {
-          const response = await api.get('/auth/me');
-          const userData = response.data;
-          
-          // Only allow Government role
-          if (userData.role === 'government') {
-            setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
-          } else {
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
-          }
-        } catch (error) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+      try {
+        const response = await api.get('/auth/me');
+        const userData = response.data;
+
+        if (userData.role === 'government') {
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+        } else {
           localStorage.removeItem('user');
         }
+      } catch {
+        localStorage.removeItem('user');
       }
       setLoading(false);
     };
@@ -49,31 +39,25 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { accessToken, refreshToken, user: userData } = response.data;
+      const { user: userData } = response.data;
 
-      // Only allow Government role
       if (userData.role !== 'government') {
         return { success: false, error: 'Access denied. Government role required.' };
       }
 
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(userData));
-      
       setUser(userData);
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Login failed' 
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Login failed',
       };
     }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
   };
 

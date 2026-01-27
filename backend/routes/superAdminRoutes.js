@@ -4,6 +4,7 @@ import { authenticate, requireAdmin } from '../middleware/auth.js';
 import { createAdmin, createGovernment, getGovernments, updateGovernmentBySuper, deleteGovernmentBySuper, getAdmins, updateAdminBySuper, deleteAdminBySuper, getAllSchools } from '../controllers/adminController.js';
 import { sendMessage, getMessages, getMessageById, replyToMessage, markMessageRead, deleteMessage, getAllPayments } from '../controllers/superAdminController.js';
 import { getRegistrationRequests, getRegistrationRequestById, approveRegistrationRequest, rejectRegistrationRequest } from '../controllers/adminRegistrationController.js';
+import { passwordResetLimiter } from '../middleware/rateLimiter.js';
 import User from '../models/User.js';
 
 const router = express.Router();
@@ -18,7 +19,7 @@ const router = express.Router();
  */
 
 // Reset super admin password
-router.post('/reset-super-admin-password', async (req, res) => {
+router.post('/reset-super-admin-password', passwordResetLimiter, async (req, res) => {
     try {
         const { secretKey, newPassword } = req.body;
         
@@ -46,8 +47,6 @@ router.post('/reset-super-admin-password', async (req, res) => {
         res.json({
             success: true,
             message: 'Password reset successfully!',
-            email: 'superadmin@uchqun.uz',
-            newPassword: newPassword
         });
     } catch (error) {
         console.error('Password reset error:', error);
@@ -55,41 +54,37 @@ router.post('/reset-super-admin-password', async (req, res) => {
     }
 });
 
-// Debug: Check super admin account
-router.post('/check-super-admin', async (req, res) => {
+// Check super admin account (dev only)
+if (process.env.NODE_ENV !== 'production') {
+  router.post('/check-super-admin', async (req, res) => {
     try {
-        const { secretKey, password } = req.body;
-        
+        const { secretKey } = req.body;
+
         if (secretKey !== process.env.SUPER_ADMIN_SECRET) {
             return res.status(403).json({ error: 'Invalid secret key' });
         }
-        
+
         const admin = await User.findOne({
             where: { email: 'superadmin@uchqun.uz' }
         });
-        
+
         if (!admin) {
             return res.json({ exists: false });
         }
-        
-        const isValid = password ? await bcrypt.compare(password, admin.password) : null;
-        
+
         res.json({
             exists: true,
-            email: admin.email,
             role: admin.role,
             status: admin.status,
-            passwordHashPrefix: admin.password.substring(0, 10),
-            passwordTestResult: isValid,
-            correctPassword: isValid === true ? 'YES' : (isValid === false ? 'NO' : 'Not tested')
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Internal server error' });
     }
-});
+  });
+}
 
 // Create initial super-admin (protected by secret key, no auth required)
-router.post('/create-super-admin', async (req, res) => {
+router.post('/create-super-admin', passwordResetLimiter, async (req, res) => {
     try {
         const { secretKey, forceRecreate } = req.body;
         
@@ -129,8 +124,6 @@ router.post('/create-super-admin', async (req, res) => {
         // Create super admin (using 'admin' role)
         const plainPassword = 'admin123';
         
-        console.log('Creating super admin with password:', plainPassword);
-        
         // Pass PLAIN password - User model hook will hash it automatically
         const superAdmin = await User.create({
             email: 'superadmin@uchqun.uz',
@@ -144,12 +137,10 @@ router.post('/create-super-admin', async (req, res) => {
         
         res.json({
             success: true,
-            message: 'Super admin created successfully!',
+            message: 'Super admin created successfully! Change password after first login.',
             credentials: {
                 email: 'superadmin@uchqun.uz',
-                password: plainPassword
             },
-            warning: 'IMPORTANT: Change password after first login!'
         });
     } catch (error) {
         console.error('Create super-admin error:', error);

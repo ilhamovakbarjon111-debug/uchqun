@@ -1,0 +1,7 @@
+node_modules
+.git
+*.log
+dist
+.env
+coverage
+__tests__

@@ -17,31 +17,18 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('accessToken');
-      const storedUser = localStorage.getItem('user');
-      
-      if (token && storedUser) {
-        try {
-          // Verify token is still valid
-          const response = await api.get('/auth/me');
-          const userData = response.data;
-          
-          // Only allow Reception role
-          if (userData.role === 'reception') {
-            setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
-          } else {
-            // Not a reception user, clear auth
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
-          }
-        } catch (error) {
-          // Token invalid, clear auth
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+      try {
+        const response = await api.get('/auth/me');
+        const userData = response.data;
+
+        if (userData.role === 'reception') {
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+        } else {
           localStorage.removeItem('user');
         }
+      } catch {
+        localStorage.removeItem('user');
       }
       setLoading(false);
     };
@@ -52,32 +39,25 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { accessToken, refreshToken, user: userData } = response.data;
+      const { user: userData } = response.data;
 
-      // Only allow Reception role
       if (userData.role !== 'reception') {
         return { success: false, error: 'Access denied. Reception role required.' };
       }
 
-      // Store tokens and user data
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(userData));
-      
       setUser(userData);
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Login failed' 
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Login failed',
       };
     }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
   };
 
@@ -92,4 +72,3 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

@@ -1,28 +1,24 @@
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://uchqun-production.up.railway.app/api';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://uchqun-production.up.railway.app/api',
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Send HttpOnly cookies with every request
 });
 
-// Request interceptor to add auth token
+// Request interceptor — only handle FormData content-type
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    // If data is FormData, remove Content-Type header to let browser set it with boundary
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor to handle token refresh
@@ -31,28 +27,14 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If error is 401 and we haven't already retried
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          const response = await axios.post(
-            `${import.meta.env.VITE_API_URL || 'https://uchqun-production.up.railway.app/api'}/auth/refresh`,
-            { refreshToken }
-          );
-
-          const { accessToken } = response.data;
-          localStorage.setItem('accessToken', accessToken);
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-
-          return api(originalRequest);
-        }
-      } catch (refreshError) {
-        // Refresh failed, logout user
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        // Cookie-based refresh — server reads refreshToken from cookie
+        await axios.post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true });
+        return api(originalRequest);
+      } catch {
         localStorage.removeItem('user');
         window.location.href = '/login';
       }
@@ -63,5 +45,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-
-

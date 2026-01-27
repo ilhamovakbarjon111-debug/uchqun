@@ -16,33 +16,36 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user in localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    const checkAuth = async () => {
+      try {
+        const response = await api.get('/auth/me');
+        const userData = response.data;
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      } catch {
+        localStorage.removeItem('user');
+      }
+      setLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { accessToken, refreshToken, user } = response.data;
-      
-      if (user && accessToken) {
-        setUser(user);
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('accessToken', accessToken);
-        if (refreshToken) {
-          localStorage.setItem('refreshToken', refreshToken);
-        }
+      const { user: userData } = response.data;
+
+      if (userData) {
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
         return { success: true };
       }
       return { success: false, error: 'Invalid response from server' };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || error.message || 'Login failed' 
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Login failed',
       };
     }
   };
@@ -50,9 +53,6 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    // If running inside React Native WebView, notify the native shell
     try {
       window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'logout' }));
     } catch {
@@ -73,4 +73,3 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

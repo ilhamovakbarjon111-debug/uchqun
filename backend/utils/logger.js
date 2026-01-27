@@ -22,11 +22,38 @@ try {
   console.warn('Could not create logs directory, file logging disabled:', error.message);
 }
 
+// PII redaction format — strips emails, tokens, and passwords from log metadata
+const piiRedact = winston.format((info) => {
+  const sensitiveKeys = /password|secret|token|authorization|cookie/i;
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+
+  function redact(obj) {
+    if (typeof obj === 'string') {
+      return obj.replace(emailRegex, '[REDACTED_EMAIL]');
+    }
+    if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+      const cleaned = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (sensitiveKeys.test(key)) {
+          cleaned[key] = '[REDACTED]';
+        } else {
+          cleaned[key] = redact(value);
+        }
+      }
+      return cleaned;
+    }
+    return obj;
+  }
+
+  return redact(info);
+});
+
 // Define log format
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
   winston.format.splat(),
+  piiRedact(),
   winston.format.json()
 );
 

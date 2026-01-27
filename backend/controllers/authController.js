@@ -22,11 +22,9 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    logger.info('Login attempt', { 
+    logger.info('Login attempt', {
       email: email ? email.substring(0, 3) + '***' : 'missing',
       hasPassword: !!password,
-      bodyKeys: Object.keys(req.body),
-      emailValue: email
     });
 
     if (!email || !password) {
@@ -47,7 +45,6 @@ export const login = async (req, res) => {
 
     // Email already normalized by validator, but ensure it's lowercase and trimmed
     const normalizedEmail = (email || '').toLowerCase().trim();
-    logger.info('Searching for user', { normalizedEmail, originalEmail: email });
     
     // Try exact match first
     let user = await User.findOne({ where: { email: normalizedEmail } });
@@ -63,36 +60,28 @@ export const login = async (req, res) => {
     }
     
     if (!user) {
-      logger.warn('Login attempt with non-existent email', { 
-        normalizedEmail,
-        searchedWith: 'exact and case-insensitive'
-      });
+      logger.warn('Login attempt with non-existent email');
       return res.status(401).json({ 
         error: 'Invalid email or password',
         message: 'The email address or password you entered is incorrect. Please check and try again.'
       });
     }
 
-    logger.info('User found', { 
-      userId: user.id, 
+    logger.info('User found', {
+      userId: user.id,
       role: user.role,
-      email: user.email,
-      hasPassword: !!user.password,
-      passwordStartsWith: user.password ? user.password.substring(0, 7) : 'none'
     });
 
     // Debug: Check if password field exists and is a valid hash
     if (!user.password) {
-      logger.error('User found but password field is missing', { email: normalizedEmail, userId: user.id });
+      logger.error('User found but password field is missing', { userId: user.id });
       return res.status(500).json({ error: 'User account error. Please contact support.' });
     }
 
     // Check if password is a valid bcrypt hash (starts with $2a$, $2b$, or $2y$)
     if (!user.password.startsWith('$2')) {
-      logger.error('User password is not properly hashed', { 
-        email: normalizedEmail, 
+      logger.error('User password is not properly hashed', {
         userId: user.id,
-        passwordLength: user.password?.length 
       });
       return res.status(500).json({ error: 'User account error. Password needs to be reset.' });
     }
@@ -104,23 +93,16 @@ export const login = async (req, res) => {
     const directCompare = await bcrypt.default.compare(password, user.password);
     const methodCompare = await user.comparePassword(password);
     
-    logger.info('Password comparison result', { 
+    logger.info('Password comparison result', {
       userId: user.id,
-      directCompare,
-      methodCompare,
-      passwordLength: password?.length,
-      hashLength: user.password?.length
+      isValid: methodCompare || directCompare,
     });
     
     const isPasswordValid = methodCompare || directCompare;
     
     if (!isPasswordValid) {
-      logger.warn('Login attempt with invalid password', { 
-        email: normalizedEmail, 
+      logger.warn('Login attempt with invalid password', {
         userId: user.id,
-        passwordHashPrefix: user.password.substring(0, 7), // First 7 chars of hash for debugging
-        directCompare,
-        methodCompare
       });
       return res.status(401).json({ 
         error: 'Invalid email or password',
@@ -164,7 +146,24 @@ export const login = async (req, res) => {
 
     const { accessToken, refreshToken } = generateTokens(user.id);
 
-    logger.info('Successful login', { email: normalizedEmail, userId: user.id, role: user.role });
+    logger.info('Successful login', { userId: user.id, role: user.role });
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+    };
+
+    res.cookie('accessToken', accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+    res.cookie('refreshToken', refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
     res.json({
       success: true,
@@ -205,6 +204,15 @@ export const refreshToken = async (req, res) => {
     }
 
     const { accessToken } = generateTokens(user.id);
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+      maxAge: 15 * 60 * 1000,
+    });
 
     res.json({
       success: true,

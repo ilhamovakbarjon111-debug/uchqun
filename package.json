@@ -9,7 +9,28 @@
     "test:rls": "node scripts/test-rls.js",
     "setup": "node scripts/setup.js",
     "build": "cd teacher && npm run build",
-    "install": "cd teacher && npm install"
+    "install": "cd teacher && npm install",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "backend/**/*.js": [
+      "npx eslint --fix"
+    ],
+    "admin/src/**/*.{js,jsx}": [
+      "npx eslint --fix"
+    ],
+    "teacher/src/**/*.{js,jsx}": [
+      "npx eslint --fix"
+    ],
+    "reception/src/**/*.{js,jsx}": [
+      "npx eslint --fix"
+    ],
+    "super-admin/src/**/*.{js,jsx}": [
+      "npx eslint --fix"
+    ],
+    "government/src/**/*.{js,jsx}": [
+      "npx eslint --fix"
+    ]
   },
   "keywords": [
     "education",
@@ -24,6 +45,9 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7"
   }
 }
-

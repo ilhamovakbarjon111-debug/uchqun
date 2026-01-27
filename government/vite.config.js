@@ -14,4 +14,9 @@ export default defineConfig({
     sourcemap: false,
   },
   base: '/',
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.js',
+  },
 })
