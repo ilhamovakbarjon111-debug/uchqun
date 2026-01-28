@@ -1,15 +1,25 @@
-import { JSDOM } from 'jsdom';
-import DOMPurify from 'dompurify';
-
-const window = new JSDOM('').window;
-const purify = DOMPurify(window);
+/**
+ * Basic string sanitization without jsdom/DOMPurify
+ * Removes potentially dangerous HTML/script tags
+ */
+function sanitizeString(str) {
+  if (typeof str !== 'string') return str;
+  
+  // Remove script tags and event handlers
+  return str
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/data:text\/html/gi, '')
+    .trim();
+}
 
 /**
  * Recursively sanitize all string values in an object.
  */
 function sanitize(obj) {
   if (typeof obj === 'string') {
-    return purify.sanitize(obj);
+    return sanitizeString(obj);
   }
   if (Array.isArray(obj)) {
     return obj.map(sanitize);
