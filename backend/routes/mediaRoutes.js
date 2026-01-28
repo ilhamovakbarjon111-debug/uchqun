@@ -22,7 +22,9 @@ router.use(authenticate);
 router.get('/', paginationValidator.concat(dateQueryValidator).concat(childIdQueryValidator), handleValidationErrors, getMedia);
 router.get('/:id', mediaIdValidator, handleValidationErrors, getMediaItem);
 // Proxy endpoint for Appwrite files (to avoid CORS issues)
-router.get('/proxy/:fileId', authenticate, proxyMediaFile);
+// Note: No authentication required for images/videos (public access via media record ID)
+// The media record ID acts as a token - only users who know the ID can access
+router.get('/proxy/:fileId', proxyMediaFile);
 
 // File upload endpoint (disabled for now to avoid storage issues)
 // File upload endpoint (multipart/form-data) - stores files in Appwrite

@@ -738,8 +738,44 @@ export const proxyMediaFile = async (req, res) => {
       res.setHeader('Content-Length', response.headers['content-length']);
     }
 
+    // Check if response is successful
+    if (response.status >= 400) {
+      logger.error('Appwrite returned error status', {
+        status: response.status,
+        mediaId: fileId,
+        appwriteFileId,
+        appwriteUrl,
+      });
+      return res.status(response.status).json({ 
+        error: 'Failed to fetch file from Appwrite',
+        status: response.status,
+      });
+    }
+
+    // Set appropriate headers
+    const contentType = response.headers['content-type'] || 
+                       (media.type === 'video' ? 'video/mp4' : 'image/jpeg');
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow CORS
+    if (response.headers['content-length']) {
+      res.setHeader('Content-Length', response.headers['content-length']);
+    }
+
     // Pipe the file stream to response
     response.data.pipe(res);
+    
+    // Handle stream errors
+    response.data.on('error', (streamError) => {
+      logger.error('Error streaming file from Appwrite', {
+        error: streamError.message,
+        mediaId: fileId,
+        appwriteFileId,
+      });
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to stream file from Appwrite' });
+      }
+    });
   } catch (error) {
     logger.error('Proxy media file error', { 
       error: error.message, 
@@ -747,13 +783,23 @@ export const proxyMediaFile = async (req, res) => {
       fileId: req.params.fileId,
       responseStatus: error.response?.status,
       responseData: error.response?.data,
+      axiosError: error.isAxiosError,
     });
     
-    if (error.response?.status === 404) {
-      return res.status(404).json({ error: 'File not found in Appwrite' });
+    if (!res.headersSent) {
+      if (error.response?.status === 404) {
+        return res.status(404).json({ error: 'File not found in Appwrite' });
+      }
+      
+      if (error.response?.status === 403) {
+        return res.status(403).json({ error: 'Access denied to Appwrite file' });
+      }
+      
+      res.status(500).json({ 
+        error: 'Failed to proxy media file',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      });
     }
-    
-    res.status(500).json({ error: 'Failed to proxy media file' });
   }
 };
 
