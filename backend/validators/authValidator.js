@@ -13,9 +13,10 @@ export const loginValidator = [
 ];
 
 export const refreshTokenValidator = [
+  // refreshToken is optional - can come from cookie or body
+  // Controller will check both cookie and body
   body('refreshToken')
-    .notEmpty()
-    .withMessage('Refresh token is required')
+    .optional()
     .isString()
     .withMessage('Refresh token must be a string'),
 ];
