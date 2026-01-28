@@ -81,10 +81,33 @@ export async function uploadFile(file, filename, mimetype) {
   if (appwriteConfigured) {
     try {
       if (!appwriteStorage || !appwriteBucketId) {
-        throw new Error('Appwrite storage not initialized');
+        const error = new Error('Appwrite storage not initialized');
+        console.error('❌ Appwrite storage check failed:', {
+          hasStorage: !!appwriteStorage,
+          hasBucketId: !!appwriteBucketId,
+          bucketId: appwriteBucketId,
+        });
+        throw error;
       }
+
+      console.log('📤 Starting Appwrite upload:', {
+        filename,
+        mimetype,
+        bucketId: appwriteBucketId,
+        projectId: appwriteProjectId,
+        endpoint: process.env.APPWRITE_ENDPOINT,
+      });
+
       const buffer = Buffer.isBuffer(file) ? file : await streamToBuffer(file);
       const fileId = ID.unique();
+      
+      console.log('📤 Creating file in Appwrite:', {
+        fileId,
+        filename,
+        size: buffer.length,
+        bucketId: appwriteBucketId,
+      });
+
       const createdFile = await appwriteStorage.createFile(
         appwriteBucketId,
         fileId,
@@ -93,6 +116,13 @@ export async function uploadFile(file, filename, mimetype) {
           contentType: mimetype,
         }
       );
+
+      console.log('✓ Appwrite file created:', {
+        fileId: createdFile.$id,
+        name: createdFile.name,
+        sizeOriginal: createdFile.sizeOriginal,
+        mimeType: createdFile.mimeType,
+      });
 
       const baseEndpoint = process.env.APPWRITE_ENDPOINT.replace(/\/+$/, '');
       // Appwrite public file URL format
@@ -112,11 +142,29 @@ export async function uploadFile(file, filename, mimetype) {
         path: createdFile.$id,
       };
     } catch (err) {
+      // Log detailed error information
+      console.error('❌ Appwrite upload error:', {
+        message: err.message,
+        code: err.code,
+        type: err.type,
+        response: err.response ? {
+          status: err.response.status,
+          statusText: err.response.statusText,
+          data: err.response.data,
+        } : null,
+        stack: err.stack,
+        filename,
+        mimetype,
+        bucketId: appwriteBucketId,
+        projectId: appwriteProjectId,
+        endpoint: process.env.APPWRITE_ENDPOINT,
+      });
+
       // In production, never fallback to local storage - throw error instead
       if (process.env.NODE_ENV === 'production') {
-        console.error('❌ Appwrite upload failed in production:', err.message);
-        console.error('❌ Error details:', err);
-        throw new Error(`Appwrite upload failed: ${err.message}. Check Appwrite credentials, bucket permissions, and endpoint connectivity.`);
+        const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
+        const errorCode = err.code || err.response?.status || 'UNKNOWN';
+        throw new Error(`Appwrite upload failed (${errorCode}): ${errorMessage}. Check Appwrite credentials, bucket permissions, and endpoint connectivity.`);
       }
       // In development, allow fallback if explicitly enabled
       if (process.env.LOCAL_STORAGE_FALLBACK !== 'false') {
