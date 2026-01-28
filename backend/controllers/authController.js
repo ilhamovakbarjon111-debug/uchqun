@@ -169,11 +169,23 @@ export const login = async (req, res) => {
     });
 
     // Store refresh token hash in DB
-    await RefreshToken.create({
-      tokenHash: RefreshToken.hashToken(refreshToken),
-      userId: user.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+    // Wrap in try-catch to prevent login failure if table doesn't exist yet
+    try {
+      await RefreshToken.create({
+        tokenHash: RefreshToken.hashToken(refreshToken),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      });
+    } catch (tokenError) {
+      // Log error but don't fail login - tokens are still set in cookies
+      logger.error('Failed to store refresh token in DB', {
+        error: tokenError.message,
+        stack: tokenError.stack,
+        userId: user.id,
+      });
+      console.warn('⚠ Failed to store refresh token in DB, but login continues');
+      // Continue with login - tokens are set in cookies, so user can still use the app
+    }
 
     // Set CSRF token cookie (non-httpOnly so JS can read it)
     const csrfToken = generateCsrfToken();
