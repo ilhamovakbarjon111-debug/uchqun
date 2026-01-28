@@ -16,19 +16,65 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    // First check localStorage synchronously to avoid unnecessary API calls
+    const storedUser = localStorage.getItem('user');
+    const accessToken = localStorage.getItem('accessToken');
+    
+    if (storedUser && accessToken) {
       try {
-        const response = await api.get('/auth/me');
-        const userData = response.data;
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-      } catch {
+        const userData = JSON.parse(storedUser);
+        if (userData && userData.id && userData.role) {
+          setUser(userData);
+          setLoading(false);
+          // Verify token in background (non-blocking)
+          api.get('/auth/me')
+            .then((response) => {
+              const verifiedUser = response.data;
+              if (verifiedUser) {
+                setUser(verifiedUser);
+                localStorage.setItem('user', JSON.stringify(verifiedUser));
+              }
+            })
+            .catch(() => {
+              // Token invalid - clear storage but don't redirect (let ProtectedRoute handle it)
+              localStorage.removeItem('user');
+              localStorage.removeItem('accessToken');
+              localStorage.removeItem('refreshToken');
+              setUser(null);
+            });
+          return;
+        }
+      } catch (parseError) {
+        // Invalid stored user data
         localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
       }
+    }
+    
+    // No valid stored user - check API only if we have a token
+    if (accessToken) {
+      api.get('/auth/me')
+        .then((response) => {
+          const userData = response.data;
+          if (userData) {
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('user');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      // No token at all - just clear and set loading to false
+      localStorage.removeItem('user');
       setLoading(false);
-    };
-
-    checkAuth();
+    }
   }, []);
 
   const login = async (email, password) => {

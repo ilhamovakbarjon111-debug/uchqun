@@ -41,17 +41,32 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      // Don't try to refresh for auth endpoints - just reject
+      const isAuthEndpoint = originalRequest?.url?.includes('/auth/login') || 
+                            originalRequest?.url?.includes('/auth/refresh') ||
+                            originalRequest?.url?.includes('/auth/logout');
+      
+      if (isAuthEndpoint) {
+        return Promise.reject(error);
+      }
+
       try {
         await axios.post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true });
         return api(originalRequest);
       } catch {
         localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         try {
           window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'sessionExpired' }));
         } catch {
           // ignore
         }
-        window.location.href = '/login';
+        // Only redirect if not already on login page to avoid infinite loops
+        const isLoginPage = window.location.pathname === '/login' || window.location.pathname.startsWith('/login');
+        if (!isLoginPage) {
+          window.location.href = '/login';
+        }
       }
     }
 
