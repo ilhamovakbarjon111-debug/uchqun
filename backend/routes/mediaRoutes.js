@@ -24,7 +24,7 @@ router.get('/:id', mediaIdValidator, handleValidationErrors, getMediaItem);
 // File upload endpoint (disabled for now to avoid storage issues)
 // File upload endpoint (multipart/form-data) - stores files in Appwrite
 router.post('/upload', 
-  requireRole('teacher', 'admin'), 
+  requireRole('teacher', 'admin', 'reception'), 
   uploadSingle,
   [
     body('childId')
@@ -54,9 +54,9 @@ router.post('/upload',
 );
 
 // URL-based media creation (legacy support)
-router.post('/', requireRole('teacher', 'admin'), createMediaValidator, handleValidationErrors, createMedia);
-router.put('/:id', requireRole('teacher', 'admin'), mediaIdValidator.concat(updateMediaValidator), handleValidationErrors, updateMedia);
-router.delete('/:id', requireRole('teacher', 'admin'), mediaIdValidator, handleValidationErrors, deleteMedia);
+router.post('/', requireRole('teacher', 'admin', 'reception'), createMediaValidator, handleValidationErrors, createMedia);
+router.put('/:id', requireRole('teacher', 'admin', 'reception'), mediaIdValidator.concat(updateMediaValidator), handleValidationErrors, updateMedia);
+router.delete('/:id', requireRole('teacher', 'admin', 'reception'), mediaIdValidator, handleValidationErrors, deleteMedia);
 
 export default router;
 

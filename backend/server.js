@@ -206,10 +206,11 @@ app.use(sanitizeBody);
 // CSRF protection (double-submit cookie)
 import { verifyCsrfToken } from './middleware/csrf.js';
 app.use((req, res, next) => {
-  // Skip CSRF for auth, health, and chat paths (chat uses cookie auth)
+  // Skip CSRF for auth, health, chat, and media upload paths (these use cookie auth or file uploads)
   if (req.path.startsWith('/api/auth') || 
       req.path.startsWith('/health') ||
-      req.path.startsWith('/api/chat')) {
+      req.path.startsWith('/api/chat') ||
+      req.path.startsWith('/api/media/upload')) {
     return next();
   }
   verifyCsrfToken(req, res, next);

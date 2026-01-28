@@ -277,8 +277,8 @@ export const uploadMedia = async (req, res) => {
       });
     }
 
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only teachers can upload media' });
+    if (req.user.role !== 'teacher' && req.user.role !== 'admin' && req.user.role !== 'reception') {
+      return res.status(403).json({ error: 'Only teachers, admins, and reception can upload media' });
     }
 
     if (!req.file) {
@@ -435,8 +435,8 @@ export const uploadMedia = async (req, res) => {
 // Create media (teachers only) - URL-based (legacy support)
 export const createMedia = async (req, res) => {
   try {
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only teachers can create media' });
+    if (req.user.role !== 'teacher' && req.user.role !== 'admin' && req.user.role !== 'reception') {
+      return res.status(403).json({ error: 'Only teachers, admins, and reception can create media' });
     }
 
     const { childId, activityId, type, url, title, description, date } = req.body;
@@ -538,8 +538,8 @@ export const createMedia = async (req, res) => {
 // Update media (teachers only)
 export const updateMedia = async (req, res) => {
   try {
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only teachers can update media' });
+    if (req.user.role !== 'teacher' && req.user.role !== 'admin' && req.user.role !== 'reception') {
+      return res.status(403).json({ error: 'Only teachers, admins, and reception can update media' });
     }
 
     const { id } = req.params;
@@ -578,8 +578,8 @@ export const updateMedia = async (req, res) => {
 // Delete media (teachers only)
 export const deleteMedia = async (req, res) => {
   try {
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only teachers can delete media' });
+    if (req.user.role !== 'teacher' && req.user.role !== 'admin' && req.user.role !== 'reception') {
+      return res.status(403).json({ error: 'Only teachers, admins, and reception can delete media' });
     }
 
     const { id } = req.params;
