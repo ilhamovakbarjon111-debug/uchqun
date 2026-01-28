@@ -373,10 +373,24 @@ export const uploadMedia = async (req, res) => {
     const fileBuffer = fs.readFileSync(req.file.path);
     let uploadResult;
     try {
+      logger.info('Uploading file to Appwrite', {
+        filename: req.file.filename,
+        mimetype: req.file.mimetype,
+        size: fileBuffer.length,
+      });
       uploadResult = await uploadFile(fileBuffer, req.file.filename, req.file.mimetype);
+      logger.info('File uploaded successfully to Appwrite', {
+        url: uploadResult.url,
+        path: uploadResult.path,
+      });
     } catch (err) {
       safeCleanup(req.file.path);
-      logger.error('Storage upload failed', { error: err.message, stack: err.stack });
+      logger.error('Storage upload failed', { 
+        error: err.message, 
+        stack: err.stack,
+        filename: req.file.filename,
+        mimetype: req.file.mimetype,
+      });
       return res.status(502).json({
         error: 'Storage upload failed',
         message: 'Failed to upload file to Appwrite storage. Check Appwrite credentials, bucket permissions, and endpoint connectivity.',

@@ -78,9 +78,10 @@ export async function uploadFile(file, filename, mimetype) {
         throw new Error('Appwrite storage not initialized');
       }
       const buffer = Buffer.isBuffer(file) ? file : await streamToBuffer(file);
+      const fileId = ID.unique();
       const createdFile = await appwriteStorage.createFile(
         appwriteBucketId,
-        ID.unique(),
+        fileId,
         InputFile.fromBuffer(buffer, filename),
         {
           contentType: mimetype,
@@ -88,7 +89,17 @@ export async function uploadFile(file, filename, mimetype) {
       );
 
       const baseEndpoint = process.env.APPWRITE_ENDPOINT.replace(/\/+$/, '');
+      // Appwrite public file URL format
+      // For public buckets: /storage/buckets/{bucketId}/files/{fileId}/view?project={projectId}
+      // For private buckets, you might need to use preview endpoint or generate signed URL
       const url = `${baseEndpoint}/storage/buckets/${appwriteBucketId}/files/${createdFile.$id}/view?project=${appwriteProjectId}`;
+
+      console.log('✓ Appwrite file uploaded successfully:', {
+        fileId: createdFile.$id,
+        filename,
+        url,
+        size: buffer.length,
+      });
 
       return {
         url,
