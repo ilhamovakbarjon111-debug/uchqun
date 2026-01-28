@@ -10,8 +10,9 @@ const canAccessConversation = (req, conversationId) => {
   if (isParent) {
     return conversationId === buildConversationId(req.user.id);
   }
-  // teacher/admin can access any
-  return true;
+  // teacher/admin/reception can access any
+  const allowedRoles = ['teacher', 'admin', 'reception'];
+  return allowedRoles.includes(req.user.role);
 };
 
 export const listMessages = async (req, res) => {
