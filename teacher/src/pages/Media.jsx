@@ -22,12 +22,18 @@ import { useTranslation } from 'react-i18next';
 
 // Helper function to convert Appwrite URL to proxy URL
 const getProxyUrl = (url, mediaId) => {
-  if (!url || !mediaId) return url;
+  if (!url) return url;
+  if (!mediaId) {
+    console.warn('getProxyUrl: mediaId is missing', { url });
+    return url;
+  }
   
   // If URL is from Appwrite, convert to proxy endpoint
-  if (url.includes('appwrite.io') && url.includes('/storage/buckets/') && url.includes('/files/')) {
+  if (url.includes('appwrite.io') && (url.includes('/storage/buckets/') || url.includes('/files/'))) {
     const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
-    return `${apiBase}/api/media/proxy/${mediaId}`;
+    const proxyUrl = `${apiBase}/api/media/proxy/${mediaId}`;
+    console.log('Converting Appwrite URL to proxy:', { original: url, proxy: proxyUrl, mediaId });
+    return proxyUrl;
   }
   
   // Otherwise return original URL
