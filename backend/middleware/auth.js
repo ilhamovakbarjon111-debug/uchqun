@@ -85,8 +85,18 @@ export const requireReception = requireRole('reception');
 /**
  * Teacher-only Middleware
  * Ensures only Teacher role can access
+ * Note: Reception role can also access teacher routes (they manage teachers)
  */
-export const requireTeacher = requireRole('teacher');
+export const requireTeacher = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  // Allow both teacher and reception roles
+  if (req.user.role === 'teacher' || req.user.role === 'reception' || req.user.role === 'admin') {
+    return next();
+  }
+  return res.status(403).json({ error: 'Insufficient permissions. Teacher, Reception, or Admin role required.' });
+};
 
 /**
  * Parent-only Middleware
