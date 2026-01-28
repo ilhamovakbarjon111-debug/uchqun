@@ -10,9 +10,9 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "updates": {
-      "enabled": false,
-      "checkAutomatically": "NEVER",
-      "fallbackToCacheTimeout": 0
+      "enabled": true,
+      "checkAutomatically": "ON_LAUNCH",
+      "fallbackToCacheTimeout": 5000
     },
     "splash": {
       "image": "./assets/Uchqun logo.png",
@@ -24,7 +24,8 @@
       "bundleIdentifier": "com.uchqun.platform",
       "infoPlist": {
         "NSCameraUsageDescription": "This app needs access to your camera to scan QR codes",
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library"
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library",
+        "NSUserNotificationsUsageDescription": "This app sends notifications about your child's activities and updates"
       }
     },
     "android": {
@@ -41,7 +42,9 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
-        "READ_MEDIA_IMAGES"
+        "READ_MEDIA_IMAGES",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
       ]
     },
     "web": {
@@ -55,8 +58,16 @@
       }
     },
     "plugins": [
-      "expo-build-properties",
-      "@react-native-community/datetimepicker"
+      ["expo-build-properties", {
+        "android": {
+          "compileSdkVersion": 36,
+          "targetSdkVersion": 34
+        }
+      }],
+      "@react-native-community/datetimepicker",
+      "expo-notifications",
+      "expo-secure-store",
+      "expo-image"
     ]
   }
 }

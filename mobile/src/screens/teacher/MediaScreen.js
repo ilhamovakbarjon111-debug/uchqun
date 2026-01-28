@@ -21,6 +21,7 @@ export function MediaScreen() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [viewerVisible, setViewerVisible] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -45,14 +46,30 @@ export function MediaScreen() {
   };
 
   const handleCreate = () => {
+    setEditingId(null);
     setFormData({ title: '', description: '', childId: '' });
+    setShowModal(true);
+  };
+
+  const handleEdit = (item) => {
+    setEditingId(item.id);
+    setFormData({
+      title: item.title || '',
+      description: item.description || '',
+      childId: item.childId || '',
+    });
     setShowModal(true);
   };
 
   const handleSave = async () => {
     try {
-      await mediaService.createMedia(formData);
+      if (editingId) {
+        await mediaService.updateMedia(editingId, formData);
+      } else {
+        await mediaService.createMedia(formData);
+      }
       setShowModal(false);
+      setEditingId(null);
       loadMedia();
     } catch (error) {
       console.error('Error saving media:', error);
@@ -113,6 +130,12 @@ export function MediaScreen() {
           />
         </Pressable>
         <Pressable
+          style={styles.editButton}
+          onPress={() => handleEdit(item)}
+        >
+          <Ionicons name="pencil-outline" size={18} color={theme.Colors.text.inverse} />
+        </Pressable>
+        <Pressable
           style={styles.deleteButton}
           onPress={() => handleDelete(item.id)}
         >
@@ -156,7 +179,7 @@ export function MediaScreen() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Create Media</Text>
+              <Text style={styles.modalTitle}>{editingId ? 'Edit Media' : 'Create Media'}</Text>
               <TouchableOpacity onPress={() => setShowModal(false)}>
                 <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
               </TouchableOpacity>
@@ -224,6 +247,15 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+  },
+  editButton: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    backgroundColor: theme.Colors.primary.blue,
+    borderRadius: theme.BorderRadius.sm,
+    padding: 6,
+    ...theme.Colors.shadow.sm,
   },
   deleteButton: {
     position: 'absolute',

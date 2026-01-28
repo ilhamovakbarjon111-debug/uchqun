@@ -26,6 +26,7 @@ export function useAuth() {
         console.warn('[useAuth] logout called but not in provider');
       },
       setUser: () => {},
+      refreshUser: async () => {},
     };
   }
   return ctx;
@@ -78,6 +79,20 @@ export function AuthProvider({ children }) {
     setRefreshToken(null);
   };
 
+  const refreshUser = async () => {
+    try {
+      const resp = await api.get('/auth/me');
+      const updatedUser = resp.data?.user || resp.data?.data || resp.data;
+      if (updatedUser && updatedUser.id) {
+        setUser(updatedUser);
+        const stored = await getStoredAuth();
+        await storeAuth({ ...stored, user: updatedUser });
+      }
+    } catch (error) {
+      console.error('[AuthContext] refreshUser error:', error);
+    }
+  };
+
   const value = useMemo(
     () => ({
       user,
@@ -95,6 +110,7 @@ export function AuthProvider({ children }) {
       login,
       logout,
       setUser, // Add setUser for compatibility with web app
+      refreshUser,
     }),
     [user, accessToken, refreshToken, bootstrapping]
   );

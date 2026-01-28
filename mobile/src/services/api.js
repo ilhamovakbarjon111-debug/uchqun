@@ -93,3 +93,56 @@ api.interceptors.response.use(
   }
 );
 
+// Cache interceptor for GET responses
+api.interceptors.response.use(
+  async (response) => {
+    // Cache successful GET responses
+    if (response.config.method === 'get' && response.status >= 200 && response.status < 300) {
+      try {
+        const { cacheService } = await import('./cacheService');
+        const params = response.config.params;
+        cacheService.set(response.config.url, params, response.data);
+      } catch {}
+    }
+    return response;
+  },
+  async (error) => {
+    const config = error.config;
+
+    // On network error for GET requests, try cache
+    if (!error.response && config?.method === 'get') {
+      try {
+        const { cacheService } = await import('./cacheService');
+        const cached = await cacheService.get(config.url, config.params);
+        if (cached) {
+          return { data: cached.data, status: 200, config, _fromCache: true, _isStale: cached.isStale };
+        }
+      } catch {}
+    }
+
+    // On network error for mutation requests, queue for later
+    if (!error.response && config && ['post', 'put', 'delete', 'patch'].includes(config.method)) {
+      try {
+        const { offlineQueue } = await import('./offlineQueue');
+        await offlineQueue.add({
+          method: config.method,
+          url: config.url,
+          data: config.data,
+          headers: { Authorization: config.headers?.Authorization },
+        });
+        console.log('[API] Request queued for offline replay:', config.method, config.url);
+      } catch {}
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// Clear cache on logout
+api.clearCache = async () => {
+  try {
+    const { cacheService } = await import('./cacheService');
+    await cacheService.clear();
+  } catch {}
+};
+

@@ -50,7 +50,7 @@ export function PaymentsScreen() {
 
       return () => clearInterval(interval);
     }
-  }, [payments, selectedChildId]);
+  }, [selectedChildId]);
 
   const loadPayments = async () => {
     try {

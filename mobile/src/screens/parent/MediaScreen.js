@@ -9,7 +9,9 @@ import {
   Animated,
   RefreshControl,
   ScrollView,
+  Modal,
 } from 'react-native';
+import { Video, ResizeMode } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -36,6 +38,8 @@ export function MediaScreen() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [viewerVisible, setViewerVisible] = useState(false);
+  const [videoUri, setVideoUri] = useState(null);
+  const [videoVisible, setVideoVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -209,7 +213,14 @@ export function MediaScreen() {
                           styles.mediaItem,
                           pressed && styles.mediaItemPressed,
                         ]}
-                        onPress={() => openImageViewer(item, globalIndex)}
+                        onPress={() => {
+                          if (isVideo) {
+                            setVideoUri(imageUrl);
+                            setVideoVisible(true);
+                          } else {
+                            openImageViewer(item, globalIndex);
+                          }
+                        }}
                       >
                         <Image
                           source={{ uri: imageUrl }}
@@ -239,6 +250,23 @@ export function MediaScreen() {
           </Animated.View>
         )}
       </ScrollView>
+
+      <Modal visible={videoVisible} animationType="fade" transparent onRequestClose={() => setVideoVisible(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' }}>
+          <Pressable style={{ position: 'absolute', top: 60, right: 20, zIndex: 10 }} onPress={() => setVideoVisible(false)}>
+            <Ionicons name="close-circle" size={36} color="#fff" />
+          </Pressable>
+          {videoUri && (
+            <Video
+              source={{ uri: videoUri }}
+              style={{ width: width, height: width * 9 / 16 }}
+              useNativeControls
+              resizeMode="contain"
+              shouldPlay
+            />
+          )}
+        </View>
+      </Modal>
 
       {viewerVisible && selectedImage && (
         <ImageViewer

@@ -99,4 +99,28 @@ export const teacherService = {
     const response = await api.post('/teacher/message-to-super-admin', data);
     return extractResponseData(response);
   },
+
+  // Emotional Monitoring
+  getEmotionalRecords: async (childId) => {
+    const response = await api.get(`/teacher/children/${childId}/emotional-monitoring`);
+    const data = extractResponseData(response);
+    return Array.isArray(data) ? data : [];
+  },
+
+  createEmotionalRecord: async (childId, data) => {
+    const response = await api.post(`/teacher/children/${childId}/emotional-monitoring`, data);
+    return extractResponseData(response);
+  },
+
+  // Therapy
+  getTherapySessions: async (childId) => {
+    const response = await api.get(`/teacher/children/${childId}/therapy`);
+    const data = extractResponseData(response);
+    return Array.isArray(data) ? data : [];
+  },
+
+  createTherapySession: async (childId, data) => {
+    const response = await api.post(`/teacher/children/${childId}/therapy`, data);
+    return extractResponseData(response);
+  },
 };

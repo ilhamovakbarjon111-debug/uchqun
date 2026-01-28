@@ -10,6 +10,7 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 import TeacherBackground from '../../components/layout/TeacherBackground';
 import theme from '../../styles/theme';
 import { api } from '../../services/api';
+import { teacherService } from '../../services/teacherService';
 
 export function SettingsScreen() {
   const { user, logout, refreshUser } = useAuth();
@@ -26,6 +27,10 @@ export function SettingsScreen() {
     phone: '',
   });
   const [profileLoading, setProfileLoading] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageSubject, setMessageSubject] = useState('');
+  const [messageText, setMessageText] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     setCurrentLanguage(getCurrentLanguage());
@@ -118,6 +123,11 @@ export function SettingsScreen() {
       icon: 'time-outline',
       title: 'Work History',
       onPress: () => safeNavigate('WorkHistory'),
+    },
+    {
+      icon: 'mail-outline',
+      title: 'Contact Admin',
+      onPress: () => setShowMessageModal(true),
     },
     {
       icon: 'information-circle-outline',
@@ -289,6 +299,83 @@ export function SettingsScreen() {
                 <Text style={styles.saveButtonText}>{t('settings.save', { defaultValue: 'Save' })}</Text>
               )}
             </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Contact Admin Modal */}
+      <Modal
+        visible={showMessageModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowMessageModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Contact Admin</Text>
+                <TouchableOpacity onPress={() => setShowMessageModal(false)}>
+                  <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Subject</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={messageSubject}
+                  onChangeText={setMessageSubject}
+                  placeholder="Subject"
+                  placeholderTextColor={theme.Colors.text.tertiary}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Message</Text>
+                <TextInput
+                  style={[styles.textInput, { height: 120, textAlignVertical: 'top' }]}
+                  value={messageText}
+                  onChangeText={setMessageText}
+                  placeholder="Write your message..."
+                  placeholderTextColor={theme.Colors.text.tertiary}
+                  multiline
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveButton, sendingMessage && styles.saveButtonDisabled]}
+                onPress={async () => {
+                  if (!messageSubject.trim() || !messageText.trim()) {
+                    Alert.alert('Error', 'Subject and message are required.');
+                    return;
+                  }
+                  setSendingMessage(true);
+                  try {
+                    await teacherService.sendMessage({ subject: messageSubject, message: messageText });
+                    Alert.alert('Success', 'Message sent successfully.');
+                    setShowMessageModal(false);
+                    setMessageSubject('');
+                    setMessageText('');
+                  } catch (error) {
+                    Alert.alert('Error', 'Failed to send message.');
+                  } finally {
+                    setSendingMessage(false);
+                  }
+                }}
+                disabled={sendingMessage}
+              >
+                {sendingMessage ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Send</Text>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         </KeyboardAvoidingView>

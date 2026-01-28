@@ -16,6 +16,9 @@ import { MealsScreen } from '../screens/teacher/MealsScreen';
 import { MediaScreen } from '../screens/teacher/MediaScreen';
 import { ChatScreen } from '../screens/teacher/ChatScreen';
 import { SettingsScreen } from '../screens/teacher/SettingsScreen';
+import { NotificationsScreen } from '../screens/teacher/NotificationsScreen';
+import { EmotionalMonitoringScreen } from '../screens/teacher/EmotionalMonitoringScreen';
+import { TherapyScreen } from '../screens/teacher/TherapyScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -109,6 +112,8 @@ export function TeacherNavigator() {
       <Stack.Screen name="Media" component={MediaScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
+      <Stack.Screen name="EmotionalMonitoring" component={EmotionalMonitoringScreen} />
+      <Stack.Screen name="Therapy" component={TherapyScreen} />
     </Stack.Navigator>
   );
 }

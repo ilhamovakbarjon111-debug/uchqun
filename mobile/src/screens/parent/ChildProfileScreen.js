@@ -205,17 +205,52 @@ export function ChildProfileScreen() {
   };
 
   const handleFileUpload = async () => {
-    // Image upload functionality - requires expo-image-picker package
-    // For now, show a message that this feature will be available soon
-    Alert.alert(
-      t('child.changePhoto', { defaultValue: 'Change Photo' }),
-      t('child.uploadComingSoon', { defaultValue: 'Photo upload feature will be available soon. Please use the web version for now.' })
-    );
-    setShowAvatarSelector(false);
-    
-    // TODO: Implement image picker when expo-image-picker is installed
-    // const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    // ... rest of upload logic
+    try {
+      const ImagePicker = require('expo-image-picker');
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          t('common.error', { defaultValue: 'Error' }),
+          t('child.photoPermissionRequired', { defaultValue: 'Photo library permission is required' })
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled) return;
+
+      setUploading(true);
+      setShowAvatarSelector(false);
+
+      const uri = result.assets[0].uri;
+      const filename = uri.split('/').pop() || 'photo.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      const formData = new FormData();
+      formData.append('photo', { uri, name: filename, type });
+
+      await api.post(`/parent/children/${selectedChildId}/avatar`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setPhotoTimestamp(Date.now());
+      await loadChild();
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      Alert.alert(
+        t('common.error', { defaultValue: 'Error' }),
+        error.response?.data?.error || t('child.photoUploadFailed', { defaultValue: 'Failed to upload photo' })
+      );
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSendMessage = async () => {
