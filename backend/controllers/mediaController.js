@@ -407,12 +407,20 @@ export const uploadMedia = async (req, res) => {
       childId,
       activityId: activityId || null,
       type: mediaType,
-      url: uploadResult.url,   // store only the Appwrite file URL
+      url: uploadResult.url,   // Initially store Appwrite file URL or proxy URL
       thumbnail: null,         // no thumbnails persisted
       title,
       description: description || '',
       date: date || new Date().toISOString().split('T')[0],
     });
+
+    // Update URL to use media record ID for proxy endpoint
+    // If uploadResult.url is a proxy URL with Appwrite file ID, replace it with media record ID
+    const backendUrl = process.env.PUBLIC_API_URL || process.env.FILE_BASE_URL || 'https://uchqun-production.up.railway.app';
+    const proxyUrl = `${backendUrl}/api/media/proxy/${media.id}`;
+    
+    // Update media record with proxy URL using media record ID
+    await media.update({ url: proxyUrl });
 
     const createdMedia = await Media.findByPk(media.id, {
       include: [
@@ -611,23 +619,28 @@ export const proxyMediaFile = async (req, res) => {
       return res.status(400).json({ error: 'File ID is required' });
     }
 
-    // Get media record to verify access
+    // Get media record by ID (database UUID)
     const media = await Media.findByPk(fileId);
+    
     if (!media) {
+      logger.error('Media not found for proxy', {
+        fileId,
+      });
       return res.status(404).json({ error: 'Media not found' });
     }
 
     // Check if URL is from Appwrite
-    if (!media.url || !media.url.includes('appwrite.io')) {
-      return res.status(400).json({ error: 'Invalid media URL' });
+    if (!media.url) {
+      return res.status(400).json({ error: 'Media URL is missing' });
     }
-
+    
     // Extract Appwrite file ID from URL
     // URL format: https://fra.cloud.appwrite.io/v1/storage/buckets/{bucketId}/files/{fileId}/view?project={projectId}
     // or: https://fra.cloud.appwrite.io/v1/storage/buckets/{bucketId}/files/{fileId}/preview?project={projectId}
     let appwriteFileId = null;
-    if (media.url.includes('/files/')) {
-      // Match /files/{fileId}/ pattern
+    
+    if (media.url.includes('appwrite.io') && media.url.includes('/files/')) {
+      // Extract Appwrite file ID from URL
       const match = media.url.match(/\/files\/([^/?]+)/);
       if (match && match[1]) {
         appwriteFileId = match[1];
@@ -635,11 +648,11 @@ export const proxyMediaFile = async (req, res) => {
     }
 
     if (!appwriteFileId) {
-      logger.error('Could not extract Appwrite file ID', {
+      logger.error('Could not extract Appwrite file ID from media URL', {
         mediaId: fileId,
         mediaUrl: media.url,
       });
-      return res.status(400).json({ error: 'Could not extract Appwrite file ID from URL' });
+      return res.status(400).json({ error: 'Could not extract Appwrite file ID from URL. Media URL must be an Appwrite URL.' });
     }
 
     // Get Appwrite configuration

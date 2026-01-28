@@ -127,30 +127,28 @@ export async function uploadFile(file, filename, mimetype) {
       });
 
       const baseEndpoint = process.env.APPWRITE_ENDPOINT.replace(/\/+$/, '');
-      // Use backend proxy endpoint to avoid CORS issues
-      // Backend will proxy the file from Appwrite to frontend
-      const backendUrl = process.env.PUBLIC_API_URL || process.env.FILE_BASE_URL || 'https://uchqun-production.up.railway.app';
-      const url = `${backendUrl}/api/media/proxy/${createdFile.$id}`;
+      // Store the original Appwrite URL (will be updated to proxy URL after media record is created)
+      const appwriteUrl = `${baseEndpoint}/storage/buckets/${appwriteBucketId}/files/${createdFile.$id}/view?project=${appwriteProjectId}`;
       
-      console.log('✓ Generated Appwrite URL (via proxy):', {
-        url,
+      console.log('✓ Generated Appwrite URL:', {
+        appwriteUrl,
         fileId: createdFile.$id,
         isVideo: mimetype.startsWith('video/'),
         isImage: mimetype.startsWith('image/'),
         mimetype,
-        appwriteUrl: `${baseEndpoint}/storage/buckets/${appwriteBucketId}/files/${createdFile.$id}/view?project=${appwriteProjectId}`,
       });
 
       console.log('✓ Appwrite file uploaded successfully:', {
         fileId: createdFile.$id,
         filename,
-        url,
+        appwriteUrl,
         size: buffer.length,
       });
 
       return {
-        url,
-        path: createdFile.$id,
+        url: appwriteUrl, // Return original Appwrite URL, will be updated to proxy URL in controller
+        path: createdFile.$id, // Appwrite file ID
+        appwriteFileId: createdFile.$id, // Also return Appwrite file ID for reference
       };
     } catch (err) {
       // Log detailed error information
