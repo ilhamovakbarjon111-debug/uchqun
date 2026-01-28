@@ -179,6 +179,13 @@ export function TeacherDashboardScreen() {
       color: '#8b5cf6',
       onPress: () => safeNavigate('Media'),
     },
+    {
+      title: t('dashboard.monitoring') || 'Monitoring',
+      value: null,
+      icon: 'heart',
+      color: (tokens.colors.joy && tokens.colors.joy.coral) ? tokens.colors.joy.coral : '#FF6B6B',
+      onPress: () => safeNavigate('MonitoringJournal'),
+    },
   ];
 
   const header = (
@@ -231,7 +238,9 @@ export function TeacherDashboardScreen() {
                     <Ionicons name={stat.icon} size={24} color={stat.color} />
                   </View>
                   <View style={styles.statTextContainer}>
-                    <Text style={styles.statValue} allowFontScaling={true}>{stat.value}</Text>
+                    <Text style={styles.statValue} allowFontScaling={true}>
+                      {stat.value != null && stat.value !== '' ? stat.value : '—'}
+                    </Text>
                     <Text style={styles.statTitle} allowFontScaling={true}>{stat.title}</Text>
                   </View>
                 </View>

@@ -107,10 +107,31 @@ export const teacherService = {
     return Array.isArray(data) ? data : [];
   },
 
+  // All monitoring records (for Monitoring Journal screen)
+  getAllMonitoringRecords: async () => {
+    const response = await api.get('/teacher/emotional-monitoring');
+    const data = extractResponseData(response);
+    return Array.isArray(data) ? data : [];
+  },
+
   createEmotionalRecord: async (childId, data) => {
     const body = { childId, date: data.date, notes: data.notes, emotionalState: data.emotionalState || {} };
     const response = await api.post('/teacher/emotional-monitoring', body);
     return extractResponseData(response);
+  },
+
+  createMonitoringRecord: async (body) => {
+    const response = await api.post('/teacher/emotional-monitoring', body);
+    return extractResponseData(response);
+  },
+
+  updateEmotionalRecord: async (id, data) => {
+    const response = await api.put(`/teacher/emotional-monitoring/${id}`, data);
+    return extractResponseData(response);
+  },
+
+  deleteEmotionalRecord: async (id) => {
+    await api.delete(`/teacher/emotional-monitoring/${id}`);
   },
 
   // Therapy (backend: GET /api/therapy/usage?childId= returns { usages: [...], total })

@@ -1,0 +1,508 @@
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context/AuthContext';
+import { teacherService } from '../../services/teacherService';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import TeacherBackground from '../../components/layout/TeacherBackground';
+import Card from '../../components/common/Card';
+import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import theme from '../../styles/theme';
+
+const EMOTIONAL_STATE_KEYS = [
+  'stable',
+  'positiveEmotions',
+  'noAnxiety',
+  'noHostility',
+  'calmResponse',
+  'showsEmpathy',
+  'quickRecovery',
+  'stableMood',
+  'trustingRelationship',
+];
+
+const defaultEmotionalState = () =>
+  EMOTIONAL_STATE_KEYS.reduce((acc, key) => ({ ...acc, [key]: false }), {});
+
+export function MonitoringJournalScreen() {
+  const { user } = useAuth();
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(true);
+  const [monitoringRecords, setMonitoringRecords] = useState([]);
+  const [children, setChildren] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [selectedChild, setSelectedChild] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    childId: '',
+    date: new Date().toISOString().split('T')[0],
+    emotionalState: defaultEmotionalState(),
+    notes: '',
+    teacherSignature: '',
+  });
+
+  useEffect(() => {
+    loadParents();
+    loadMonitoringRecords();
+  }, []);
+
+  const loadParents = async () => {
+    try {
+      const parentsList = await teacherService.getParents();
+      const allChildren = [];
+      (Array.isArray(parentsList) ? parentsList : []).forEach((parent) => {
+        if (parent.children && Array.isArray(parent.children)) {
+          parent.children.forEach((child) => {
+            allChildren.push({
+              ...child,
+              parentName: `${parent.firstName || ''} ${parent.lastName || ''}`.trim(),
+            });
+          });
+        }
+      });
+      setChildren(allChildren);
+    } catch (error) {
+      console.error('Error loading parents:', error);
+    }
+  };
+
+  const loadMonitoringRecords = async () => {
+    try {
+      setLoading(true);
+      const records = await teacherService.getAllMonitoringRecords();
+      setMonitoringRecords(Array.isArray(records) ? records : []);
+    } catch (error) {
+      console.error('Error loading monitoring records:', error);
+      setMonitoringRecords([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRecordForChild = (childId, date) => {
+    return monitoringRecords.find((r) => r.childId === childId && r.date === date);
+  };
+
+  const todayStr = () => new Date().toISOString().split('T')[0];
+
+  const handleOpenModal = (child, record = null) => {
+    if (record) {
+      setEditingRecord(record);
+      setSelectedChild(child);
+      setFormData({
+        childId: record.childId,
+        date: record.date,
+        emotionalState: record.emotionalState || defaultEmotionalState(),
+        notes: record.notes || '',
+        teacherSignature: record.teacherSignature || `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+      });
+    } else {
+      setEditingRecord(null);
+      setSelectedChild(child);
+      setFormData({
+        childId: child?.id || '',
+        date: todayStr(),
+        emotionalState: defaultEmotionalState(),
+        notes: '',
+        teacherSignature: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+      });
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingRecord(null);
+    setSelectedChild(null);
+  };
+
+  const toggleEmotionalState = (key) => {
+    setFormData((prev) => ({
+      ...prev,
+      emotionalState: {
+        ...prev.emotionalState,
+        [key]: !prev.emotionalState[key],
+      },
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.childId || !formData.date) {
+      Alert.alert('', t('monitoring.selectChildError'));
+      return;
+    }
+    setSaving(true);
+    try {
+      if (editingRecord) {
+        await teacherService.updateEmotionalRecord(editingRecord.id, {
+          date: formData.date,
+          emotionalState: formData.emotionalState,
+          notes: formData.notes,
+          teacherSignature: formData.teacherSignature,
+        });
+      } else {
+        await teacherService.createMonitoringRecord({
+          childId: formData.childId,
+          date: formData.date,
+          emotionalState: formData.emotionalState,
+          notes: formData.notes,
+          teacherSignature: formData.teacherSignature,
+        });
+      }
+      handleCloseModal();
+      loadMonitoringRecords();
+    } catch (error) {
+      console.error('Error saving monitoring record:', error);
+      Alert.alert('', error.response?.data?.error || t('monitoring.toastError'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      t('monitoring.confirmDelete'),
+      '',
+      [
+        { text: t('monitoring.cancel'), style: 'cancel' },
+        {
+          text: t('monitoring.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await teacherService.deleteEmotionalRecord(editingRecord.id);
+              handleCloseModal();
+              loadMonitoringRecords();
+            } catch (error) {
+              console.error('Error deleting record:', error);
+              Alert.alert('', t('monitoring.toastError'));
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  return (
+    <View style={styles.container}>
+      <TeacherBackground />
+      <ScreenHeader title={t('monitoring.title')} />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.subtitle}>{t('monitoring.subtitle')}</Text>
+
+        {children.length === 0 ? (
+          <Card style={styles.emptyCard}>
+            <Ionicons name="people-outline" size={48} color={theme.Colors.text.tertiary} />
+            <Text style={styles.emptyText}>{t('parentsPage.noParentsFound')}</Text>
+          </Card>
+        ) : (
+          children.map((child) => {
+            const todayRecord = getRecordForChild(child.id, todayStr());
+            return (
+              <Card key={child.id} style={styles.childCard}>
+                <View style={styles.childHeader}>
+                  <View style={styles.childIconWrap}>
+                    <Ionicons name="person" size={24} color={theme.Colors.primary.blue} />
+                  </View>
+                  <View style={styles.childInfo}>
+                    <Text style={styles.childName}>
+                      {child.firstName} {child.lastName}
+                    </Text>
+                    <Text style={styles.childParent}>{child.parentName}</Text>
+                    {child.school || child.class ? (
+                      <Text style={styles.childMeta}>
+                        {[child.school, child.class].filter(Boolean).join(', ')}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+                <View style={styles.statusRow}>
+                  {todayRecord ? (
+                    <View style={styles.statusBadge}>
+                      <Ionicons name="checkmark-circle" size={18} color={theme.Colors.status.success} />
+                      <Text style={styles.statusTextOk}>{t('monitoring.assessedToday')}</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.statusBadge}>
+                      <Ionicons name="ellipse-outline" size={18} color={theme.Colors.text.tertiary} />
+                      <Text style={styles.statusText}>{t('monitoring.notAssessedToday')}</Text>
+                    </View>
+                  )}
+                </View>
+                <Pressable
+                  style={({ pressed }) => [styles.assessButton, pressed && styles.assessButtonPressed]}
+                  onPress={() => handleOpenModal(child, todayRecord || undefined)}
+                >
+                  <Ionicons
+                    name={todayRecord ? 'pencil' : 'add'}
+                    size={18}
+                    color={theme.Colors.text.inverse}
+                  />
+                  <Text style={styles.assessButtonText}>
+                    {todayRecord ? t('monitoring.edit') : t('monitoring.assess')}
+                  </Text>
+                </Pressable>
+              </Card>
+            );
+          })
+        )}
+      </ScrollView>
+
+      {/* Modal */}
+      <Modal visible={showModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingRecord ? t('monitoring.editModal') : t('monitoring.createModal')}
+              </Text>
+              <TouchableOpacity onPress={handleCloseModal}>
+                <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
+              {selectedChild && (
+                <View style={styles.selectedChildBox}>
+                  <Ionicons name="person" size={20} color={theme.Colors.primary.blue} />
+                  <View>
+                    <Text style={styles.selectedChildName}>
+                      {selectedChild.firstName} {selectedChild.lastName}
+                    </Text>
+                    <Text style={styles.selectedChildParent}>{selectedChild.parentName}</Text>
+                  </View>
+                </View>
+              )}
+
+              <Text style={styles.label}>{t('monitoring.date')}</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.date}
+                onChangeText={(text) => setFormData((prev) => ({ ...prev, date: text }))}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor={theme.Colors.text.tertiary}
+              />
+
+              <Text style={styles.label}>{t('monitoring.emotionalState')}</Text>
+              {EMOTIONAL_STATE_KEYS.map((key) => (
+                <Pressable
+                  key={key}
+                  style={styles.checkRow}
+                  onPress={() => toggleEmotionalState(key)}
+                >
+                  <Ionicons
+                    name={formData.emotionalState[key] ? 'checkbox' : 'square-outline'}
+                    size={22}
+                    color={formData.emotionalState[key] ? theme.Colors.primary.blue : theme.Colors.text.tertiary}
+                  />
+                  <Text style={styles.checkLabel}>{t(`monitoring.emotionalStates.${key}`)}</Text>
+                </Pressable>
+              ))}
+
+              <Text style={styles.label}>{t('monitoring.notes')}</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={formData.notes}
+                onChangeText={(text) => setFormData((prev) => ({ ...prev, notes: text }))}
+                placeholder={t('monitoring.notesPlaceholder')}
+                placeholderTextColor={theme.Colors.text.tertiary}
+                multiline
+              />
+
+              <Text style={styles.label}>{t('monitoring.teacherSignature')}</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.teacherSignature}
+                onChangeText={(text) => setFormData((prev) => ({ ...prev, teacherSignature: text }))}
+                placeholder={t('monitoring.teacherSignaturePlaceholder')}
+                placeholderTextColor={theme.Colors.text.tertiary}
+              />
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <Pressable style={styles.cancelBtn} onPress={handleCloseModal}>
+                <Text style={styles.cancelBtnText}>{t('monitoring.cancel')}</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+                onPress={handleSubmit}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator size="small" color={theme.Colors.text.inverse} />
+                ) : (
+                  <Text style={styles.saveBtnText}>{t('monitoring.save')}</Text>
+                )}
+              </Pressable>
+              {editingRecord && (
+                <Pressable style={styles.deleteBtn} onPress={handleDelete}>
+                  <Ionicons name="trash-outline" size={18} color={theme.Colors.status.error} />
+                  <Text style={styles.deleteBtnText}>{t('monitoring.delete')}</Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.Colors.background.secondary },
+  scroll: { flex: 1 },
+  content: { padding: theme.Spacing.md, paddingBottom: theme.Spacing.xl * 2 },
+  subtitle: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.secondary,
+    marginBottom: theme.Spacing.lg,
+  },
+  emptyCard: {
+    alignItems: 'center',
+    padding: theme.Spacing.xl,
+  },
+  emptyText: { marginTop: theme.Spacing.sm, color: theme.Colors.text.secondary },
+  childCard: { marginBottom: theme.Spacing.md },
+  childHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: theme.Spacing.sm },
+  childIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.Colors.primary.blueBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.Spacing.sm,
+  },
+  childInfo: { flex: 1 },
+  childName: {
+    fontSize: theme.Typography.sizes.lg,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.text.primary,
+  },
+  childParent: { fontSize: theme.Typography.sizes.sm, color: theme.Colors.text.secondary },
+  childMeta: { fontSize: theme.Typography.sizes.xs, color: theme.Colors.text.tertiary },
+  statusRow: { marginBottom: theme.Spacing.sm },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statusText: { fontSize: theme.Typography.sizes.sm, color: theme.Colors.text.tertiary },
+  statusTextOk: { fontSize: theme.Typography.sizes.sm, color: theme.Colors.status.success, fontWeight: '600' },
+  assessButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: theme.Colors.primary.blue,
+    paddingVertical: theme.Spacing.sm,
+    paddingHorizontal: theme.Spacing.md,
+    borderRadius: theme.BorderRadius.sm,
+  },
+  assessButtonPressed: { opacity: 0.8 },
+  assessButtonText: { color: theme.Colors.text.inverse, fontWeight: '600', fontSize: theme.Typography.sizes.sm },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.Spacing.md,
+  },
+  modalBox: {
+    backgroundColor: theme.Colors.background.card,
+    borderRadius: theme.BorderRadius.lg,
+    width: '100%',
+    maxHeight: '90%',
+    ...theme.Colors.shadow.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.Colors.border.light,
+  },
+  modalTitle: {
+    fontSize: theme.Typography.sizes.xl,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.text.primary,
+  },
+  modalScroll: { maxHeight: 400, padding: theme.Spacing.md },
+  selectedChildBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.Colors.primary.blueBg,
+    padding: theme.Spacing.sm,
+    borderRadius: theme.BorderRadius.sm,
+    marginBottom: theme.Spacing.md,
+    gap: theme.Spacing.sm,
+  },
+  selectedChildName: { fontWeight: '600', color: theme.Colors.text.primary },
+  selectedChildParent: { fontSize: theme.Typography.sizes.sm, color: theme.Colors.text.secondary },
+  label: {
+    fontSize: theme.Typography.sizes.sm,
+    fontWeight: '600',
+    color: theme.Colors.text.secondary,
+    marginBottom: theme.Spacing.xs,
+    marginTop: theme.Spacing.sm,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: theme.Colors.border.medium,
+    borderRadius: theme.BorderRadius.sm,
+    padding: theme.Spacing.sm,
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.primary,
+    backgroundColor: theme.Colors.background.primary,
+  },
+  textArea: { height: 80, textAlignVertical: 'top' },
+  checkRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 10 },
+  checkLabel: { flex: 1, fontSize: theme.Typography.sizes.sm, color: theme.Colors.text.primary },
+  modalActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.Spacing.sm,
+    padding: theme.Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.Colors.border.light,
+  },
+  cancelBtn: { paddingVertical: theme.Spacing.sm, paddingHorizontal: theme.Spacing.md },
+  cancelBtnText: { color: theme.Colors.text.secondary, fontWeight: '600' },
+  saveBtn: {
+    backgroundColor: theme.Colors.primary.blue,
+    paddingVertical: theme.Spacing.sm,
+    paddingHorizontal: theme.Spacing.lg,
+    borderRadius: theme.BorderRadius.sm,
+  },
+  saveBtnDisabled: { opacity: 0.6 },
+  saveBtnText: { color: theme.Colors.text.inverse, fontWeight: '600' },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: theme.Spacing.sm,
+    paddingHorizontal: theme.Spacing.md,
+    backgroundColor: theme.Colors.status.error + '20',
+    borderRadius: theme.BorderRadius.sm,
+  },
+  deleteBtnText: { color: theme.Colors.status.error, fontWeight: '600' },
+});
