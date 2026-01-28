@@ -107,9 +107,11 @@ const VideoPlayer = ({ url }) => {
         <video
           src={url}
           controls
+          crossOrigin="anonymous"
           className="max-w-full max-h-full"
           onLoadedData={() => setIsLoading(false)}
-          onError={() => {
+          onError={(e) => {
+            console.error('Video load error:', url, e);
             setIsLoading(false);
             setError(true);
           }}
