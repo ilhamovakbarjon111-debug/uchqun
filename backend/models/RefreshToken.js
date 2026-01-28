@@ -11,6 +11,7 @@ const RefreshToken = sequelize.define('RefreshToken', {
   tokenHash: {
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'token_hash',
   },
   userId: {
     type: DataTypes.UUID,
@@ -19,22 +20,27 @@ const RefreshToken = sequelize.define('RefreshToken', {
       model: 'users',
       key: 'id',
     },
+    field: 'user_id',
   },
   expiresAt: {
     type: DataTypes.DATE,
     allowNull: false,
+    field: 'expires_at',
   },
   revoked: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
+    allowNull: false,
   },
   revokedAt: {
     type: DataTypes.DATE,
     allowNull: true,
+    field: 'revoked_at',
   },
 }, {
   tableName: 'refresh_tokens',
   timestamps: true,
+  underscored: false, // We're using explicit field mappings
 });
 
 RefreshToken.hashToken = (token) => {
