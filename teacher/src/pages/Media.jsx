@@ -20,6 +20,20 @@ import { useToast } from '../shared/context/ToastContext';
 import api from '../shared/services/api';
 import { useTranslation } from 'react-i18next';
 
+// Helper function to convert Appwrite URL to proxy URL
+const getProxyUrl = (url, mediaId) => {
+  if (!url || !mediaId) return url;
+  
+  // If URL is from Appwrite, convert to proxy endpoint
+  if (url.includes('appwrite.io') && url.includes('/storage/buckets/') && url.includes('/files/')) {
+    const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
+    return `${apiBase}/api/media/proxy/${mediaId}`;
+  }
+  
+  // Otherwise return original URL
+  return url;
+};
+
 // Helper function to get YouTube embed URL
 const getYouTubeEmbedUrl = (url) => {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -394,7 +408,7 @@ const Media = () => {
               {/* Image Container */}
               <div className="relative aspect-[4/5] overflow-hidden">
                 <img
-                  src={item.url || item.imageUrl || item.photoUrl}
+                  src={getProxyUrl(item.url || item.imageUrl || item.photoUrl, item.id)}
                   alt={item.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   onError={(e) => {
@@ -483,10 +497,10 @@ const Media = () => {
             {/* Media Content Area */}
             <div className="flex-[2] bg-black flex items-center justify-center overflow-hidden relative">
               {selectedMedia.type === 'video' ? (
-                <VideoPlayer url={selectedMedia.url} />
+                <VideoPlayer url={getProxyUrl(selectedMedia.url, selectedMedia.id)} />
               ) : (
                 <img
-                  src={selectedMedia.url || selectedMedia.imageUrl || selectedMedia.photoUrl}
+                  src={getProxyUrl(selectedMedia.url || selectedMedia.imageUrl || selectedMedia.photoUrl, selectedMedia.id)}
                   alt={selectedMedia.title}
                   className="max-w-full max-h-full object-contain"
                   onError={(e) => {
