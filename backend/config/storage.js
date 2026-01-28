@@ -40,11 +40,17 @@ if (appwriteConfigured) {
     appwriteStorage = new AppwriteStorage(appwriteClient);
     appwriteBucketId = process.env.APPWRITE_BUCKET_ID;
     appwriteProjectId = process.env.APPWRITE_PROJECT_ID;
-    console.log('✓ Appwrite Storage initialized');
+    console.log('✓ Appwrite Storage initialized', {
+      endpoint: process.env.APPWRITE_ENDPOINT,
+      projectId: process.env.APPWRITE_PROJECT_ID,
+      bucketId: appwriteBucketId,
+    });
   } catch (error) {
     console.warn('⚠ Failed to initialize Appwrite Storage:', error.message);
     console.warn('⚠ Falling back to other storage options');
   }
+} else {
+  console.warn('⚠ Appwrite Storage not configured. Set APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY, and APPWRITE_BUCKET_ID');
 }
 
 // Initialize Google Cloud Storage if configured
