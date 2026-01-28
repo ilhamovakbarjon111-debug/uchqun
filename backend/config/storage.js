@@ -128,22 +128,22 @@ export async function uploadFile(file, filename, mimetype) {
 
       const baseEndpoint = process.env.APPWRITE_ENDPOINT.replace(/\/+$/, '');
       // Appwrite file URL format
-      // For images: use /view endpoint (works for public buckets)
-      // For videos: use /view endpoint (works for public buckets)
-      // If bucket is private, may need preview or signed URL
-      // Note: /view endpoint works for both images and videos in public buckets
+      // For public buckets: /storage/buckets/{bucketId}/files/{fileId}/view?project={projectId}
+      // For private buckets or CORS issues: use /preview endpoint
+      // Preview endpoint works for both public and private files and handles CORS better
       const isVideo = mimetype.startsWith('video/');
       const isImage = mimetype.startsWith('image/');
       
-      // Use view endpoint for both images and videos (works for public buckets)
-      // For private buckets, you might need to use preview or generate signed URL
-      const url = `${baseEndpoint}/storage/buckets/${appwriteBucketId}/files/${createdFile.$id}/view?project=${appwriteProjectId}`;
+      // Use preview endpoint for better CORS support and compatibility
+      // Preview endpoint works for both public and private files
+      const url = `${baseEndpoint}/storage/buckets/${appwriteBucketId}/files/${createdFile.$id}/preview?project=${appwriteProjectId}`;
       
       console.log('✓ Generated Appwrite URL:', {
         url,
         isVideo,
         isImage,
         mimetype,
+        endpoint: 'preview', // Using preview endpoint for better CORS support
       });
 
       console.log('✓ Appwrite file uploaded successfully:', {
