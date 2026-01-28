@@ -169,8 +169,8 @@ export const getActivity = async (req, res) => {
       
       const childIds = children.map(c => c.id);
       where.childId = { [Op.in]: childIds };
-    } else if (req.user.role === 'admin') {
-      // Admin can see all activities - no filter needed
+    } else if (req.user.role === 'admin' || req.user.role === 'reception') {
+      // Admin and reception can see all activities - no filter needed
     } else {
       const child = await Child.findOne({
         where: { parentId: req.user.id },
@@ -207,8 +207,8 @@ export const getActivity = async (req, res) => {
 // Create activity (teachers only)
 export const createActivity = async (req, res) => {
   try {
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only teachers can create activities' });
+    if (req.user.role !== 'teacher' && req.user.role !== 'admin' && req.user.role !== 'reception') {
+      return res.status(403).json({ error: 'Only teachers, admins, and reception can create activities' });
     }
 
     const {
@@ -337,8 +337,8 @@ export const createActivity = async (req, res) => {
 // Update activity (teachers only)
 export const updateActivity = async (req, res) => {
   try {
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only teachers can update activities' });
+    if (req.user.role !== 'teacher' && req.user.role !== 'admin' && req.user.role !== 'reception') {
+      return res.status(403).json({ error: 'Only teachers, admins, and reception can update activities' });
     }
 
     const { id } = req.params;
@@ -395,8 +395,8 @@ export const updateActivity = async (req, res) => {
 // Delete activity (teachers only)
 export const deleteActivity = async (req, res) => {
   try {
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only teachers can delete activities' });
+    if (req.user.role !== 'teacher' && req.user.role !== 'admin' && req.user.role !== 'reception') {
+      return res.status(403).json({ error: 'Only teachers, admins, and reception can delete activities' });
     }
 
     const { id } = req.params;
