@@ -622,13 +622,17 @@ export const proxyMediaFile = async (req, res) => {
       return res.status(400).json({ error: 'Invalid media URL' });
     }
 
-    // Extract file ID from Appwrite URL if needed
-    let appwriteFileId = fileId;
+    // Extract Appwrite file ID from URL
+    let appwriteFileId = null;
     if (media.url.includes('/files/')) {
       const match = media.url.match(/\/files\/([^/]+)/);
       if (match && match[1]) {
         appwriteFileId = match[1];
       }
+    }
+
+    if (!appwriteFileId) {
+      return res.status(400).json({ error: 'Could not extract Appwrite file ID from URL' });
     }
 
     // Get Appwrite configuration
@@ -641,8 +645,15 @@ export const proxyMediaFile = async (req, res) => {
       return res.status(503).json({ error: 'Appwrite not configured' });
     }
 
-    // Construct Appwrite file URL
+    // Construct Appwrite file URL (use view endpoint)
     const appwriteUrl = `${appwriteEndpoint}/storage/buckets/${appwriteBucketId}/files/${appwriteFileId}/view?project=${appwriteProjectId}`;
+
+    logger.info('Proxying Appwrite file', {
+      mediaId: fileId,
+      appwriteFileId,
+      appwriteUrl,
+      mediaType: media.type,
+    });
 
     // Fetch file from Appwrite
     const response = await axios.get(appwriteUrl, {
@@ -651,12 +662,18 @@ export const proxyMediaFile = async (req, res) => {
         'X-Appwrite-Key': appwriteApiKey,
       },
       responseType: 'stream',
+      timeout: 30000, // 30 second timeout
     });
 
     // Set appropriate headers
-    res.setHeader('Content-Type', response.headers['content-type'] || media.type === 'video' ? 'video/mp4' : 'image/jpeg');
+    const contentType = response.headers['content-type'] || 
+                       (media.type === 'video' ? 'video/mp4' : 'image/jpeg');
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
     res.setHeader('Access-Control-Allow-Origin', '*'); // Allow CORS
+    if (response.headers['content-length']) {
+      res.setHeader('Content-Length', response.headers['content-length']);
+    }
 
     // Pipe the file stream to response
     response.data.pipe(res);
@@ -665,7 +682,14 @@ export const proxyMediaFile = async (req, res) => {
       error: error.message, 
       stack: error.stack,
       fileId: req.params.fileId,
+      responseStatus: error.response?.status,
+      responseData: error.response?.data,
     });
+    
+    if (error.response?.status === 404) {
+      return res.status(404).json({ error: 'File not found in Appwrite' });
+    }
+    
     res.status(500).json({ error: 'Failed to proxy media file' });
   }
 };
