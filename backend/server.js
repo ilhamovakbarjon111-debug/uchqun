@@ -101,19 +101,24 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // CORS Configuration
+const defaultOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'https://uchqun-platform.vercel.app',
+  'https://uchqunedu.uz',
+  'https://www.uchqunedu.uz',
+];
+
 const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(',').map(url => url.trim()).filter(url => {
-      // Remove old Railway URLs (uchqun-production-4f83)
-      return !url.includes('uchqun-production-4f83');
-    })
-  : [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:5175',
-    'https://uchqun-platform.vercel.app',
-    'https://uchqunedu.uz',
-    'https://www.uchqunedu.uz',
-  ];
+  ? [
+      ...defaultOrigins,
+      ...process.env.FRONTEND_URL.split(',').map(url => url.trim()).filter(url => {
+        // Remove old Railway URLs (uchqun-production-4f83)
+        return !url.includes('uchqun-production-4f83');
+      })
+    ].filter((url, index, self) => self.indexOf(url) === index) // Remove duplicates
+  : defaultOrigins;
 
 // In production, default to strict CORS; opt out with CORS_STRICT=false
 const allowAllOrigins = process.env.NODE_ENV === 'production'
