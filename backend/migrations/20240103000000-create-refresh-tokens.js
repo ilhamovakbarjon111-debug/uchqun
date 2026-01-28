@@ -1,6 +1,4 @@
-/** @type {import('sequelize-cli').Migration} */
-export default {
-  async up(queryInterface, Sequelize) {
+export const up = async (queryInterface, Sequelize) => {
     await queryInterface.createTable('refresh_tokens', {
       id: {
         type: Sequelize.UUID,
@@ -61,9 +59,8 @@ export default {
     await queryInterface.addIndex('refresh_tokens', ['revoked'], {
       name: 'idx_refresh_tokens_revoked',
     });
-  },
+};
 
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('refresh_tokens');
-  },
+export const down = async (queryInterface, Sequelize) => {
+  await queryInterface.dropTable('refresh_tokens');
 };

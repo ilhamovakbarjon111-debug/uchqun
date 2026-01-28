@@ -136,8 +136,11 @@ async function runMigrations() {
       try {
         const migration = await import(`file://${path.join(migrationsDir, file)}`);
         
-        if (typeof migration.up === 'function') {
-          await migration.up(sequelize.getQueryInterface(), Sequelize);
+        // Support both export default and named exports
+        const upFunction = migration.up || migration.default?.up;
+        
+        if (typeof upFunction === 'function') {
+          await upFunction(sequelize.getQueryInterface(), Sequelize);
           await sequelize.query(`INSERT INTO "SequelizeMeta" (name) VALUES ('${file}')`);
           console.log(`✓ Completed ${file}`);
         } else {
