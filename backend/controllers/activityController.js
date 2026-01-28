@@ -48,8 +48,8 @@ export const getActivities = async (req, res) => {
         // Show activities for all assigned children
         where.childId = { [Op.in]: childIds };
       }
-    } else if (req.user.role === 'admin') {
-      // Admin can see all activities
+    } else if (req.user.role === 'admin' || req.user.role === 'reception') {
+      // Admin and reception can see all activities
       if (childId) {
         where.childId = childId;
       }
