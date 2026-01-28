@@ -127,23 +127,18 @@ export async function uploadFile(file, filename, mimetype) {
       });
 
       const baseEndpoint = process.env.APPWRITE_ENDPOINT.replace(/\/+$/, '');
-      // Appwrite file URL format
-      // For public buckets: /storage/buckets/{bucketId}/files/{fileId}/view?project={projectId}
-      // For private buckets or CORS issues: use /preview endpoint
-      // Preview endpoint works for both public and private files and handles CORS better
-      const isVideo = mimetype.startsWith('video/');
-      const isImage = mimetype.startsWith('image/');
+      // Use backend proxy endpoint to avoid CORS issues
+      // Backend will proxy the file from Appwrite to frontend
+      const backendUrl = process.env.PUBLIC_API_URL || process.env.FILE_BASE_URL || 'https://uchqun-production.up.railway.app';
+      const url = `${backendUrl}/api/media/proxy/${createdFile.$id}`;
       
-      // Use preview endpoint for better CORS support and compatibility
-      // Preview endpoint works for both public and private files
-      const url = `${baseEndpoint}/storage/buckets/${appwriteBucketId}/files/${createdFile.$id}/preview?project=${appwriteProjectId}`;
-      
-      console.log('✓ Generated Appwrite URL:', {
+      console.log('✓ Generated Appwrite URL (via proxy):', {
         url,
-        isVideo,
-        isImage,
+        fileId: createdFile.$id,
+        isVideo: mimetype.startsWith('video/'),
+        isImage: mimetype.startsWith('image/'),
         mimetype,
-        endpoint: 'preview', // Using preview endpoint for better CORS support
+        appwriteUrl: `${baseEndpoint}/storage/buckets/${appwriteBucketId}/files/${createdFile.$id}/view?project=${appwriteProjectId}`,
       });
 
       console.log('✓ Appwrite file uploaded successfully:', {

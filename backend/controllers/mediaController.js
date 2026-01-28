@@ -8,6 +8,7 @@ import { createNotification } from './notificationController.js';
 import fs from 'fs';
 import path from 'path';
 import logger from '../utils/logger.js';
+import axios from 'axios';
 
 // sharp is loaded dynamically to avoid startup crashes in containers
 let sharpModule = null;
@@ -601,6 +602,74 @@ export const updateMedia = async (req, res) => {
 };
 
 // Delete media (teachers only)
+// Proxy Appwrite file through backend to avoid CORS issues
+export const proxyMediaFile = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    
+    if (!fileId) {
+      return res.status(400).json({ error: 'File ID is required' });
+    }
+
+    // Get media record to verify access
+    const media = await Media.findByPk(fileId);
+    if (!media) {
+      return res.status(404).json({ error: 'Media not found' });
+    }
+
+    // Check if URL is from Appwrite
+    if (!media.url || !media.url.includes('appwrite.io')) {
+      return res.status(400).json({ error: 'Invalid media URL' });
+    }
+
+    // Extract file ID from Appwrite URL if needed
+    let appwriteFileId = fileId;
+    if (media.url.includes('/files/')) {
+      const match = media.url.match(/\/files\/([^/]+)/);
+      if (match && match[1]) {
+        appwriteFileId = match[1];
+      }
+    }
+
+    // Get Appwrite configuration
+    const appwriteEndpoint = process.env.APPWRITE_ENDPOINT?.replace(/\/+$/, '');
+    const appwriteBucketId = process.env.APPWRITE_BUCKET_ID;
+    const appwriteProjectId = process.env.APPWRITE_PROJECT_ID;
+    const appwriteApiKey = process.env.APPWRITE_API_KEY;
+
+    if (!appwriteEndpoint || !appwriteBucketId || !appwriteProjectId || !appwriteApiKey) {
+      return res.status(503).json({ error: 'Appwrite not configured' });
+    }
+
+    // Construct Appwrite file URL
+    const appwriteUrl = `${appwriteEndpoint}/storage/buckets/${appwriteBucketId}/files/${appwriteFileId}/view?project=${appwriteProjectId}`;
+
+    // Fetch file from Appwrite
+    const response = await axios.get(appwriteUrl, {
+      headers: {
+        'X-Appwrite-Project': appwriteProjectId,
+        'X-Appwrite-Key': appwriteApiKey,
+      },
+      responseType: 'stream',
+    });
+
+    // Set appropriate headers
+    res.setHeader('Content-Type', response.headers['content-type'] || media.type === 'video' ? 'video/mp4' : 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow CORS
+
+    // Pipe the file stream to response
+    response.data.pipe(res);
+  } catch (error) {
+    logger.error('Proxy media file error', { 
+      error: error.message, 
+      stack: error.stack,
+      fileId: req.params.fileId,
+    });
+    res.status(500).json({ error: 'Failed to proxy media file' });
+  }
+};
+
 export const deleteMedia = async (req, res) => {
   try {
     if (req.user.role !== 'teacher' && req.user.role !== 'admin' && req.user.role !== 'reception') {

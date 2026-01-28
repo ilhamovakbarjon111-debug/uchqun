@@ -5,7 +5,8 @@ import {
   createMedia, 
   uploadMedia,
   updateMedia, 
-  deleteMedia 
+  deleteMedia,
+  proxyMediaFile
 } from '../controllers/mediaController.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { createMediaValidator, updateMediaValidator, mediaIdValidator } from '../validators/mediaValidator.js';
@@ -20,6 +21,8 @@ router.use(authenticate);
 
 router.get('/', paginationValidator.concat(dateQueryValidator).concat(childIdQueryValidator), handleValidationErrors, getMedia);
 router.get('/:id', mediaIdValidator, handleValidationErrors, getMediaItem);
+// Proxy endpoint for Appwrite files (to avoid CORS issues)
+router.get('/proxy/:fileId', authenticate, proxyMediaFile);
 
 // File upload endpoint (disabled for now to avoid storage issues)
 // File upload endpoint (multipart/form-data) - stores files in Appwrite
