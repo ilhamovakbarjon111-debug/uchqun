@@ -136,8 +136,7 @@ export function ParentsListScreen() {
             <View style={styles.childrenHeader}>
               <Ionicons name="people-outline" size={14} color={theme.Colors.text.secondary} />
               <Text style={styles.childrenCount}>
-                {item.children.length} {t('parentsPage.children') || 'child'}
-                {item.children.length > 1 ? (t('parentsPage.childrenSuffix') || 'ren') : ''}
+                {t('parentsPage.children', { count: item.children.length })}
               </Text>
             </View>
             <View style={styles.childrenList}>
@@ -160,7 +159,7 @@ export function ParentsListScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title={t('tabs.parents') || 'Parents'} showBack={false} />
+      <ScreenHeader title={t('parentsPage.title')} showBack={false} />
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -168,7 +167,7 @@ export function ParentsListScreen() {
           <Ionicons name="search" size={20} color={theme.Colors.text.secondary} />
           <TextInput
             style={styles.searchInput}
-            placeholder={t('parentsPage.searchPlaceholder') || 'Search by name, email or phone...'}
+            placeholder={t('parentsPage.searchPlaceholder')}
             placeholderTextColor={theme.Colors.text.tertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -182,17 +181,17 @@ export function ParentsListScreen() {
           )}
         </View>
         <Text style={styles.resultCount}>
-          {filteredParents.length} {t('parentsPage.results') || 'results'}
+          {filteredParents.length} {t('parentsPage.results')}
         </Text>
       </View>
 
       {filteredParents.length === 0 ? (
         <EmptyState
           icon="people-outline"
-          message={
+          title={
             searchQuery
-              ? t('parentsPage.noSearchResults') || 'No parents found for this search'
-              : t('parentsPage.empty') || 'No parents found'
+              ? t('parentsPage.noSearchResults')
+              : t('parentsPage.noParentsFound')
           }
         />
       ) : (

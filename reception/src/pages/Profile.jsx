@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import api from '../services/api';
@@ -103,9 +103,12 @@ const Profile = () => {
         </div>
 
         <div className="flex items-center gap-6 mb-6">
-          <div className="w-20 h-20 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-2xl font-bold border-4 border-white shadow-lg">
-            {user?.firstName?.[0]}
-            {user?.lastName?.[0]}
+          <div className="w-20 h-20 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-2xl font-bold border-4 border-white shadow-lg overflow-hidden shrink-0">
+            {user?.avatar ? (
+              <img src={user.avatar.startsWith('http') ? user.avatar : `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') || window.location.origin}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span>{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
+            )}
           </div>
           <div>
             <h3 className="text-2xl font-bold text-gray-900">

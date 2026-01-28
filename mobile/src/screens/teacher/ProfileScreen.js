@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { teacherService } from '../../services/teacherService';
 import Card from '../../components/common/Card';
@@ -7,6 +7,14 @@ import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import theme from '../../styles/theme';
+import { API_URL } from '../../config';
+
+function getAvatarUrl(avatar) {
+  if (!avatar) return null;
+  if (avatar.startsWith('http')) return avatar;
+  const base = (API_URL || '').replace(/\/api\/?$/, '');
+  return `${base}${avatar.startsWith('/') ? '' : '/'}${avatar}`;
+}
 
 export function ProfileScreen() {
   const [loading, setLoading] = useState(true);
@@ -36,6 +44,8 @@ export function ProfileScreen() {
     return <EmptyState message="Profile not found" />;
   }
 
+  const u = profile.teacher || profile;
+
   return (
     <View style={styles.container}>
       <ScreenHeader title="Profile" />
@@ -43,9 +53,13 @@ export function ProfileScreen() {
         <Card>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
-              </Text>
+              {u.avatar ? (
+                <Image source={{ uri: getAvatarUrl(u.avatar) }} style={styles.avatarImage} resizeMode="cover" />
+              ) : (
+                <Text style={styles.avatarText}>
+                  {u.firstName?.charAt(0)}{u.lastName?.charAt(0)}
+                </Text>
+              )}
             </View>
           </View>
           <Text style={styles.sectionTitle}>Personal Information</Text>
@@ -54,16 +68,16 @@ export function ProfileScreen() {
             <View style={styles.infoContent}>
               <Text style={styles.label}>Name</Text>
               <Text style={styles.value}>
-                {profile.firstName} {profile.lastName}
+                {u.firstName} {u.lastName}
               </Text>
             </View>
           </View>
-          {profile.email && (
+          {u.email && (
             <View style={styles.infoRow}>
               <Ionicons name="mail-outline" size={18} color={theme.Colors.text.secondary} />
               <View style={styles.infoContent}>
                 <Text style={styles.label}>Email</Text>
-                <Text style={styles.value}>{profile.email}</Text>
+                <Text style={styles.value}>{u.email}</Text>
               </View>
             </View>
           )}

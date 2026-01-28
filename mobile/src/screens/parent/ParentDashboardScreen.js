@@ -194,7 +194,7 @@ export function ParentDashboardScreen() {
 
           <View style={styles.headerContent}>
             <View style={styles.headerTop}>
-              <Text style={styles.roleText}>{t('dashboard.role', { defaultValue: 'My Role: Parent' })}</Text>
+              <Text style={styles.roleText}>{t('dashboard.roleParent', { defaultValue: 'Mening rolim: Ota-ona' })}</Text>
             </View>
             <Text style={styles.greetingText}>{t('dashboard.welcome')}</Text>
             <Text style={styles.nameText} allowFontScaling={true}>

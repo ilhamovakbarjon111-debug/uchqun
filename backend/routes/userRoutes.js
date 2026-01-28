@@ -1,15 +1,17 @@
 import express from 'express';
-import { updateProfile, changePassword } from '../controllers/userController.js';
+import { updateProfile, changePassword, updateAvatar } from '../controllers/userController.js';
 import { sendMessage } from '../controllers/superAdminController.js';
 import { authenticate } from '../middleware/auth.js';
 import { updateProfileValidator, changePasswordValidator } from '../validators/userValidator.js';
 import { handleValidationErrors } from '../middleware/validation.js';
+import { uploadUserAvatar } from '../middleware/uploadChildren.js';
 
 const router = express.Router();
 
 router.use(authenticate);
 
 router.put('/profile', updateProfileValidator, handleValidationErrors, updateProfile);
+router.put('/avatar', uploadUserAvatar.single('avatar'), updateAvatar);
 router.put('/password', changePasswordValidator, handleValidationErrors, changePassword);
 
 // Send message to super-admin (available for all authenticated users)

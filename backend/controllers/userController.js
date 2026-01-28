@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import { uploadFile } from '../config/storage.js';
 
 export const updateProfile = async (req, res) => {
   try {
@@ -36,6 +37,26 @@ export const updateProfile = async (req, res) => {
     console.error('Update profile error:', error);
     const errorMessage = error.message || 'Failed to update profile';
     res.status(500).json({ error: errorMessage });
+  }
+};
+
+export const updateAvatar = async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ error: 'Avatar image is required' });
+    }
+    const user = req.user;
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const filename = `avatar-${user.id}-${Date.now()}.${req.file.mimetype.split('/')[1] || 'jpg'}`;
+    const uploadResult = await uploadFile(req.file.buffer, filename, req.file.mimetype);
+    await user.update({ avatar: uploadResult.url });
+    await user.reload();
+    res.json(user.toJSON());
+  } catch (error) {
+    console.error('Update avatar error:', error);
+    res.status(500).json({ error: error.message || 'Failed to update avatar' });
   }
 };
 

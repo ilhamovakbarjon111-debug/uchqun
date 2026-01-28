@@ -33,8 +33,12 @@ const Profile = () => {
       {/* Profile Information */}
       <Card className="p-6">
         <div className="flex items-start gap-4">
-          <div className="w-20 h-20 bg-primary-100 rounded-xl flex items-center justify-center">
-            <Shield className="w-10 h-10 text-primary-600" />
+          <div className="w-20 h-20 bg-primary-100 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
+            {user?.avatar ? (
+              <img src={user.avatar.startsWith('http') ? user.avatar : `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') || window.location.origin}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <Shield className="w-10 h-10 text-primary-600" />
+            )}
           </div>
           <div className="flex-1">
             <h2 className="text-xl font-bold text-gray-900 mb-4">

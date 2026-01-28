@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { TeacherDashboardScreen } from '../screens/teacher/TeacherDashboardScreen';
 import { ProfileScreen } from '../screens/teacher/ProfileScreen';
 import { ResponsibilitiesScreen } from '../screens/teacher/ResponsibilitiesScreen';
@@ -28,12 +29,21 @@ import theme from '../styles/theme';
 // Icon size per Mobile-icons.md (20px)
 const ICON_SIZE = 20;
 
+const TAB_LABELS = {
+  Dashboard: 'nav.dashboard',
+  Parents: 'nav.parents',
+  Chat: 'nav.chat',
+  Settings: 'nav.settings',
+};
+
 function TeacherTabs() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        tabBarLabel: TAB_LABELS[route.name] ? t(TAB_LABELS[route.name]) : route.name,
         tabBarIcon: ({ focused, color, size }) => {
           // CRITICAL: Safe route name access
           const routeName = route?.name;

@@ -128,9 +128,9 @@ export function TeacherDashboardScreen() {
             <View style={{ padding: theme.Spacing.xl, alignItems: 'center' }}>
               <Ionicons name="information-circle-outline" size={48} color={theme.Colors.primary.blue} />
               <Text style={{ marginTop: theme.Spacing.md, fontSize: theme.Typography.sizes.base, color: theme.Colors.text.secondary, textAlign: 'center' }}>
-                {isAdmin ? 'Admin' : 'Reception'} role detected.{'\n'}
-                This mobile app is designed for Teachers and Parents.{'\n'}
-                Please use the web application for {isAdmin ? 'Admin' : 'Reception'} features.
+                {isAdmin ? t('dashboard.roleAdminLabel') : t('dashboard.roleReceptionLabel')} {t('dashboard.roleDetected')}{'\n'}
+                {t('dashboard.mobileForTeachersParents')}{'\n'}
+                {t('dashboard.pleaseUseWeb', { role: isAdmin ? t('dashboard.roleAdminLabel') : t('dashboard.roleReceptionLabel') })}
               </Text>
             </View>
           </Card>
@@ -143,14 +143,11 @@ export function TeacherDashboardScreen() {
     return <LoadingSpinner />;
   }
 
-  // Get role display text based on user role (like website)
+  const role = (user?.role || '').toLowerCase();
   const getRoleText = () => {
-    if (user?.role === 'admin') {
-      return t('dashboard.roleAdmin') || 'My Role: Admin';
-    } else if (user?.role === 'teacher') {
-      return t('dashboard.roleTeacher') || 'My Role: Teacher';
-    }
-    return t('dashboard.role') || 'My Role: Teacher';
+    if (role === 'admin') return t('dashboard.roleAdmin') || 'My Role: Admin';
+    if (role === 'teacher') return t('dashboard.roleTeacher') || 'My Role: Teacher';
+    return t('dashboard.roleTeacher') || 'My Role: Teacher';
   };
 
   const statCards = [
@@ -187,7 +184,7 @@ export function TeacherDashboardScreen() {
   const header = (
     <View style={styles.topBar}>
       <View style={styles.placeholder} />
-      <Text style={styles.topBarTitle} allowFontScaling={true}>{t('dashboard.title') || 'Dashboard'}</Text>
+      <Text style={styles.topBarTitle} allowFontScaling={true}>{t('nav.dashboard')}</Text>
       <View style={styles.placeholder} />
     </View>
   );
@@ -205,7 +202,7 @@ export function TeacherDashboardScreen() {
           <View style={styles.roleBadge}>
             <Ionicons name="people" size={16} color={tokens.colors.text.white} />
             <Text style={styles.roleText}>
-              {user?.role === 'admin' ? t('dashboard.roleAdmin') : t('dashboard.roleTeacher')}
+              {(user?.role || '').toLowerCase() === 'admin' ? t('dashboard.roleAdmin') : t('dashboard.roleTeacher')}
             </Text>
           </View>
           <Text style={styles.greetingText}>{t('dashboard.welcome')}</Text>

@@ -1,6 +1,7 @@
 import ChatMessage from '../models/ChatMessage.js';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
+import { sendPushToUser } from '../utils/expoPush.js';
 
 const buildConversationId = (parentId) => `parent:${parentId}`;
 
@@ -56,6 +57,29 @@ export const createMessage = async (req, res) => {
       readByParent: senderRole === 'parent',
       readByTeacher: senderRole === 'teacher',
     });
+
+    // Push notification to recipient
+    let recipientUserId = null;
+    if (conversationId.startsWith('parent:')) {
+      const parentId = conversationId.replace('parent:', '');
+      if (senderRole === 'teacher') {
+        recipientUserId = parentId;
+      } else {
+        const parentUser = await User.findByPk(parentId, { attributes: ['teacherId'] });
+        if (parentUser?.teacherId) recipientUserId = parentUser.teacherId;
+      }
+    }
+    if (recipientUserId) {
+      const senderName = req.user.firstName || req.user.role || 'Someone';
+      const preview = content.trim().slice(0, 80) + (content.trim().length > 80 ? '...' : '');
+      sendPushToUser(
+        recipientUserId,
+        senderRole === 'parent' ? 'Ota-ona: Yangi xabar' : 'O\'qituvchi: Yangi xabar',
+        `${senderName}: ${preview}`,
+        { type: 'message', conversationId, messageId: msg.id },
+        'message'
+      ).catch((err) => logger.warn('Push after createMessage failed', { recipientUserId, err: err.message }));
+    }
 
     res.status(201).json(msg);
   } catch (err) {

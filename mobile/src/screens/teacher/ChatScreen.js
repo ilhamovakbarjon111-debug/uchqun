@@ -10,7 +10,7 @@ import { api } from '../../services/api';
 import theme from '../../styles/theme';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { EmptyState } from '../../components/common/EmptyState';
+import EmptyState from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import TeacherBackground from '../../components/layout/TeacherBackground';
 
@@ -147,7 +147,7 @@ export function ChatScreen() {
   return (
     <View style={styles.container}>
       <TeacherBackground />
-      <ScreenHeader title={t('chat.title') || 'Chat'} />
+      <ScreenHeader title={t('chat.title')} />
       
       {/* Parent selector - Like website */}
       {parents.length > 0 && (
@@ -180,7 +180,7 @@ export function ChatScreen() {
       {!selectedParent ? (
         <EmptyState 
           icon="people-outline" 
-          message={t('chat.selectParent') || 'Please select a parent to start chatting'} 
+          title={t('chat.selectParent') || 'Please select a parent to start chatting'} 
         />
       ) : (
         <>
@@ -189,8 +189,9 @@ export function ChatScreen() {
             style={styles.messagesContainer}
             contentContainerStyle={styles.messagesContent}
             onScroll={(e) => {
-              const el = e.nativeEvent;
-              const distance = el.contentSize.height - el.contentOffset.y - el.layoutMeasurement.height;
+              const el = e?.nativeEvent;
+              if (!el?.contentSize?.height) return;
+              const distance = el.contentSize.height - el.contentOffset.y - (el.layoutMeasurement?.height ?? 0);
               setIsAtBottom(distance < 80);
             }}
             scrollEventThrottle={16}
@@ -198,15 +199,16 @@ export function ChatScreen() {
             {sorted.length === 0 ? (
               <EmptyState 
                 icon="chatbubbles-outline" 
-                message={t('chat.empty') || 'No messages yet'} 
+                title={t('chat.empty') || 'No messages yet'} 
                 description={t('chat.subtitle') || 'Start a conversation'}
               />
             ) : (
-              sorted.map((msg) => {
+              sorted.map((msg, index) => {
                 const isYou = msg.senderRole === 'teacher';
+                const msgKey = msg.id ?? msg._id ?? `msg-${index}`;
                 return (
                   <View
-                    key={msg.id}
+                    key={msgKey}
                     style={[
                       styles.messageRow,
                       isYou && styles.ownMessageRow,

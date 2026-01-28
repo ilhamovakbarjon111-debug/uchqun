@@ -22,6 +22,9 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { changeLanguage, getCurrentLanguage, getAvailableLanguages } from '../../i18n/config';
 import { parentService } from '../../services/parentService';
+import { activityService } from '../../services/activityService';
+import { mealService } from '../../services/mealService';
+import { mediaService } from '../../services/mediaService';
 import { api } from '../../services/api';
 import tokens from '../../styles/tokens';
 import Screen from '../../components/layout/Screen';
@@ -116,9 +119,9 @@ export function ChildProfileScreen() {
       setLoading(true);
       const [childResponse, activitiesResponse, mealsResponse, mediaResponse, profileResponse, monitoringResponse] = await Promise.all([
         parentService.getChildById(selectedChildId).catch(() => null),
-        parentService.getActivities({ childId: selectedChildId }).catch(() => []),
-        parentService.getMeals({ childId: selectedChildId }).catch(() => []),
-        parentService.getMedia({ childId: selectedChildId }).catch(() => []),
+        activityService.getActivities({ childId: selectedChildId }).catch(() => []),
+        mealService.getMeals({ childId: selectedChildId }).catch(() => []),
+        mediaService.getMedia({ childId: selectedChildId }).catch(() => []),
         parentService.getProfile().catch(() => null),
         api.get(`/parent/emotional-monitoring/child/${selectedChildId}`).catch(() => ({ data: { data: [] } })),
       ]);
@@ -221,6 +224,7 @@ export function ChildProfileScreen() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
+        base64: true,
       });
 
       if (result.canceled) return;
@@ -228,17 +232,23 @@ export function ChildProfileScreen() {
       setUploading(true);
       setShowAvatarSelector(false);
 
-      const uri = result.assets[0].uri;
-      const filename = uri.split('/').pop() || 'photo.jpg';
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : 'image/jpeg';
+      const asset = result.assets[0];
+      const base64 = asset.base64;
 
-      const formData = new FormData();
-      formData.append('photo', { uri, name: filename, type });
-
-      await api.post(`/parent/children/${selectedChildId}/avatar`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      // Prefer base64 to avoid React Native + axios FormData Network Error on Android
+      if (base64 && typeof base64 === 'string') {
+        const mimeType = asset.mimeType || 'image/jpeg';
+        const photoBase64 = `data:${mimeType};base64,${base64}`;
+        await api.put(`/child/${selectedChildId}`, { photoBase64 });
+      } else {
+        const uri = asset.uri;
+        const filename = uri.split('/').pop() || 'photo.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+        const formData = new FormData();
+        formData.append('photo', { uri, name: filename, type });
+        await api.put(`/child/${selectedChildId}`, formData);
+      }
 
       setPhotoTimestamp(Date.now());
       await loadChild();

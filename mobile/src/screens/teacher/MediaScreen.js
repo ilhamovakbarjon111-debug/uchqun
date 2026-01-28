@@ -1,41 +1,95 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Image, View, Pressable, Modal, TextInput, Text, Dimensions, TouchableOpacity } from 'react-native';
+import { 
+  FlatList, 
+  StyleSheet, 
+  Image, 
+  View, 
+  Pressable, 
+  Modal, 
+  TextInput, 
+  Text, 
+  Dimensions, 
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { mediaService } from '../../services/mediaService';
+import { teacherService } from '../../services/teacherService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { ImageViewer } from '../../components/common/ImageViewer';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
 import TeacherBackground from '../../components/layout/TeacherBackground';
 import { API_URL } from '../../config';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context/AuthContext';
 import theme from '../../styles/theme';
 
 const { width } = Dimensions.get('window');
 const itemSize = (width - 48) / 3;
 
+const MEDIA_TYPES = ['photo', 'video'];
+
 export function MediaScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [media, setMedia] = useState([]);
+  const [filter, setFilter] = useState('all');
   const [selectedImage, setSelectedImage] = useState(null);
   const [viewerVisible, setViewerVisible] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+  const [editingMedia, setEditingMedia] = useState(null);
+  const [children, setChildren] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [formData, setFormData] = useState({
+    childId: '',
     title: '',
     description: '',
-    childId: '',
+    type: 'photo',
+    date: new Date().toISOString().split('T')[0],
   });
 
   useEffect(() => {
     loadMedia();
+    loadChildren();
   }, []);
+
+  useEffect(() => {
+    loadMedia();
+  }, [filter]);
+
+  const loadChildren = async () => {
+    try {
+      const parentsList = await teacherService.getParents();
+      const allChildren = [];
+      parentsList.forEach(parent => {
+        if (parent.children && Array.isArray(parent.children)) {
+          allChildren.push(...parent.children);
+        }
+      });
+      setChildren(allChildren);
+      if (allChildren.length > 0 && !formData.childId) {
+        setFormData(prev => ({ ...prev, childId: allChildren[0].id }));
+      }
+    } catch (error) {
+      console.error('Error loading children:', error);
+      setChildren([]);
+    }
+  };
 
   const loadMedia = async () => {
     try {
       setLoading(true);
-      const data = await mediaService.getMedia();
+      const params = filter !== 'all' ? { type: filter } : {};
+      const data = await mediaService.getMedia(params);
       setMedia(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading media:', error);
@@ -46,43 +100,191 @@ export function MediaScreen() {
   };
 
   const handleCreate = () => {
-    setEditingId(null);
-    setFormData({ title: '', description: '', childId: '' });
-    setShowModal(true);
-  };
-
-  const handleEdit = (item) => {
-    setEditingId(item.id);
+    setEditingMedia(null);
+    setSelectedFile(null);
     setFormData({
-      title: item.title || '',
-      description: item.description || '',
-      childId: item.childId || '',
+      childId: children.length > 0 ? children[0].id : '',
+      title: '',
+      description: '',
+      type: 'photo',
+      date: new Date().toISOString().split('T')[0],
     });
     setShowModal(true);
   };
 
+  const handleEdit = (item) => {
+    setEditingMedia(item);
+    setSelectedFile(null);
+    setFormData({
+      childId: item.childId || '',
+      title: item.title || '',
+      description: item.description || '',
+      type: item.type || 'photo',
+      date: item.date ? item.date.split('T')[0] : new Date().toISOString().split('T')[0],
+    });
+    setShowModal(true);
+  };
+
+  const pickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          t('common.error', { defaultValue: 'Error' }),
+          t('mediaPage.permissionRequired', { defaultValue: 'Photo library permission is required' })
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: formData.type === 'video' 
+          ? ImagePicker.MediaTypeOptions.Videos 
+          : ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setSelectedFile({
+          uri: asset.uri,
+          type: asset.type || (formData.type === 'video' ? 'video' : 'image'),
+          name: asset.fileName || `media.${asset.type === 'video' ? 'mp4' : 'jpg'}`,
+        });
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert(
+        t('common.error', { defaultValue: 'Error' }),
+        t('mediaPage.pickError', { defaultValue: 'Failed to pick media' })
+      );
+    }
+  };
+
+  const pickFromCamera = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          t('common.error', { defaultValue: 'Error' }),
+          t('mediaPage.cameraPermissionRequired', { defaultValue: 'Camera permission is required' })
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: formData.type === 'video' 
+          ? ImagePicker.MediaTypeOptions.Videos 
+          : ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setSelectedFile({
+          uri: asset.uri,
+          type: asset.type || (formData.type === 'video' ? 'video' : 'image'),
+          name: asset.fileName || `media.${asset.type === 'video' ? 'mp4' : 'jpg'}`,
+        });
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert(
+        t('common.error', { defaultValue: 'Error' }),
+        t('mediaPage.cameraError', { defaultValue: 'Failed to take photo' })
+      );
+    }
+  };
+
   const handleSave = async () => {
     try {
-      if (editingId) {
-        await mediaService.updateMedia(editingId, formData);
-      } else {
-        await mediaService.createMedia(formData);
+      // Validation
+      if (!formData.childId) {
+        Alert.alert(t('common.error', { defaultValue: 'Error' }), t('mediaPage.modal.selectChild', { defaultValue: 'Bolani tanlang' }));
+        return;
       }
+      if (!formData.title || formData.title.trim() === '') {
+        Alert.alert(t('common.error', { defaultValue: 'Error' }), t('mediaPage.modal.title', { defaultValue: 'Sarlavha majburiy' }));
+        return;
+      }
+
+      if (editingMedia) {
+        // Only metadata update in edit flow
+        await mediaService.updateMedia(editingMedia.id, {
+          childId: formData.childId,
+          title: formData.title,
+          description: formData.description,
+          type: formData.type,
+          date: formData.date,
+        });
+        Alert.alert(t('common.success', { defaultValue: 'Success' }), t('mediaPage.toastUpdate', { defaultValue: 'Media yangilandi' }));
+      } else {
+        if (!selectedFile) {
+          Alert.alert(t('common.error', { defaultValue: 'Error' }), t('mediaPage.modal.fileRequired', { defaultValue: 'Fayl yuklash majburiy' }));
+          return;
+        }
+
+        // Upload file
+        setUploading(true);
+        const uploadFormData = new FormData();
+        uploadFormData.append('childId', formData.childId);
+        uploadFormData.append('title', formData.title.trim());
+        if (formData.description) uploadFormData.append('description', formData.description.trim());
+        if (formData.date) uploadFormData.append('date', formData.date);
+        
+        // Append file
+        const fileUri = selectedFile.uri;
+        const filename = selectedFile.name || `media.${selectedFile.type === 'video' ? 'mp4' : 'jpg'}`;
+        const match = /\.(\w+)$/.exec(filename);
+        const mimeType = selectedFile.type === 'video' 
+          ? `video/${match ? match[1] : 'mp4'}`
+          : `image/${match ? match[1] : 'jpeg'}`;
+        
+        uploadFormData.append('file', {
+          uri: fileUri,
+          name: filename,
+          type: mimeType,
+        });
+
+        await mediaService.uploadMedia(uploadFormData);
+        Alert.alert(t('common.success', { defaultValue: 'Success' }), t('mediaPage.toastCreate', { defaultValue: 'Media yaratildi' }));
+      }
+      
       setShowModal(false);
-      setEditingId(null);
+      setSelectedFile(null);
       loadMedia();
     } catch (error) {
       console.error('Error saving media:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.details?.join(', ') || error.message || t('mediaPage.toastError', { defaultValue: 'Xatolik yuz berdi' });
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), errorMessage);
+    } finally {
+      setUploading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    try {
-      await mediaService.deleteMedia(id);
-      loadMedia();
-    } catch (error) {
-      console.error('Error deleting media:', error);
-    }
+    Alert.alert(
+      t('mediaPage.confirmDelete', { defaultValue: 'O\'chirishni tasdiqlash' }),
+      t('mediaPage.confirmDeleteMessage', { defaultValue: 'Bu mediani o\'chirishni xohlaysizmi?' }),
+      [
+        { text: t('common.cancel', { defaultValue: 'Bekor qilish' }), style: 'cancel' },
+        {
+          text: t('common.delete', { defaultValue: 'O\'chirish' }),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await mediaService.deleteMedia(id);
+              Alert.alert(t('common.success', { defaultValue: 'Success' }), t('mediaPage.toastDelete', { defaultValue: 'Media o\'chirildi' }));
+              loadMedia();
+            } catch (error) {
+              console.error('Error deleting media:', error);
+              Alert.alert(t('common.error', { defaultValue: 'Error' }), t('mediaPage.toastError', { defaultValue: 'Xatolik yuz berdi' }));
+            }
+          },
+        },
+      ]
+    );
   };
 
   const getImageUrl = (item) => {
@@ -110,6 +312,8 @@ export function MediaScreen() {
     }
   };
 
+  const filteredMedia = filter === 'all' ? media : media.filter((item) => item.type === filter);
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -120,14 +324,21 @@ export function MediaScreen() {
 
     return (
       <View style={styles.mediaItemContainer}>
-        <Pressable onPress={() => openImageViewer(item)}>
-          <Image 
-            source={{ uri: imageUrl }} 
-            style={styles.image}
-            onError={(e) => {
-              console.warn('[MediaScreen] Image load error:', imageUrl, e.nativeEvent.error);
-            }}
-          />
+        <Pressable onPress={() => item.type === 'photo' ? openImageViewer(item) : null}>
+          {item.type === 'photo' ? (
+            <Image 
+              source={{ uri: imageUrl }} 
+              style={styles.image}
+              onError={(e) => {
+                console.warn('[MediaScreen] Image load error:', imageUrl, e.nativeEvent.error);
+              }}
+            />
+          ) : (
+            <View style={styles.videoContainer}>
+              <Ionicons name="play-circle" size={40} color={theme.Colors.text.inverse} />
+              <Text style={styles.videoLabel}>{t('mediaPage.videoLabel', { defaultValue: 'Video' })}</Text>
+            </View>
+          )}
         </Pressable>
         <Pressable
           style={styles.editButton}
@@ -141,6 +352,11 @@ export function MediaScreen() {
         >
           <Ionicons name="trash-outline" size={18} color={theme.Colors.text.inverse} />
         </Pressable>
+        {item.type === 'video' && (
+          <View style={styles.videoBadge}>
+            <Ionicons name="videocam" size={12} color={theme.Colors.text.inverse} />
+          </View>
+        )}
       </View>
     );
   };
@@ -148,12 +364,56 @@ export function MediaScreen() {
   return (
     <View style={styles.container}>
       <TeacherBackground />
-      <ScreenHeader title="Media" rightAction={handleCreate} rightIcon="add" />
-      {media.length === 0 ? (
-        <EmptyState icon="images-outline" message="No media found" />
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.Colors.text.inverse} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {t('mediaPage.title', { defaultValue: 'Media' })}
+        </Text>
+        <TouchableOpacity onPress={handleCreate} style={styles.headerAction}>
+          <Ionicons name="add" size={24} color={theme.Colors.text.inverse} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Filters */}
+      <View style={styles.filtersContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
+          {[
+            { id: 'all', label: t('mediaPage.filters.all', { defaultValue: 'All' }), icon: 'grid-outline' },
+            { id: 'photo', label: t('mediaPage.photoLabel', { defaultValue: 'Photos' }), icon: 'image-outline' },
+            { id: 'video', label: t('mediaPage.videoLabel', { defaultValue: 'Videos' }), icon: 'videocam-outline' },
+          ].map((filterOption) => (
+            <Pressable
+              key={filterOption.id}
+              style={[
+                styles.filterButton,
+                filter === filterOption.id && styles.filterButtonActive
+              ]}
+              onPress={() => setFilter(filterOption.id)}
+            >
+              <Ionicons 
+                name={filterOption.icon} 
+                size={18} 
+                color={filter === filterOption.id ? theme.Colors.text.inverse : theme.Colors.text.secondary} 
+              />
+              <Text style={[
+                styles.filterText,
+                filter === filterOption.id && styles.filterTextActive
+              ]}>
+                {filterOption.label}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
+      {filteredMedia.length === 0 ? (
+        <EmptyState icon="images-outline" message={t('mediaPage.empty', { defaultValue: 'No media found' })} />
       ) : (
         <FlatList
-          data={media}
+          data={filteredMedia}
           renderItem={renderMediaItem}
           keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
           numColumns={3}
@@ -175,40 +435,229 @@ export function MediaScreen() {
         onClose={() => setViewerVisible(false)}
       />
 
+      {/* Create/Edit Modal */}
       <Modal visible={showModal} animationType="slide" transparent>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{editingId ? 'Edit Media' : 'Create Media'}</Text>
-              <TouchableOpacity onPress={() => setShowModal(false)}>
-                <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
-              </TouchableOpacity>
-            </View>
-            <TextInput
-              style={styles.input}
-              placeholder="Title"
-              placeholderTextColor={theme.Colors.text.tertiary}
-              value={formData.title}
-              onChangeText={(text) => setFormData({ ...formData, title: text })}
-            />
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Description"
-              placeholderTextColor={theme.Colors.text.tertiary}
-              value={formData.description}
-              onChangeText={(text) => setFormData({ ...formData, description: text })}
-              multiline
-            />
-            <View style={styles.modalActions}>
-              <Pressable style={styles.cancelButton} onPress={() => setShowModal(false)}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable style={styles.saveButton} onPress={handleSave}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </Pressable>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {editingMedia 
+                    ? t('mediaPage.modal.editTitle', { defaultValue: 'Edit Media' })
+                    : t('mediaPage.modal.addTitle', { defaultValue: 'Create Media' })
+                  }
+                </Text>
+                <TouchableOpacity onPress={() => setShowModal(false)}>
+                  <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView 
+                style={styles.modalScrollView}
+                showsVerticalScrollIndicator={true}
+                keyboardShouldPersistTaps="handled"
+              >
+                {/* Child Selection */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>
+                    {t('mediaPage.modal.child', { defaultValue: 'Bola' })}
+                  </Text>
+                  {children.length === 0 ? (
+                    <View style={styles.helperContainer}>
+                      <Text style={styles.helperText}>
+                        {t('mediaPage.modal.childHelp', { defaultValue: 'Bolalar mavjud emas' })}
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={styles.pickerContainer}>
+                      <ScrollView style={styles.pickerScrollView} nestedScrollEnabled>
+                        {children.map((child) => (
+                          <Pressable
+                            key={child.id}
+                            style={[
+                              styles.pickerOption,
+                              formData.childId === child.id && styles.pickerOptionSelected
+                            ]}
+                            onPress={() => setFormData(prev => ({ ...prev, childId: child.id }))}
+                          >
+                            <Text style={[
+                              styles.pickerOptionText,
+                              formData.childId === child.id && styles.pickerOptionTextSelected
+                            ]}>
+                              {child.firstName} {child.lastName}
+                            </Text>
+                            {formData.childId === child.id && (
+                              <Ionicons name="checkmark" size={20} color={theme.Colors.primary.blue} />
+                            )}
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
+
+                {/* Title */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>
+                    {t('mediaPage.modal.title', { defaultValue: 'Sarlavha' })}
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder={t('mediaPage.modal.titlePlaceholder', { defaultValue: 'Media sarlavhasini kiriting' })}
+                    placeholderTextColor={theme.Colors.text.tertiary}
+                    value={formData.title}
+                    onChangeText={(text) => setFormData({ ...formData, title: text })}
+                  />
+                </View>
+
+                {/* Description */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>
+                    {t('mediaPage.modal.description', { defaultValue: 'Tavsif' })}
+                  </Text>
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    placeholder={t('mediaPage.modal.descriptionPlaceholder', { defaultValue: 'Media tavsifini kiriting' })}
+                    placeholderTextColor={theme.Colors.text.tertiary}
+                    value={formData.description}
+                    onChangeText={(text) => setFormData({ ...formData, description: text })}
+                    multiline
+                    numberOfLines={3}
+                  />
+                </View>
+
+                {/* Type and Date */}
+                <View style={styles.row}>
+                  <View style={[styles.inputGroup, styles.halfWidth]}>
+                    <Text style={styles.label}>
+                      {t('mediaPage.modal.type', { defaultValue: 'Turi' })}
+                    </Text>
+                    <View style={styles.pickerContainer}>
+                      <ScrollView style={styles.pickerScrollView} nestedScrollEnabled>
+                        {MEDIA_TYPES.map((type) => (
+                          <Pressable
+                            key={type}
+                            style={[
+                              styles.pickerOption,
+                              formData.type === type && styles.pickerOptionSelected
+                            ]}
+                            onPress={() => {
+                              setFormData(prev => ({ ...prev, type }));
+                              setSelectedFile(null); // Reset file when type changes
+                            }}
+                          >
+                            <Text style={[
+                              styles.pickerOptionText,
+                              formData.type === type && styles.pickerOptionTextSelected
+                            ]}>
+                              {type === 'photo' 
+                                ? t('mediaPage.photoLabel', { defaultValue: 'Photo' })
+                                : t('mediaPage.videoLabel', { defaultValue: 'Video' })
+                              }
+                            </Text>
+                            {formData.type === type && (
+                              <Ionicons name="checkmark" size={20} color={theme.Colors.primary.blue} />
+                            )}
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  </View>
+                  <View style={[styles.inputGroup, styles.halfWidth]}>
+                    <Text style={styles.label}>
+                      {t('mediaPage.modal.date', { defaultValue: 'Sana' })}
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor={theme.Colors.text.tertiary}
+                      value={formData.date}
+                      onChangeText={(text) => setFormData({ ...formData, date: text })}
+                    />
+                  </View>
+                </View>
+
+                {/* File Upload (only for create) */}
+                {!editingMedia && (
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>
+                      {t('mediaPage.modal.file', { defaultValue: 'Fayl' })}
+                    </Text>
+                    {selectedFile ? (
+                      <View style={styles.filePreview}>
+                        <Ionicons 
+                          name={formData.type === 'video' ? 'videocam' : 'image'} 
+                          size={24} 
+                          color={theme.Colors.primary.blue} 
+                        />
+                        <Text style={styles.fileName} numberOfLines={1}>
+                          {selectedFile.name || 'Selected file'}
+                        </Text>
+                        <TouchableOpacity onPress={() => setSelectedFile(null)}>
+                          <Ionicons name="close-circle" size={24} color={theme.Colors.status.error} />
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <View style={styles.fileUploadButtons}>
+                        <TouchableOpacity 
+                          style={styles.fileUploadButton}
+                          onPress={pickImage}
+                        >
+                          <Ionicons name="images-outline" size={20} color={theme.Colors.primary.blue} />
+                          <Text style={styles.fileUploadButtonText}>
+                            {t('mediaPage.modal.pickFromLibrary', { defaultValue: 'Kutubxonadan tanlash' })}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={styles.fileUploadButton}
+                          onPress={pickFromCamera}
+                        >
+                          <Ionicons name="camera-outline" size={20} color={theme.Colors.primary.blue} />
+                          <Text style={styles.fileUploadButtonText}>
+                            {t('mediaPage.modal.takePhoto', { defaultValue: 'Kameradan olish' })}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    <Text style={styles.helperText}>
+                      {t('mediaPage.modal.fileHelp', { defaultValue: 'Rasm yoki video yuklang' })}
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
+
+              <View style={styles.modalActions}>
+                <Pressable style={styles.cancelButton} onPress={() => {
+                  setShowModal(false);
+                  setSelectedFile(null);
+                }}>
+                  <Text style={styles.cancelButtonText}>
+                    {t('mediaPage.modal.cancel', { defaultValue: 'Bekor qilish' })}
+                  </Text>
+                </Pressable>
+                <Pressable 
+                  style={[styles.saveButton, uploading && styles.saveButtonDisabled]} 
+                  onPress={handleSave}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.saveButtonText}>
+                      {editingMedia 
+                        ? t('mediaPage.modal.update', { defaultValue: 'Yangilash' })
+                        : t('mediaPage.modal.create', { defaultValue: 'Yaratish' })
+                      }
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -218,6 +667,61 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.Colors.background.secondary,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.Colors.primary.blue,
+    paddingTop: 50,
+    paddingBottom: theme.Spacing.md,
+    paddingHorizontal: theme.Spacing.md,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  backButton: {
+    padding: theme.Spacing.xs,
+  },
+  headerTitle: {
+    fontSize: theme.Typography.sizes.xl,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.text.inverse,
+  },
+  headerAction: {
+    padding: theme.Spacing.xs,
+  },
+  filtersContainer: {
+    paddingVertical: theme.Spacing.md,
+    backgroundColor: theme.Colors.background.card,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.Colors.border.light,
+  },
+  filters: {
+    paddingHorizontal: theme.Spacing.md,
+    gap: theme.Spacing.sm,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.Spacing.xs,
+    paddingHorizontal: theme.Spacing.md,
+    paddingVertical: theme.Spacing.sm,
+    borderRadius: theme.BorderRadius.md,
+    backgroundColor: theme.Colors.background.secondary,
+    borderWidth: 1,
+    borderColor: theme.Colors.border.medium,
+  },
+  filterButtonActive: {
+    backgroundColor: theme.Colors.primary.blue,
+    borderColor: theme.Colors.primary.blue,
+  },
+  filterText: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.secondary,
+    fontWeight: theme.Typography.weights.medium,
+  },
+  filterTextActive: {
+    color: theme.Colors.text.inverse,
   },
   fab: {
     position: 'absolute',
@@ -248,6 +752,19 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  videoContainer: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: theme.Colors.background.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoLabel: {
+    fontSize: theme.Typography.sizes.xs,
+    color: theme.Colors.text.inverse,
+    marginTop: theme.Spacing.xs,
+    fontWeight: theme.Typography.weights.medium,
+  },
   editButton: {
     position: 'absolute',
     top: 4,
@@ -266,54 +783,165 @@ const styles = StyleSheet.create({
     padding: 6,
     ...theme.Colors.shadow.sm,
   },
+  videoBadge: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: theme.BorderRadius.sm,
+    padding: 4,
+  },
   modalContainer: {
     flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: theme.Colors.background.card,
-    borderRadius: theme.BorderRadius.lg,
-    padding: theme.Spacing.lg,
-    width: '90%',
-    maxWidth: 400,
-    ...theme.Colors.shadow.lg,
+    borderTopLeftRadius: theme.BorderRadius.xl,
+    borderTopRightRadius: theme.BorderRadius.xl,
+    maxHeight: '90%',
+    paddingBottom: Platform.OS === 'ios' ? 40 : theme.Spacing.md,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.Spacing.md,
+    padding: theme.Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.Colors.border.light,
   },
   modalTitle: {
     fontSize: theme.Typography.sizes.xl,
     fontWeight: theme.Typography.weights.bold,
     color: theme.Colors.text.primary,
   },
+  modalScrollView: {
+    maxHeight: 500,
+    paddingHorizontal: theme.Spacing.lg,
+  },
+  inputGroup: {
+    marginBottom: theme.Spacing.md,
+  },
+  label: {
+    fontSize: theme.Typography.sizes.sm,
+    fontWeight: theme.Typography.weights.semibold,
+    color: theme.Colors.text.primary,
+    marginBottom: theme.Spacing.xs,
+  },
   input: {
     borderWidth: 1,
     borderColor: theme.Colors.border.medium,
     borderRadius: theme.BorderRadius.sm,
     padding: theme.Spacing.md,
-    marginBottom: theme.Spacing.md,
     fontSize: theme.Typography.sizes.base,
     color: theme.Colors.text.primary,
     backgroundColor: theme.Colors.background.card,
   },
   textArea: {
-    height: 100,
+    height: 80,
     textAlignVertical: 'top',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: theme.Spacing.md,
+  },
+  halfWidth: {
+    flex: 1,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: theme.Colors.border.medium,
+    borderRadius: theme.BorderRadius.sm,
+    maxHeight: 150,
+    backgroundColor: theme.Colors.background.card,
+  },
+  pickerScrollView: {
+    maxHeight: 150,
+  },
+  pickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.Colors.border.light,
+  },
+  pickerOptionSelected: {
+    backgroundColor: theme.Colors.primary.blueBg,
+  },
+  pickerOptionText: {
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.text.primary,
+  },
+  pickerOptionTextSelected: {
+    color: theme.Colors.primary.blue,
+    fontWeight: theme.Typography.weights.semibold,
+  },
+  helperContainer: {
+    padding: theme.Spacing.md,
+    backgroundColor: theme.Colors.status.warning + '20',
+    borderRadius: theme.BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: theme.Colors.status.warning,
+  },
+  helperText: {
+    fontSize: theme.Typography.sizes.xs,
+    color: theme.Colors.text.secondary,
+    marginTop: theme.Spacing.xs / 2,
+  },
+  fileUploadButtons: {
+    gap: theme.Spacing.sm,
+  },
+  fileUploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.Spacing.sm,
+    padding: theme.Spacing.md,
+    borderWidth: 2,
+    borderColor: theme.Colors.primary.blue,
+    borderRadius: theme.BorderRadius.sm,
+    borderStyle: 'dashed',
+  },
+  fileUploadButtonText: {
+    fontSize: theme.Typography.sizes.base,
+    color: theme.Colors.primary.blue,
+    fontWeight: theme.Typography.weights.medium,
+  },
+  filePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.Spacing.sm,
+    padding: theme.Spacing.md,
+    backgroundColor: theme.Colors.primary.blueBg,
+    borderRadius: theme.BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: theme.Colors.primary.blue,
+  },
+  fileName: {
+    flex: 1,
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.primary,
+    fontWeight: theme.Typography.weights.medium,
   },
   modalActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: theme.Spacing.md,
+    justifyContent: 'space-between',
+    padding: theme.Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: theme.Colors.border.light,
+    gap: theme.Spacing.md,
   },
   cancelButton: {
-    paddingHorizontal: theme.Spacing.lg,
-    paddingVertical: theme.Spacing.sm,
-    marginRight: theme.Spacing.md,
+    flex: 1,
+    paddingVertical: theme.Spacing.md,
+    alignItems: 'center',
+    borderRadius: theme.BorderRadius.sm,
+    backgroundColor: theme.Colors.background.secondary,
   },
   cancelButtonText: {
     color: theme.Colors.text.secondary,
@@ -321,10 +949,14 @@ const styles = StyleSheet.create({
     fontWeight: theme.Typography.weights.medium,
   },
   saveButton: {
-    backgroundColor: theme.Colors.cards.media,
-    paddingHorizontal: theme.Spacing.lg,
-    paddingVertical: theme.Spacing.sm,
+    flex: 1,
+    paddingVertical: theme.Spacing.md,
+    alignItems: 'center',
     borderRadius: theme.BorderRadius.sm,
+    backgroundColor: theme.Colors.cards.media,
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
   },
   saveButtonText: {
     color: theme.Colors.text.inverse,

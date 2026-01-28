@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, Alert, Modal, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable, Alert, Modal, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,14 @@ import Card from '../../components/common/Card';
 import ListRow from '../../components/common/ListRow';
 import Pill from '../../components/common/Pill';
 import { api } from '../../services/api';
+import { API_URL } from '../../config';
+
+function getAvatarUrl(avatar) {
+  if (!avatar) return null;
+  if (avatar.startsWith('http')) return avatar;
+  const base = (API_URL || '').replace(/\/api\/?$/, '');
+  return `${base}${avatar.startsWith('/') ? '' : '/'}${avatar}`;
+}
 
 export function SettingsScreen() {
   const { user, logout, refreshUser } = useAuth();
@@ -189,14 +197,20 @@ export function SettingsScreen() {
         {/* User Info Card - Enhanced */}
         <Card style={styles.card} variant="elevated" shadow="soft">
           <View style={styles.userInfo}>
-            <LinearGradient
-              colors={[tokens.colors.accent.blue + '30', tokens.colors.accent.blue + '15']}
-              style={styles.avatar}
-            >
-              <Text style={styles.avatarText}>
-                {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
-              </Text>
-            </LinearGradient>
+            <View style={styles.avatarWrapper}>
+              {user?.avatar ? (
+                <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.avatarImage} resizeMode="cover" />
+              ) : (
+                <LinearGradient
+                  colors={[tokens.colors.accent.blue + '30', tokens.colors.accent.blue + '15']}
+                  style={styles.avatar}
+                >
+                  <Text style={styles.avatarText}>
+                    {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
+                  </Text>
+                </LinearGradient>
+              )}
+            </View>
             <View style={styles.userDetails}>
               <Text style={styles.userName} allowFontScaling={true}>
                 {user?.firstName ?? '—'} {user?.lastName ?? ''}
@@ -469,14 +483,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatar: {
+  avatarWrapper: {
     width: 64,
     height: 64,
     borderRadius: 32,
+    marginRight: tokens.space.md,
+    overflow: 'hidden',
+    ...tokens.shadow.soft,
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: tokens.space.md,
-    ...tokens.shadow.soft,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   avatarText: {
     fontSize: tokens.type.h1.fontSize,

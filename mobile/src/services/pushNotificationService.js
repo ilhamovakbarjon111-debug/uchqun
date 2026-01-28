@@ -3,10 +3,12 @@ import { api } from './api';
 
 let Notifications = null;
 let Device = null;
+let Constants = null;
 
 try {
   Notifications = require('expo-notifications');
   Device = require('expo-device');
+  Constants = require('expo-constants');
 } catch (e) {
   console.warn('[PushNotification] expo-notifications or expo-device not installed');
 }
@@ -31,8 +33,15 @@ export async function registerForPushNotifications() {
     return null;
   }
 
-  const tokenData = await Notifications.getExpoPushTokenAsync();
-  const token = tokenData.data;
+  const projectId = Constants?.expoConfig?.extra?.eas?.projectId || Constants?.manifest?.extra?.eas?.projectId;
+  const tokenData = await Notifications.getExpoPushTokenAsync(
+    projectId ? { projectId } : undefined
+  );
+  const token = tokenData?.data;
+  if (!token) {
+    console.warn('[PushNotification] No push token received');
+    return null;
+  }
 
   // Register with backend
   try {
@@ -59,8 +68,12 @@ export async function registerForPushNotifications() {
 export async function unregisterPushNotifications() {
   if (!Notifications) return;
   try {
-    const tokenData = await Notifications.getExpoPushTokenAsync();
-    await api.delete(`/push-notifications/device/${encodeURIComponent(tokenData.data)}`);
+    const projectId = Constants?.expoConfig?.extra?.eas?.projectId || Constants?.manifest?.extra?.eas?.projectId;
+    const tokenData = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+    const token = tokenData?.data;
+    if (token) {
+      await api.delete(`/push-notifications/device/${encodeURIComponent(token)}`);
+    }
   } catch (error) {
     console.error('[PushNotification] Failed to unregister:', error);
   }

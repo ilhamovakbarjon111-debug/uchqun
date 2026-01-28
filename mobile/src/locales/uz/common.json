@@ -7,6 +7,7 @@
     "meals": "Taomlar",
     "media": "Media",
     "chat": "Chat",
+    "settings": "Sozlamalar",
     "logout": "Chiqish",
     "profile": "Profil",
     "menu": "Menyu",
@@ -24,10 +25,16 @@
     "invalidRole": "Noto'g'ri foydalanuvchi roli"
   },
   "dashboard": {
+    "title": "Bosh sahifa",
     "role": "Mening rolim: O'qituvchi",
     "roleTeacher": "Mening rolim: O'qituvchi",
     "roleAdmin": "Mening rolim: Admin",
     "roleParent": "Mening rolim: Ota-ona",
+    "roleAdminLabel": "Admin",
+    "roleReceptionLabel": "Qabulxona",
+    "mobileForTeachersParents": "Ushbu mobil ilova O'qituvchilar va Ota-onalar uchun mo'ljallangan.",
+    "pleaseUseWeb": "{{role}} funksiyalari uchun veb-ilovadan foydalaning.",
+    "roleDetected": "roli aniqlandi.",
     "welcome": "Xush kelibsiz",
     "overview": "Umumiy ko'rinish",
     "parents": "Ota-onalar",
@@ -55,6 +62,9 @@
     "title": "Ota-onalarni boshqarish",
     "subtitle": "Ota-ona akkauntlarini ko'rish",
     "search": "Ota-onalarni qidirish...",
+    "searchPlaceholder": "Ism, email yoki telefon bo'yicha qidirish...",
+    "noSearchResults": "Ushbu qidiruv bo'yicha ota-onalar topilmadi",
+    "results": "natija",
     "children": "{{count}} bola",
     "children_plural": "{{count}} bola",
     "noChildInfo": "Bola haqida ma'lumot yo'q",
@@ -479,7 +489,16 @@
     "pushNotifications": "Push bildirishnomalari",
     "pushNotificationsDesc": "Push bildirishnomalar olish",
     "profileInfo": "Profil ma'lumotlari",
-    "selectLanguage": "Interfeys tilini tanlang"
+    "selectLanguage": "Interfeys tilini tanlang",
+    "responsibilities": "Vazifalar",
+    "tasks": "Vazifalar ro'yxati",
+    "workHistory": "Ish tarixi",
+    "contactAdmin": "Adminga murojaat",
+    "logout": "Chiqish"
+  },
+  "about": {
+    "title": "Haqida",
+    "version": "Uchqun Platform v1.0.0"
   },
   "therapy": {
     "title": "Terapiya",

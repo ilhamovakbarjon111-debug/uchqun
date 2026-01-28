@@ -7,6 +7,7 @@
     "meals": "Питание",
     "media": "Медиа",
     "chat": "Чат",
+    "settings": "Настройки",
     "logout": "Выход",
     "profile": "Профиль",
     "menu": "Меню",
@@ -32,10 +33,16 @@
     "passwordPlaceholder": "Введите ваш пароль"
   },
   "dashboard": {
+    "title": "Главная",
     "role": "Моя роль: Учитель",
     "roleTeacher": "Моя роль: Учитель",
     "roleAdmin": "Моя роль: Админ",
     "roleParent": "Моя роль: Родитель",
+    "roleAdminLabel": "Админ",
+    "roleReceptionLabel": "Регистратура",
+    "mobileForTeachersParents": "Это приложение предназначено для учителей и родителей.",
+    "pleaseUseWeb": "Используйте веб-приложение для функций {{role}}.",
+    "roleDetected": "роль определена.",
     "welcome": "С возвращением",
     "overview": "Общий обзор",
     "parents": "Родители",
@@ -64,6 +71,9 @@
     "title": "Управление родителями",
     "subtitle": "Просмотр аккаунтов родителей",
     "search": "Поиск родителей...",
+    "searchPlaceholder": "Поиск по имени, email или телефону...",
+    "noSearchResults": "Родители по этому запросу не найдены",
+    "results": "результатов",
     "children": "{{count}} ребенок",
     "children_plural": "{{count}} детей",
     "noChildInfo": "Нет информации о детях",
@@ -335,6 +345,7 @@
     "edit": "Редактировать",
     "delete": "Удалить",
     "confirmDelete": "Удалить это сообщение?",
+    "selectParent": "Выберите родителя",
     "scrollToBottom": "Прокрутить вниз",
     "errorSend": "Ошибка отправки сообщения",
     "errorUpdate": "Ошибка обновления сообщения",
@@ -542,7 +553,16 @@
     "pushNotifications": "Push уведомления",
     "pushNotificationsDesc": "Получать push уведомления",
     "profileInfo": "Информация профиля",
-    "selectLanguage": "Выберите язык интерфейса"
+    "selectLanguage": "Выберите язык интерфейса",
+    "responsibilities": "Обязанности",
+    "tasks": "Задачи",
+    "workHistory": "История работы",
+    "contactAdmin": "Связаться с админом",
+    "logout": "Выход"
+  },
+  "about": {
+    "title": "О приложении",
+    "version": "Uchqun Platform v1.0.0"
   },
   "therapy": {
     "title": "Терапия",

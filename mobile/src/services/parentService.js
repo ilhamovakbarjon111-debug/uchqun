@@ -107,14 +107,19 @@ export const parentService = {
 
   // Messages
   // Backend returns: { success: true, data: [...] }
+  // 404 is normal (no messages yet) - don't log as error
   getMessages: async () => {
     try {
       const response = await api.get('/parent/messages');
       const data = extractResponseData(response);
       return Array.isArray(data) ? data : [];
     } catch (error) {
+      // 404 means no messages yet - this is normal, not an error
+      if (error.response?.status === 404) {
+        return [];
+      }
+      // Only log non-404 errors
       console.error('[parentService] Error getting messages:', error);
-      // Return empty array instead of throwing to prevent crashes
       return [];
     }
   },

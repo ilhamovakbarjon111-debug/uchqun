@@ -44,7 +44,7 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (res) => {
     if (__DEV__) {
-      console.log('[API] Response:', res.config.url, res.status);
+      console.log('[API] Response:', res.config?.url, res.status);
     }
     return res;
   },
@@ -96,8 +96,8 @@ api.interceptors.response.use(
 // Cache interceptor for GET responses
 api.interceptors.response.use(
   async (response) => {
-    // Cache successful GET responses
-    if (response.config.method === 'get' && response.status >= 200 && response.status < 300) {
+    // Cache successful GET responses (guard: response.config may be missing on synthetic responses)
+    if (response.config?.method === 'get' && response.status >= 200 && response.status < 300) {
       try {
         const { cacheService } = await import('./cacheService');
         const params = response.config.params;
@@ -115,7 +115,8 @@ api.interceptors.response.use(
         const { cacheService } = await import('./cacheService');
         const cached = await cacheService.get(config.url, config.params);
         if (cached) {
-          return { data: cached.data, status: 200, config, _fromCache: true, _isStale: cached.isStale };
+          const safeConfig = config || { method: 'get', url: '', params: undefined };
+          return { data: cached.data, status: 200, config: safeConfig, _fromCache: true, _isStale: cached.isStale };
         }
       } catch {}
     }

@@ -1,4 +1,4 @@
-﻿import { LogOut, MessageSquare, Send, X } from 'lucide-react';
+import { LogOut, MessageSquare, Send, X } from 'lucide-react';
 import { useAuth } from '../shared/context/AuthContext';
 import Card from '../shared/components/Card';
 import { useTranslation } from 'react-i18next';
@@ -91,9 +91,12 @@ const Profile = () => {
 
       <Card className="p-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold">
-            {user?.firstName?.[0]}
-            {user?.lastName?.[0]}
+          <div className="w-14 h-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold overflow-hidden shrink-0">
+            {user?.avatar ? (
+              <img src={user.avatar.startsWith('http') ? user.avatar : `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') || window.location.origin}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span>{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
+            )}
           </div>
           <div>
             <div className="text-lg font-bold text-gray-900">

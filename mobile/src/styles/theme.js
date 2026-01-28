@@ -347,6 +347,7 @@ const ThemeSpacing = {
 };
 
 const ThemeBorderRadius = {
+  xs: 4,
   sm: tokens.radius.sm,
   md: tokens.radius.md,
   lg: tokens.radius.lg,

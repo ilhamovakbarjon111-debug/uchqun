@@ -11,11 +11,13 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
+// Video funksiyasi vaqtincha o'chirilgan
+// import { Video, ResizeMode } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
+import { mediaService } from '../../services/mediaService';
 import tokens from '../../styles/tokens';
 import Screen from '../../components/layout/Screen';
 import Card from '../../components/common/Card';
@@ -32,19 +34,43 @@ const itemSize = (width - GRID_PADDING * 2 - GRID_GAP * (COLUMNS - 1)) / COLUMNS
 
 export function MediaScreen() {
   const navigation = useNavigation();
+  const [children, setChildren] = useState([]);
+  const [selectedChildId, setSelectedChildId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [media, setMedia] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [viewerVisible, setViewerVisible] = useState(false);
-  const [videoUri, setVideoUri] = useState(null);
-  const [videoVisible, setVideoVisible] = useState(false);
+  // Video funksiyasi vaqtincha o'chirilgan
+  // const [videoUri, setVideoUri] = useState(null);
+  // const [videoVisible, setVideoVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    loadMedia();
+    const loadChildren = async () => {
+      try {
+        const list = await parentService.getChildren();
+        const arr = Array.isArray(list) ? list : [];
+        setChildren(arr);
+        if (arr.length > 0 && !selectedChildId) {
+          setSelectedChildId(arr[0].id);
+        }
+      } catch (error) {
+        setChildren([]);
+      }
+    };
+    loadChildren();
   }, []);
+
+  useEffect(() => {
+    if (selectedChildId) {
+      loadMedia();
+    } else {
+      setMedia([]);
+      setLoading(false);
+    }
+  }, [selectedChildId]);
 
   useEffect(() => {
     if (!loading) {
@@ -57,9 +83,13 @@ export function MediaScreen() {
   }, [loading]);
 
   const loadMedia = async () => {
+    if (!selectedChildId) {
+      setMedia([]);
+      return;
+    }
     try {
       setLoading(true);
-      const data = await parentService.getMedia();
+      const data = await mediaService.getMedia({ childId: selectedChildId });
       setMedia(Array.isArray(data) ? data : []);
     } catch (error) {
       setMedia([]);
@@ -165,6 +195,46 @@ export function MediaScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
+        {/* Child selector (same API as web: filter by childId) */}
+        {children.length > 1 && (
+          <View style={styles.childRow}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childRowContent}>
+              {children.map((c) => (
+                <Pressable
+                  key={c.id}
+                  style={[
+                    styles.childPill,
+                    selectedChildId === c.id && styles.childPillActive,
+                  ]}
+                  onPress={() => setSelectedChildId(c.id)}
+                >
+                  <Text
+                    style={[
+                      styles.childPillText,
+                      selectedChildId === c.id && styles.childPillTextActive,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {c.firstName} {c.lastName}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+        {children.length === 0 && !loading && (
+          <View style={styles.emptyContainer}>
+            <Card style={styles.emptyCard}>
+              <EmptyState
+                emoji="👶"
+                title="Farzand tanlang"
+                description="Farzand qo'shilgach rasmlar ko'rinadi"
+              />
+            </Card>
+          </View>
+        )}
+        {children.length > 0 && (
+        <>
         {loading ? (
           <View style={styles.loadingGrid}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
@@ -230,13 +300,14 @@ export function MediaScreen() {
                             console.warn('[MediaScreen] Image load error:', imageUrl, e.nativeEvent.error);
                           }}
                         />
-                        {isVideo && (
+                        {/* Video funksiyasi vaqtincha o'chirilgan */}
+                        {/* {isVideo && (
                           <View style={styles.videoOverlay}>
                             <View style={styles.playButton}>
                               <Ionicons name="play" size={20} color="#fff" />
                             </View>
                           </View>
-                        )}
+                        )} */}
                         <LinearGradient
                           colors={['transparent', 'rgba(0,0,0,0.3)']}
                           style={styles.imageGradient}
@@ -249,9 +320,12 @@ export function MediaScreen() {
             ))}
           </Animated.View>
         )}
+        </>
+        )}
       </ScrollView>
 
-      <Modal visible={videoVisible} animationType="fade" transparent onRequestClose={() => setVideoVisible(false)}>
+      {/* Video funksiyasi vaqtincha o'chirilgan */}
+      {/* <Modal visible={videoVisible} animationType="fade" transparent onRequestClose={() => setVideoVisible(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' }}>
           <Pressable style={{ position: 'absolute', top: 60, right: 20, zIndex: 10 }} onPress={() => setVideoVisible(false)}>
             <Ionicons name="close-circle" size={36} color="#fff" />
@@ -266,7 +340,7 @@ export function MediaScreen() {
             />
           )}
         </View>
-      </Modal>
+      </Modal> */}
 
       {viewerVisible && selectedImage && (
         <ImageViewer
@@ -288,6 +362,34 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: tokens.space['3xl'],
+  },
+  childRow: {
+    marginBottom: tokens.space.lg,
+    paddingHorizontal: GRID_PADDING,
+  },
+  childRowContent: {
+    gap: tokens.space.sm,
+    paddingVertical: tokens.space.xs,
+  },
+  childPill: {
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.sm,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.colors.card.base,
+    borderWidth: 2,
+    borderColor: tokens.colors.border.light,
+  },
+  childPillActive: {
+    backgroundColor: tokens.colors.joy.rose,
+    borderColor: tokens.colors.joy.rose,
+  },
+  childPillText: {
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.secondary,
+  },
+  childPillTextActive: {
+    color: '#fff',
   },
   headerContainer: {
     overflow: 'hidden',

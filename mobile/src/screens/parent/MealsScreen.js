@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
+import { mealService } from '../../services/mealService';
 import tokens from '../../styles/tokens';
 import Screen from '../../components/layout/Screen';
 import Card from '../../components/common/Card';
@@ -70,6 +71,8 @@ const getMealConfig = (mealType) => {
 
 export function MealsScreen() {
   const navigation = useNavigation();
+  const [children, setChildren] = useState([]);
+  const [selectedChildId, setSelectedChildId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [meals, setMeals] = useState([]);
@@ -77,8 +80,29 @@ export function MealsScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    loadMeals();
+    const loadChildren = async () => {
+      try {
+        const list = await parentService.getChildren();
+        const arr = Array.isArray(list) ? list : [];
+        setChildren(arr);
+        if (arr.length > 0 && !selectedChildId) {
+          setSelectedChildId(arr[0].id);
+        }
+      } catch (error) {
+        setChildren([]);
+      }
+    };
+    loadChildren();
   }, []);
+
+  useEffect(() => {
+    if (selectedChildId) {
+      loadMeals();
+    } else {
+      setMeals([]);
+      setLoading(false);
+    }
+  }, [selectedChildId]);
 
   useEffect(() => {
     if (!loading) {
@@ -91,9 +115,13 @@ export function MealsScreen() {
   }, [loading]);
 
   const loadMeals = async () => {
+    if (!selectedChildId) {
+      setMeals([]);
+      return;
+    }
     try {
       setLoading(true);
-      const data = await parentService.getMeals();
+      const data = await mealService.getMeals({ childId: selectedChildId });
       setMeals(Array.isArray(data) ? data : []);
     } catch (error) {
       setMeals([]);
@@ -234,6 +262,44 @@ export function MealsScreen() {
           </>
         ) : (
           <Animated.View style={{ opacity: fadeAnim }}>
+            {/* Child selector (same API as web: filter by childId) */}
+            {children.length > 1 && (
+              <View style={styles.childRow}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childRowContent}>
+                  {children.map((c) => (
+                    <Pressable
+                      key={c.id}
+                      style={[
+                        styles.childPill,
+                        selectedChildId === c.id && styles.childPillActive,
+                      ]}
+                      onPress={() => setSelectedChildId(c.id)}
+                    >
+                      <Text
+                        style={[
+                          styles.childPillText,
+                          selectedChildId === c.id && styles.childPillTextActive,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {c.firstName} {c.lastName}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+            {children.length === 0 && !loading && (
+              <Card style={styles.emptyCard}>
+                <EmptyState
+                  emoji="👶"
+                  title="Farzand tanlang"
+                  description="Farzand qo'shilgach ovqat yozuvlari ko'rinadi"
+                />
+              </Card>
+            )}
+            {children.length > 0 && (
+            <>
             {/* Filter Pills */}
             <View style={styles.filterRow}>
               {filters.map((f) => (
@@ -356,6 +422,8 @@ export function MealsScreen() {
                 ))}
               </View>
             )}
+            </>
+            )}
           </Animated.View>
         )}
       </ScrollView>
@@ -366,6 +434,33 @@ export function MealsScreen() {
 const styles = StyleSheet.create({
   content: {
     paddingTop: tokens.space.md,
+  },
+  childRow: {
+    marginBottom: tokens.space.lg,
+  },
+  childRowContent: {
+    gap: tokens.space.sm,
+    paddingVertical: tokens.space.xs,
+  },
+  childPill: {
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.sm,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.colors.card.base,
+    borderWidth: 2,
+    borderColor: tokens.colors.border.light,
+  },
+  childPillActive: {
+    backgroundColor: tokens.colors.semantic.warning,
+    borderColor: tokens.colors.semantic.warning,
+  },
+  childPillText: {
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.secondary,
+  },
+  childPillTextActive: {
+    color: '#fff',
   },
   headerContainer: {
     overflow: 'hidden',

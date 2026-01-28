@@ -100,27 +100,34 @@ export const teacherService = {
     return extractResponseData(response);
   },
 
-  // Emotional Monitoring
+  // Emotional Monitoring (backend: GET /teacher/emotional-monitoring/child/:childId, POST /teacher/emotional-monitoring)
   getEmotionalRecords: async (childId) => {
-    const response = await api.get(`/teacher/children/${childId}/emotional-monitoring`);
+    const response = await api.get(`/teacher/emotional-monitoring/child/${childId}`);
     const data = extractResponseData(response);
     return Array.isArray(data) ? data : [];
   },
 
   createEmotionalRecord: async (childId, data) => {
-    const response = await api.post(`/teacher/children/${childId}/emotional-monitoring`, data);
+    const body = { childId, date: data.date, notes: data.notes, emotionalState: data.emotionalState || {} };
+    const response = await api.post('/teacher/emotional-monitoring', body);
     return extractResponseData(response);
   },
 
-  // Therapy
+  // Therapy (backend: GET /api/therapy/usage?childId= returns { usages: [...], total })
   getTherapySessions: async (childId) => {
-    const response = await api.get(`/teacher/children/${childId}/therapy`);
+    const response = await api.get('/therapy/usage', { params: { childId } });
     const data = extractResponseData(response);
-    return Array.isArray(data) ? data : [];
+    const list = data?.usages ?? (Array.isArray(data) ? data : []);
+    return Array.isArray(list) ? list : [];
   },
 
   createTherapySession: async (childId, data) => {
-    const response = await api.post(`/teacher/children/${childId}/therapy`, data);
-    return extractResponseData(response);
+    // Backend: POST /api/therapy/:id/start with body { childId } starts a session; need therapyId
+    const therapyId = data.therapyId || data.therapy_id;
+    if (therapyId) {
+      const response = await api.post(`/therapy/${therapyId}/start`, { childId });
+      return extractResponseData(response);
+    }
+    return null;
   },
 };

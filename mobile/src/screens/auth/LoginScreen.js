@@ -33,7 +33,9 @@ export function LoginScreen() {
 
   const onSubmit = async () => {
     if (submitting) return;
-    if (!email.trim() || !password) {
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = typeof password === 'string' ? password.trim() : String(password || '').trim();
+    if (!trimmedEmail || !trimmedPassword) {
       setError('Email va parolni kiriting');
       return;
     }
@@ -42,7 +44,7 @@ export function LoginScreen() {
     try {
       // Clear any old tokens before fresh login
       await clearAuth();
-      await login(email.trim().toLowerCase(), password);
+      await login(trimmedEmail, trimmedPassword);
       // Navigation will happen via useEffect when isAuthenticated changes
     } catch (e) {
       // Extract error message from response or error object
@@ -57,10 +59,15 @@ export function LoginScreen() {
       } else if (e?.message?.includes('Network')) {
         msg = 'Server bilan bog\'lanib bo\'lmadi. Internet aloqangizni tekshiring.';
       }
-      
+      // 401 + reception-created account hint: app must use same backend as web
+      const is401 = e?.response?.status === 401;
+      if (is401 && (msg.includes('Invalid') || msg.includes('credentials') || msg.includes('parol'))) {
+        msg += '\n\nReception (veb) da qo\'shilgan hisob bilan kirish uchun ilova ham shu serverni ishlatishi kerak (Sozlamalar / .env: EXPO_PUBLIC_API_URL).';
+      }
       setError(msg);
       if (__DEV__) {
         console.error('[LoginScreen] Login error:', e?.response?.data || e?.message || e);
+        console.log('[LoginScreen] API_URL:', API_URL);
       }
     } finally {
       setSubmitting(false);

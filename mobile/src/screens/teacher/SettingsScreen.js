@@ -49,7 +49,7 @@ export function SettingsScreen() {
 
   const handleProfileUpdate = async () => {
     if (!profileData.firstName || !profileData.lastName) {
-      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('settings.nameRequired', { defaultValue: 'First and last name are required' }));
+      Alert.alert(t('common.error'), t('settings.nameRequired'));
       return;
     }
 
@@ -57,11 +57,11 @@ export function SettingsScreen() {
     try {
       await api.put('/user/profile', profileData);
       if (refreshUser) await refreshUser();
-      Alert.alert(t('common.success', { defaultValue: 'Success' }), t('settings.profileUpdated', { defaultValue: 'Profile updated successfully' }));
+      Alert.alert(t('common.success'), t('settings.profileUpdated'));
       setShowProfileModal(false);
     } catch (error) {
-      const message = error.response?.data?.message || t('settings.profileUpdateFailed', { defaultValue: 'Failed to update profile' });
-      Alert.alert(t('common.error', { defaultValue: 'Error' }), message);
+      const message = error.response?.data?.message || t('settings.profileUpdateFailed');
+      Alert.alert(t('common.error'), message);
     } finally {
       setProfileLoading(false);
     }
@@ -75,12 +75,12 @@ export function SettingsScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      t('profile.logoutTitle'),
+      t('profile.confirmLogout'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Logout',
+          text: t('settings.logout'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -106,37 +106,37 @@ export function SettingsScreen() {
   const settingsItems = [
     {
       icon: 'person-outline',
-      title: t('settings.editProfile', { defaultValue: 'Edit Profile' }),
+      title: t('settings.editProfile'),
       onPress: () => setShowProfileModal(true),
     },
     {
       icon: 'list-outline',
-      title: 'Responsibilities',
+      title: t('settings.responsibilities'),
       onPress: () => safeNavigate('Responsibilities'),
     },
     {
       icon: 'checkmark-circle-outline',
-      title: 'Tasks',
+      title: t('settings.tasks'),
       onPress: () => safeNavigate('Tasks'),
     },
     {
       icon: 'time-outline',
-      title: 'Work History',
+      title: t('settings.workHistory'),
       onPress: () => safeNavigate('WorkHistory'),
     },
     {
       icon: 'mail-outline',
-      title: 'Contact Admin',
+      title: t('settings.contactAdmin'),
       onPress: () => setShowMessageModal(true),
     },
     {
       icon: 'information-circle-outline',
-      title: 'About',
-      onPress: () => Alert.alert('About', 'Uchqun Platform v1.0.0'),
+      title: t('about.title'),
+      onPress: () => Alert.alert(t('about.title'), t('about.version')),
     },
     {
       icon: 'log-out-outline',
-      title: 'Logout',
+      title: t('settings.logout'),
       onPress: handleLogout,
       destructive: true,
     },
@@ -145,7 +145,7 @@ export function SettingsScreen() {
   return (
     <View style={styles.container}>
       <TeacherBackground />
-      <ScreenHeader title="Settings" />
+      <ScreenHeader title={t('settings.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Card>
           <View style={styles.userInfo}>
@@ -161,7 +161,7 @@ export function SettingsScreen() {
               <Text style={styles.userEmail}>{user?.email ?? '—'}</Text>
               <View style={styles.roleBadge}>
                 <Ionicons name="school" size={14} color={theme.Colors.primary.blue} />
-                <Text style={styles.roleText}>Teacher</Text>
+                <Text style={styles.roleText}>{t('dashboard.roleTeacher')}</Text>
               </View>
             </View>
           </View>
@@ -238,54 +238,54 @@ export function SettingsScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('settings.editProfile', { defaultValue: 'Edit Profile' })}</Text>
+              <Text style={styles.modalTitle}>{t('settings.editProfile')}</Text>
               <TouchableOpacity onPress={() => setShowProfileModal(false)}>
                 <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.firstName', { defaultValue: 'First Name' })}</Text>
+              <Text style={styles.inputLabel}>{t('settings.firstName')}</Text>
               <TextInput
                 style={styles.textInput}
                 value={profileData.firstName}
                 onChangeText={(text) => setProfileData({ ...profileData, firstName: text })}
-                placeholder="First Name"
+                placeholder={t('settings.firstName')}
                 placeholderTextColor={theme.Colors.text.tertiary}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.lastName', { defaultValue: 'Last Name' })}</Text>
+              <Text style={styles.inputLabel}>{t('settings.lastName')}</Text>
               <TextInput
                 style={styles.textInput}
                 value={profileData.lastName}
                 onChangeText={(text) => setProfileData({ ...profileData, lastName: text })}
-                placeholder="Last Name"
+                placeholder={t('settings.lastName')}
                 placeholderTextColor={theme.Colors.text.tertiary}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.phone', { defaultValue: 'Phone' })}</Text>
+              <Text style={styles.inputLabel}>{t('settings.phone')}</Text>
               <TextInput
                 style={styles.textInput}
                 value={profileData.phone}
                 onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
-                placeholder="+998 XX XXX XX XX"
+                placeholder={t('settings.phone')}
                 placeholderTextColor={theme.Colors.text.tertiary}
                 keyboardType="phone-pad"
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.email', { defaultValue: 'Email' })}</Text>
+              <Text style={styles.inputLabel}>{t('settings.email')}</Text>
               <TextInput
                 style={[styles.textInput, styles.disabledInput]}
                 value={user?.email || ''}
                 editable={false}
               />
-              <Text style={styles.helperText}>{t('settings.emailReadOnly', { defaultValue: 'Email cannot be changed' })}</Text>
+              <Text style={styles.helperText}>{t('settings.emailReadOnly')}</Text>
             </View>
 
             <TouchableOpacity
@@ -296,7 +296,7 @@ export function SettingsScreen() {
               {profileLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.saveButtonText}>{t('settings.save', { defaultValue: 'Save' })}</Text>
+                <Text style={styles.saveButtonText}>{t('settings.save')}</Text>
               )}
             </TouchableOpacity>
             </View>
@@ -319,30 +319,30 @@ export function SettingsScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Contact Admin</Text>
+                <Text style={styles.modalTitle}>{t('settings.contactAdmin')}</Text>
                 <TouchableOpacity onPress={() => setShowMessageModal(false)}>
                   <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Subject</Text>
+                <Text style={styles.inputLabel}>{t('profile.subject')}</Text>
                 <TextInput
                   style={styles.textInput}
                   value={messageSubject}
                   onChangeText={setMessageSubject}
-                  placeholder="Subject"
+                  placeholder={t('profile.subjectPlaceholder')}
                   placeholderTextColor={theme.Colors.text.tertiary}
                 />
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Message</Text>
+                <Text style={styles.inputLabel}>{t('profile.message')}</Text>
                 <TextInput
                   style={[styles.textInput, { height: 120, textAlignVertical: 'top' }]}
                   value={messageText}
                   onChangeText={setMessageText}
-                  placeholder="Write your message..."
+                  placeholder={t('profile.messagePlaceholder')}
                   placeholderTextColor={theme.Colors.text.tertiary}
                   multiline
                 />
@@ -352,18 +352,18 @@ export function SettingsScreen() {
                 style={[styles.saveButton, sendingMessage && styles.saveButtonDisabled]}
                 onPress={async () => {
                   if (!messageSubject.trim() || !messageText.trim()) {
-                    Alert.alert('Error', 'Subject and message are required.');
+                    Alert.alert(t('common.error'), t('profile.messageRequired'));
                     return;
                   }
                   setSendingMessage(true);
                   try {
                     await teacherService.sendMessage({ subject: messageSubject, message: messageText });
-                    Alert.alert('Success', 'Message sent successfully.');
+                    Alert.alert(t('common.success'), t('profile.messageSent'));
                     setShowMessageModal(false);
                     setMessageSubject('');
                     setMessageText('');
                   } catch (error) {
-                    Alert.alert('Error', 'Failed to send message.');
+                    Alert.alert(t('common.error'), t('profile.messageError'));
                   } finally {
                     setSendingMessage(false);
                   }
@@ -373,7 +373,7 @@ export function SettingsScreen() {
                 {sendingMessage ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.saveButtonText}>Send</Text>
+                  <Text style={styles.saveButtonText}>{t('profile.send')}</Text>
                 )}
               </TouchableOpacity>
             </View>

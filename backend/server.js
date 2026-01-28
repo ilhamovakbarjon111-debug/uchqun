@@ -31,6 +31,7 @@ import receptionRoutes from './routes/receptionRoutes.js';
 import parentRoutes from './routes/parentRoutes.js';
 import teacherRoutes from './routes/teacherRoutes.js';
 import childRoutes from './routes/childRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 // Activity, meal, and media routes
 import activityRoutes from './routes/activityRoutes.js';
 import mediaRoutes from './routes/mediaRoutes.js';
@@ -215,6 +216,7 @@ app.use('/api/reception', receptionRoutes); // Reception routes (teacher/parent 
 app.use('/api/parent', parentRoutes);       // Parent routes (view own activities, meals, media)
 app.use('/api/teacher', teacherRoutes);     // Teacher routes (responsibilities, tasks, work history)
 app.use('/api/child', childRoutes);         // Child routes (child management for parents)
+app.use('/api/user', userRoutes);           // User profile, avatar, password (authenticated)
 
 // Migration routes (public for Railway deployment)
 import migrationRoutes from './routes/migrationRoutes.js';

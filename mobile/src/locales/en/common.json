@@ -7,6 +7,7 @@
     "meals": "Meals",
     "media": "Media",
     "chat": "Chat",
+    "settings": "Settings",
     "logout": "Logout",
     "profile": "Profile",
     "menu": "Menu",
@@ -24,10 +25,16 @@
     "invalidRole": "Invalid user role"
   },
   "dashboard": {
+    "title": "Dashboard",
     "role": "My Role",
     "roleTeacher": "My Role: Teacher",
     "roleAdmin": "My Role: Admin",
     "roleParent": "My Role: Parent",
+    "roleAdminLabel": "Admin",
+    "roleReceptionLabel": "Reception",
+    "mobileForTeachersParents": "This mobile app is designed for Teachers and Parents.",
+    "pleaseUseWeb": "Please use the web application for {{role}} features.",
+    "roleDetected": "role detected.",
     "welcome": "Welcome back",
     "overview": "Overview",
     "parents": "Parents",
@@ -55,6 +62,9 @@
     "title": "Parent Management",
     "subtitle": "View parent accounts",
     "search": "Search parents...",
+    "searchPlaceholder": "Search by name, email or phone...",
+    "noSearchResults": "No parents found for this search",
+    "results": "results",
     "children": "{{count}} child",
     "children_plural": "{{count}} children",
     "noChildInfo": "No child information",
@@ -456,7 +466,16 @@
     "pushNotifications": "Push Notifications",
     "pushNotificationsDesc": "Receive push notifications",
     "profileInfo": "Profile Information",
-    "selectLanguage": "Select interface language"
+    "selectLanguage": "Select interface language",
+    "responsibilities": "Responsibilities",
+    "tasks": "Tasks",
+    "workHistory": "Work History",
+    "contactAdmin": "Contact Admin",
+    "logout": "Logout"
+  },
+  "about": {
+    "title": "About",
+    "version": "Uchqun Platform v1.0.0"
   },
   "therapy": {
     "title": "Terapiya",

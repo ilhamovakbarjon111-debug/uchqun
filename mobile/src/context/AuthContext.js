@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
 import { clearAuth, getStoredAuth, storeAuth } from '../storage/authStorage';
+import { registerForPushNotifications, unregisterPushNotifications } from '../services/pushNotificationService';
 
 const AuthContext = createContext(null);
 
@@ -47,6 +48,9 @@ export function AuthProvider({ children }) {
         setUser(stored.user);
         setAccessToken(stored.accessToken || null);
         setRefreshToken(stored.refreshToken || null);
+        if (stored.accessToken && stored.user) {
+          registerForPushNotifications().catch((err) => console.warn('[AuthContext] Push register on load failed', err));
+        }
       } catch (error) {
         console.error('[AuthContext] Bootstrap error:', error);
       } finally {
@@ -59,7 +63,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    const resp = await api.post('/auth/login', { email, password });
+    const payload = {
+      email: typeof email === 'string' ? email.trim().toLowerCase() : email,
+      password: typeof password === 'string' ? password.trim() : String(password || ''),
+    };
+    const resp = await api.post('/auth/login', payload);
     // Backend returns { success: true, accessToken, refreshToken, user }
     const { accessToken, refreshToken, user, success } = resp.data || {};
     if (!success || !accessToken || !user) {
@@ -69,10 +77,13 @@ export function AuthProvider({ children }) {
     setUser(user);
     setAccessToken(accessToken);
     setRefreshToken(refreshToken || null);
+    // Register device for push notifications (teacher and parent)
+    registerForPushNotifications().catch((err) => console.warn('[AuthContext] Push register failed', err));
     return user;
   };
 
   const logout = async () => {
+    unregisterPushNotifications().catch(() => {});
     await clearAuth();
     setUser(null);
     setAccessToken(null);
@@ -93,6 +104,8 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const role = (user?.role || '').toLowerCase();
+
   const value = useMemo(
     () => ({
       user,
@@ -100,19 +113,17 @@ export function AuthProvider({ children }) {
       refreshToken,
       bootstrapping,
       isAuthenticated: !!user && !!accessToken,
-      // CRITICAL FIX: Only set isTeacher for actual 'teacher' role
-      // Admin and Reception should NOT be treated as teachers to prevent crashes
-      isTeacher: user?.role === 'teacher',
-      isParent: user?.role === 'parent',
-      // Add explicit role checks for better handling
-      isAdmin: user?.role === 'admin',
-      isReception: user?.role === 'reception',
+      // Role checks: use normalized lowercase so backend "Parent" / "parent" both work
+      isTeacher: role === 'teacher',
+      isParent: role === 'parent',
+      isAdmin: role === 'admin',
+      isReception: role === 'reception',
       login,
       logout,
       setUser, // Add setUser for compatibility with web app
       refreshUser,
     }),
-    [user, accessToken, refreshToken, bootstrapping]
+    [user, accessToken, refreshToken, bootstrapping, role]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

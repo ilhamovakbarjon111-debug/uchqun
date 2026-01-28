@@ -1,10 +1,6 @@
 import PushNotification from '../models/PushNotification.js';
-import User from '../models/User.js';
-import { Op } from 'sequelize';
+import { getDeviceTokensForUser, sendToExpo } from '../utils/expoPush.js';
 import logger from '../utils/logger.js';
-
-// TODO: Integrate with FCM (Firebase Cloud Messaging) or Expo Push Notifications
-// For now, this is a placeholder implementation
 
 /**
  * Register device token
@@ -73,15 +69,10 @@ export const sendNotification = async (req, res) => {
       return res.status(400).json({ error: 'Title and body are required' });
     }
 
-    // Get user's device tokens
-    const devices = await PushNotification.findAll({
-      where: {
-        userId: userId || req.user.id,
-        status: { [Op.in]: ['pending', 'sent', 'delivered'] },
-      },
-    });
+    const targetUserId = userId || req.user.id;
+    const tokens = await getDeviceTokensForUser(targetUserId);
 
-    if (devices.length === 0) {
+    if (tokens.length === 0) {
       return res.json({
         success: true,
         message: 'No devices found for user',
@@ -89,35 +80,14 @@ export const sendNotification = async (req, res) => {
       });
     }
 
-    const notifications = [];
-    for (const device of devices) {
-      const notification = await PushNotification.create({
-        userId: device.userId,
-        deviceToken: device.deviceToken,
-        platform: device.platform,
-        title,
-        body,
-        data,
-        notificationType: notificationType || 'other',
-        priority,
-        status: 'pending',
-      });
-
-      // TODO: Send actual push notification via FCM/Expo
-      // For now, mark as sent
-      await notification.update({
-        status: 'sent',
-        sentAt: new Date(),
-      });
-
-      notifications.push(notification);
-    }
+    const messages = tokens.map((to) => ({ to, title, body, data: data || {} }));
+    const result = await sendToExpo(messages);
 
     res.json({
       success: true,
       data: {
-        notifications,
-        sent: notifications.length,
+        sent: result.success,
+        failed: result.failed,
       },
     });
   } catch (error) {
@@ -211,7 +181,7 @@ export const markAsOpened = async (req, res) => {
  */
 export const unregisterDevice = async (req, res) => {
   try {
-    const { token } = req.params;
+    const token = req.params.token ? decodeURIComponent(req.params.token) : req.params.token;
     const userId = req.user.id;
 
     const device = await PushNotification.findOne({
