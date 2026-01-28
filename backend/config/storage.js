@@ -138,15 +138,30 @@ export async function uploadFile(file, filename, mimetype) {
     });
   }
 
-  // Local disk fallback (development/unstaged environments)
+  // Local disk fallback (development/unstaged environments only)
+  // In production, we should use Appwrite or GCS, not local storage
+  if (process.env.NODE_ENV === 'production' && !appwriteConfigured && !bucket) {
+    throw new Error(
+      'Storage not configured for production. Please configure Appwrite (APPWRITE_*) or Google Cloud Storage (GCP_*) environment variables.'
+    );
+  }
+
   const buffer = Buffer.isBuffer(file) ? file : await streamToBuffer(file);
   const safeName = filename || `upload-${Date.now()}`;
   const destination = path.join(localMediaDir, safeName);
+  
+  // Ensure directory exists
+  ensureDir(localMediaDir);
   await fs.promises.writeFile(destination, buffer);
 
   // URL is served statically from Express (/uploads)
   const urlPath = `/uploads/media/${safeName}`;
   const absoluteUrl = fileBaseUrl ? `${fileBaseUrl}${urlPath}` : urlPath;
+
+  // Log warning in production if using local storage
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠ WARNING: Using local storage in production. Files will be lost on container restart. Configure Appwrite or GCS for persistent storage.');
+  }
 
   return {
     url: absoluteUrl,

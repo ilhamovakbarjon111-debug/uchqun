@@ -270,11 +270,21 @@ export const uploadMedia = async (req, res) => {
       process.env.APPWRITE_BUCKET_ID
     );
 
-    if (!appwriteConfigured) {
+    // In production, require Appwrite or GCS (not local storage)
+    if (process.env.NODE_ENV === 'production' && !appwriteConfigured && !process.env.GCS_BUCKET_NAME) {
+      logger.error('Media upload attempted without storage configuration in production', {
+        hasAppwrite: !!appwriteConfigured,
+        hasGCS: !!process.env.GCS_BUCKET_NAME,
+      });
       return res.status(503).json({
         error: 'Storage not configured',
-        message: 'Appwrite storage is required for media uploads. Please configure APPWRITE_* variables.',
+        message: 'Appwrite or Google Cloud Storage is required for media uploads in production. Please configure APPWRITE_* or GCP_* environment variables.',
       });
+    }
+
+    // In development, warn but allow local storage fallback
+    if (!appwriteConfigured && process.env.NODE_ENV !== 'production') {
+      logger.warn('Appwrite not configured, will use local storage fallback (files may not persist)');
     }
 
     if (req.user.role !== 'teacher' && req.user.role !== 'admin' && req.user.role !== 'reception') {
