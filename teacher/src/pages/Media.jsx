@@ -390,9 +390,13 @@ const Media = () => {
               {/* Image Container */}
               <div className="relative aspect-[4/5] overflow-hidden">
                 <img
-                  src={item.url}
+                  src={item.url || item.imageUrl || item.photoUrl}
                   alt={item.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  onError={(e) => {
+                    console.error('Image load error:', item.url || item.imageUrl || item.photoUrl);
+                    e.target.style.display = 'none';
+                  }}
                 />
                 
                 {/* Overlay on Hover */}
@@ -478,9 +482,13 @@ const Media = () => {
                 <VideoPlayer url={selectedMedia.url} />
               ) : (
                 <img
-                  src={selectedMedia.url}
+                  src={selectedMedia.url || selectedMedia.imageUrl || selectedMedia.photoUrl}
                   alt={selectedMedia.title}
                   className="max-w-full max-h-full object-contain"
+                  onError={(e) => {
+                    console.error('Image load error in modal:', selectedMedia.url || selectedMedia.imageUrl || selectedMedia.photoUrl);
+                    e.target.style.display = 'none';
+                  }}
                 />
               )}
             </div>
