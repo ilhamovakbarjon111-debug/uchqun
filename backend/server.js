@@ -108,6 +108,12 @@ const defaultOrigins = [
   'https://uchqun-platform.vercel.app',
   'https://uchqunedu.uz',
   'https://www.uchqunedu.uz',
+  // Netlify deployments
+  'https://uchqun-reception.netlify.app',
+  'https://uchqun-admin.netlify.app',
+  'https://uchqun-teacher.netlify.app',
+  'https://uchqun-government.netlify.app',
+  'https://uchqun-super-admin.netlify.app',
 ];
 
 const allowedOrigins = process.env.FRONTEND_URL
@@ -146,8 +152,17 @@ app.use(cors({
       // In development, allow any localhost origin
       if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
         callback(null, true);
+      } else if (process.env.NODE_ENV === 'production') {
+        // In production, allow Netlify and Vercel subdomains
+        if (origin.includes('.netlify.app') || origin.includes('.vercel.app')) {
+          callback(null, true);
+        } else {
+          // Log blocked origin for debugging
+          logger.warn('CORS blocked origin:', { origin, allowedOrigins, environment: process.env.NODE_ENV });
+          callback(new Error(`CORS: Origin ${origin} is not allowed`));
+        }
       } else {
-        // Log blocked origin for debugging (both dev and prod)
+        // Log blocked origin for debugging
         logger.warn('CORS blocked origin:', { origin, allowedOrigins, environment: process.env.NODE_ENV });
         callback(new Error(`CORS: Origin ${origin} is not allowed`));
       }
