@@ -16,32 +16,47 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Helper function to get cookie value
+    const getCookie = (name) => {
+      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? match[2] : null;
+    };
+
     // First check localStorage synchronously to avoid unnecessary API calls
     const storedUser = localStorage.getItem('user');
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = localStorage.getItem('accessToken') || getCookie('accessToken');
     
-    if (storedUser && accessToken) {
+    if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
         if (userData && userData.id && userData.role) {
+          // Set user immediately from localStorage
           setUser(userData);
           setLoading(false);
-          // Verify token in background (non-blocking)
-          api.get('/auth/me')
-            .then((response) => {
-              const verifiedUser = response.data;
-              if (verifiedUser) {
-                setUser(verifiedUser);
-                localStorage.setItem('user', JSON.stringify(verifiedUser));
-              }
-            })
-            .catch(() => {
-              // Token invalid - clear storage but don't redirect (let ProtectedRoute handle it)
-              localStorage.removeItem('user');
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('refreshToken');
-              setUser(null);
-            });
+          
+          // Verify token in background (non-blocking) - only if we have a token
+          if (accessToken) {
+            api.get('/auth/me')
+              .then((response) => {
+                const verifiedUser = response.data;
+                if (verifiedUser) {
+                  setUser(verifiedUser);
+                  localStorage.setItem('user', JSON.stringify(verifiedUser));
+                }
+              })
+              .catch((error) => {
+                // Token invalid - but don't clear user immediately
+                // Let ProtectedRoute handle redirect if needed
+                console.warn('Token verification failed:', error.response?.status);
+                // Only clear if it's a real auth error (not network error)
+                if (error.response?.status === 401) {
+                  localStorage.removeItem('user');
+                  localStorage.removeItem('accessToken');
+                  localStorage.removeItem('refreshToken');
+                  setUser(null);
+                }
+              });
+          }
           return;
         }
       } catch (parseError) {
@@ -52,7 +67,7 @@ export const AuthProvider = ({ children }) => {
       }
     }
     
-    // No valid stored user - check API only if we have a token
+    // No valid stored user - check API if we have a token (cookie or localStorage)
     if (accessToken) {
       api.get('/auth/me')
         .then((response) => {
@@ -62,17 +77,19 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('user', JSON.stringify(userData));
           }
         })
-        .catch(() => {
-          localStorage.removeItem('user');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+        .catch((error) => {
+          // Only clear if it's a real auth error
+          if (error.response?.status === 401) {
+            localStorage.removeItem('user');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+          }
         })
         .finally(() => {
           setLoading(false);
         });
     } else {
-      // No token at all - just clear and set loading to false
-      localStorage.removeItem('user');
+      // No token at all - just set loading to false
       setLoading(false);
     }
   }, []);
