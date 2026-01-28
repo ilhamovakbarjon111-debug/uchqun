@@ -111,6 +111,8 @@ const allowedOrigins = process.env.FRONTEND_URL
     'http://localhost:5174',
     'http://localhost:5175',
     'https://uchqun-platform.vercel.app',
+    'https://uchqunedu.uz',
+    'https://www.uchqunedu.uz',
   ];
 
 // In production, default to strict CORS; opt out with CORS_STRICT=false
@@ -118,10 +120,8 @@ const allowAllOrigins = process.env.NODE_ENV === 'production'
   ? process.env.CORS_STRICT === 'false'
   : process.env.CORS_STRICT !== 'true' ? true : false;
 
-// Log allowed origins in development
-if (process.env.NODE_ENV === 'development') {
-  logger.info('CORS allowed origins:', { origins: allowedOrigins });
-}
+// Log allowed origins (both development and production for debugging)
+logger.info('CORS allowed origins:', { origins: allowedOrigins, environment: process.env.NODE_ENV });
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -142,10 +142,8 @@ app.use(cors({
       if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
         callback(null, true);
       } else {
-        // Log blocked origin for debugging
-        if (process.env.NODE_ENV === 'development') {
-          logger.warn('CORS blocked origin:', { origin, allowedOrigins });
-        }
+        // Log blocked origin for debugging (both dev and prod)
+        logger.warn('CORS blocked origin:', { origin, allowedOrigins, environment: process.env.NODE_ENV });
         callback(new Error(`CORS: Origin ${origin} is not allowed`));
       }
     }
