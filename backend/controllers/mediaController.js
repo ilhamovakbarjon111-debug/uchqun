@@ -418,8 +418,9 @@ export const uploadMedia = async (req, res) => {
       );
     }
 
-    // Frontend expects only the uploaded image URL
-    res.status(201).json({ imageUrl: uploadResult.url });
+    // Frontend expects the full media object with url field
+    const sanitized = sanitizeMediaUrls(createdMedia);
+    res.status(201).json(sanitized);
   } catch (error) {
     logger.error('Upload media error', { error: error.message, stack: error.stack, userId: req.user?.id });
     
