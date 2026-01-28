@@ -44,7 +44,9 @@ const VideoPlayer = ({ url }) => {
 
   const youtubeUrl = getYouTubeEmbedUrl(url);
   const vimeoUrl = getVimeoEmbedUrl(url);
-  const isDirectVideo = url.match(/\.(mp4|webm|ogg|mov|avi)(\?.*)?$/i);
+  // Check if URL is a direct video file (has video extension or is from Appwrite storage)
+  const isDirectVideo = url.match(/\.(mp4|webm|ogg|mov|avi)(\?.*)?$/i) || 
+                        url.includes('/storage/buckets/') && url.includes('/files/') && url.includes('/view');
 
   useEffect(() => {
     setIsLoading(true);
