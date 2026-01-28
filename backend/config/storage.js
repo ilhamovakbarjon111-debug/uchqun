@@ -108,6 +108,7 @@ export async function uploadFile(file, filename, mimetype) {
         bucketId: appwriteBucketId,
       });
 
+      // Create file with proper permissions and content type
       const createdFile = await appwriteStorage.createFile(
         appwriteBucketId,
         fileId,
@@ -122,13 +123,28 @@ export async function uploadFile(file, filename, mimetype) {
         name: createdFile.name,
         sizeOriginal: createdFile.sizeOriginal,
         mimeType: createdFile.mimeType,
+        uploadedMimeType: mimetype,
       });
 
       const baseEndpoint = process.env.APPWRITE_ENDPOINT.replace(/\/+$/, '');
-      // Appwrite public file URL format
-      // For public buckets: /storage/buckets/{bucketId}/files/{fileId}/view?project={projectId}
-      // For private buckets, you might need to use preview endpoint or generate signed URL
+      // Appwrite file URL format
+      // For images: use /view endpoint (works for public buckets)
+      // For videos: use /view endpoint (works for public buckets)
+      // If bucket is private, may need preview or signed URL
+      // Note: /view endpoint works for both images and videos in public buckets
+      const isVideo = mimetype.startsWith('video/');
+      const isImage = mimetype.startsWith('image/');
+      
+      // Use view endpoint for both images and videos (works for public buckets)
+      // For private buckets, you might need to use preview or generate signed URL
       const url = `${baseEndpoint}/storage/buckets/${appwriteBucketId}/files/${createdFile.$id}/view?project=${appwriteProjectId}`;
+      
+      console.log('✓ Generated Appwrite URL:', {
+        url,
+        isVideo,
+        isImage,
+        mimetype,
+      });
 
       console.log('✓ Appwrite file uploaded successfully:', {
         fileId: createdFile.$id,
