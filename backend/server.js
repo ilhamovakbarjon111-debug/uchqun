@@ -266,39 +266,49 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`✅ Health check available at /health`);
   
-  // Run migrations in background after server starts
+  // Run migrations in background after server starts (only if RUN_MIGRATIONS env var is set)
   // This allows healthcheck to respond immediately
-  (async () => {
-    try {
-      console.log('Running database migrations in background...');
+  // Migrations should be run manually or via deployment script, not on every restart
+  if (process.env.RUN_MIGRATIONS === 'true') {
+    (async () => {
       try {
-        const { runMigrations } = await import('./config/migrate.js');
-        await runMigrations();
-        console.log('✓ Migrations completed successfully');
-      } catch (migrationError) {
-        console.error('⚠ Migration error:', migrationError.message);
-        console.error('Migration error stack:', migrationError.stack);
-        // Don't exit on migration errors - allow server to continue
-        // Migrations can be run manually if needed
-        console.warn('⚠ Continuing despite migration errors - server will continue running');
-        logger.warn('Migration failed but server continuing', { error: migrationError.message });
+        console.log('Running database migrations in background...');
+        try {
+          const { runMigrations } = await import('./config/migrate.js');
+          await runMigrations();
+          console.log('✓ Migrations completed successfully');
+        } catch (migrationError) {
+          console.error('⚠ Migration error:', migrationError.message);
+          console.error('Migration error stack:', migrationError.stack);
+          // Don't exit on migration errors - allow server to continue
+          // Migrations can be run manually if needed
+          console.warn('⚠ Continuing despite migration errors - server will continue running');
+          logger.warn('Migration failed but server continuing', { error: migrationError.message });
+        }
+      } catch (error) {
+        console.error('Background migration task error:', error);
+        logger.error('Background migration task failed', { error: error.message });
+        // Don't exit - server should continue running
       }
-      
-      // In development, also allow sync for convenience
-      if (process.env.NODE_ENV !== 'production') {
-        // In development, still allow sync for convenience (but warn)
+    })();
+  } else {
+    console.log('ℹ Migrations skipped (set RUN_MIGRATIONS=true to run migrations on startup)');
+  }
+  
+  // In development, also allow sync for convenience
+  if (process.env.NODE_ENV !== 'production') {
+    (async () => {
+      try {
         const forceSync = process.env.FORCE_SYNC === 'true';
         if (forceSync) {
           console.warn('⚠ WARNING: FORCE_SYNC is enabled. This will drop all tables!');
+          await syncDatabase(forceSync);
         }
-        await syncDatabase(forceSync);
+      } catch (error) {
+        console.error('Sync error:', error.message);
       }
-    } catch (error) {
-      console.error('Background migration task error:', error);
-      logger.error('Background migration task failed', { error: error.message });
-      // Don't exit - server should continue running
-    }
-  })();
+    })();
+  }
 });
 
 export default app;
