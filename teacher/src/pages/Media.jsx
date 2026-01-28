@@ -418,7 +418,14 @@ const Media = () => {
                   alt={item.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   onError={(e) => {
-                    console.error('Image load error:', item.url || item.imageUrl || item.photoUrl);
+                    const originalUrl = item.url || item.imageUrl || item.photoUrl;
+                    const proxyUrl = getProxyUrl(originalUrl, item.id);
+                    console.error('Image load error:', {
+                      original: originalUrl,
+                      proxy: proxyUrl,
+                      mediaId: item.id,
+                      error: e
+                    });
                     e.target.style.display = 'none';
                   }}
                 />
@@ -510,7 +517,14 @@ const Media = () => {
                   alt={selectedMedia.title}
                   className="max-w-full max-h-full object-contain"
                   onError={(e) => {
-                    console.error('Image load error in modal:', selectedMedia.url || selectedMedia.imageUrl || selectedMedia.photoUrl);
+                    const originalUrl = selectedMedia.url || selectedMedia.imageUrl || selectedMedia.photoUrl;
+                    const proxyUrl = getProxyUrl(originalUrl, selectedMedia.id);
+                    console.error('Image load error in modal:', {
+                      original: originalUrl,
+                      proxy: proxyUrl,
+                      mediaId: selectedMedia.id,
+                      error: e
+                    });
                     e.target.style.display = 'none';
                   }}
                 />
