@@ -403,24 +403,25 @@ export const uploadMedia = async (req, res) => {
     safeCleanup(req.file.path);
 
     // Create media record
+    // Store the Appwrite URL in the database - proxy endpoint will use it to extract file ID
+    // Frontend will convert it to proxy URL using getProxyUrl helper
     const media = await Media.create({
       childId,
       activityId: activityId || null,
       type: mediaType,
-      url: uploadResult.url,   // Initially store Appwrite file URL or proxy URL
+      url: uploadResult.url,   // Store Appwrite URL (needed for proxy endpoint to extract file ID)
       thumbnail: null,         // no thumbnails persisted
       title,
       description: description || '',
       date: date || new Date().toISOString().split('T')[0],
     });
 
-    // Update URL to use media record ID for proxy endpoint
-    // If uploadResult.url is a proxy URL with Appwrite file ID, replace it with media record ID
-    const backendUrl = process.env.PUBLIC_API_URL || process.env.FILE_BASE_URL || 'https://uchqun-production.up.railway.app';
-    const proxyUrl = `${backendUrl}/api/media/proxy/${media.id}`;
-    
-    // Update media record with proxy URL using media record ID
-    await media.update({ url: proxyUrl });
+    logger.info('Media record created', {
+      mediaId: media.id,
+      url: media.url,
+      type: mediaType,
+      childId,
+    });
 
     const createdMedia = await Media.findByPk(media.id, {
       include: [
