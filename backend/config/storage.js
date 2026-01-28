@@ -112,7 +112,13 @@ export async function uploadFile(file, filename, mimetype) {
         path: createdFile.$id,
       };
     } catch (err) {
-      // If Appwrite fails and fallback allowed, continue to local storage
+      // In production, never fallback to local storage - throw error instead
+      if (process.env.NODE_ENV === 'production') {
+        console.error('❌ Appwrite upload failed in production:', err.message);
+        console.error('❌ Error details:', err);
+        throw new Error(`Appwrite upload failed: ${err.message}. Check Appwrite credentials, bucket permissions, and endpoint connectivity.`);
+      }
+      // In development, allow fallback if explicitly enabled
       if (process.env.LOCAL_STORAGE_FALLBACK !== 'false') {
         console.warn('⚠ Appwrite upload failed, falling back to local storage:', err.message);
       } else {
