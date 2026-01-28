@@ -623,15 +623,22 @@ export const proxyMediaFile = async (req, res) => {
     }
 
     // Extract Appwrite file ID from URL
+    // URL format: https://fra.cloud.appwrite.io/v1/storage/buckets/{bucketId}/files/{fileId}/view?project={projectId}
+    // or: https://fra.cloud.appwrite.io/v1/storage/buckets/{bucketId}/files/{fileId}/preview?project={projectId}
     let appwriteFileId = null;
     if (media.url.includes('/files/')) {
-      const match = media.url.match(/\/files\/([^/]+)/);
+      // Match /files/{fileId}/ pattern
+      const match = media.url.match(/\/files\/([^/?]+)/);
       if (match && match[1]) {
         appwriteFileId = match[1];
       }
     }
 
     if (!appwriteFileId) {
+      logger.error('Could not extract Appwrite file ID', {
+        mediaId: fileId,
+        mediaUrl: media.url,
+      });
       return res.status(400).json({ error: 'Could not extract Appwrite file ID from URL' });
     }
 
@@ -646,6 +653,7 @@ export const proxyMediaFile = async (req, res) => {
     }
 
     // Construct Appwrite file URL (use view endpoint)
+    // Try view endpoint first, if it fails, try preview endpoint
     const appwriteUrl = `${appwriteEndpoint}/storage/buckets/${appwriteBucketId}/files/${appwriteFileId}/view?project=${appwriteProjectId}`;
 
     logger.info('Proxying Appwrite file', {
@@ -653,17 +661,58 @@ export const proxyMediaFile = async (req, res) => {
       appwriteFileId,
       appwriteUrl,
       mediaType: media.type,
+      originalUrl: media.url,
     });
 
     // Fetch file from Appwrite
-    const response = await axios.get(appwriteUrl, {
-      headers: {
-        'X-Appwrite-Project': appwriteProjectId,
-        'X-Appwrite-Key': appwriteApiKey,
-      },
-      responseType: 'stream',
-      timeout: 30000, // 30 second timeout
-    });
+    let response;
+    try {
+      response = await axios.get(appwriteUrl, {
+        headers: {
+          'X-Appwrite-Project': appwriteProjectId,
+          'X-Appwrite-Key': appwriteApiKey,
+        },
+        responseType: 'stream',
+        timeout: 30000, // 30 second timeout
+        validateStatus: (status) => status < 500, // Don't throw on 4xx errors
+      });
+
+      // If view endpoint returns 404 or 403, try preview endpoint
+      if (response.status === 404 || response.status === 403) {
+        logger.warn('View endpoint failed, trying preview endpoint', {
+          status: response.status,
+          mediaId: fileId,
+        });
+        const previewUrl = `${appwriteEndpoint}/storage/buckets/${appwriteBucketId}/files/${appwriteFileId}/preview?project=${appwriteProjectId}`;
+        response = await axios.get(previewUrl, {
+          headers: {
+            'X-Appwrite-Project': appwriteProjectId,
+            'X-Appwrite-Key': appwriteApiKey,
+          },
+          responseType: 'stream',
+          timeout: 30000,
+        });
+      }
+    } catch (axiosError) {
+      // If view endpoint fails, try preview endpoint
+      if (axiosError.response?.status === 404 || axiosError.response?.status === 403) {
+        logger.warn('View endpoint failed, trying preview endpoint', {
+          status: axiosError.response?.status,
+          mediaId: fileId,
+        });
+        const previewUrl = `${appwriteEndpoint}/storage/buckets/${appwriteBucketId}/files/${appwriteFileId}/preview?project=${appwriteProjectId}`;
+        response = await axios.get(previewUrl, {
+          headers: {
+            'X-Appwrite-Project': appwriteProjectId,
+            'X-Appwrite-Key': appwriteApiKey,
+          },
+          responseType: 'stream',
+          timeout: 30000,
+        });
+      } else {
+        throw axiosError;
+      }
+    }
 
     // Set appropriate headers
     const contentType = response.headers['content-type'] || 
