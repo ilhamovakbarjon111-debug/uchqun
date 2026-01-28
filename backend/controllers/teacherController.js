@@ -448,7 +448,7 @@ export const getParents = async (req, res) => {
         where.teacherId = req.user.id;
       }
     }
-    // Admin can see all parents
+    // Admin and Reception can see all parents (no filter needed)
 
     if (search) {
       const searchCondition = {
