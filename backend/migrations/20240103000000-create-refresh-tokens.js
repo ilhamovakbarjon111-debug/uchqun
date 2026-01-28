@@ -5,12 +5,11 @@ export const up = async (queryInterface, Sequelize) => {
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
       },
-      tokenHash: {
+      token_hash: {
         type: Sequelize.STRING,
         allowNull: false,
-        field: 'token_hash',
       },
-      userId: {
+      user_id: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
@@ -18,34 +17,29 @@ export const up = async (queryInterface, Sequelize) => {
           key: 'id',
         },
         onDelete: 'CASCADE',
-        field: 'user_id',
       },
-      expiresAt: {
+      expires_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        field: 'expires_at',
       },
       revoked: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
         allowNull: false,
       },
-      revokedAt: {
+      revoked_at: {
         type: Sequelize.DATE,
         allowNull: true,
-        field: 'revoked_at',
       },
-      createdAt: {
+      created_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-        field: 'created_at',
       },
-      updatedAt: {
+      updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-        field: 'updated_at',
       },
     });
 
