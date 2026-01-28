@@ -112,9 +112,9 @@ export async function uploadFile(file, filename, mimetype) {
         appwriteBucketId,
         fileId,
         InputFile.fromBuffer(buffer, filename),
-        {
-          contentType: mimetype,
-        }
+        [
+          'read("any")', // Allow anyone to read the file (for public bucket)
+        ]
       );
 
       console.log('✓ Appwrite file created:', {
