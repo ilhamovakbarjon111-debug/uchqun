@@ -611,13 +611,21 @@ export const updateMedia = async (req, res) => {
 };
 
 // Delete media (teachers only)
+// Helper function to return transparent PNG for errors
+const returnTransparentPng = (res, statusCode = 404) => {
+  const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+  res.setHeader('Content-Type', 'image/png');
+  res.setHeader('Cache-Control', 'no-cache');
+  return res.status(statusCode).send(transparentPng);
+};
+
 // Proxy Appwrite file through backend to avoid CORS issues
 export const proxyMediaFile = async (req, res) => {
   try {
     const { fileId } = req.params;
     
     if (!fileId) {
-      return res.status(400).json({ error: 'File ID is required' });
+      return returnTransparentPng(res, 400);
     }
 
     // Get media record by ID (database UUID)
@@ -627,12 +635,12 @@ export const proxyMediaFile = async (req, res) => {
       logger.error('Media not found for proxy', {
         fileId,
       });
-      return res.status(404).json({ error: 'Media not found' });
+      return returnTransparentPng(res, 404);
     }
 
     // Check if URL is from Appwrite
     if (!media.url) {
-      return res.status(400).json({ error: 'Media URL is missing' });
+      return returnTransparentPng(res, 400);
     }
     
     // Extract Appwrite file ID from URL
@@ -655,10 +663,7 @@ export const proxyMediaFile = async (req, res) => {
         mediaId: fileId,
         mediaUrl: media.url,
       });
-      return res.status(400).json({ 
-        error: 'Media URL is already a proxy URL. Please update the media record with the original Appwrite URL.',
-        hint: 'This media record needs to be updated with the original Appwrite URL from the upload result.',
-      });
+      return returnTransparentPng(res, 400);
     }
 
     if (!appwriteFileId) {
@@ -673,14 +678,7 @@ export const proxyMediaFile = async (req, res) => {
         matchResult: media.url.match(/\/files\/([^/?]+)/),
       });
       
-      // Return a 1x1 transparent PNG instead of JSON error so browser doesn't show broken image
-      if (!res.headersSent) {
-        const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
-        res.setHeader('Content-Type', 'image/png');
-        res.setHeader('Cache-Control', 'no-cache');
-        return res.status(404).send(transparentPng);
-      }
-      return;
+      return returnTransparentPng(res, 400);
     }
 
     // Get Appwrite configuration
@@ -690,7 +688,13 @@ export const proxyMediaFile = async (req, res) => {
     const appwriteApiKey = process.env.APPWRITE_API_KEY;
 
     if (!appwriteEndpoint || !appwriteBucketId || !appwriteProjectId || !appwriteApiKey) {
-      return res.status(503).json({ error: 'Appwrite not configured' });
+      logger.error('Appwrite not configured for proxy', {
+        hasEndpoint: !!appwriteEndpoint,
+        hasBucketId: !!appwriteBucketId,
+        hasProjectId: !!appwriteProjectId,
+        hasApiKey: !!appwriteApiKey,
+      });
+      return returnTransparentPng(res, 503);
     }
 
     // Construct Appwrite file URL (use view endpoint)
@@ -769,12 +773,9 @@ export const proxyMediaFile = async (req, res) => {
         responseHeaders: response.headers,
       });
       
-      // If headers already sent, we can't send JSON error
+      // If headers already sent, we can't send error response
       if (!res.headersSent) {
-        return res.status(response.status).json({ 
-          error: 'Failed to fetch file from Appwrite',
-          status: response.status,
-        });
+        return returnTransparentPng(res, response.status);
       }
       return;
     }
