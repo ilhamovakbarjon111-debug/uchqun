@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { mealService } from '../../services/mealService';
 import { teacherService } from '../../services/teacherService';
-import { Card } from '../../components/common/Card';
+import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
 import TeacherBackground from '../../components/layout/TeacherBackground';
