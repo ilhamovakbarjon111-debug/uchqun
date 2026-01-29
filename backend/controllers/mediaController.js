@@ -745,19 +745,26 @@ export const proxyMediaFile = async (req, res) => {
         mediaId: fileId,
         appwriteFileId,
         appwriteUrl,
+        responseHeaders: response.headers,
       });
-      return res.status(response.status).json({ 
-        error: 'Failed to fetch file from Appwrite',
-        status: response.status,
-      });
+      
+      // If headers already sent, we can't send JSON error
+      if (!res.headersSent) {
+        return res.status(response.status).json({ 
+          error: 'Failed to fetch file from Appwrite',
+          status: response.status,
+        });
+      }
+      return;
     }
 
-    // Set appropriate headers
+    // Set appropriate headers BEFORE piping
     const contentType = response.headers['content-type'] || 
                        (media.type === 'video' ? 'video/mp4' : 'image/jpeg');
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
     res.setHeader('Access-Control-Allow-Origin', '*'); // Allow CORS
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); // Allow cross-origin usage
     if (response.headers['content-length']) {
       res.setHeader('Content-Length', response.headers['content-length']);
     }
@@ -769,12 +776,23 @@ export const proxyMediaFile = async (req, res) => {
     response.data.on('error', (streamError) => {
       logger.error('Error streaming file from Appwrite', {
         error: streamError.message,
+        stack: streamError.stack,
         mediaId: fileId,
         appwriteFileId,
       });
+      // Don't try to send JSON if headers already sent
       if (!res.headersSent) {
         res.status(500).json({ error: 'Failed to stream file from Appwrite' });
       }
+    });
+    
+    // Handle successful stream completion
+    response.data.on('end', () => {
+      logger.info('Successfully proxied Appwrite file', {
+        mediaId: fileId,
+        appwriteFileId,
+        contentType,
+      });
     });
   } catch (error) {
     logger.error('Proxy media file error', { 
