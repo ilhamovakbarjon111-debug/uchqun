@@ -163,14 +163,14 @@ export function TeacherDashboardScreen() {
       value: stats?.activities || 0,
       icon: 'checkmark-circle',
       color: tokens.colors.semantic.success,
-      onPress: () => safeNavigateToTab('Activities'),
+      onPress: () => safeNavigate('Activities'),
     },
     {
       title: t('dashboard.meals'),
       value: stats?.meals || 0,
       icon: 'restaurant',
       color: tokens.colors.semantic.warning,
-      onPress: () => safeNavigateToTab('Meals'),
+      onPress: () => safeNavigate('Meals'),
     },
     {
       title: t('dashboard.media'),
