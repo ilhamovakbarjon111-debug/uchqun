@@ -914,10 +914,17 @@ export const rateSchool = async (req, res) => {
         created = false;
       } else {
         // Create new rating
+        // Prepare stars value - only set if no evaluation and starsNum is valid
+        const starsValue = Object.keys(finalEvaluationData).length > 0 
+          ? null 
+          : (starsNum !== null && starsNum !== undefined && starsNum >= 1 && starsNum <= 5) 
+            ? starsNum 
+            : null;
+        
         rating = await SchoolRating.create({
           schoolId: finalSchoolId,
           parentId,
-          stars: Object.keys(finalEvaluationData).length > 0 ? null : starsNum, // Only set stars if no evaluation
+          stars: starsValue,
           evaluation: finalEvaluationData,
           comment: comment || null,
         });

@@ -27,8 +27,23 @@ const SchoolRating = sequelize.define('SchoolRating', {
     type: DataTypes.INTEGER,
     allowNull: true,
     validate: {
-      min: 1,
-      max: 5,
+      isInt: true,
+      min: {
+        args: [1],
+        msg: 'Stars must be at least 1',
+      },
+      max: {
+        args: [5],
+        msg: 'Stars must be at most 5',
+      },
+      // Allow null values
+      isNullOrValid(value) {
+        if (value === null || value === undefined) {
+          return true;
+        }
+        const num = Number(value);
+        return !isNaN(num) && num >= 1 && num <= 5;
+      },
     },
   },
   evaluation: {
