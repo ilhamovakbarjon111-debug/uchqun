@@ -666,11 +666,21 @@ export const proxyMediaFile = async (req, res) => {
         mediaId: fileId,
         mediaUrl: media.url,
         urlType: media.url.includes('appwrite.io') ? 'appwrite' : media.url.includes('/api/media/proxy/') ? 'proxy' : 'unknown',
+        urlLength: media.url?.length,
+        urlSubstring: media.url?.substring(0, 200), // First 200 chars for debugging
+        hasAppwriteIo: media.url.includes('appwrite.io'),
+        hasFiles: media.url.includes('/files/'),
+        matchResult: media.url.match(/\/files\/([^/?]+)/),
       });
-      return res.status(400).json({ 
-        error: 'Could not extract Appwrite file ID from URL. Media URL must be an Appwrite URL.',
-        details: 'The media record URL is not in the expected format. Please ensure the URL is an Appwrite storage URL.',
-      });
+      
+      // Return a 1x1 transparent PNG instead of JSON error so browser doesn't show broken image
+      if (!res.headersSent) {
+        const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'no-cache');
+        return res.status(404).send(transparentPng);
+      }
+      return;
     }
 
     // Get Appwrite configuration
