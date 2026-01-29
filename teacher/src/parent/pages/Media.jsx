@@ -15,6 +15,28 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+// Helper function to convert Appwrite URL to proxy URL
+const getProxyUrl = (url, mediaId) => {
+  if (!url) return url;
+  if (!mediaId) {
+    console.warn('getProxyUrl: mediaId is missing', { url });
+    return url;
+  }
+  
+  // If URL is from Appwrite, convert to proxy endpoint
+  if (url.includes('appwrite.io') && (url.includes('/storage/buckets/') || url.includes('/files/'))) {
+    // Use VITE_API_URL if available, otherwise use Railway backend URL (same as api.js)
+    // This ensures consistency with the API base URL
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://uchqun-production.up.railway.app/api';
+    const apiBase = apiUrl.replace('/api', '');
+    const proxyUrl = `${apiBase}/api/media/proxy/${mediaId}`;
+    return proxyUrl;
+  }
+  
+  // Otherwise return original URL
+  return url;
+};
+
 // Helper function to get YouTube embed URL
 const getYouTubeEmbedUrl = (url) => {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -39,7 +61,10 @@ const VideoPlayer = ({ url }) => {
 
   const youtubeUrl = getYouTubeEmbedUrl(url);
   const vimeoUrl = getVimeoEmbedUrl(url);
-  const isDirectVideo = url.match(/\.(mp4|webm|ogg|mov|avi)(\?.*)?$/i);
+  // Check if URL is a direct video file (has video extension, is from Appwrite storage, or is a proxy URL)
+  const isDirectVideo = url.match(/\.(mp4|webm|ogg|mov|avi)(\?.*)?$/i) || 
+                        (url.includes('/storage/buckets/') && url.includes('/files/') && url.includes('/view')) ||
+                        url.includes('/api/media/proxy/');
 
   useEffect(() => {
     setIsLoading(true);
@@ -100,7 +125,9 @@ const VideoPlayer = ({ url }) => {
         <video
           src={url}
           controls
-          className="max-w-full max-h-full"
+          crossOrigin="anonymous"
+          className="w-full h-full object-contain"
+          style={{ maxHeight: '100%', maxWidth: '100%' }}
           onLoadedData={() => setIsLoading(false)}
           onError={() => {
             setIsLoading(false);
@@ -236,13 +263,65 @@ const Media = () => {
               onClick={() => setSelectedMedia(item)}
               className="group relative bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100"
             >
-              {/* Image Container */}
+              {/* Image/Video Container */}
               <div className="relative aspect-[4/5] overflow-hidden">
-                <img
-                  src={item.url}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
+                {item.type === 'video' ? (
+                  // Video preview with play on hover
+                  <div className="relative w-full h-full">
+                    <video
+                      src={getProxyUrl(item.url, item.id)}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      muted
+                      loop
+                      playsInline
+                      onMouseEnter={(e) => {
+                        // Play video on hover
+                        e.target.play().catch(() => {
+                          // Ignore autoplay errors
+                        });
+                      }}
+                      onMouseLeave={(e) => {
+                        // Pause video when mouse leaves
+                        e.target.pause();
+                        e.target.currentTime = 0; // Reset to beginning
+                      }}
+                      onError={(e) => {
+                        const originalUrl = item.url;
+                        const proxyUrl = getProxyUrl(originalUrl, item.id);
+                        console.error('Video load error:', {
+                          original: originalUrl,
+                          proxy: proxyUrl,
+                          mediaId: item.id,
+                          error: e
+                        });
+                      }}
+                    />
+                    {/* Video Play Icon - Always visible */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-white/30 shadow-lg">
+                        <Play className="w-8 h-8 text-white fill-current" />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Image
+                  <img
+                    src={getProxyUrl(item.url || item.imageUrl || item.photoUrl, item.id)}
+                    alt={item.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    onError={(e) => {
+                      const originalUrl = item.url || item.imageUrl || item.photoUrl;
+                      const proxyUrl = getProxyUrl(originalUrl, item.id);
+                      console.error('Image load error:', {
+                        original: originalUrl,
+                        proxy: proxyUrl,
+                        mediaId: item.id,
+                        error: e
+                      });
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                )}
                 
                 {/* Overlay on Hover */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 text-white">
@@ -293,7 +372,7 @@ const Media = () => {
             onClick={() => setSelectedMedia(null)}
           />
           
-          <div className="relative w-full max-w-6xl bg-white rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col lg:flex-row max-h-[90vh]">
+          <div className="relative w-full max-w-6xl bg-white rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col lg:flex-row max-h-[90vh] h-[90vh]">
             
             {/* Close Button Mobile */}
             <button 
@@ -304,14 +383,25 @@ const Media = () => {
             </button>
 
             {/* Media Content Area */}
-            <div className="flex-[2] bg-black flex items-center justify-center overflow-hidden relative">
+            <div className="flex-[2] bg-black flex items-center justify-center overflow-hidden relative w-full h-full">
               {selectedMedia.type === 'video' ? (
-                <VideoPlayer url={selectedMedia.url} />
+                <VideoPlayer url={getProxyUrl(selectedMedia.url, selectedMedia.id)} />
               ) : (
                 <img
-                  src={selectedMedia.url}
+                  src={getProxyUrl(selectedMedia.url || selectedMedia.imageUrl || selectedMedia.photoUrl, selectedMedia.id)}
                   alt={selectedMedia.title}
                   className="max-w-full max-h-full object-contain"
+                  onError={(e) => {
+                    const originalUrl = selectedMedia.url || selectedMedia.imageUrl || selectedMedia.photoUrl;
+                    const proxyUrl = getProxyUrl(originalUrl, selectedMedia.id);
+                    console.error('Image load error in modal:', {
+                      original: originalUrl,
+                      proxy: proxyUrl,
+                      mediaId: selectedMedia.id,
+                      error: e
+                    });
+                    e.target.style.display = 'none';
+                  }}
                 />
               )}
             </div>
