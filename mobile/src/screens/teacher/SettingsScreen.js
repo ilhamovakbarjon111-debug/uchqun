@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -11,6 +12,7 @@ import TeacherBackground from '../../components/layout/TeacherBackground';
 import theme from '../../styles/theme';
 import { api } from '../../services/api';
 import { teacherService } from '../../services/teacherService';
+import { API_URL } from '../../config';
 
 export function SettingsScreen() {
   const { user, logout, refreshUser } = useAuth();
@@ -31,6 +33,14 @@ export function SettingsScreen() {
   const [messageSubject, setMessageSubject] = useState('');
   const [messageText, setMessageText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  function getAvatarUrl(avatar) {
+    if (!avatar) return null;
+    if (avatar.startsWith('http')) return avatar;
+    const base = (API_URL || '').replace(/\/api\/?$/, '');
+    return `${base}${avatar.startsWith('/') ? '' : '/'}${avatar}`;
+  }
 
   useEffect(() => {
     setCurrentLanguage(getCurrentLanguage());
@@ -64,6 +74,71 @@ export function SettingsScreen() {
       Alert.alert(t('common.error'), message);
     } finally {
       setProfileLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async () => {
+    try {
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          t('common.error', { defaultValue: 'Error' }),
+          t('profile.photoPermissionRequired', { defaultValue: 'Photo library permission is required' })
+        );
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled) return;
+
+      setUploadingAvatar(true);
+
+      const asset = result.assets[0];
+      const uri = asset.uri;
+      const filename = uri.split('/').pop() || `avatar-${Date.now()}.jpg`;
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append('avatar', {
+        uri: uri,
+        name: filename,
+        type: type,
+      });
+
+      // Upload to backend
+      await api.put('/user/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Refresh user data
+      if (refreshUser) {
+        await refreshUser();
+      }
+
+      Alert.alert(
+        t('common.success', { defaultValue: 'Success' }),
+        t('profile.avatarUpdated', { defaultValue: 'Avatar updated successfully' })
+      );
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      Alert.alert(
+        t('common.error', { defaultValue: 'Error' }),
+        error.response?.data?.error || t('profile.uploadError', { defaultValue: 'Failed to upload avatar' })
+      );
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -149,11 +224,25 @@ export function SettingsScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Card>
           <View style={styles.userInfo}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
-              </Text>
-            </View>
+            <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar}>
+              <View style={styles.avatar}>
+                {user?.avatar ? (
+                  <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.avatarImage} resizeMode="cover" />
+                ) : (
+                  <Text style={styles.avatarText}>
+                    {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                  </Text>
+                )}
+                {uploadingAvatar && (
+                  <View style={styles.uploadingOverlay}>
+                    <ActivityIndicator color="#fff" />
+                  </View>
+                )}
+                <View style={styles.cameraButton}>
+                  <Ionicons name="camera" size={14} color="#fff" />
+                </View>
+              </View>
+            </TouchableOpacity>
             <View style={styles.userDetails}>
               <Text style={styles.userName}>
                 {user?.firstName ?? '—'} {user?.lastName ?? ''}
@@ -404,11 +493,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.Spacing.md,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   avatarText: {
     fontSize: theme.Typography.sizes['2xl'],
     fontWeight: theme.Typography.weights.bold,
     color: theme.Colors.primary.blue,
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: theme.Colors.primary.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  uploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   userDetails: {
     flex: 1,

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, Alert, Modal, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -43,6 +44,7 @@ export function SettingsScreen() {
     },
   });
   const [profileLoading, setProfileLoading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   
 
   useEffect(() => {
@@ -86,6 +88,71 @@ export function SettingsScreen() {
       Alert.alert(t('common.error', { defaultValue: 'Error' }), message);
     } finally {
       setProfileLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async () => {
+    try {
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          t('common.error', { defaultValue: 'Error' }),
+          t('profile.photoPermissionRequired', { defaultValue: 'Photo library permission is required' })
+        );
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled) return;
+
+      setUploadingAvatar(true);
+
+      const asset = result.assets[0];
+      const uri = asset.uri;
+      const filename = uri.split('/').pop() || `avatar-${Date.now()}.jpg`;
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append('avatar', {
+        uri: uri,
+        name: filename,
+        type: type,
+      });
+
+      // Upload to backend
+      await api.put('/user/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Refresh user data
+      if (refreshUser) {
+        await refreshUser();
+      }
+
+      Alert.alert(
+        t('common.success', { defaultValue: 'Success' }),
+        t('profile.avatarUpdated', { defaultValue: 'Avatar updated successfully' })
+      );
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      Alert.alert(
+        t('common.error', { defaultValue: 'Error' }),
+        error.response?.data?.error || t('profile.uploadError', { defaultValue: 'Failed to upload avatar' })
+      );
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -197,20 +264,30 @@ export function SettingsScreen() {
         {/* User Info Card - Enhanced */}
         <Card style={styles.card} variant="elevated" shadow="soft">
           <View style={styles.userInfo}>
-            <View style={styles.avatarWrapper}>
-              {user?.avatar ? (
-                <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.avatarImage} resizeMode="cover" />
-              ) : (
-                <LinearGradient
-                  colors={[tokens.colors.accent.blue + '30', tokens.colors.accent.blue + '15']}
-                  style={styles.avatar}
-                >
-                  <Text style={styles.avatarText}>
-                    {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
-                  </Text>
-                </LinearGradient>
-              )}
-            </View>
+            <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar}>
+              <View style={styles.avatarWrapper}>
+                {user?.avatar ? (
+                  <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.avatarImage} resizeMode="cover" />
+                ) : (
+                  <LinearGradient
+                    colors={[tokens.colors.accent.blue + '30', tokens.colors.accent.blue + '15']}
+                    style={styles.avatar}
+                  >
+                    <Text style={styles.avatarText}>
+                      {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
+                    </Text>
+                  </LinearGradient>
+                )}
+                {uploadingAvatar && (
+                  <View style={styles.uploadingOverlay}>
+                    <ActivityIndicator color="#fff" />
+                  </View>
+                )}
+                <View style={styles.cameraButton}>
+                  <Ionicons name="camera" size={14} color="#fff" />
+                </View>
+              </View>
+            </TouchableOpacity>
             <View style={styles.userDetails}>
               <Text style={styles.userName} allowFontScaling={true}>
                 {user?.firstName ?? '—'} {user?.lastName ?? ''}
@@ -490,6 +567,7 @@ const styles = StyleSheet.create({
     marginRight: tokens.space.md,
     overflow: 'hidden',
     ...tokens.shadow.soft,
+    position: 'relative',
   },
   avatar: {
     width: '100%',
@@ -709,6 +787,29 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: tokens.type.body.fontSize,
     fontWeight: tokens.type.h3.fontWeight,
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: tokens.colors.accent.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  uploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   passwordInputContainer: {
     flexDirection: 'row',
