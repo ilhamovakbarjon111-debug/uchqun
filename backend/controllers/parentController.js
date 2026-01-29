@@ -885,49 +885,44 @@ export const rateSchool = async (req, res) => {
     });
 
     try {
-      // Use transaction to prevent race conditions
-      rating = await sequelize.transaction(async (t) => {
-        // First, try to find existing rating
-        let existingRating = await SchoolRating.findOne({
-          where: {
-            schoolId: finalSchoolId,
-            parentId,
-          },
-          transaction: t,
-        });
-
-        if (existingRating) {
-          // Update existing rating
-          if (Object.keys(finalEvaluationData).length > 0) {
-            // Has evaluation criteria
-            existingRating.evaluation = finalEvaluationData;
-            existingRating.stars = null; // Clear stars when using evaluation
-          } else if (starsNum !== null && starsNum !== undefined) {
-            // Has stars, no evaluation
-            existingRating.stars = starsNum;
-            existingRating.evaluation = {}; // Use empty object instead of null
-          } else {
-            // Neither evaluation nor stars - this shouldn't happen due to validation above
-            existingRating.evaluation = {};
-            existingRating.stars = null;
-          }
-          existingRating.comment = comment || null;
-          await existingRating.save({ transaction: t });
-          created = false;
-          return existingRating;
-        } else {
-          // Create new rating
-          const newRating = await SchoolRating.create({
-            schoolId: finalSchoolId,
-            parentId,
-            stars: Object.keys(finalEvaluationData).length > 0 ? null : starsNum, // Only set stars if no evaluation
-            evaluation: finalEvaluationData,
-            comment: comment || null,
-          }, { transaction: t });
-          created = true;
-          return newRating;
-        }
+      // First, try to find existing rating (outside transaction for better error handling)
+      let existingRating = await SchoolRating.findOne({
+        where: {
+          schoolId: finalSchoolId,
+          parentId,
+        },
       });
+
+      if (existingRating) {
+        // Update existing rating
+        if (Object.keys(finalEvaluationData).length > 0) {
+          // Has evaluation criteria
+          existingRating.evaluation = finalEvaluationData;
+          existingRating.stars = null; // Clear stars when using evaluation
+        } else if (starsNum !== null && starsNum !== undefined) {
+          // Has stars, no evaluation
+          existingRating.stars = starsNum;
+          existingRating.evaluation = {}; // Use empty object instead of null
+        } else {
+          // Neither evaluation nor stars - this shouldn't happen due to validation above
+          existingRating.evaluation = {};
+          existingRating.stars = null;
+        }
+        existingRating.comment = comment || null;
+        await existingRating.save();
+        rating = existingRating;
+        created = false;
+      } else {
+        // Create new rating
+        rating = await SchoolRating.create({
+          schoolId: finalSchoolId,
+          parentId,
+          stars: Object.keys(finalEvaluationData).length > 0 ? null : starsNum, // Only set stars if no evaluation
+          evaluation: finalEvaluationData,
+          comment: comment || null,
+        });
+        created = true;
+      }
     } catch (ratingError) {
       // Log comprehensive error information
       const errorInfo = {
