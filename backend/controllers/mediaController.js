@@ -837,23 +837,8 @@ export const proxyMediaFile = async (req, res) => {
       return;
     }
     
-    // Return a 1x1 transparent PNG instead of JSON error so browser doesn't show broken image
-    // This prevents the browser from trying to parse JSON as an image
-    const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'no-cache');
-    
-    // Return appropriate error status with transparent PNG
-    if (error.response?.status === 404) {
-      return res.status(404).send(transparentPng);
-    }
-    
-    if (error.response?.status === 403) {
-      return res.status(403).send(transparentPng);
-    }
-    
-    // For other errors (500, etc.), return transparent PNG
-    res.status(500).send(transparentPng);
+    // Return transparent PNG for all errors
+    return returnTransparentPng(res, error.response?.status || 500);
   }
 };
 
