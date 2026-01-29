@@ -168,9 +168,29 @@ export const updateChild = async (req, res) => {
             childId: id,
             filename,
             mimetype,
-            bufferSize: fileBuffer.length
+            bufferSize: fileBuffer.length,
+            errorCode: uploadFileError.code,
+            errorType: uploadFileError.type,
+            errorResponse: uploadFileError.response ? {
+              status: uploadFileError.response.status,
+              statusText: uploadFileError.response.statusText,
+              data: uploadFileError.response.data
+            } : null
           });
-          throw uploadFileError;
+          
+          // Return more specific error message
+          const errorMessage = uploadFileError.response?.data?.message || uploadFileError.message || 'Unknown upload error';
+          const errorCode = uploadFileError.code || uploadFileError.response?.status || 'UNKNOWN';
+          
+          return res.status(500).json({ 
+            error: 'Failed to upload photo',
+            message: `Storage upload failed: ${errorMessage}`,
+            code: errorCode,
+            details: process.env.NODE_ENV === 'development' ? {
+              originalError: uploadFileError.message,
+              stack: uploadFileError.stack
+            } : undefined
+          });
         }
 
         if (!uploadResult || !uploadResult.url) {
@@ -195,11 +215,37 @@ export const updateChild = async (req, res) => {
           childId: id,
           hasPhotoBase64: !!req.body.photoBase64,
           photoBase64Length: req.body.photoBase64?.length,
-          photoBase64Type: typeof req.body.photoBase64
+          photoBase64Type: typeof req.body.photoBase64,
+          errorCode: uploadError.code,
+          errorName: uploadError.name,
+          errorResponse: uploadError.response ? {
+            status: uploadError.response.status,
+            statusText: uploadError.response.statusText,
+            data: uploadError.response.data
+          } : null,
+          originalError: uploadError.originalError ? {
+            message: uploadError.originalError.message,
+            code: uploadError.originalError.code
+          } : null
         });
+        
+        // If error was already handled (response sent), don't send again
+        if (res.headersSent) {
+          return;
+        }
+        
+        const errorMessage = uploadError.message || 'Unknown upload error';
+        const errorCode = uploadError.code || 'UNKNOWN';
+        
         return res.status(500).json({ 
           error: 'Failed to upload photo',
-          details: process.env.NODE_ENV === 'development' ? uploadError.message : undefined
+          message: errorMessage,
+          code: errorCode,
+          details: process.env.NODE_ENV === 'development' ? {
+            stack: uploadError.stack,
+            name: uploadError.name,
+            originalError: uploadError.originalError ? uploadError.originalError.message : undefined
+          } : undefined
         });
       }
     }
@@ -231,11 +277,24 @@ export const updateChild = async (req, res) => {
       childId: req.params?.id, 
       userId: req.user?.id,
       hasPhotoBase64: !!req.body?.photoBase64,
-      hasFile: !!req.file
+      hasFile: !!req.file,
+      errorName: error.name,
+      errorCode: error.code
     });
+    
+    // If error was already handled (response sent), don't send again
+    if (res.headersSent) {
+      return;
+    }
+    
     res.status(500).json({ 
       error: 'Failed to update child',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: error.message || 'Unknown error occurred',
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error.stack,
+        name: error.name,
+        code: error.code
+      } : undefined
     });
   }
 };

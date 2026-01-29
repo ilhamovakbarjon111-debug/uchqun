@@ -173,13 +173,19 @@ export async function uploadFile(file, filename, mimetype) {
       if (process.env.NODE_ENV === 'production') {
         const errorMessage = err.response?.data?.message || err.message || 'Unknown error';
         const errorCode = err.code || err.response?.status || 'UNKNOWN';
-        throw new Error(`Appwrite upload failed (${errorCode}): ${errorMessage}. Check Appwrite credentials, bucket permissions, and endpoint connectivity.`);
+        const detailedError = new Error(`Appwrite upload failed (${errorCode}): ${errorMessage}. Check Appwrite credentials, bucket permissions, and endpoint connectivity.`);
+        detailedError.code = errorCode;
+        detailedError.originalError = err;
+        throw detailedError;
       }
       // In development, allow fallback if explicitly enabled
       if (process.env.LOCAL_STORAGE_FALLBACK !== 'false') {
         console.warn('⚠ Appwrite upload failed, falling back to local storage:', err.message);
       } else {
-        throw err;
+        const detailedError = new Error(`Appwrite upload failed: ${err.message}`);
+        detailedError.code = err.code;
+        detailedError.originalError = err;
+        throw detailedError;
       }
     }
   }
