@@ -13,10 +13,14 @@ export const verifyCsrfToken = (req, res, next) => {
   // Skip for Bearer token auth (mobile clients and web clients using Bearer tokens)
   // This takes priority - if Bearer token is present, skip CSRF check
   // Bearer token auth is stateless and doesn't need CSRF protection
-  // Check Authorization header (case-insensitive)
+  // Check Authorization header (case-insensitive, handle both lowercase and uppercase)
   const authHeader = req.headers.authorization || req.headers.Authorization;
-  if (authHeader && typeof authHeader === 'string' && authHeader.trim().startsWith('Bearer ')) {
-    return next();
+  if (authHeader && typeof authHeader === 'string') {
+    const trimmedHeader = authHeader.trim();
+    // Check for Bearer token (case-insensitive)
+    if (trimmedHeader.startsWith('Bearer ') || trimmedHeader.startsWith('bearer ')) {
+      return next();
+    }
   }
 
   // Skip if no cookie auth present (no session to protect)
@@ -40,11 +44,14 @@ export const verifyCsrfToken = (req, res, next) => {
       error: 'Invalid CSRF token',
       message: 'CSRF token is required for cookie-based authentication. If using Bearer token, ensure Authorization header is set correctly.',
       debug: {
+        method: req.method,
+        path: req.path,
         hasAuthHeader: !!authHeader,
-        authHeaderValue: authHeader ? authHeader.substring(0, 20) + '...' : null,
+        authHeaderValue: authHeader ? (authHeader.length > 30 ? authHeader.substring(0, 30) + '...' : authHeader) : null,
         hasCookieToken: !!req.cookies?.accessToken || !!req.cookies?.refreshToken,
         hasHeaderToken: !!headerToken,
         hasCookieCsrfToken: !!cookieToken,
+        contentType: contentType.substring(0, 50),
       }
     });
   }
