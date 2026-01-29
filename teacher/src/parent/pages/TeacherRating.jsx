@@ -69,8 +69,10 @@ const TeacherRating = () => {
           throw err;
         }),
         api.get(`/parent/school-rating${childIdParam}`).catch((err) => {
-          if (err.response?.status === 400 || err.response?.status === 404) {
-            return { data: { data: { rating: null, school: null, summary: { average: 0, count: 0 } } } };
+          // Handle 400, 404, and 500 errors gracefully
+          if (err.response?.status === 400 || err.response?.status === 404 || err.response?.status === 500) {
+            console.warn('School rating endpoint error (handled gracefully):', err.response?.status, err.response?.data);
+            return { data: { data: { rating: null, school: null, summary: { average: 0, count: 0 }, allRatings: [] } } };
           }
           throw err;
         }),
