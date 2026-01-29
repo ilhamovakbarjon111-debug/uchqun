@@ -728,17 +728,7 @@ export const proxyMediaFile = async (req, res) => {
       }
     }
 
-    // Set appropriate headers
-    const contentType = response.headers['content-type'] || 
-                       (media.type === 'video' ? 'video/mp4' : 'image/jpeg');
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow CORS
-    if (response.headers['content-length']) {
-      res.setHeader('Content-Length', response.headers['content-length']);
-    }
-
-    // Check if response is successful
+    // Check if response is successful BEFORE setting headers
     if (response.status >= 400) {
       logger.error('Appwrite returned error status', {
         status: response.status,
@@ -800,24 +790,41 @@ export const proxyMediaFile = async (req, res) => {
       stack: error.stack,
       fileId: req.params.fileId,
       responseStatus: error.response?.status,
+      responseStatusText: error.response?.statusText,
       responseData: error.response?.data,
+      responseHeaders: error.response?.headers,
       axiosError: error.isAxiosError,
+      code: error.code,
     });
     
-    if (!res.headersSent) {
-      if (error.response?.status === 404) {
-        return res.status(404).json({ error: 'File not found in Appwrite' });
-      }
-      
-      if (error.response?.status === 403) {
-        return res.status(403).json({ error: 'Access denied to Appwrite file' });
-      }
-      
-      res.status(500).json({ 
-        error: 'Failed to proxy media file',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    // Don't try to send response if headers already sent
+    if (res.headersSent) {
+      logger.warn('Headers already sent, cannot send error response', {
+        fileId: req.params.fileId,
       });
+      return;
     }
+    
+    // Return appropriate error status
+    if (error.response?.status === 404) {
+      return res.status(404).json({ error: 'File not found in Appwrite' });
+    }
+    
+    if (error.response?.status === 403) {
+      return res.status(403).json({ error: 'Access denied to Appwrite file' });
+    }
+    
+    // For other errors, return 500 with error details
+    res.status(500).json({ 
+      error: 'Failed to proxy media file',
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error.stack,
+        code: error.code,
+        responseStatus: error.response?.status,
+        responseData: error.response?.data,
+      } : undefined,
+    });
   }
 };
 
