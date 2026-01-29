@@ -1092,4 +1092,103 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.body.fontSize,
     color: tokens.colors.text.secondary,
   },
+  // School Rating Styles
+  schoolHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: tokens.space.lg,
+  },
+  schoolInfoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  schoolIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: tokens.radius.xl,
+    backgroundColor: `${tokens.colors.semantic.success}15`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: tokens.space.md,
+  },
+  schoolDetails: {
+    flex: 1,
+  },
+  schoolLabel: {
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.semantic.success,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  schoolName: {
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.type.h1.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: 2,
+  },
+  schoolAddress: {
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
+  },
+  evaluationSection: {
+    marginBottom: tokens.space.lg,
+  },
+  evaluationLabel: {
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs,
+  },
+  evaluationSubtitle: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.text.secondary,
+    marginBottom: tokens.space.md,
+  },
+  evaluationList: {
+    gap: tokens.space.sm,
+  },
+  evaluationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.space.md,
+    padding: tokens.space.md,
+    borderRadius: tokens.radius.lg,
+    borderWidth: 1,
+    borderColor: tokens.colors.border.light,
+    backgroundColor: tokens.colors.surface.secondary,
+  },
+  evaluationItemText: {
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
+    flex: 1,
+  },
+  schoolSubmitButton: {
+    backgroundColor: tokens.colors.semantic.success,
+  },
+  evaluationChecklist: {
+    gap: tokens.space.xs,
+    marginBottom: tokens.space.sm,
+  },
+  evaluationCheckItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.space.sm,
+  },
+  evaluationCheckText: {
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.secondary,
+    flex: 1,
+  },
+  evaluationCheckTextActive: {
+    color: tokens.colors.text.primary,
+  },
+  sidebarCardSubtitle: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.text.secondary,
+    marginTop: 2,
+  },
 });
