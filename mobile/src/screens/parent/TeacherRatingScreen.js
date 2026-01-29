@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, TextInput, Alert } from 'react-native';
+import { StyleSheet, Text, View, Pressable, TextInput, Alert, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { parentService } from '../../services/parentService';
 import { api } from '../../services/api';
@@ -13,7 +13,10 @@ import Skeleton from '../../components/common/Skeleton';
 
 export function TeacherRatingScreen() {
   const navigation = useNavigation();
+  const route = useRoute();
   const { t, i18n } = useTranslation();
+  const { childId = null } = route?.params || {};
+  
   const [loading, setLoading] = useState(true);
   const [teacher, setTeacher] = useState(null);
   const [rating, setRating] = useState(null);
@@ -23,6 +26,28 @@ export function TeacherRatingScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // School rating states
+  const [school, setSchool] = useState(null);
+  const [schoolRating, setSchoolRating] = useState(null);
+  const [schoolSummary, setSchoolSummary] = useState({ average: 0, count: 0 });
+  const [schoolStars, setSchoolStars] = useState(0);
+  const [schoolEvaluation, setSchoolEvaluation] = useState({
+    officiallyRegistered: false,
+    qualifiedSpecialists: false,
+    individualPlan: false,
+    safeEnvironment: false,
+    medicalRequirements: false,
+    developmentalActivities: false,
+    foodQuality: false,
+    regularInformation: false,
+    clearPayments: false,
+    kindAttitude: false,
+  });
+  const [schoolComment, setSchoolComment] = useState('');
+  const [savingSchool, setSavingSchool] = useState(false);
+  const [schoolError, setSchoolError] = useState('');
+  const [schoolSuccess, setSchoolSuccess] = useState('');
 
   const locale = useMemo(() => {
     return {
@@ -34,18 +59,30 @@ export function TeacherRatingScreen() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [childId]);
 
   const loadData = async () => {
     setLoading(true);
     setError('');
+    setSchoolError('');
     try {
+      // Get childId from route params if available
+      const childIdParam = childId ? `?childId=${childId}` : '';
+      
       // Get teacher from profile and rating data (like web)
-      const [profileRes, ratingRes] = await Promise.all([
+      const [profileRes, ratingRes, schoolRatingRes] = await Promise.all([
         api.get('/parent/profile').catch(() => ({ data: { data: { user: { assignedTeacher: null } } } })),
         api.get('/parent/ratings').catch((err) => {
           if (err.response?.status === 400 || err.response?.status === 404) {
             return { data: { data: { rating: null, summary: { average: 0, count: 0 } } } };
+          }
+          throw err;
+        }),
+        api.get(`/parent/school-rating${childIdParam}`).catch((err) => {
+          // Handle 400, 404, and 500 errors gracefully
+          if (err.response?.status === 400 || err.response?.status === 404 || err.response?.status === 500) {
+            console.warn('School rating endpoint error (handled gracefully):', err.response?.status, err.response?.data);
+            return { data: { data: { rating: null, school: null, summary: { average: 0, count: 0 }, allRatings: [] } } };
           }
           throw err;
         }),
@@ -59,6 +96,26 @@ export function TeacherRatingScreen() {
       setStars(ratingData.rating?.stars || 0);
       setComment(ratingData.rating?.comment || '');
       setSummary(ratingData.summary || { average: 0, count: 0 });
+
+      // School rating data
+      const schoolRatingData = schoolRatingRes?.data?.data || { rating: null, school: null, summary: { average: 0, count: 0 } };
+      setSchool(schoolRatingData.school);
+      setSchoolRating(schoolRatingData.rating);
+      setSchoolStars(schoolRatingData.rating?.stars || 0);
+      setSchoolEvaluation(schoolRatingData.rating?.evaluation || {
+        officiallyRegistered: false,
+        qualifiedSpecialists: false,
+        individualPlan: false,
+        safeEnvironment: false,
+        medicalRequirements: false,
+        developmentalActivities: false,
+        foodQuality: false,
+        regularInformation: false,
+        clearPayments: false,
+        kindAttitude: false,
+      });
+      setSchoolComment(schoolRatingData.rating?.comment || '');
+      setSchoolSummary(schoolRatingData.summary || { average: 0, count: 0 });
     } catch (err) {
       console.error('Error loading rating data:', err);
       setError(t('ratingPage.errorLoad'));
@@ -113,6 +170,93 @@ export function TeacherRatingScreen() {
     const dateValue = rating.updatedAt || rating.createdAt;
     return new Date(dateValue).toLocaleString(locale);
   }, [rating, locale]);
+
+  const handleSchoolSubmit = async () => {
+    setSchoolError('');
+    setSchoolSuccess('');
+
+    if (!school) {
+      setSchoolError(t('schoolRatingPage.noSchool'));
+      return;
+    }
+
+    // Check if at least one evaluation criterion is selected
+    const hasEvaluation = Object.values(schoolEvaluation).some(value => value === true);
+    if (!hasEvaluation && !schoolStars) {
+      setSchoolError(t('schoolRatingPage.errorRequired'));
+      return;
+    }
+
+    // Validate school data
+    if (!school.id && (!school.name || typeof school.name !== 'string' || school.name.trim().length === 0)) {
+      setSchoolError(t('schoolRatingPage.noSchool'));
+      return;
+    }
+
+    setSavingSchool(true);
+    try {
+      // Send schoolId if available, otherwise send schoolName
+      const payload = school.id 
+        ? { 
+            schoolId: school.id, 
+            evaluation: schoolEvaluation,
+            comment: schoolComment || null
+          }
+        : { 
+            schoolName: school.name.trim(), 
+            evaluation: schoolEvaluation,
+            comment: schoolComment || null
+          };
+      
+      console.log('Sending school rating payload:', payload);
+      await api.post('/parent/school-rating', payload);
+      setSchoolRating({
+        evaluation: schoolEvaluation,
+        comment: schoolComment,
+        updatedAt: new Date().toISOString(),
+      });
+      setSchoolSuccess(t('schoolRatingPage.success'));
+
+      // Refresh summary after saving
+      const childIdParam = childId ? `?childId=${childId}` : '';
+      const refreshRes = await api.get(`/parent/school-rating${childIdParam}`).catch((err) => {
+        if (err.response?.status === 400 || err.response?.status === 404) {
+          return { data: { data: { summary: { average: 0, count: 0 } } } };
+        }
+        throw err;
+      });
+      const ratingData = refreshRes?.data?.data || {};
+      setSchoolSummary(ratingData.summary || { average: 0, count: 0 });
+      // Also update school data in case it was found/created
+      if (ratingData.school) {
+        setSchool(ratingData.school);
+      }
+    } catch (err) {
+      console.error('Error saving school rating:', err);
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+      
+      // Get error message from response
+      let errorMessage = t('schoolRatingPage.errorSave');
+      if (err.response?.data) {
+        errorMessage = err.response.data.error || err.response.data.message || errorMessage;
+        // Add details if available
+        if (err.response.data.details) {
+          if (typeof err.response.data.details === 'string') {
+            errorMessage += ': ' + err.response.data.details;
+          } else if (typeof err.response.data.details === 'object') {
+            errorMessage += ': ' + JSON.stringify(err.response.data.details);
+          }
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setSchoolError(errorMessage);
+    } finally {
+      setSavingSchool(false);
+    }
+  };
 
   const starButtons = [1, 2, 3, 4, 5];
 
@@ -366,6 +510,235 @@ export function TeacherRatingScreen() {
                   </View>
                 </Card>
               </View>
+
+              {/* School Rating Section */}
+              {school ? (
+                <>
+                  {/* Gradient Header Card for School Rating */}
+                  <Card variant="gradient" gradientColors={[tokens.colors.semantic.success, '#22c55e']} style={styles.gradientHeader} padding="xl" shadow="elevated">
+                    <Text style={styles.gradientTitle} allowFontScaling={true}>{t('schoolRatingPage.title')}</Text>
+                    <Text style={styles.gradientSubtitle} allowFontScaling={true}>{t('schoolRatingPage.subtitle')}</Text>
+                  </Card>
+
+                  {/* School Rating Main Card */}
+                  <Card style={styles.mainCard} variant="elevated" shadow="soft">
+                    {/* School Info Header */}
+                    <View style={styles.schoolHeader}>
+                      <View style={styles.schoolInfoLeft}>
+                        <View style={styles.schoolIconContainer}>
+                          <Ionicons name="school" size={24} color={tokens.colors.semantic.success} />
+                        </View>
+                        <View style={styles.schoolDetails}>
+                          <Text style={styles.schoolLabel} allowFontScaling={true}>
+                            {t('schoolRatingPage.yourSchool')}
+                          </Text>
+                          <Text style={styles.schoolName} allowFontScaling={true}>
+                            {school.name}
+                          </Text>
+                          {school.address && (
+                            <Text style={styles.schoolAddress} allowFontScaling={true}>{school.address}</Text>
+                          )}
+                        </View>
+                      </View>
+
+                      <View style={styles.averageContainer}>
+                        <Text style={styles.averageLabel} allowFontScaling={true}>
+                          {t('schoolRatingPage.average')}
+                        </Text>
+                        <View style={styles.averageValueContainer}>
+                          <Ionicons name="star" size={20} color={tokens.colors.semantic.success} />
+                          <Text style={[styles.averageValue, { color: tokens.colors.semantic.success }]} allowFontScaling={true}>
+                            {schoolSummary.average?.toFixed(1) || '0.0'}
+                          </Text>
+                        </View>
+                        <Text style={styles.ratingsCount} allowFontScaling={true}>
+                          {t('schoolRatingPage.ratingsCount', { count: schoolSummary.count || 0 })}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Evaluation Criteria */}
+                    <View style={styles.evaluationSection}>
+                      <Text style={styles.evaluationLabel} allowFontScaling={true}>
+                        {t('schoolRatingPage.evaluationLabel')}
+                      </Text>
+                      <Text style={styles.evaluationSubtitle} allowFontScaling={true}>
+                        {t('schoolRatingPage.evaluationSubtitle')}
+                      </Text>
+                      <View style={styles.evaluationList}>
+                        {Object.keys(schoolEvaluation).map((key) => (
+                          <Pressable
+                            key={key}
+                            style={styles.evaluationItem}
+                            onPress={() => setSchoolEvaluation(prev => ({
+                              ...prev,
+                              [key]: !prev[key]
+                            }))}
+                          >
+                            <Switch
+                              value={schoolEvaluation[key] || false}
+                              onValueChange={(value) => setSchoolEvaluation(prev => ({
+                                ...prev,
+                                [key]: value
+                              }))}
+                              trackColor={{ false: tokens.colors.border.medium, true: tokens.colors.semantic.success }}
+                              thumbColor="#fff"
+                            />
+                            <Text style={styles.evaluationItemText} allowFontScaling={true}>
+                              {t(`schoolRatingPage.criteria.${key}`)}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Comment Input */}
+                    <View style={styles.commentSection}>
+                      <View style={styles.commentHeader}>
+                        <Text style={styles.commentLabel} allowFontScaling={true}>
+                          {t('schoolRatingPage.commentLabel')}
+                        </Text>
+                        <Text style={styles.optionalLabel} allowFontScaling={true}>
+                          {t('schoolRatingPage.optional')}
+                        </Text>
+                      </View>
+                      <TextInput
+                        style={styles.commentInput}
+                        value={schoolComment}
+                        onChangeText={setSchoolComment}
+                        placeholder={t('schoolRatingPage.commentPlaceholder')}
+                        placeholderTextColor={tokens.colors.text.muted}
+                        multiline
+                        numberOfLines={4}
+                        textAlignVertical="top"
+                      />
+                    </View>
+
+                    {/* Error/Success Messages */}
+                    {schoolError && (
+                      <View style={styles.messageContainer}>
+                        <Ionicons name="alert-circle" size={16} color={tokens.colors.semantic.error} />
+                        <Text style={styles.errorText} allowFontScaling={true}>{schoolError}</Text>
+                      </View>
+                    )}
+
+                    {schoolSuccess && (
+                      <View style={[styles.messageContainer, styles.successContainer]}>
+                        <Ionicons name="checkmark-circle" size={16} color={tokens.colors.semantic.success} />
+                        <Text style={styles.successText} allowFontScaling={true}>{schoolSuccess}</Text>
+                      </View>
+                    )}
+
+                    {/* Submit Button */}
+                    <View style={styles.submitContainer}>
+                      {schoolRating?.updatedAt && (
+                        <Text style={styles.lastUpdatedText} allowFontScaling={true}>
+                          {t('schoolRatingPage.lastUpdated', { 
+                            date: new Date(schoolRating.updatedAt).toLocaleString(locale) 
+                          })}
+                        </Text>
+                      )}
+                      <Pressable
+                        style={[styles.submitButton, styles.schoolSubmitButton, savingSchool && styles.submitButtonDisabled]}
+                        onPress={handleSchoolSubmit}
+                        disabled={savingSchool}
+                      >
+                        {savingSchool && (
+                          <Ionicons name="hourglass-outline" size={16} color="#fff" style={{ marginRight: 8 }} />
+                        )}
+                        <Text style={styles.submitButtonText} allowFontScaling={true}>
+                          {schoolRating ? t('schoolRatingPage.update') : t('schoolRatingPage.submit')}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </Card>
+
+                  {/* School Rating Sidebar Cards */}
+                  <View style={styles.sidebar}>
+                    {/* Your School Rating Card */}
+                    <Card style={styles.sidebarCard} variant="elevated" shadow="soft">
+                      <View style={styles.sidebarCardHeader}>
+                        <View style={[styles.sidebarIcon, { backgroundColor: `${tokens.colors.semantic.success}15` }]}>
+                          <Ionicons name="checkmark-circle" size={20} color={tokens.colors.semantic.success} />
+                        </View>
+                        <View>
+                          <Text style={styles.sidebarCardTitle} allowFontScaling={true}>
+                            {t('schoolRatingPage.yourRating')}
+                          </Text>
+                          <Text style={styles.sidebarCardSubtitle} allowFontScaling={true}>
+                            {t('schoolRatingPage.rateCta')}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.evaluationChecklist}>
+                        {Object.keys(schoolEvaluation).map((key) => {
+                          const isChecked = (schoolRating?.evaluation?.[key] || schoolEvaluation[key]) === true;
+                          return (
+                            <View key={key} style={styles.evaluationCheckItem}>
+                              <Ionicons 
+                                name={isChecked ? "checkmark-circle" : "ellipse-outline"} 
+                                size={16} 
+                                color={isChecked ? tokens.colors.semantic.success : tokens.colors.border.medium} 
+                              />
+                              <Text style={[
+                                styles.evaluationCheckText,
+                                isChecked && styles.evaluationCheckTextActive
+                              ]} allowFontScaling={true}>
+                                {t(`schoolRatingPage.criteria.${key}`)}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                      <Text style={styles.sidebarComment} allowFontScaling={true}>
+                        {schoolRating?.comment ? `"${schoolRating.comment}"` : t('schoolRatingPage.noComment')}
+                      </Text>
+                    </Card>
+
+                    {/* School Summary Card */}
+                    <Card style={styles.sidebarCard} variant="elevated" shadow="soft">
+                      <Text style={styles.sidebarCardTitle} allowFontScaling={true}>
+                        {t('schoolRatingPage.summaryTitle')}
+                      </Text>
+                      <View style={styles.summaryContent}>
+                        <View style={styles.summaryItem}>
+                          <Ionicons name="star" size={20} color={tokens.colors.semantic.success} />
+                          <View>
+                            <Text style={styles.summaryValue} allowFontScaling={true}>
+                              {schoolSummary.average?.toFixed(1) || '0.0'}
+                            </Text>
+                            <Text style={styles.summaryLabel} allowFontScaling={true}>
+                              {t('schoolRatingPage.average')}
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={styles.summaryItem}>
+                          <View>
+                            <Text style={styles.summaryValue} allowFontScaling={true}>
+                              {schoolSummary.count || 0}
+                            </Text>
+                            <Text style={styles.summaryLabel} allowFontScaling={true}>
+                              {t('schoolRatingPage.ratingsCount', { count: schoolSummary.count || 0 })}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </Card>
+                  </View>
+                </>
+              ) : (
+                <Card style={styles.card}>
+                  <View style={styles.alertContainer}>
+                    <View style={[styles.sidebarIcon, { backgroundColor: `${tokens.colors.semantic.success}15` }]}>
+                      <Ionicons name="school" size={20} color={tokens.colors.semantic.success} />
+                    </View>
+                    <View style={styles.alertText}>
+                      <Text style={styles.alertTitle} allowFontScaling={true}>{t('schoolRatingPage.title')}</Text>
+                      <Text style={styles.alertMessage} allowFontScaling={true}>{t('schoolRatingPage.noSchool')}</Text>
+                    </View>
+                  </View>
+                </Card>
+              )}
             </>
           )}
     </Screen>
