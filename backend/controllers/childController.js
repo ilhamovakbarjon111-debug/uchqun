@@ -99,7 +99,19 @@ export const updateChild = async (req, res) => {
     if (req.file) {
       try {
         const fileBuffer = req.file.buffer;
-        const filename = `child-${id}-${Date.now()}${req.file.originalname.substring(req.file.originalname.lastIndexOf('.'))}`;
+        // Get extension from original filename or mimetype
+        let extension = req.file.originalname.substring(req.file.originalname.lastIndexOf('.') + 1) || 
+                       req.file.mimetype.split('/')[1] || 'jpg';
+        // Normalize extension - Appwrite expects jpg, not jpeg
+        if (extension === 'jpeg') {
+          extension = 'jpg';
+        }
+        // Ensure extension is lowercase and valid
+        const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (!validExtensions.includes(extension.toLowerCase())) {
+          extension = 'jpg'; // Default to jpg if invalid
+        }
+        const filename = `child-${id}-${Date.now()}.${extension.toLowerCase()}`;
 
         const uploadResult = await uploadFile(fileBuffer, filename, req.file.mimetype);
         updateData.photo = uploadResult.url;
@@ -142,8 +154,17 @@ export const updateChild = async (req, res) => {
           return res.status(400).json({ error: 'Invalid base64 encoding' });
         }
 
-        const extension = mimetype.split('/')[1] || 'jpg';
-        const filename = `child-${id}-${Date.now()}.${extension}`;
+        // Normalize extension - Appwrite expects jpg, not jpeg
+        let extension = mimetype.split('/')[1] || 'jpg';
+        if (extension === 'jpeg') {
+          extension = 'jpg';
+        }
+        // Ensure extension is lowercase and valid
+        const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (!validExtensions.includes(extension.toLowerCase())) {
+          extension = 'jpg'; // Default to jpg if invalid
+        }
+        const filename = `child-${id}-${Date.now()}.${extension.toLowerCase()}`;
 
         logger.info('Uploading child photo', { 
           childId: id, 
