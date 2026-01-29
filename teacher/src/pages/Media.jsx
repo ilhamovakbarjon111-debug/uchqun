@@ -66,9 +66,10 @@ const VideoPlayer = ({ url }) => {
 
   const youtubeUrl = getYouTubeEmbedUrl(url);
   const vimeoUrl = getVimeoEmbedUrl(url);
-  // Check if URL is a direct video file (has video extension or is from Appwrite storage)
+  // Check if URL is a direct video file (has video extension, is from Appwrite storage, or is a proxy URL)
   const isDirectVideo = url.match(/\.(mp4|webm|ogg|mov|avi)(\?.*)?$/i) || 
-                        url.includes('/storage/buckets/') && url.includes('/files/') && url.includes('/view');
+                        (url.includes('/storage/buckets/') && url.includes('/files/') && url.includes('/view')) ||
+                        url.includes('/api/media/proxy/');
 
   useEffect(() => {
     setIsLoading(true);
