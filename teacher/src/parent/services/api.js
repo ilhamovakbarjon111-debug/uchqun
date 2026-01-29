@@ -10,25 +10,28 @@ const api = axios.create({
   withCredentials: true,
 });
 
-function getCookie(name) {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? match[2] : null;
-}
-
 api.interceptors.request.use(
   (config) => {
-    // For JSON requests (like base64 photo upload), check if we have Bearer token
-    // If Bearer token is present, CSRF is not required
-    const hasBearerToken = config.headers?.Authorization?.startsWith('Bearer ') || 
-                          config.headers?.authorization?.startsWith('Bearer ');
+    // Add Bearer token from localStorage to all requests
+    // This automatically bypasses CSRF protection on the backend
+    const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
+      config.headers['Authorization'] = `Bearer ${accessToken}`;
+    }
     
-    // Only add CSRF token for cookie-based auth (not Bearer token)
-    if (['post', 'put', 'delete', 'patch'].includes(config.method) && !hasBearerToken) {
-      const csrfToken = getCookie('csrfToken');
-      if (csrfToken) {
+    // Also add CSRF token from cookie as fallback (for cookie-based auth)
+    // Helper function to get cookie value
+    const getCookie = (name) => {
+      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? match[2] : null;
+    };
+    
+    // Add CSRF token for POST/PUT/DELETE requests if available
+    // Bearer token takes priority, but CSRF token is added as fallback
+    if (['post', 'put', 'delete', 'patch'].includes(config.method?.toLowerCase())) {
+      const csrfToken = getCookie('csrfToken') || localStorage.getItem('csrfToken');
+      if (csrfToken && !config.headers['X-CSRF-Token']) {
         config.headers['X-CSRF-Token'] = csrfToken;
-      } else {
-        console.warn('CSRF token not found in cookies for', config.method, config.url);
       }
     }
     
@@ -46,37 +49,38 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 403 Forbidden (CSRF or permission error)
-    if (error.response?.status === 403 && !originalRequest._retry) {
-      const errorMessage = error.response?.data?.error || '';
-      
-      // If CSRF error, try to get new CSRF token and retry
-      if (errorMessage.includes('CSRF') || errorMessage.includes('csrf')) {
-        originalRequest._retry = true;
-        console.warn('CSRF token error, retrying request');
-        
-        // Try to get CSRF token from a GET request first
-        try {
-          await axios.get(`${BASE_URL}/auth/me`, { withCredentials: true });
-          // Retry original request
-          return api(originalRequest);
-        } catch {
-          // If that fails, redirect to login
-          localStorage.removeItem('user');
-          window.location.href = '/login';
-          return Promise.reject(error);
-        }
-      }
-    }
-
+    // Handle 401 Unauthorized (token expired)
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-        await axios.post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true });
-        return api(originalRequest);
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+          throw new Error('No refresh token');
+        }
+
+        const refreshResponse = await axios.post(`${BASE_URL}/auth/refresh`, {}, { 
+          withCredentials: true,
+          headers: {
+            'Authorization': `Bearer ${refreshToken}`
+          }
+        });
+        
+        const { accessToken, refreshToken: newRefreshToken } = refreshResponse.data || {};
+        if (accessToken) {
+          localStorage.setItem('accessToken', accessToken);
+          if (newRefreshToken) {
+            localStorage.setItem('refreshToken', newRefreshToken);
+          }
+          // Retry original request with new token
+          originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
+          return api(originalRequest);
+        }
+        throw new Error('No access token in refresh response');
       } catch {
         localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         try {
           window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'sessionExpired' }));
         } catch {
