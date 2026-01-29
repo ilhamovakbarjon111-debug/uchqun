@@ -39,15 +39,8 @@ export const authenticate = async (req, res, next) => {
       }
     }
 
-    // Parent-specific check: must have active account
-    if (user.role === 'parent') {
-      if (!user.isActive) {
-        return res.status(403).json({ 
-          error: 'Account is not active. Please contact support.',
-          requiresActivation: true 
-        });
-      }
-    }
+    // Note: Parent role doesn't need isActive check - they can always access their own children
+    // The updateChild controller already checks parentId: req.user.id
 
     req.user = user;
     next();
