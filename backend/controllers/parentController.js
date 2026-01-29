@@ -678,27 +678,47 @@ export const rateSchool = async (req, res) => {
     let starsNum = stars ? Number(stars) : null;
 
     // If evaluation is provided, use it; otherwise fall back to stars for backward compatibility
-    if (evaluationData && typeof evaluationData === 'object' && Object.keys(evaluationData).length > 0) {
-      // Validate evaluation criteria
-      const validKeys = [
-        'officiallyRegistered',
-        'qualifiedSpecialists',
-        'individualPlan',
-        'safeEnvironment',
-        'medicalRequirements',
-        'developmentalActivities',
-        'foodQuality',
-        'regularInformation',
-        'clearPayments',
-        'kindAttitude'
-      ];
+    if (evaluationData && typeof evaluationData === 'object' && !Array.isArray(evaluationData)) {
+      // Check if evaluation object has any keys
+      const evaluationKeys = Object.keys(evaluationData);
       
-      // Ensure all keys are boolean
-      const validatedEvaluation = {};
-      for (const key of validKeys) {
-        validatedEvaluation[key] = evaluationData[key] === true;
+      if (evaluationKeys.length > 0) {
+        // Validate evaluation criteria
+        const validKeys = [
+          'officiallyRegistered',
+          'qualifiedSpecialists',
+          'individualPlan',
+          'safeEnvironment',
+          'medicalRequirements',
+          'developmentalActivities',
+          'foodQuality',
+          'regularInformation',
+          'clearPayments',
+          'kindAttitude'
+        ];
+        
+        // Ensure all keys are boolean
+        const validatedEvaluation = {};
+        let hasAtLeastOneTrue = false;
+        
+        for (const key of validKeys) {
+          const value = evaluationData[key] === true;
+          validatedEvaluation[key] = value;
+          if (value) {
+            hasAtLeastOneTrue = true;
+          }
+        }
+        
+        // If no criteria is selected, return error
+        if (!hasAtLeastOneTrue) {
+          return res.status(400).json({ error: 'At least one evaluation criterion must be selected' });
+        }
+        
+        evaluationData = validatedEvaluation;
+      } else {
+        // Empty object - treat as no evaluation
+        evaluationData = null;
       }
-      evaluationData = validatedEvaluation;
     } else if (starsNum && !isNaN(starsNum) && starsNum >= 1 && starsNum <= 5) {
       // Backward compatibility: convert stars to evaluation if needed
       // This is a fallback for old ratings
@@ -845,9 +865,19 @@ export const rateSchool = async (req, res) => {
     let created = false;
     try {
       // Prepare evaluation data - ensure it's a valid object or null
-      const finalEvaluationData = evaluationData && typeof evaluationData === 'object' && Object.keys(evaluationData).length > 0
+      // evaluationData is already validated above, so use it directly
+      const finalEvaluationData = evaluationData && typeof evaluationData === 'object' && !Array.isArray(evaluationData) && Object.keys(evaluationData).length > 0
         ? evaluationData
         : null;
+      
+      // Log for debugging
+      logger.info('Preparing to save rating', {
+        schoolId: finalSchoolId,
+        parentId,
+        hasEvaluation: !!finalEvaluationData,
+        evaluationKeys: finalEvaluationData ? Object.keys(finalEvaluationData) : [],
+        starsNum,
+      });
 
       // First, try to find existing rating
       rating = await SchoolRating.findOne({
