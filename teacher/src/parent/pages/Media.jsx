@@ -101,21 +101,27 @@ const VideoPlayer = ({ url, autoPlay = false, onEnded }) => {
   };
 
   // Handle skip backward (10 seconds)
-  const skipBackward = () => {
-    if (videoRef.current) {
+  const skipBackward = (e) => {
+    e?.stopPropagation();
+    if (videoRef.current && !isNaN(videoRef.current.currentTime)) {
       const newTime = Math.max(0, videoRef.current.currentTime - 10);
       videoRef.current.currentTime = newTime;
       setCurrentTime(newTime);
+      resetControlsTimeout();
     }
   };
 
   // Handle skip forward (10 seconds)
-  const skipForward = () => {
-    if (videoRef.current) {
-      const videoDuration = videoRef.current.duration || duration;
-      const newTime = Math.min(videoDuration, videoRef.current.currentTime + 10);
-      videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
+  const skipForward = (e) => {
+    e?.stopPropagation();
+    if (videoRef.current && !isNaN(videoRef.current.currentTime)) {
+      const videoDuration = videoRef.current.duration;
+      if (videoDuration && !isNaN(videoDuration)) {
+        const newTime = Math.min(videoDuration, videoRef.current.currentTime + 10);
+        videoRef.current.currentTime = newTime;
+        setCurrentTime(newTime);
+        resetControlsTimeout();
+      }
     }
   };
 
