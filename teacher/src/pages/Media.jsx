@@ -65,10 +65,17 @@ const getVimeoEmbedUrl = (url) => {
 };
 
 // Video Player Component
-const VideoPlayer = ({ url, autoPlay = false }) => {
+const VideoPlayer = ({ url, autoPlay = false, onEnded }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [showControls, setShowControls] = useState(true);
   const videoRef = useRef(null);
+  const controlsTimeoutRef = useRef(null);
   const { t } = useTranslation();
 
   const youtubeUrl = getYouTubeEmbedUrl(url);
