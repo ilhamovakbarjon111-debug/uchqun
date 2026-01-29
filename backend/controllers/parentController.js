@@ -844,6 +844,11 @@ export const rateSchool = async (req, res) => {
     let rating;
     let created;
     try {
+      // Prepare evaluation data - ensure it's a valid object or null
+      const finalEvaluationData = evaluationData && typeof evaluationData === 'object' && Object.keys(evaluationData).length > 0
+        ? evaluationData
+        : null;
+
       [rating, created] = await SchoolRating.findOrCreate({
         where: {
           schoolId: finalSchoolId,
@@ -853,17 +858,18 @@ export const rateSchool = async (req, res) => {
           schoolId: finalSchoolId,
           parentId,
           stars: starsNum,
-          evaluation: evaluationData,
+          evaluation: finalEvaluationData,
           comment: comment || null,
         },
       });
 
       if (!created) {
-        if (evaluationData) {
-          rating.evaluation = evaluationData;
+        if (finalEvaluationData) {
+          rating.evaluation = finalEvaluationData;
           rating.stars = null; // Clear stars when using evaluation
-        } else if (starsNum !== null) {
+        } else if (starsNum !== null && starsNum !== undefined) {
           rating.stars = starsNum;
+          rating.evaluation = null; // Clear evaluation when using stars
         }
         rating.comment = comment || null;
         await rating.save();
@@ -876,6 +882,9 @@ export const rateSchool = async (req, res) => {
         parentId,
         errorName: ratingError.name,
         errorCode: ratingError.code,
+        hasEvaluation: !!evaluationData,
+        evaluationType: typeof evaluationData,
+        starsNum,
       });
       return res.status(500).json({ 
         error: 'Failed to save school rating',
