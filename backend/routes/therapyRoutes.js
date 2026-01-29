@@ -20,6 +20,15 @@ router.get('/:id', getTherapy);
 // Protected routes
 router.use(authenticate);
 
+// Get therapy usage history (must come before /:id routes)
+router.get('/usage', getTherapyUsage);
+
+// Start therapy session (Parent, Teacher) - must come before /:id routes
+router.post('/:id/start', requireRole('parent', 'teacher'), startTherapy);
+
+// End therapy session (Parent, Teacher) - must come before /:id routes
+router.put('/usage/:id/end', requireRole('parent', 'teacher'), endTherapy);
+
 // Create therapy (Admin, Teacher)
 router.post('/', requireRole('admin', 'teacher'), createTherapy);
 
@@ -28,14 +37,5 @@ router.put('/:id', requireRole('admin', 'teacher'), updateTherapy);
 
 // Delete therapy (Admin, Teacher)
 router.delete('/:id', requireRole('admin', 'teacher'), deleteTherapy);
-
-// Start therapy session (Parent, Teacher)
-router.post('/:id/start', requireRole('parent', 'teacher'), startTherapy);
-
-// End therapy session (Parent, Teacher)
-router.put('/usage/:id/end', requireRole('parent', 'teacher'), endTherapy);
-
-// Get therapy usage history
-router.get('/usage', getTherapyUsage);
 
 export default router;
