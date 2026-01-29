@@ -864,19 +864,24 @@ export const rateSchool = async (req, res) => {
     let rating;
     let created = false;
     try {
-      // Prepare evaluation data - ensure it's a valid object or null
-      // evaluationData is already validated above, so use it directly
-      const finalEvaluationData = evaluationData && typeof evaluationData === 'object' && !Array.isArray(evaluationData) && Object.keys(evaluationData).length > 0
-        ? evaluationData
-        : null;
+      // Prepare evaluation data - ensure it's a valid object or empty object
+      // Model has defaultValue: {} for evaluation, so use empty object instead of null
+      let finalEvaluationData;
+      if (evaluationData && typeof evaluationData === 'object' && !Array.isArray(evaluationData) && Object.keys(evaluationData).length > 0) {
+        finalEvaluationData = evaluationData;
+      } else {
+        // Use empty object instead of null to match model's defaultValue
+        finalEvaluationData = {};
+      }
       
       // Log for debugging
       logger.info('Preparing to save rating', {
         schoolId: finalSchoolId,
         parentId,
-        hasEvaluation: !!finalEvaluationData,
-        evaluationKeys: finalEvaluationData ? Object.keys(finalEvaluationData) : [],
+        hasEvaluation: Object.keys(finalEvaluationData).length > 0,
+        evaluationKeys: Object.keys(finalEvaluationData),
         starsNum,
+        finalEvaluationData,
       });
 
       // First, try to find existing rating
@@ -889,12 +894,18 @@ export const rateSchool = async (req, res) => {
 
       if (rating) {
         // Update existing rating
-        if (finalEvaluationData) {
+        if (Object.keys(finalEvaluationData).length > 0) {
+          // Has evaluation criteria
           rating.evaluation = finalEvaluationData;
           rating.stars = null; // Clear stars when using evaluation
         } else if (starsNum !== null && starsNum !== undefined) {
+          // Has stars, no evaluation
           rating.stars = starsNum;
-          rating.evaluation = null; // Clear evaluation when using stars
+          rating.evaluation = {}; // Use empty object instead of null
+        } else {
+          // Neither evaluation nor stars - this shouldn't happen due to validation above
+          rating.evaluation = {};
+          rating.stars = null;
         }
         rating.comment = comment || null;
         await rating.save();
@@ -904,7 +915,7 @@ export const rateSchool = async (req, res) => {
         rating = await SchoolRating.create({
           schoolId: finalSchoolId,
           parentId,
-          stars: starsNum,
+          stars: Object.keys(finalEvaluationData).length > 0 ? null : starsNum, // Only set stars if no evaluation
           evaluation: finalEvaluationData,
           comment: comment || null,
         });
