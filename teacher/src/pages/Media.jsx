@@ -8,10 +8,16 @@ import {
   LayoutGrid, 
   Maximize2,
   Play, 
+  Pause,
   Plus,
   Save,
   Trash2,
-  X
+  X,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+  Volume1
 } from 'lucide-react';
 import Card from '../shared/components/Card';
 import LoadingSpinner from '../shared/components/LoadingSpinner';
@@ -72,17 +78,104 @@ const VideoPlayer = ({ url, autoPlay = false }) => {
                         (url.includes('/storage/buckets/') && url.includes('/files/') && url.includes('/view')) ||
                         url.includes('/api/media/proxy/');
 
+  // Format time helper
+  const formatTime = (seconds) => {
+    if (!isFinite(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Handle play/pause
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  // Handle skip backward (10 seconds)
+  const skipBackward = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10);
+    }
+  };
+
+  // Handle skip forward (10 seconds)
+  const skipForward = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.min(duration, videoRef.current.currentTime + 10);
+    }
+  };
+
+  // Handle volume change
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+      setIsMuted(newVolume === 0);
+    }
+  };
+
+  // Handle mute toggle
+  const toggleMute = () => {
+    if (videoRef.current) {
+      if (isMuted) {
+        videoRef.current.volume = volume || 0.5;
+        setIsMuted(false);
+      } else {
+        videoRef.current.volume = 0;
+        setIsMuted(true);
+      }
+    }
+  };
+
+  // Handle progress bar change
+  const handleProgressChange = (e) => {
+    const newTime = parseFloat(e.target.value);
+    setCurrentTime(newTime);
+    if (videoRef.current) {
+      videoRef.current.currentTime = newTime;
+    }
+  };
+
+  // Hide controls after 3 seconds of inactivity
+  const resetControlsTimeout = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (isPlaying) {
+        setShowControls(false);
+      }
+    }, 3000);
+  };
+
   useEffect(() => {
     setIsLoading(true);
     setError(false);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
     
     // Auto-play video when it loads if autoPlay is true
     if (autoPlay && videoRef.current && isDirectVideo) {
       videoRef.current.play().catch((err) => {
         console.warn('Auto-play failed:', err);
-        // Auto-play might fail due to browser policies, that's okay
       });
     }
+
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
   }, [url, autoPlay, isDirectVideo]);
 
   if (youtubeUrl) {
@@ -135,21 +228,44 @@ const VideoPlayer = ({ url, autoPlay = false }) => {
 
   if (isDirectVideo) {
     return (
-      <div className="w-full h-full flex items-center justify-center p-4">
+      <div 
+        className="relative w-full h-full flex items-center justify-center bg-black"
+        onMouseMove={resetControlsTimeout}
+        onMouseLeave={() => {
+          if (isPlaying) {
+            setShowControls(false);
+          }
+        }}
+      >
         <video
           ref={videoRef}
           src={url}
-          controls
           autoPlay={autoPlay}
           crossOrigin="anonymous"
           className="max-w-full max-h-full"
           onLoadedData={() => {
             setIsLoading(false);
-            // Try to play if autoPlay is enabled
-            if (autoPlay && videoRef.current) {
-              videoRef.current.play().catch((err) => {
-                console.warn('Auto-play failed:', err);
-              });
+            if (videoRef.current) {
+              setDuration(videoRef.current.duration);
+              // Try to play if autoPlay is enabled
+              if (autoPlay) {
+                videoRef.current.play().catch((err) => {
+                  console.warn('Auto-play failed:', err);
+                });
+              }
+            }
+          }}
+          onTimeUpdate={() => {
+            if (videoRef.current) {
+              setCurrentTime(videoRef.current.currentTime);
+            }
+          }}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => {
+            setIsPlaying(false);
+            if (onEnded) {
+              onEnded();
             }
           }}
           onError={(e) => {
@@ -160,11 +276,109 @@ const VideoPlayer = ({ url, autoPlay = false }) => {
         >
           Your browser does not support the video tag.
         </video>
+
+        {/* Custom Controls */}
+        <div 
+          className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 transition-opacity duration-300 ${
+            showControls ? 'opacity-100' : 'opacity-0'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Progress Bar */}
+          <div className="mb-4">
+            <input
+              type="range"
+              min="0"
+              max={duration || 0}
+              value={currentTime}
+              onChange={handleProgressChange}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+              style={{
+                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(currentTime / duration) * 100}%, #4b5563 ${(currentTime / duration) * 100}%, #4b5563 100%)`
+              }}
+            />
+          </div>
+
+          {/* Controls Row */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Left Controls */}
+            <div className="flex items-center gap-3">
+              {/* Play/Pause */}
+              <button
+                onClick={togglePlay}
+                className="text-white hover:text-blue-400 transition-colors p-2"
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+              >
+                {isPlaying ? (
+                  <Pause className="w-6 h-6" />
+                ) : (
+                  <Play className="w-6 h-6" />
+                )}
+              </button>
+
+              {/* Skip Backward */}
+              <button
+                onClick={skipBackward}
+                className="text-white hover:text-blue-400 transition-colors p-2"
+                aria-label="Skip backward 10 seconds"
+              >
+                <SkipBack className="w-5 h-5" />
+              </button>
+
+              {/* Skip Forward */}
+              <button
+                onClick={skipForward}
+                className="text-white hover:text-blue-400 transition-colors p-2"
+                aria-label="Skip forward 10 seconds"
+              >
+                <SkipForward className="w-5 h-5" />
+              </button>
+
+              {/* Volume Control */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={toggleMute}
+                  className="text-white hover:text-blue-400 transition-colors p-2"
+                  aria-label={isMuted ? 'Unmute' : 'Mute'}
+                >
+                  {isMuted || volume === 0 ? (
+                    <VolumeX className="w-5 h-5" />
+                  ) : volume < 0.5 ? (
+                    <Volume1 className="w-5 h-5" />
+                  ) : (
+                    <Volume2 className="w-5 h-5" />
+                  )}
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={isMuted ? 0 : volume}
+                  onChange={handleVolumeChange}
+                  className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(isMuted ? 0 : volume) * 100}%, #4b5563 ${(isMuted ? 0 : volume) * 100}%, #4b5563 100%)`
+                  }}
+                />
+              </div>
+
+              {/* Time Display */}
+              <div className="text-white text-sm font-mono">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Loading Overlay */}
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
             <div className="text-white">Loading video...</div>
           </div>
         )}
+
+        {/* Error Overlay */}
         {error && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
             <div className="text-white text-center p-4">
