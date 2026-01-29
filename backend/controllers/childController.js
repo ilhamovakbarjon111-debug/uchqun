@@ -110,35 +110,132 @@ export const updateChild = async (req, res) => {
       }
     } else if (req.body.photoBase64) {
       try {
+        if (typeof req.body.photoBase64 !== 'string') {
+          return res.status(400).json({ error: 'photoBase64 must be a string' });
+        }
+
         const matches = req.body.photoBase64.match(/^data:(.+);base64,(.+)$/);
-        if (!matches) {
-          return res.status(400).json({ error: 'Invalid base64 photo format' });
+        if (!matches || matches.length !== 3) {
+          logger.warn('Invalid base64 format', { 
+            hasPrefix: req.body.photoBase64.startsWith('data:'),
+            length: req.body.photoBase64.length,
+            preview: req.body.photoBase64.substring(0, 50)
+          });
+          return res.status(400).json({ error: 'Invalid base64 photo format. Expected format: data:image/jpeg;base64,...' });
         }
 
         const mimetype = matches[1];
         const base64Data = matches[2];
-        const fileBuffer = Buffer.from(base64Data, 'base64');
+        
+        if (!base64Data || base64Data.length === 0) {
+          return res.status(400).json({ error: 'Empty base64 data' });
+        }
+
+        let fileBuffer;
+        try {
+          fileBuffer = Buffer.from(base64Data, 'base64');
+          if (fileBuffer.length === 0) {
+            return res.status(400).json({ error: 'Failed to decode base64 data' });
+          }
+        } catch (decodeError) {
+          logger.error('Base64 decode error', { error: decodeError.message });
+          return res.status(400).json({ error: 'Invalid base64 encoding' });
+        }
+
         const extension = mimetype.split('/')[1] || 'jpg';
         const filename = `child-${id}-${Date.now()}.${extension}`;
 
-        const uploadResult = await uploadFile(fileBuffer, filename, mimetype);
+        logger.info('Uploading child photo', { 
+          childId: id, 
+          filename, 
+          mimetype, 
+          size: fileBuffer.length,
+          bufferLength: fileBuffer.length
+        });
+
+        let uploadResult;
+        try {
+          uploadResult = await uploadFile(fileBuffer, filename, mimetype);
+          logger.info('Upload file result:', { 
+            hasUrl: !!uploadResult?.url,
+            url: uploadResult?.url?.substring(0, 100),
+            hasPath: !!uploadResult?.path
+          });
+        } catch (uploadFileError) {
+          logger.error('uploadFile error in childController', {
+            error: uploadFileError.message,
+            stack: uploadFileError.stack,
+            childId: id,
+            filename,
+            mimetype,
+            bufferSize: fileBuffer.length
+          });
+          throw uploadFileError;
+        }
+
+        if (!uploadResult || !uploadResult.url) {
+          logger.error('Upload result missing URL', { uploadResult, childId: id });
+          return res.status(500).json({ 
+            error: 'Upload succeeded but no URL returned',
+            details: process.env.NODE_ENV === 'development' ? 'Upload result is missing URL field' : undefined
+          });
+        }
+
         updateData.photo = uploadResult.url;
         delete updateData.photoBase64;
+        
+        logger.info('Child photo uploaded successfully', { 
+          childId: id, 
+          url: uploadResult.url.substring(0, 100)
+        });
       } catch (uploadError) {
-        logger.error('Photo upload error (base64)', { error: uploadError.message, childId: id });
-        return res.status(500).json({ error: 'Failed to upload photo' });
+        logger.error('Photo upload error (base64)', { 
+          error: uploadError.message, 
+          stack: uploadError.stack,
+          childId: id,
+          hasPhotoBase64: !!req.body.photoBase64,
+          photoBase64Length: req.body.photoBase64?.length,
+          photoBase64Type: typeof req.body.photoBase64
+        });
+        return res.status(500).json({ 
+          error: 'Failed to upload photo',
+          details: process.env.NODE_ENV === 'development' ? uploadError.message : undefined
+        });
       }
     }
 
-    await child.update(updateData);
-    await child.reload();
+    try {
+      await child.update(updateData);
+      await child.reload();
+    } catch (updateError) {
+      logger.error('Child update error', {
+        error: updateError.message,
+        stack: updateError.stack,
+        childId: id,
+        updateData: { ...updateData, photo: updateData.photo?.substring(0, 100) }
+      });
+      return res.status(500).json({ 
+        error: 'Failed to update child record',
+        details: process.env.NODE_ENV === 'development' ? updateError.message : undefined
+      });
+    }
 
     const childData = child.toJSON();
     childData.age = child.getAge();
 
     res.json(childData);
   } catch (error) {
-    logger.error('Update child error', { error: error.message, childId: req.params?.id, userId: req.user?.id });
-    res.status(500).json({ error: 'Failed to update child' });
+    logger.error('Update child error', { 
+      error: error.message, 
+      stack: error.stack,
+      childId: req.params?.id, 
+      userId: req.user?.id,
+      hasPhotoBase64: !!req.body?.photoBase64,
+      hasFile: !!req.file
+    });
+    res.status(500).json({ 
+      error: 'Failed to update child',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
