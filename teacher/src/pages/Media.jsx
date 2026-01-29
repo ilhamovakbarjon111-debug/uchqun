@@ -441,10 +441,10 @@ const Media = () => {
                   <h3 className="text-lg font-bold leading-tight">{item.title}</h3>
                 </div>
 
-                {/* Video Play Icon */}
+                {/* Video Play Icon - Always visible for videos */}
                 {item.type === 'video' && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-white/30">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-white/30 shadow-lg">
                       <Play className="w-8 h-8 text-white fill-current" />
                     </div>
                   </div>
