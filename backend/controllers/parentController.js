@@ -667,14 +667,18 @@ export const getMyRating = async (req, res) => {
 export const rateSchool = async (req, res) => {
   try {
     const { schoolId, schoolName, stars, evaluation, comment } = req.body;
-    const parentId = req.user.id;
+    const parentId = req.user?.id;
+
+    if (!parentId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     // Support both old stars format (for backward compatibility) and new evaluation format
     let evaluationData = evaluation;
     let starsNum = stars ? Number(stars) : null;
 
     // If evaluation is provided, use it; otherwise fall back to stars for backward compatibility
-    if (evaluationData && typeof evaluationData === 'object') {
+    if (evaluationData && typeof evaluationData === 'object' && Object.keys(evaluationData).length > 0) {
       // Validate evaluation criteria
       const validKeys = [
         'officiallyRegistered',
@@ -708,46 +712,76 @@ export const rateSchool = async (req, res) => {
 
     // If schoolId is provided, find school by ID
     if (schoolId) {
-      school = await School.findByPk(schoolId);
-      if (!school) {
-        return res.status(404).json({ error: 'School not found' });
+      try {
+        school = await School.findByPk(schoolId);
+        if (!school) {
+          return res.status(404).json({ error: 'School not found' });
+        }
+        finalSchoolId = schoolId;
+      } catch (schoolError) {
+        logger.error('Error finding school by ID', {
+          error: schoolError.message,
+          stack: schoolError.stack,
+          schoolId,
+          parentId,
+        });
+        return res.status(500).json({ error: 'Failed to find school' });
       }
-      finalSchoolId = schoolId;
-    } else if (schoolName) {
+    } else if (schoolName && typeof schoolName === 'string' && schoolName.trim().length > 0) {
       // If schoolName is provided but no schoolId, try to find or create school
-      school = await School.findOne({
-        where: {
-          name: {
-            [Op.iLike]: schoolName,
-          },
-        },
-      });
-
-      if (!school) {
-        // Try partial match
+      try {
         school = await School.findOne({
           where: {
             name: {
-              [Op.iLike]: `%${schoolName}%`,
+              [Op.iLike]: schoolName.trim(),
             },
           },
         });
-      }
 
-      if (school) {
-        finalSchoolId = school.id;
-      } else {
-        // Create new school if not found
-        school = await School.create({
-          name: schoolName,
-          type: 'both', // Default value for new schools
-        });
-        finalSchoolId = school.id;
-        logger.info('School created during rating', {
-          schoolId: school.id,
-          schoolName: school.name,
+        if (!school) {
+          // Try partial match
+          school = await School.findOne({
+            where: {
+              name: {
+                [Op.iLike]: `%${schoolName.trim()}%`,
+              },
+            },
+          });
+        }
+
+        if (school) {
+          finalSchoolId = school.id;
+        } else {
+          // Create new school if not found
+          try {
+            school = await School.create({
+              name: schoolName.trim(),
+              type: 'both', // Default value for new schools
+            });
+            finalSchoolId = school.id;
+            logger.info('School created during rating', {
+              schoolId: school.id,
+              schoolName: school.name,
+              parentId,
+            });
+          } catch (createError) {
+            logger.error('Error creating school during rating', {
+              error: createError.message,
+              stack: createError.stack,
+              schoolName: schoolName.trim(),
+              parentId,
+            });
+            return res.status(500).json({ error: 'Failed to create school' });
+          }
+        }
+      } catch (findError) {
+        logger.error('Error finding school by name', {
+          error: findError.message,
+          stack: findError.stack,
+          schoolName: schoolName.trim(),
           parentId,
         });
+        return res.status(500).json({ error: 'Failed to find school' });
       }
     } else {
       return res.status(400).json({ error: 'School ID or school name is required' });
@@ -807,29 +841,46 @@ export const rateSchool = async (req, res) => {
       stars: starsNum,
     });
 
-    const [rating, created] = await SchoolRating.findOrCreate({
-      where: {
-        schoolId: finalSchoolId,
-        parentId,
-      },
-      defaults: {
-        schoolId: finalSchoolId,
-        parentId,
-        stars: starsNum,
-        evaluation: evaluationData,
-        comment: comment || null,
-      },
-    });
+    let rating;
+    let created;
+    try {
+      [rating, created] = await SchoolRating.findOrCreate({
+        where: {
+          schoolId: finalSchoolId,
+          parentId,
+        },
+        defaults: {
+          schoolId: finalSchoolId,
+          parentId,
+          stars: starsNum,
+          evaluation: evaluationData,
+          comment: comment || null,
+        },
+      });
 
-    if (!created) {
-      if (evaluationData) {
-        rating.evaluation = evaluationData;
-        rating.stars = null; // Clear stars when using evaluation
-      } else if (starsNum !== null) {
-        rating.stars = starsNum;
+      if (!created) {
+        if (evaluationData) {
+          rating.evaluation = evaluationData;
+          rating.stars = null; // Clear stars when using evaluation
+        } else if (starsNum !== null) {
+          rating.stars = starsNum;
+        }
+        rating.comment = comment || null;
+        await rating.save();
       }
-      rating.comment = comment || null;
-      await rating.save();
+    } catch (ratingError) {
+      logger.error('Error creating/updating school rating', {
+        error: ratingError.message,
+        stack: ratingError.stack,
+        schoolId: finalSchoolId,
+        parentId,
+        errorName: ratingError.name,
+        errorCode: ratingError.code,
+      });
+      return res.status(500).json({ 
+        error: 'Failed to save school rating',
+        details: process.env.NODE_ENV === 'development' ? ratingError.message : undefined,
+      });
     }
 
     logger.info('School rating saved', {
