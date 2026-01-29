@@ -776,7 +776,7 @@ const Media = () => {
             onClick={() => setSelectedMedia(null)}
           />
           
-          <div className="relative w-full max-w-6xl bg-white rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col lg:flex-row max-h-[90vh]">
+          <div className="relative w-full max-w-6xl bg-white rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col lg:flex-row max-h-[90vh] h-[90vh]">
             {/* Close Button Mobile */}
             <button 
               onClick={() => setSelectedMedia(null)}
@@ -786,7 +786,7 @@ const Media = () => {
             </button>
 
             {/* Media Content Area */}
-            <div className="flex-[2] bg-black flex items-center justify-center overflow-hidden relative">
+            <div className="flex-[2] bg-black flex items-center justify-center overflow-hidden relative w-full h-full">
               {selectedMedia.type === 'video' ? (
                 <VideoPlayer 
                   url={getProxyUrl(selectedMedia.url, selectedMedia.id)} 
