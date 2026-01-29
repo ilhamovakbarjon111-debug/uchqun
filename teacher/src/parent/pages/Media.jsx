@@ -80,10 +80,110 @@ const VideoPlayer = ({ url, autoPlay = false, onEnded }) => {
                         (url.includes('/storage/buckets/') && url.includes('/files/') && url.includes('/view')) ||
                         url.includes('/api/media/proxy/');
 
+  // Format time helper
+  const formatTime = (seconds) => {
+    if (!isFinite(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Handle play/pause
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  // Handle skip backward (10 seconds)
+  const skipBackward = () => {
+    if (videoRef.current) {
+      const newTime = Math.max(0, videoRef.current.currentTime - 10);
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
+  };
+
+  // Handle skip forward (10 seconds)
+  const skipForward = () => {
+    if (videoRef.current) {
+      const videoDuration = videoRef.current.duration || duration;
+      const newTime = Math.min(videoDuration, videoRef.current.currentTime + 10);
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
+  };
+
+  // Handle volume change
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+      setIsMuted(newVolume === 0);
+    }
+  };
+
+  // Handle mute toggle
+  const toggleMute = () => {
+    if (videoRef.current) {
+      if (isMuted) {
+        videoRef.current.volume = volume || 0.5;
+        setIsMuted(false);
+      } else {
+        videoRef.current.volume = 0;
+        setIsMuted(true);
+      }
+    }
+  };
+
+  // Handle progress bar change
+  const handleProgressChange = (e) => {
+    const newTime = parseFloat(e.target.value);
+    setCurrentTime(newTime);
+    if (videoRef.current) {
+      videoRef.current.currentTime = newTime;
+    }
+  };
+
+  // Hide controls after 3 seconds of inactivity
+  const resetControlsTimeout = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (isPlaying) {
+        setShowControls(false);
+      }
+    }, 3000);
+  };
+
   useEffect(() => {
     setIsLoading(true);
     setError(false);
-  }, [url]);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    
+    // Auto-play video when it loads if autoPlay is true
+    if (autoPlay && videoRef.current && isDirectVideo) {
+      videoRef.current.play().catch((err) => {
+        console.warn('Auto-play failed:', err);
+      });
+    }
+
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [url, autoPlay, isDirectVideo]);
 
   if (youtubeUrl) {
     return (
