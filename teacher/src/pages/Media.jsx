@@ -414,41 +414,75 @@ const Media = () => {
               onClick={() => setSelectedMedia(item)}
               className="group relative bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100"
             >
-              {/* Image Container */}
+              {/* Image/Video Container */}
               <div className="relative aspect-[4/5] overflow-hidden">
-                <img
-                  src={getProxyUrl(item.url || item.imageUrl || item.photoUrl, item.id)}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  onError={(e) => {
-                    const originalUrl = item.url || item.imageUrl || item.photoUrl;
-                    const proxyUrl = getProxyUrl(originalUrl, item.id);
-                    console.error('Image load error:', {
-                      original: originalUrl,
-                      proxy: proxyUrl,
-                      mediaId: item.id,
-                      error: e
-                    });
-                    e.target.style.display = 'none';
-                  }}
-                />
+                {item.type === 'video' ? (
+                  // Video preview with play on click
+                  <div className="relative w-full h-full">
+                    <video
+                      src={getProxyUrl(item.url, item.id)}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      muted
+                      loop
+                      playsInline
+                      onMouseEnter={(e) => {
+                        // Play video on hover
+                        e.target.play().catch(() => {
+                          // Ignore autoplay errors
+                        });
+                      }}
+                      onMouseLeave={(e) => {
+                        // Pause video when mouse leaves
+                        e.target.pause();
+                        e.target.currentTime = 0; // Reset to beginning
+                      }}
+                      onError={(e) => {
+                        const originalUrl = item.url;
+                        const proxyUrl = getProxyUrl(originalUrl, item.id);
+                        console.error('Video load error:', {
+                          original: originalUrl,
+                          proxy: proxyUrl,
+                          mediaId: item.id,
+                          error: e
+                        });
+                      }}
+                    />
+                    {/* Video Play Icon - Always visible */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-white/30 shadow-lg">
+                        <Play className="w-8 h-8 text-white fill-current" />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Image
+                  <>
+                    <img
+                      src={getProxyUrl(item.url || item.imageUrl || item.photoUrl, item.id)}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      onError={(e) => {
+                        const originalUrl = item.url || item.imageUrl || item.photoUrl;
+                        const proxyUrl = getProxyUrl(originalUrl, item.id);
+                        console.error('Image load error:', {
+                          original: originalUrl,
+                          proxy: proxyUrl,
+                          mediaId: item.id,
+                          error: e
+                        });
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </>
+                )}
                 
                 {/* Overlay on Hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 text-white">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 text-white pointer-events-none">
                   <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-1">
                     {typeLabels[item.type] || item.type}
                   </p>
                   <h3 className="text-lg font-bold leading-tight">{item.title}</h3>
                 </div>
-
-                {/* Video Play Icon - Always visible for videos */}
-                {item.type === 'video' && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-white/30 shadow-lg">
-                      <Play className="w-8 h-8 text-white fill-current" />
-                    </div>
-                  </div>
-                )}
 
                 {/* Action Buttons (Teachers only) */}
                 {isTeacher && (
