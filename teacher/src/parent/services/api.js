@@ -17,15 +17,25 @@ function getCookie(name) {
 
 api.interceptors.request.use(
   (config) => {
-    if (['post', 'put', 'delete', 'patch'].includes(config.method)) {
+    // For JSON requests (like base64 photo upload), check if we have Bearer token
+    // If Bearer token is present, CSRF is not required
+    const hasBearerToken = config.headers?.Authorization?.startsWith('Bearer ') || 
+                          config.headers?.authorization?.startsWith('Bearer ');
+    
+    // Only add CSRF token for cookie-based auth (not Bearer token)
+    if (['post', 'put', 'delete', 'patch'].includes(config.method) && !hasBearerToken) {
       const csrfToken = getCookie('csrfToken');
       if (csrfToken) {
         config.headers['X-CSRF-Token'] = csrfToken;
+      } else {
+        console.warn('CSRF token not found in cookies for', config.method, config.url);
       }
     }
+    
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
+    
     return config;
   },
   (error) => Promise.reject(error)
@@ -35,6 +45,29 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // Handle 403 Forbidden (CSRF or permission error)
+    if (error.response?.status === 403 && !originalRequest._retry) {
+      const errorMessage = error.response?.data?.error || '';
+      
+      // If CSRF error, try to get new CSRF token and retry
+      if (errorMessage.includes('CSRF') || errorMessage.includes('csrf')) {
+        originalRequest._retry = true;
+        console.warn('CSRF token error, retrying request');
+        
+        // Try to get CSRF token from a GET request first
+        try {
+          await axios.get(`${BASE_URL}/auth/me`, { withCredentials: true });
+          // Retry original request
+          return api(originalRequest);
+        } catch {
+          // If that fails, redirect to login
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          return Promise.reject(error);
+        }
+      }
+    }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;

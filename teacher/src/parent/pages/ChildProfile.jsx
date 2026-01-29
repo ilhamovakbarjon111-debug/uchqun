@@ -76,14 +76,25 @@ const ChildProfile = () => {
     try {
       setUploading(true);
       
-      // Create FormData for multipart upload
-      const formData = new FormData();
-      formData.append('photo', file);
+      // Convert file to base64 for Appwrite storage
+      const reader = new FileReader();
+      const photoBase64 = await new Promise((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result;
+          if (typeof result === 'string') {
+            resolve(result);
+          } else {
+            reject(new Error('Failed to read file as base64'));
+          }
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
 
-      // Upload to backend
-      const response = await api.put(`/child/${child.id}`, formData, {
+      // Upload to backend with base64 (will be saved to Appwrite)
+      const response = await api.put(`/child/${child.id}`, { photoBase64 }, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
       });
 
@@ -106,14 +117,28 @@ const ChildProfile = () => {
       // Preload new image
       if (newPhotoUrl) {
         const img = new Image();
+        // Appwrite URL or full URL - use as-is
+        // Local path - prepend API_BASE
         const photoUrl = newPhotoUrl.startsWith('/avatars/')
           ? newPhotoUrl
           : newPhotoUrl.startsWith('http://') || newPhotoUrl.startsWith('https://')
-          ? newPhotoUrl
+          ? newPhotoUrl // Appwrite URL or full URL - use as-is
           : `${API_BASE}${newPhotoUrl.startsWith('/') ? '' : '/'}${newPhotoUrl}`;
-        img.src = `${photoUrl}?t=${timestamp}`;
-        img.onload = () => setImageLoading(false);
-        img.onerror = () => setImageLoading(false);
+        
+        // For Appwrite URLs, don't add timestamp (they have query params)
+        const finalUrl = newPhotoUrl.startsWith('http://') || newPhotoUrl.startsWith('https://')
+          ? photoUrl
+          : `${photoUrl}?t=${timestamp}`;
+        
+        img.src = finalUrl;
+        img.onload = () => {
+          setImageLoading(false);
+          console.log('Image loaded successfully:', finalUrl);
+        };
+        img.onerror = (e) => {
+          setImageLoading(false);
+          console.error('Image load error:', finalUrl, e);
+        };
       }
       
       // Reload child data from server to ensure we have the latest
@@ -129,7 +154,23 @@ const ChildProfile = () => {
       toastSuccess(t('profile.avatarUpdated', { defaultValue: 'Rasm muvaffaqiyatli yuklandi' }));
     } catch (err) {
       console.error('Avatar yuklash xatolik:', err);
-      toastError(err.response?.data?.error || t('profile.uploadError', { defaultValue: 'Rasm yuklashda xatolik yuz berdi' }));
+      
+      let errorMessage = t('profile.uploadError', { defaultValue: 'Rasm yuklashda xatolik yuz berdi' });
+      
+      if (err.response) {
+        // Server responded with error
+        if (err.response.status === 403) {
+          errorMessage = 'Ruxsat yo\'q. Iltimos, qayta kirib ko\'ring.';
+        } else if (err.response.status === 500) {
+          errorMessage = err.response.data?.message || err.response.data?.error || 'Server xatosi. Iltimos, qayta urinib ko\'ring.';
+        } else {
+          errorMessage = err.response.data?.error || err.response.data?.message || errorMessage;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      toastError(errorMessage);
     } finally {
       setUploading(false);
       // Reset file input
@@ -434,8 +475,8 @@ const ChildProfile = () => {
                         // Local avatar - use as-is (frontend path)
                         ? child.photo
                         : child.photo.startsWith('http://') || child.photo.startsWith('https://')
-                        // Full URL - use as-is with timestamp
-                        ? `${child.photo}?t=${photoTimestamp}`
+                        // Appwrite URL or full URL - use as-is (Appwrite URLs already have query params)
+                        ? child.photo
                         // Relative path - prepend API_BASE
                         : `${API_BASE}${child.photo.startsWith('/') ? '' : '/'}${child.photo}?t=${photoTimestamp}`)
                     : defaultAvatar
