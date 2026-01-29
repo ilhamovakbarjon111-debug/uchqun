@@ -836,26 +836,23 @@ export const proxyMediaFile = async (req, res) => {
       return;
     }
     
-    // Return appropriate error status
+    // Return a 1x1 transparent PNG instead of JSON error so browser doesn't show broken image
+    // This prevents the browser from trying to parse JSON as an image
+    const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'no-cache');
+    
+    // Return appropriate error status with transparent PNG
     if (error.response?.status === 404) {
-      return res.status(404).json({ error: 'File not found in Appwrite' });
+      return res.status(404).send(transparentPng);
     }
     
     if (error.response?.status === 403) {
-      return res.status(403).json({ error: 'Access denied to Appwrite file' });
+      return res.status(403).send(transparentPng);
     }
     
-    // For other errors, return 500 with error details
-    res.status(500).json({ 
-      error: 'Failed to proxy media file',
-      message: error.message,
-      details: process.env.NODE_ENV === 'development' ? {
-        stack: error.stack,
-        code: error.code,
-        responseStatus: error.response?.status,
-        responseData: error.response?.data,
-      } : undefined,
-    });
+    // For other errors (500, etc.), return transparent PNG
+    res.status(500).send(transparentPng);
   }
 };
 
