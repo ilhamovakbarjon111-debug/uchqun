@@ -39,6 +39,16 @@ export const authenticate = async (req, res, next) => {
       }
     }
 
+    // Parent-specific check: must have active account
+    if (user.role === 'parent') {
+      if (!user.isActive) {
+        return res.status(403).json({ 
+          error: 'Account is not active. Please contact support.',
+          requiresActivation: true 
+        });
+      }
+    }
+
     req.user = user;
     next();
   } catch (error) {

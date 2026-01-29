@@ -1,6 +1,6 @@
 import express from 'express';
 import { getChildren, getChild, updateChild } from '../controllers/childController.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, requireParent } from '../middleware/auth.js';
 import { updateChildValidator, childIdValidator } from '../validators/childValidator.js';
 import { handleValidationErrors } from '../middleware/validation.js';
 import { uploadChildPhoto } from '../middleware/uploadChildren.js'; // ✅ To'g'ri yo'l
@@ -27,6 +27,8 @@ router.get('/debug/appwrite', (req, res) => {
 });
 
 router.use(authenticate);
+// Note: We don't use requireParent here because updateChild already checks parentId: req.user.id
+// This allows flexibility for future admin/reception access if needed
 
 // Get all children
 router.get('/', getChildren);
