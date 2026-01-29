@@ -12,18 +12,34 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, res) => {
-            console.error('Proxy error:', err);
-            // Return transparent PNG on proxy error
+          // Handle connection errors (ECONNREFUSED, etc.)
+          proxy.on('error', (err, req, res) => {
+            console.error('Vite proxy error:', req.url, err.code || err.message);
+            
+            // Only handle if response hasn't been sent
             if (res && !res.headersSent) {
-              const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
-              res.writeHead(500, {
-                'Content-Type': 'image/png',
-                'Cache-Control': 'no-cache',
-              });
-              res.end(transparentPng);
+              // For media proxy requests, return transparent PNG
+              if (req.url?.includes('/api/media/proxy/')) {
+                const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+                res.writeHead(500, {
+                  'Content-Type': 'image/png',
+                  'Cache-Control': 'no-cache',
+                });
+                res.end(transparentPng);
+              } else {
+                // For other API requests, return JSON error
+                res.writeHead(503, {
+                  'Content-Type': 'application/json',
+                });
+                res.end(JSON.stringify({ 
+                  error: 'Service unavailable', 
+                  message: 'Backend server is not running. Please start the backend server on port 5000.',
+                  code: err.code || 'ECONNREFUSED'
+                }));
+              }
             }
           });
+          
         },
       },
       '/uploads': {
