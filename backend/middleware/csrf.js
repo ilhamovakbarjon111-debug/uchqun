@@ -21,6 +21,12 @@ export const verifyCsrfToken = (req, res, next) => {
     return next();
   }
 
+  // Skip for multipart/form-data (file uploads) - CSRF token may not be properly sent
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.includes('multipart/form-data')) {
+    return next();
+  }
+
   const headerToken = req.headers['x-csrf-token'];
   const cookieToken = req.cookies?.csrfToken;
 
