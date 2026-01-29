@@ -104,17 +104,14 @@ const VideoPlayer = ({ url, autoPlay = false, onEnded }) => {
   const skipBackward = (e) => {
     e?.stopPropagation();
     e?.preventDefault();
-    if (videoRef.current) {
-      const current = videoRef.current.currentTime;
-      if (current !== undefined && !isNaN(current) && isFinite(current)) {
+    const video = videoRef.current;
+    if (video && video.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+      const current = video.currentTime;
+      if (current !== undefined && !isNaN(current) && isFinite(current) && current > 0) {
         const newTime = Math.max(0, current - 10);
-        try {
-          videoRef.current.currentTime = newTime;
-          setCurrentTime(newTime);
-          resetControlsTimeout();
-        } catch (error) {
-          console.error('Error skipping backward:', error);
-        }
+        video.currentTime = newTime;
+        setCurrentTime(newTime);
+        resetControlsTimeout();
       }
     }
   };
@@ -123,19 +120,17 @@ const VideoPlayer = ({ url, autoPlay = false, onEnded }) => {
   const skipForward = (e) => {
     e?.stopPropagation();
     e?.preventDefault();
-    if (videoRef.current) {
-      const current = videoRef.current.currentTime;
-      const videoDuration = videoRef.current.duration;
+    const video = videoRef.current;
+    if (video && video.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+      const current = video.currentTime;
+      const videoDuration = video.duration;
       if (current !== undefined && !isNaN(current) && isFinite(current) &&
-          videoDuration !== undefined && !isNaN(videoDuration) && isFinite(videoDuration)) {
+          videoDuration !== undefined && !isNaN(videoDuration) && isFinite(videoDuration) &&
+          current < videoDuration) {
         const newTime = Math.min(videoDuration, current + 10);
-        try {
-          videoRef.current.currentTime = newTime;
-          setCurrentTime(newTime);
-          resetControlsTimeout();
-        } catch (error) {
-          console.error('Error skipping forward:', error);
-        }
+        video.currentTime = newTime;
+        setCurrentTime(newTime);
+        resetControlsTimeout();
       }
     }
   };
