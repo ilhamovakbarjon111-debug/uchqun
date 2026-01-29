@@ -8,9 +8,9 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000',
+        target: process.env.VITE_API_URL?.replace('/api', '') || 'https://uchqun-production.up.railway.app',
         changeOrigin: true,
-        secure: false,
+        secure: true, // Use secure for HTTPS Railway backend
         configure: (proxy, _options) => {
           // Handle connection errors (ECONNREFUSED, etc.)
           proxy.on('error', (err, req, res) => {
@@ -43,9 +43,9 @@ export default defineConfig({
         },
       },
       '/uploads': {
-        target: process.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000',
+        target: process.env.VITE_API_URL?.replace('/api', '') || 'https://uchqun-production.up.railway.app',
         changeOrigin: true,
-        secure: false,
+        secure: true, // Use secure for HTTPS Railway backend
       },
     },
   },
