@@ -802,9 +802,9 @@ export const proxyMediaFile = async (req, res) => {
         mediaId: fileId,
         appwriteFileId,
       });
-      // Don't try to send JSON if headers already sent
+      // Don't try to send response if headers already sent
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Failed to stream file from Appwrite' });
+        return returnTransparentPng(res, 500);
       }
     });
     
