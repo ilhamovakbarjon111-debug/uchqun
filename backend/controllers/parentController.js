@@ -928,7 +928,7 @@ export const getMySchoolRating = async (req, res) => {
     if (child.schoolId) {
       schoolId = child.schoolId;
       school = child.childSchool;
-    } else if (child.school) {
+    } else if (child.school && typeof child.school === 'string' && child.school.trim().length > 0) {
       // Find school by name (case-insensitive search)
       school = await School.findOne({
         where: {
@@ -970,9 +970,9 @@ export const getMySchoolRating = async (req, res) => {
     }
 
     // If school not found but child has school name, return school name for display
-    if (!schoolId && child.school) {
+    if (!schoolId && child?.school && typeof child.school === 'string' && child.school.trim().length > 0) {
       logger.info('School not found in database, returning school name from child', {
-        childId: child.id,
+        childId: child?.id,
         childSchool: child.school,
         parentId,
       });
@@ -1007,89 +1007,144 @@ export const getMySchoolRating = async (req, res) => {
     }
 
     // Get parent's rating for this school
-    const rating = await SchoolRating.findOne({
-      where: {
+    let rating = null;
+    try {
+      rating = await SchoolRating.findOne({
+        where: {
+          schoolId,
+          parentId,
+        },
+      });
+    } catch (ratingError) {
+      logger.error('Error fetching parent school rating', {
+        error: ratingError.message,
+        stack: ratingError.stack,
         schoolId,
         parentId,
-      },
-    });
+      });
+      rating = null; // Continue with null rating if fetch fails
+    }
 
     // Get all ratings for this school with parent info
-    const allRatings = await SchoolRating.findAll({
-      where: { schoolId },
-      include: [
-        {
-          model: User,
-          as: 'ratingParent',
-          attributes: ['id', 'firstName', 'lastName', 'email'],
-          required: false,
-        },
-      ],
-      order: [['updatedAt', 'DESC']],
-    });
+    let allRatings = [];
+    try {
+      allRatings = await SchoolRating.findAll({
+        where: { schoolId },
+        include: [
+          {
+            model: User,
+            as: 'ratingParent',
+            attributes: ['id', 'firstName', 'lastName', 'email'],
+            required: false,
+          },
+        ],
+        order: [['updatedAt', 'DESC']],
+      });
+    } catch (ratingsError) {
+      logger.error('Error fetching school ratings', {
+        error: ratingsError.message,
+        stack: ratingsError.stack,
+        schoolId,
+      });
+      allRatings = []; // Default to empty array if fetch fails
+    }
 
     // Calculate average rating based on evaluation criteria or stars (for backward compatibility)
     let average = 0;
     const count = allRatings.length;
     
     if (count > 0) {
-      const ratingsWithEvaluation = allRatings.filter(r => r.evaluation && typeof r.evaluation === 'object');
-      const ratingsWithStars = allRatings.filter(r => r.stars && !r.evaluation);
-      
-      if (ratingsWithEvaluation.length > 0) {
-        // Calculate average based on evaluation criteria
-        // Count how many criteria are met across all ratings
-        const criteriaKeys = [
-          'officiallyRegistered',
-          'qualifiedSpecialists',
-          'individualPlan',
-          'safeEnvironment',
-          'medicalRequirements',
-          'developmentalActivities',
-          'foodQuality',
-          'regularInformation',
-          'clearPayments',
-          'kindAttitude'
-        ];
+      try {
+        const ratingsWithEvaluation = allRatings.filter(r => r.evaluation && typeof r.evaluation === 'object' && Object.keys(r.evaluation).length > 0);
+        const ratingsWithStars = allRatings.filter(r => r.stars !== null && r.stars !== undefined && !r.evaluation);
         
-        let totalCriteriaMet = 0;
-        let totalCriteriaCount = 0;
-        
-        ratingsWithEvaluation.forEach(rating => {
-          criteriaKeys.forEach(key => {
-            totalCriteriaCount++;
-            if (rating.evaluation[key] === true) {
-              totalCriteriaMet++;
+        if (ratingsWithEvaluation.length > 0) {
+          // Calculate average based on evaluation criteria
+          // Count how many criteria are met across all ratings
+          const criteriaKeys = [
+            'officiallyRegistered',
+            'qualifiedSpecialists',
+            'individualPlan',
+            'safeEnvironment',
+            'medicalRequirements',
+            'developmentalActivities',
+            'foodQuality',
+            'regularInformation',
+            'clearPayments',
+            'kindAttitude'
+          ];
+          
+          let totalCriteriaMet = 0;
+          let totalCriteriaCount = 0;
+          
+          ratingsWithEvaluation.forEach(rating => {
+            if (rating.evaluation && typeof rating.evaluation === 'object') {
+              criteriaKeys.forEach(key => {
+                totalCriteriaCount++;
+                if (rating.evaluation[key] === true) {
+                  totalCriteriaMet++;
+                }
+              });
             }
           });
-        });
-        
-        // Calculate percentage and convert to 0-5 scale
-        const percentage = totalCriteriaCount > 0 ? (totalCriteriaMet / totalCriteriaCount) * 100 : 0;
-        average = (percentage / 100 * 5).toFixed(1);
-      } else if (ratingsWithStars.length > 0) {
-        // Fallback to stars for backward compatibility
-        const stars = ratingsWithStars.map(r => r.stars).filter(s => s !== null);
-        if (stars.length > 0) {
-          average = (stars.reduce((sum, s) => sum + s, 0) / stars.length).toFixed(1);
+          
+          // Calculate percentage and convert to 0-5 scale
+          if (totalCriteriaCount > 0) {
+            const percentage = (totalCriteriaMet / totalCriteriaCount) * 100;
+            average = parseFloat((percentage / 100 * 5).toFixed(1));
+          }
+        } else if (ratingsWithStars.length > 0) {
+          // Fallback to stars for backward compatibility
+          const stars = ratingsWithStars.map(r => Number(r.stars)).filter(s => !isNaN(s) && s > 0);
+          if (stars.length > 0) {
+            const sum = stars.reduce((acc, s) => acc + s, 0);
+            average = parseFloat((sum / stars.length).toFixed(1));
+          }
         }
+      } catch (calcError) {
+        logger.error('Error calculating school rating average', {
+          error: calcError.message,
+          stack: calcError.stack,
+          schoolId,
+          ratingsCount: count,
+        });
+        average = 0; // Default to 0 if calculation fails
       }
     }
 
     // Format ratings with parent names
-    const formattedRatings = allRatings.map((r) => ({
-      ...r.toJSON(),
-      parentName: r.ratingParent
-        ? `${r.ratingParent.firstName || ''} ${r.ratingParent.lastName || ''}`.trim()
-        : null,
-      parentEmail: r.ratingParent?.email || null,
-    }));
+    let formattedRatings = [];
+    try {
+      formattedRatings = allRatings.map((r) => {
+        try {
+          return {
+            ...r.toJSON(),
+            parentName: r.ratingParent
+              ? `${r.ratingParent.firstName || ''} ${r.ratingParent.lastName || ''}`.trim()
+              : null,
+            parentEmail: r.ratingParent?.email || null,
+          };
+        } catch (mapError) {
+          logger.warn('Error formatting rating', {
+            error: mapError.message,
+            ratingId: r?.id,
+          });
+          return r.toJSON(); // Return basic rating if formatting fails
+        }
+      });
+    } catch (formatError) {
+      logger.error('Error formatting ratings', {
+        error: formatError.message,
+        stack: formatError.stack,
+      });
+      formattedRatings = allRatings.map(r => r.toJSON()); // Fallback to basic JSON
+    }
 
     logger.info('Get school rating response', {
       parentId,
-      childId: child.id,
+      childId: child?.id,
       schoolId,
-      schoolName: school?.name || child.school,
+      schoolName: school?.name || child?.school || 'Unknown',
       hasRating: !!rating,
       ratingsCount: count,
     });
@@ -1100,7 +1155,7 @@ export const getMySchoolRating = async (req, res) => {
         rating: rating ? rating.toJSON() : null,
         school: school ? school.toJSON() : null,
         summary: {
-          average: parseFloat(average),
+          average: isNaN(average) ? 0 : Number(average),
           count,
         },
         allRatings: formattedRatings,
