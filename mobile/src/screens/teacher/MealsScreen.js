@@ -20,7 +20,7 @@ import { mealService } from '../../services/mealService';
 import { teacherService } from '../../services/teacherService';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { EmptyState } from '../../components/common/EmptyState';
+import EmptyState from '../../components/common/EmptyState';
 import TeacherBackground from '../../components/layout/TeacherBackground';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
