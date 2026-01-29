@@ -531,7 +531,11 @@ const Media = () => {
             {/* Media Content Area */}
             <div className="flex-[2] bg-black flex items-center justify-center overflow-hidden relative w-full h-full">
               {selectedMedia.type === 'video' ? (
-                <VideoPlayer url={getProxyUrl(selectedMedia.url, selectedMedia.id)} />
+                <VideoPlayer 
+                  url={getProxyUrl(selectedMedia.url, selectedMedia.id)} 
+                  autoPlay={true}
+                  onEnded={() => setSelectedMedia(null)}
+                />
               ) : (
                 <img
                   src={getProxyUrl(selectedMedia.url || selectedMedia.imageUrl || selectedMedia.photoUrl, selectedMedia.id)}
