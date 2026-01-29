@@ -30,7 +30,12 @@ const getProxyUrl = (url, mediaId) => {
   
   // If URL is from Appwrite, convert to proxy endpoint
   if (url.includes('appwrite.io') && (url.includes('/storage/buckets/') || url.includes('/files/'))) {
-    const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
+    // Use VITE_API_URL if available, otherwise use window.location.origin (for Vite proxy)
+    // In development, Vite proxy will handle /api requests
+    // In production, use the full API URL
+    const apiBase = import.meta.env.VITE_API_URL 
+      ? import.meta.env.VITE_API_URL.replace('/api', '')
+      : window.location.origin;
     const proxyUrl = `${apiBase}/api/media/proxy/${mediaId}`;
     return proxyUrl;
   }
