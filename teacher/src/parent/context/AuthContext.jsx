@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { accessToken, refreshToken, user } = response.data;
+      const { accessToken, refreshToken, csrfToken, user } = response.data;
       
       if (user && accessToken) {
         setUser(user);
@@ -35,6 +35,10 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('accessToken', accessToken);
         if (refreshToken) {
           localStorage.setItem('refreshToken', refreshToken);
+        }
+        // Store CSRF token in localStorage as fallback
+        if (csrfToken) {
+          localStorage.setItem('csrfToken', csrfToken);
         }
         return { success: true };
       }
@@ -52,6 +56,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('csrfToken');
     // If running inside React Native WebView, notify the native shell
     try {
       window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'logout' }));

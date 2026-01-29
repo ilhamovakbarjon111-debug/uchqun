@@ -9,7 +9,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "build:apk": "cd android && (gradlew.bat assembleRelease 2>nul || ./gradlew assembleRelease)",
+    "build:apk": "cd android; if ($?) { .\\gradlew.bat assembleRelease }",
     "prebuild:android": "expo prebuild --platform android --clean"
   },
   "dependencies": {

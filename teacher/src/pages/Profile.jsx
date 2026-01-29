@@ -1,4 +1,4 @@
-import { LogOut, MessageSquare, Send, X } from 'lucide-react';
+import { LogOut, MessageSquare, Send, X, Camera, Upload } from 'lucide-react';
 import { useAuth } from '../shared/context/AuthContext';
 import Card from '../shared/components/Card';
 import { useTranslation } from 'react-i18next';
@@ -6,11 +6,11 @@ import { useNavigate } from 'react-router-dom';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import api from '../shared/services/api';
 import { useToast } from '../shared/context/ToastContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import LoadingSpinner from '../shared/components/LoadingSpinner';
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { success, error: showError } = useToast();
@@ -21,6 +21,9 @@ const Profile = () => {
   const [myMessages, setMyMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showMessagesModal, setShowMessagesModal] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef(null);
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://uchqun-production.up.railway.app/api';
 
   useEffect(() => {
     loadMessages();
@@ -42,6 +45,56 @@ const Profile = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showError(t('profile.invalidImage', { defaultValue: 'Faqat rasm fayllari qabul qilinadi' }));
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showError(t('profile.imageTooLarge', { defaultValue: 'Rasm hajmi 5MB dan katta bo\'lmasligi kerak' }));
+      return;
+    }
+
+    try {
+      setUploadingAvatar(true);
+      
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      // Upload to backend
+      const response = await api.put('/user/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Update user in context
+      if (setUser) {
+        setUser(response.data);
+      }
+      
+      success(t('profile.avatarUpdated', { defaultValue: 'Rasm muvaffaqiyatli yuklandi' }));
+    } catch (err) {
+      console.error('Avatar yuklash xatolik:', err);
+      showError(err.response?.data?.error || t('profile.uploadError', { defaultValue: 'Rasm yuklashda xatolik yuz berdi' }));
+    } finally {
+      setUploadingAvatar(false);
+      // Reset file input
+      event.target.value = '';
+    }
   };
 
   const handleSendMessage = async () => {
@@ -91,12 +144,33 @@ const Profile = () => {
 
       <Card className="p-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold overflow-hidden shrink-0">
-            {user?.avatar ? (
-              <img src={user.avatar.startsWith('http') ? user.avatar : `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') || window.location.origin}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span>{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
-            )}
+          <div className="relative">
+            <div className="w-14 h-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold overflow-hidden shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={handleAvatarClick}>
+              {user?.avatar ? (
+                <img src={user.avatar.startsWith('http') ? user.avatar : `${API_BASE.replace(/\/api\/?$/, '')}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span>{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
+              )}
+              {uploadingAvatar && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
+            <button
+              onClick={handleAvatarClick}
+              className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-md"
+              title={t('profile.changeAvatar', { defaultValue: 'Rasmni o\'zgartirish' })}
+            >
+              <Camera className="w-3 h-3" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
           </div>
           <div>
             <div className="text-lg font-bold text-gray-900">

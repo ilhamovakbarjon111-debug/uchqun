@@ -133,11 +133,9 @@ const ChildProfile = () => {
         img.src = finalUrl;
         img.onload = () => {
           setImageLoading(false);
-          console.log('Image loaded successfully:', finalUrl);
         };
         img.onerror = (e) => {
           setImageLoading(false);
-          console.error('Image load error:', finalUrl, e);
         };
       }
       
@@ -160,7 +158,19 @@ const ChildProfile = () => {
       if (err.response) {
         // Server responded with error
         if (err.response.status === 403) {
-          errorMessage = 'Ruxsat yo\'q. Iltimos, qayta kirib ko\'ring.';
+          // Check if it's an authentication issue
+          const serverError = err.response.data?.error || '';
+          if (serverError.includes('Account not approved') || serverError.includes('Account is not active')) {
+            errorMessage = serverError;
+          } else {
+            errorMessage = err.response.data?.error || 'Ruxsat yo\'q. Iltimos, qayta kirib ko\'ring.';
+          }
+        } else if (err.response.status === 401) {
+          errorMessage = 'Sessiya muddati tugagan. Iltimos, qayta kirib ko\'ring.';
+          // Redirect to login
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
         } else if (err.response.status === 500) {
           errorMessage = err.response.data?.message || err.response.data?.error || 'Server xatosi. Iltimos, qayta urinib ko\'ring.';
         } else {
@@ -414,8 +424,6 @@ const ChildProfile = () => {
     );
   }
 
-  // Debug: Log children data
-  console.log('ChildProfile - children:', children, 'length:', children?.length, 'selectedChildId:', selectedChildId);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -493,8 +501,6 @@ const ChildProfile = () => {
                   e.target.style.opacity = '1';
                 }}
                 onError={(e) => {
-                  console.error('Image load error:', e.target.src);
-                  console.error('Photo path:', child.photo);
                   setImageLoading(false);
                   // Try default avatar, if that fails, use placeholder
                   if (e.target.src !== defaultAvatar && e.target.src !== e.target.dataset.fallback) {
