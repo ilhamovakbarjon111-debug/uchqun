@@ -35,6 +35,23 @@ import EmptyState from '../../components/common/EmptyState';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { API_URL } from '../../config';
 
+// Helper function to get avatar/photo URL
+function getPhotoUrl(photo) {
+  if (!photo) return null;
+  // If already a full URL, return as is
+  if (photo.startsWith('http://') || photo.startsWith('https://')) {
+    return photo;
+  }
+  // Get base URL without /api
+  const base = (API_URL || '').replace(/\/api\/?$/, '') || 'https://uchqun-production.up.railway.app';
+  // Handle /avatars/ paths (Appwrite storage)
+  if (photo.startsWith('/avatars/')) {
+    return `${base}${photo}`;
+  }
+  // Handle other relative paths
+  return `${base}${photo.startsWith('/') ? '' : '/'}${photo}`;
+}
+
 export function ChildProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -73,8 +90,6 @@ export function ChildProfileScreen() {
     ru: 'ru-RU',
     en: 'en-US',
   }[i18n.language] || 'en-US';
-
-  const API_BASE = API_URL?.replace('/api', '') || 'https://uchqun-production.up.railway.app';
 
   useEffect(() => {
     setCurrentLanguage(getCurrentLanguage());
@@ -554,18 +569,29 @@ export function ChildProfileScreen() {
               <Image
                 key={`${child.photo}-${photoTimestamp}`}
                 source={{
-                  uri: child.photo.startsWith('/avatars/')
-                    ? child.photo
-                    : child.photo.startsWith('http://') || child.photo.startsWith('https://')
-                    ? `${child.photo}?t=${photoTimestamp}`
-                    : `${API_BASE}${child.photo.startsWith('/') ? '' : '/'}${child.photo}?t=${photoTimestamp}`,
+                  uri: (() => {
+                    const photoUrl = getPhotoUrl(child.photo);
+                    // Add timestamp for cache busting (except for Appwrite URLs which have query params)
+                    if (photoUrl && (photoUrl.startsWith('http://') || photoUrl.startsWith('https://'))) {
+                      // Check if URL already has query params
+                      if (photoUrl.includes('?')) {
+                        return `${photoUrl}&t=${photoTimestamp}`;
+                      }
+                      return `${photoUrl}?t=${photoTimestamp}`;
+                    }
+                    return photoUrl;
+                  })(),
                 }}
                 style={[
                   styles.avatarImage,
                   imageLoading && styles.avatarImageLoading,
                 ]}
                 onLoad={() => setImageLoading(false)}
-                onError={() => setImageLoading(false)}
+                onError={(error) => {
+                  console.error('Image load error:', error);
+                  setImageLoading(false);
+                }}
+                resizeMode="cover"
               />
             ) : (
               <LinearGradient
