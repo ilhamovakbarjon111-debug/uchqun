@@ -693,6 +693,10 @@ export const proxyMediaFile = async (req, res) => {
       appwriteUrl,
       mediaType: media.type,
       originalUrl: media.url,
+      urlIncludesAppwrite: media.url.includes('appwrite.io'),
+      urlIncludesFiles: media.url.includes('/files/'),
+      urlLength: media.url?.length,
+      urlSubstring: media.url?.substring(0, 100), // First 100 chars for debugging
     });
 
     // Fetch file from Appwrite
