@@ -221,13 +221,26 @@ const TeacherRating = () => {
       }
     } catch (err) {
       console.error('Error saving school rating:', err);
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || t('schoolRatingPage.errorSave');
-      setSchoolError(errorMessage);
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
       
-      // Log detailed error for debugging
-      if (err.response?.data?.details) {
-        console.error('Error details:', err.response.data.details);
+      // Get error message from response
+      let errorMessage = t('schoolRatingPage.errorSave');
+      if (err.response?.data) {
+        errorMessage = err.response.data.error || err.response.data.message || errorMessage;
+        // Add details if available
+        if (err.response.data.details) {
+          if (typeof err.response.data.details === 'string') {
+            errorMessage += ': ' + err.response.data.details;
+          } else if (typeof err.response.data.details === 'object') {
+            errorMessage += ': ' + JSON.stringify(err.response.data.details);
+          }
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
       }
+      
+      setSchoolError(errorMessage);
     } finally {
       setSavingSchool(false);
     }

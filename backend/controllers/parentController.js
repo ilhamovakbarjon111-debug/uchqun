@@ -922,7 +922,8 @@ export const rateSchool = async (req, res) => {
         created = true;
       }
     } catch (ratingError) {
-      logger.error('Error creating/updating school rating', {
+      // Log comprehensive error information
+      const errorInfo = {
         error: ratingError.message,
         stack: ratingError.stack,
         schoolId: finalSchoolId,
@@ -934,26 +935,75 @@ export const rateSchool = async (req, res) => {
         evaluationType: typeof evaluationData,
         starsNum,
         finalEvaluationData,
-      });
+        sequelizeError: ratingError.original?.code || ratingError.original?.constraint,
+        table: ratingError.table,
+        constraint: ratingError.constraint,
+      };
+      
+      logger.error('Error creating/updating school rating', errorInfo);
       
       // Handle specific database errors
       if (ratingError.name === 'SequelizeUniqueConstraintError') {
+        // Try to update instead
+        try {
+          const existingRating = await SchoolRating.findOne({
+            where: {
+              schoolId: finalSchoolId,
+              parentId,
+            },
+          });
+          
+          if (existingRating) {
+            if (Object.keys(finalEvaluationData).length > 0) {
+              existingRating.evaluation = finalEvaluationData;
+              existingRating.stars = null;
+            } else if (starsNum !== null && starsNum !== undefined) {
+              existingRating.stars = starsNum;
+              existingRating.evaluation = {};
+            }
+            existingRating.comment = comment || null;
+            await existingRating.save();
+            
+            return res.json({
+              success: true,
+              message: 'School rating updated successfully',
+              data: existingRating.toJSON(),
+            });
+          }
+        } catch (updateError) {
+          logger.error('Error updating existing rating after unique constraint error', {
+            error: updateError.message,
+            stack: updateError.stack,
+          });
+        }
+        
         return res.status(409).json({ 
           error: 'Rating already exists for this school',
-          message: 'You have already rated this school. The rating has been updated.',
+          message: 'You have already rated this school.',
         });
       }
       
       if (ratingError.name === 'SequelizeValidationError') {
+        const validationErrors = ratingError.errors?.map(e => `${e.path}: ${e.message}`).join(', ') || ratingError.message;
         return res.status(400).json({ 
           error: 'Validation error',
-          details: ratingError.errors?.map(e => e.message).join(', ') || ratingError.message,
+          message: 'Invalid data provided',
+          details: validationErrors,
         });
       }
       
       if (ratingError.name === 'SequelizeForeignKeyConstraintError') {
         return res.status(400).json({ 
           error: 'Invalid school or parent reference',
+          message: 'The school or parent ID is invalid',
+          details: process.env.NODE_ENV === 'development' ? ratingError.message : undefined,
+        });
+      }
+      
+      if (ratingError.name === 'SequelizeDatabaseError') {
+        return res.status(500).json({ 
+          error: 'Database error',
+          message: 'A database error occurred. Please try again.',
           details: process.env.NODE_ENV === 'development' ? ratingError.message : undefined,
         });
       }
@@ -969,8 +1019,8 @@ export const rateSchool = async (req, res) => {
         message: 'An error occurred while saving your rating. Please try again.',
         details: process.env.NODE_ENV === 'development' ? {
           originalError: ratingError.message,
-          stack: ratingError.stack,
           errorName: ratingError.name,
+          errorCode: ratingError.code,
         } : undefined,
       });
     }
