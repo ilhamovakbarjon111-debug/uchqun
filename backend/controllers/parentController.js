@@ -842,28 +842,23 @@ export const rateSchool = async (req, res) => {
     });
 
     let rating;
-    let created;
+    let created = false;
     try {
       // Prepare evaluation data - ensure it's a valid object or null
       const finalEvaluationData = evaluationData && typeof evaluationData === 'object' && Object.keys(evaluationData).length > 0
         ? evaluationData
         : null;
 
-      [rating, created] = await SchoolRating.findOrCreate({
+      // First, try to find existing rating
+      rating = await SchoolRating.findOne({
         where: {
           schoolId: finalSchoolId,
           parentId,
         },
-        defaults: {
-          schoolId: finalSchoolId,
-          parentId,
-          stars: starsNum,
-          evaluation: finalEvaluationData,
-          comment: comment || null,
-        },
       });
 
-      if (!created) {
+      if (rating) {
+        // Update existing rating
         if (finalEvaluationData) {
           rating.evaluation = finalEvaluationData;
           rating.stars = null; // Clear stars when using evaluation
@@ -873,6 +868,17 @@ export const rateSchool = async (req, res) => {
         }
         rating.comment = comment || null;
         await rating.save();
+        created = false;
+      } else {
+        // Create new rating
+        rating = await SchoolRating.create({
+          schoolId: finalSchoolId,
+          parentId,
+          stars: starsNum,
+          evaluation: finalEvaluationData,
+          comment: comment || null,
+        });
+        created = true;
       }
     } catch (ratingError) {
       logger.error('Error creating/updating school rating', {
@@ -882,10 +888,35 @@ export const rateSchool = async (req, res) => {
         parentId,
         errorName: ratingError.name,
         errorCode: ratingError.code,
+        errorDetails: ratingError.errors || ratingError.original?.detail || ratingError.original?.message,
         hasEvaluation: !!evaluationData,
         evaluationType: typeof evaluationData,
         starsNum,
+        finalEvaluationData,
       });
+      
+      // Handle specific database errors
+      if (ratingError.name === 'SequelizeUniqueConstraintError') {
+        return res.status(409).json({ 
+          error: 'Rating already exists for this school',
+          message: 'You have already rated this school. The rating has been updated.',
+        });
+      }
+      
+      if (ratingError.name === 'SequelizeValidationError') {
+        return res.status(400).json({ 
+          error: 'Validation error',
+          details: ratingError.errors?.map(e => e.message).join(', ') || ratingError.message,
+        });
+      }
+      
+      if (ratingError.name === 'SequelizeForeignKeyConstraintError') {
+        return res.status(400).json({ 
+          error: 'Invalid school or parent reference',
+          details: process.env.NODE_ENV === 'development' ? ratingError.message : undefined,
+        });
+      }
+      
       return res.status(500).json({ 
         error: 'Failed to save school rating',
         details: process.env.NODE_ENV === 'development' ? ratingError.message : undefined,
