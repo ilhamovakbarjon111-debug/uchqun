@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useEffect, useState, useRef } from 'react';
 import { 
   Calendar, 
   ChevronLeft,
@@ -59,9 +59,10 @@ const getVimeoEmbedUrl = (url) => {
 };
 
 // Video Player Component
-const VideoPlayer = ({ url }) => {
+const VideoPlayer = ({ url, autoPlay = false }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const videoRef = useRef(null);
   const { t } = useTranslation();
 
   const youtubeUrl = getYouTubeEmbedUrl(url);
@@ -74,7 +75,15 @@ const VideoPlayer = ({ url }) => {
   useEffect(() => {
     setIsLoading(true);
     setError(false);
-  }, [url]);
+    
+    // Auto-play video when it loads if autoPlay is true
+    if (autoPlay && videoRef.current && isDirectVideo) {
+      videoRef.current.play().catch((err) => {
+        console.warn('Auto-play failed:', err);
+        // Auto-play might fail due to browser policies, that's okay
+      });
+    }
+  }, [url, autoPlay, isDirectVideo]);
 
   if (youtubeUrl) {
     return (
@@ -128,11 +137,21 @@ const VideoPlayer = ({ url }) => {
     return (
       <div className="w-full h-full flex items-center justify-center p-4">
         <video
+          ref={videoRef}
           src={url}
           controls
+          autoPlay={autoPlay}
           crossOrigin="anonymous"
           className="max-w-full max-h-full"
-          onLoadedData={() => setIsLoading(false)}
+          onLoadedData={() => {
+            setIsLoading(false);
+            // Try to play if autoPlay is enabled
+            if (autoPlay && videoRef.current) {
+              videoRef.current.play().catch((err) => {
+                console.warn('Auto-play failed:', err);
+              });
+            }
+          }}
           onError={(e) => {
             console.error('Video load error:', url, e);
             setIsLoading(false);
