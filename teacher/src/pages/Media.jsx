@@ -94,14 +94,19 @@ const VideoPlayer = ({ url, autoPlay = false, onEnded }) => {
   };
 
   // Handle play/pause
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
+  const togglePlay = (e) => {
+    e?.stopPropagation();
+    e?.preventDefault();
+    const video = videoRef.current;
+    if (video) {
+      if (video.paused) {
+        video.play().catch((err) => {
+          console.warn('Play failed:', err);
+        });
       } else {
-        videoRef.current.play();
+        video.pause();
       }
-      setIsPlaying(!isPlaying);
+      resetControlsTimeout();
     }
   };
 
@@ -110,14 +115,12 @@ const VideoPlayer = ({ url, autoPlay = false, onEnded }) => {
     e?.stopPropagation();
     e?.preventDefault();
     const video = videoRef.current;
-    if (video && video.readyState >= 2) { // HAVE_CURRENT_DATA or higher
-      const current = video.currentTime;
-      if (current !== undefined && !isNaN(current) && isFinite(current) && current > 0) {
-        const newTime = Math.max(0, current - 10);
-        video.currentTime = newTime;
-        setCurrentTime(newTime);
-        resetControlsTimeout();
-      }
+    if (video) {
+      const current = video.currentTime || 0;
+      const newTime = Math.max(0, current - 10);
+      video.currentTime = newTime;
+      setCurrentTime(newTime);
+      resetControlsTimeout();
     }
   };
 
@@ -126,50 +129,58 @@ const VideoPlayer = ({ url, autoPlay = false, onEnded }) => {
     e?.stopPropagation();
     e?.preventDefault();
     const video = videoRef.current;
-    if (video && video.readyState >= 2) { // HAVE_CURRENT_DATA or higher
-      const current = video.currentTime;
-      const videoDuration = video.duration;
-      if (current !== undefined && !isNaN(current) && isFinite(current) &&
-          videoDuration !== undefined && !isNaN(videoDuration) && isFinite(videoDuration) &&
-          current < videoDuration) {
-        const newTime = Math.min(videoDuration, current + 10);
-        video.currentTime = newTime;
-        setCurrentTime(newTime);
-        resetControlsTimeout();
-      }
+    if (video) {
+      const current = video.currentTime || 0;
+      const videoDuration = video.duration || 0;
+      const newTime = Math.min(videoDuration, current + 10);
+      video.currentTime = newTime;
+      setCurrentTime(newTime);
+      resetControlsTimeout();
     }
   };
 
   // Handle volume change
   const handleVolumeChange = (e) => {
+    e?.stopPropagation();
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
-    if (videoRef.current) {
-      videoRef.current.volume = newVolume;
+    const video = videoRef.current;
+    if (video) {
+      video.volume = newVolume;
       setIsMuted(newVolume === 0);
     }
+    resetControlsTimeout();
   };
 
   // Handle mute toggle
-  const toggleMute = () => {
-    if (videoRef.current) {
-      if (isMuted) {
-        videoRef.current.volume = volume || 0.5;
+  const toggleMute = (e) => {
+    e?.stopPropagation();
+    e?.preventDefault();
+    const video = videoRef.current;
+    if (video) {
+      if (isMuted || video.volume === 0) {
+        const newVolume = volume > 0 ? volume : 0.5;
+        video.volume = newVolume;
+        setVolume(newVolume);
         setIsMuted(false);
       } else {
-        videoRef.current.volume = 0;
+        video.volume = 0;
         setIsMuted(true);
       }
+      resetControlsTimeout();
     }
   };
 
   // Handle progress bar change
   const handleProgressChange = (e) => {
+    e?.stopPropagation();
     const newTime = parseFloat(e.target.value);
     setCurrentTime(newTime);
-    if (videoRef.current) {
-      videoRef.current.currentTime = newTime;
+    const video = videoRef.current;
+    if (video) {
+      video.currentTime = newTime;
     }
+    resetControlsTimeout();
   };
 
   // Hide controls after 3 seconds of inactivity
