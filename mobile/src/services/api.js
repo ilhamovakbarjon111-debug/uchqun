@@ -31,6 +31,12 @@ api.interceptors.request.use(async (config) => {
     delete config.headers['Content-Type'];
   }
   
+  // For base64 photo uploads, ensure proper Content-Type and increase timeout
+  if (config.data && typeof config.data === 'object' && config.data.photoBase64) {
+    config.headers['Content-Type'] = 'application/json';
+    config.timeout = 60000; // 60 seconds for large base64 uploads
+  }
+  
   if (__DEV__) {
     console.log('[API] Request:', config.method?.toUpperCase(), config.url);
   }
@@ -146,4 +152,3 @@ api.clearCache = async () => {
     await cacheService.clear();
   } catch {}
 };
-

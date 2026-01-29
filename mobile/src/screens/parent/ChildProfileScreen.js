@@ -234,29 +234,105 @@ export function ChildProfileScreen() {
 
       const asset = result.assets[0];
       const base64 = asset.base64;
-
-      // Prefer base64 to avoid React Native + axios FormData Network Error on Android
-      if (base64 && typeof base64 === 'string') {
-        const mimeType = asset.mimeType || 'image/jpeg';
-        const photoBase64 = `data:${mimeType};base64,${base64}`;
-        await api.put(`/child/${selectedChildId}`, { photoBase64 });
-      } else {
-        const uri = asset.uri;
-        const filename = uri.split('/').pop() || 'photo.jpg';
+      const uri = asset.uri;
+      const mimeType = asset.mimeType || 'image/jpeg';
+      
+      // Try FormData first (more reliable for large files)
+      // If that fails, fallback to base64
+      let uploadSuccess = false;
+      let lastError = null;
+      
+      // Method 1: Try FormData (preferred for large files)
+      try {
+        const filename = uri.split('/').pop() || `photo-${Date.now()}.jpg`;
         const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : 'image/jpeg';
+        const type = match ? `image/${match[1]}` : mimeType;
+        
         const formData = new FormData();
-        formData.append('photo', { uri, name: filename, type });
-        await api.put(`/child/${selectedChildId}`, formData);
+        formData.append('photo', {
+          uri: uri,
+          name: filename,
+          type: type,
+        });
+        
+        console.log('[Upload] Attempting FormData upload:', { filename, type, uri: uri.substring(0, 50) });
+        
+        await api.put(`/child/${selectedChildId}`, formData, {
+          timeout: 90000, // 90 seconds
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        
+        uploadSuccess = true;
+        console.log('[Upload] FormData upload successful');
+      } catch (formDataError) {
+        console.warn('[Upload] FormData upload failed:', formDataError.message);
+        lastError = formDataError;
+        
+        // Method 2: Fallback to base64 if FormData fails
+        if (base64 && typeof base64 === 'string') {
+          try {
+            const photoBase64 = `data:${mimeType};base64,${base64}`;
+            
+            // Check if base64 is too large
+            if (base64.length > 3 * 1024 * 1024) { // > 3MB
+              console.warn('[Upload] Base64 image is large:', Math.round(base64.length / 1024 / 1024), 'MB');
+            }
+            
+            console.log('[Upload] Attempting base64 upload:', { 
+              size: Math.round(base64.length / 1024), 
+              'KB': true,
+              mimeType,
+              photoBase64Length: photoBase64.length,
+              photoBase64Prefix: photoBase64.substring(0, 50)
+            });
+            
+            const response = await api.put(`/child/${selectedChildId}`, { photoBase64 }, {
+              timeout: 90000, // 90 seconds
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+            
+            console.log('[Upload] Base64 upload response:', {
+              status: response.status,
+              hasData: !!response.data
+            });
+            
+            uploadSuccess = true;
+            console.log('[Upload] Base64 upload successful');
+          } catch (base64Error) {
+            console.error('[Upload] Base64 upload also failed:', base64Error.message);
+            lastError = base64Error;
+          }
+        }
+      }
+      
+      if (!uploadSuccess) {
+        throw lastError || new Error('Upload failed: Both FormData and base64 methods failed');
       }
 
       setPhotoTimestamp(Date.now());
       await loadChild();
     } catch (error) {
       console.error('Error uploading photo:', error);
+      
+      let errorMessage = t('child.photoUploadFailed', { defaultValue: 'Failed to upload photo' });
+      
+      if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
+        errorMessage = 'Internet aloqasi yo\'q yoki serverga ulanib bo\'lmadi. Internet aloqasini tekshiring.';
+      } else if (error.response) {
+        // Server responded with error
+        errorMessage = error.response.data?.error || error.response.data?.message || errorMessage;
+      } else if (error.message) {
+        // Other error
+        errorMessage = error.message;
+      }
+      
       Alert.alert(
         t('common.error', { defaultValue: 'Error' }),
-        error.response?.data?.error || t('child.photoUploadFailed', { defaultValue: 'Failed to upload photo' })
+        errorMessage
       );
     } finally {
       setUploading(false);

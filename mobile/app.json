@@ -67,7 +67,8 @@
       "@react-native-community/datetimepicker",
       "expo-notifications",
       "expo-secure-store",
-      "expo-image"
+      "expo-image",
+      "expo-av"
     ]
   }
 }

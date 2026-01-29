@@ -10,12 +10,31 @@ import {
   RefreshControl,
   ScrollView,
   Modal,
+  Linking,
+  Alert,
 } from 'react-native';
-// Video funksiyasi vaqtincha o'chirilgan
-// import { Video, ResizeMode } from 'expo-av';
+// Conditionally import expo-av to avoid errors if native module is not available
+let Video, ResizeMode;
+try {
+  const expoAv = require('expo-av');
+  Video = expoAv.Video;
+  ResizeMode = expoAv.ResizeMode;
+} catch (error) {
+  console.warn('expo-av not available:', error);
+  Video = null;
+  ResizeMode = { CONTAIN: 'contain' };
+}
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+// Conditionally import WebView to avoid errors if native module is not available
+let WebView;
+try {
+  WebView = require('react-native-webview').WebView;
+} catch (error) {
+  console.warn('react-native-webview not available:', error);
+  WebView = null;
+}
 import { parentService } from '../../services/parentService';
 import { mediaService } from '../../services/mediaService';
 import tokens from '../../styles/tokens';
@@ -42,9 +61,8 @@ export function MediaScreen() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [viewerVisible, setViewerVisible] = useState(false);
-  // Video funksiyasi vaqtincha o'chirilgan
-  // const [videoUri, setVideoUri] = useState(null);
-  // const [videoVisible, setVideoVisible] = useState(false);
+  const [videoUri, setVideoUri] = useState(null);
+  const [videoVisible, setVideoVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -285,6 +303,7 @@ export function MediaScreen() {
                         ]}
                         onPress={() => {
                           if (isVideo) {
+                            // Open video in modal (works with both expo-av and WebView)
                             setVideoUri(imageUrl);
                             setVideoVisible(true);
                           } else {
@@ -292,26 +311,51 @@ export function MediaScreen() {
                           }
                         }}
                       >
-                        <Image
-                          source={{ uri: imageUrl }}
-                          style={styles.image}
-                          resizeMode="cover"
-                          onError={(e) => {
-                            console.warn('[MediaScreen] Image load error:', imageUrl, e.nativeEvent.error);
-                          }}
-                        />
-                        {/* Video funksiyasi vaqtincha o'chirilgan */}
-                        {/* {isVideo && (
-                          <View style={styles.videoOverlay}>
-                            <View style={styles.playButton}>
-                              <Ionicons name="play" size={20} color="#fff" />
+                        {isVideo && Video ? (
+                          // Video preview - show video directly in grid like web version
+                          <View style={styles.videoContainer}>
+                            <Video
+                              source={{ uri: imageUrl }}
+                              style={styles.videoPreview}
+                              resizeMode={ResizeMode.COVER}
+                              isMuted={true}
+                              isLooping={true}
+                              shouldPlay={false}
+                              useNativeControls={false}
+                              onError={(e) => {
+                                console.warn('[MediaScreen] Video load error:', imageUrl, e);
+                              }}
+                            />
+                            <View style={styles.videoOverlay}>
+                              <View style={styles.playButton}>
+                                <Ionicons name="play" size={20} color="#fff" />
+                              </View>
                             </View>
                           </View>
-                        )} */}
-                        <LinearGradient
-                          colors={['transparent', 'rgba(0,0,0,0.3)']}
-                          style={styles.imageGradient}
-                        />
+                        ) : (
+                          // Image or video fallback (if Video is not available)
+                          <>
+                            <Image
+                              source={{ uri: imageUrl }}
+                              style={styles.image}
+                              resizeMode="cover"
+                              onError={(e) => {
+                                console.warn('[MediaScreen] Image load error:', imageUrl, e.nativeEvent.error);
+                              }}
+                            />
+                            {isVideo && (
+                              <View style={styles.videoOverlay}>
+                                <View style={styles.playButton}>
+                                  <Ionicons name="play" size={20} color="#fff" />
+                                </View>
+                              </View>
+                            )}
+                            <LinearGradient
+                              colors={['transparent', 'rgba(0,0,0,0.3)']}
+                              style={styles.imageGradient}
+                            />
+                          </>
+                        )}
                       </Pressable>
                     );
                   })}
@@ -324,23 +368,90 @@ export function MediaScreen() {
         )}
       </ScrollView>
 
-      {/* Video funksiyasi vaqtincha o'chirilgan */}
-      {/* <Modal visible={videoVisible} animationType="fade" transparent onRequestClose={() => setVideoVisible(false)}>
+      <Modal visible={videoVisible} animationType="fade" transparent onRequestClose={() => setVideoVisible(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' }}>
           <Pressable style={{ position: 'absolute', top: 60, right: 20, zIndex: 10 }} onPress={() => setVideoVisible(false)}>
             <Ionicons name="close-circle" size={36} color="#fff" />
           </Pressable>
           {videoUri && (
-            <Video
-              source={{ uri: videoUri }}
-              style={{ width: width, height: width * 9 / 16 }}
-              useNativeControls
-              resizeMode="contain"
-              shouldPlay
-            />
+            Video ? (
+              // Use expo-av Video if available
+              <Video
+                source={{ uri: videoUri }}
+                style={{ width: width, height: width * 9 / 16 }}
+                useNativeControls
+                resizeMode={ResizeMode.CONTAIN}
+                shouldPlay
+              />
+            ) : WebView ? (
+              // Use WebView with HTML5 video if expo-av is not available but WebView is available
+              <View style={{ width: width, height: width * 9 / 16 }}>
+                <WebView
+                  source={{
+                    html: `
+                      <!DOCTYPE html>
+                      <html>
+                        <head>
+                          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                          <style>
+                            body {
+                              margin: 0;
+                              padding: 0;
+                              background: #000;
+                              display: flex;
+                              justify-content: center;
+                              align-items: center;
+                              height: 100vh;
+                            }
+                            video {
+                              width: 100%;
+                              height: 100%;
+                              object-fit: contain;
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          <video controls autoplay>
+                            <source src="${videoUri}" type="video/mp4">
+                            Your browser does not support the video tag.
+                          </video>
+                        </body>
+                      </html>
+                    `
+                  }}
+                  style={{ flex: 1, backgroundColor: '#000' }}
+                  allowsFullscreen
+                  mediaPlaybackRequiresUserAction={false}
+                />
+              </View>
+            ) : (
+              // Fallback: open in external player if neither Video nor WebView is available
+              <View style={{ width: width, height: width * 9 / 16, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: '#fff', marginBottom: 20 }}>Video ko'rsatish uchun tashqi player ochiladi</Text>
+                <Pressable
+                  onPress={async () => {
+                    try {
+                      const canOpen = await Linking.canOpenURL(videoUri);
+                      if (canOpen) {
+                        await Linking.openURL(videoUri);
+                        setVideoVisible(false);
+                      } else {
+                        Alert.alert('Xatolik', 'Video ochib bo\'lmadi');
+                      }
+                    } catch (error) {
+                      console.warn('Failed to open video:', error);
+                      Alert.alert('Xatolik', 'Video ochib bo\'lmadi');
+                    }
+                  }}
+                  style={{ backgroundColor: '#fff', padding: 12, borderRadius: 8 }}
+                >
+                  <Text style={{ color: '#000', fontWeight: 'bold' }}>Tashqi playerda ochish</Text>
+                </Pressable>
+              </View>
+            )
           )}
         </View>
-      </Modal> */}
+      </Modal>
 
       {viewerVisible && selectedImage && (
         <ImageViewer
@@ -534,6 +645,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 30,
+  },
+  videoContainer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
+  videoPreview: {
+    width: '100%',
+    height: '100%',
   },
   videoOverlay: {
     ...StyleSheet.absoluteFillObject,
