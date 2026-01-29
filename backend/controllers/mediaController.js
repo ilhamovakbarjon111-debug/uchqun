@@ -638,22 +638,39 @@ export const proxyMediaFile = async (req, res) => {
     // Extract Appwrite file ID from URL
     // URL format: https://fra.cloud.appwrite.io/v1/storage/buckets/{bucketId}/files/{fileId}/view?project={projectId}
     // or: https://fra.cloud.appwrite.io/v1/storage/buckets/{bucketId}/files/{fileId}/preview?project={projectId}
+    // OR: old proxy URL format (should not happen, but handle it)
     let appwriteFileId = null;
     
+    // Check if URL is an Appwrite URL
     if (media.url.includes('appwrite.io') && media.url.includes('/files/')) {
       // Extract Appwrite file ID from URL
       const match = media.url.match(/\/files\/([^/?]+)/);
       if (match && match[1]) {
         appwriteFileId = match[1];
       }
+    } else if (media.url.includes('/api/media/proxy/')) {
+      // This is an old proxy URL - we can't extract Appwrite file ID from it
+      // This shouldn't happen with new records, but handle it gracefully
+      logger.error('Media URL is already a proxy URL - cannot extract Appwrite file ID', {
+        mediaId: fileId,
+        mediaUrl: media.url,
+      });
+      return res.status(400).json({ 
+        error: 'Media URL is already a proxy URL. Please update the media record with the original Appwrite URL.',
+        hint: 'This media record needs to be updated with the original Appwrite URL from the upload result.',
+      });
     }
 
     if (!appwriteFileId) {
       logger.error('Could not extract Appwrite file ID from media URL', {
         mediaId: fileId,
         mediaUrl: media.url,
+        urlType: media.url.includes('appwrite.io') ? 'appwrite' : media.url.includes('/api/media/proxy/') ? 'proxy' : 'unknown',
       });
-      return res.status(400).json({ error: 'Could not extract Appwrite file ID from URL. Media URL must be an Appwrite URL.' });
+      return res.status(400).json({ 
+        error: 'Could not extract Appwrite file ID from URL. Media URL must be an Appwrite URL.',
+        details: 'The media record URL is not in the expected format. Please ensure the URL is an Appwrite storage URL.',
+      });
     }
 
     // Get Appwrite configuration
