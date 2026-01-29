@@ -108,24 +108,39 @@ const VideoPlayer = ({ url, autoPlay = false, onEnded }) => {
   // Handle skip backward (10 seconds)
   const skipBackward = (e) => {
     e?.stopPropagation();
-    if (videoRef.current && !isNaN(videoRef.current.currentTime)) {
-      const newTime = Math.max(0, videoRef.current.currentTime - 10);
-      videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-      resetControlsTimeout();
+    e?.preventDefault();
+    if (videoRef.current) {
+      const current = videoRef.current.currentTime;
+      if (current !== undefined && !isNaN(current) && isFinite(current)) {
+        const newTime = Math.max(0, current - 10);
+        try {
+          videoRef.current.currentTime = newTime;
+          setCurrentTime(newTime);
+          resetControlsTimeout();
+        } catch (error) {
+          console.error('Error skipping backward:', error);
+        }
+      }
     }
   };
 
   // Handle skip forward (10 seconds)
   const skipForward = (e) => {
     e?.stopPropagation();
-    if (videoRef.current && !isNaN(videoRef.current.currentTime)) {
+    e?.preventDefault();
+    if (videoRef.current) {
+      const current = videoRef.current.currentTime;
       const videoDuration = videoRef.current.duration;
-      if (videoDuration && !isNaN(videoDuration)) {
-        const newTime = Math.min(videoDuration, videoRef.current.currentTime + 10);
-        videoRef.current.currentTime = newTime;
-        setCurrentTime(newTime);
-        resetControlsTimeout();
+      if (current !== undefined && !isNaN(current) && isFinite(current) &&
+          videoDuration !== undefined && !isNaN(videoDuration) && isFinite(videoDuration)) {
+        const newTime = Math.min(videoDuration, current + 10);
+        try {
+          videoRef.current.currentTime = newTime;
+          setCurrentTime(newTime);
+          resetControlsTimeout();
+        } catch (error) {
+          console.error('Error skipping forward:', error);
+        }
       }
     }
   };
