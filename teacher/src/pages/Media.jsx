@@ -32,7 +32,6 @@ const getProxyUrl = (url, mediaId) => {
   if (url.includes('appwrite.io') && (url.includes('/storage/buckets/') || url.includes('/files/'))) {
     const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
     const proxyUrl = `${apiBase}/api/media/proxy/${mediaId}`;
-    console.log('Converting Appwrite URL to proxy:', { original: url, proxy: proxyUrl, mediaId });
     return proxyUrl;
   }
   
