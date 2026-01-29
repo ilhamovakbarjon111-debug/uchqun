@@ -175,6 +175,12 @@ const TeacherRating = () => {
       return;
     }
 
+    // Validate school data
+    if (!school.id && (!school.name || typeof school.name !== 'string' || school.name.trim().length === 0)) {
+      setSchoolError(t('schoolRatingPage.noSchool'));
+      return;
+    }
+
     setSavingSchool(true);
     try {
       // Send schoolId if available, otherwise send schoolName
@@ -182,14 +188,15 @@ const TeacherRating = () => {
         ? { 
             schoolId: school.id, 
             evaluation: schoolEvaluation,
-            comment: schoolComment 
+            comment: schoolComment || null
           }
         : { 
-            schoolName: school.name, 
+            schoolName: school.name.trim(), 
             evaluation: schoolEvaluation,
-            comment: schoolComment 
+            comment: schoolComment || null
           };
       
+      console.log('Sending school rating payload:', payload);
       await api.post('/parent/school-rating', payload);
       setSchoolRating({
         evaluation: schoolEvaluation,
@@ -214,7 +221,13 @@ const TeacherRating = () => {
       }
     } catch (err) {
       console.error('Error saving school rating:', err);
-      setSchoolError(err.response?.data?.error || t('schoolRatingPage.errorSave'));
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || t('schoolRatingPage.errorSave');
+      setSchoolError(errorMessage);
+      
+      // Log detailed error for debugging
+      if (err.response?.data?.details) {
+        console.error('Error details:', err.response.data.details);
+      }
     } finally {
       setSavingSchool(false);
     }
