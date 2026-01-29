@@ -108,14 +108,19 @@ const VideoPlayer = ({ url, autoPlay = false, onEnded }) => {
   // Handle skip backward (10 seconds)
   const skipBackward = () => {
     if (videoRef.current) {
-      videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10);
+      const newTime = Math.max(0, videoRef.current.currentTime - 10);
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
     }
   };
 
   // Handle skip forward (10 seconds)
   const skipForward = () => {
     if (videoRef.current) {
-      videoRef.current.currentTime = Math.min(duration, videoRef.current.currentTime + 10);
+      const videoDuration = videoRef.current.duration || duration;
+      const newTime = Math.min(videoDuration, videoRef.current.currentTime + 10);
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
     }
   };
 
