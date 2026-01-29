@@ -249,7 +249,8 @@ const VideoPlayer = ({ url, autoPlay = false, onEnded }) => {
           src={url}
           autoPlay={autoPlay}
           crossOrigin="anonymous"
-          className="max-w-full max-h-full"
+          className="w-full h-full object-contain"
+          style={{ maxHeight: '100%', maxWidth: '100%' }}
           onLoadedData={() => {
             setIsLoading(false);
             if (videoRef.current) {
