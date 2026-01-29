@@ -917,9 +917,20 @@ export const rateSchool = async (req, res) => {
         });
       }
       
+      // Return more helpful error message
+      let errorMessage = 'Failed to save school rating';
+      if (ratingError.message) {
+        errorMessage = ratingError.message;
+      }
+      
       return res.status(500).json({ 
-        error: 'Failed to save school rating',
-        details: process.env.NODE_ENV === 'development' ? ratingError.message : undefined,
+        error: errorMessage,
+        message: 'An error occurred while saving your rating. Please try again.',
+        details: process.env.NODE_ENV === 'development' ? {
+          originalError: ratingError.message,
+          stack: ratingError.stack,
+          errorName: ratingError.name,
+        } : undefined,
       });
     }
 
