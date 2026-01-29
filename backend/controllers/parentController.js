@@ -1008,10 +1008,92 @@ export const rateSchool = async (req, res) => {
       }
       
       if (ratingError.name === 'SequelizeDatabaseError') {
+        // Log detailed database error
+        logger.error('Database error details', {
+          message: ratingError.message,
+          originalMessage: ratingError.original?.message,
+          code: ratingError.original?.code,
+          detail: ratingError.original?.detail,
+          hint: ratingError.original?.hint,
+          position: ratingError.original?.position,
+          internalPosition: ratingError.original?.internalPosition,
+          internalQuery: ratingError.original?.internalQuery,
+          where: ratingError.original?.where,
+          schema: ratingError.original?.schema,
+          table: ratingError.original?.table,
+          column: ratingError.original?.column,
+          dataType: ratingError.original?.dataType,
+          constraint: ratingError.original?.constraint,
+          file: ratingError.original?.file,
+          line: ratingError.original?.line,
+          routine: ratingError.original?.routine,
+        });
+        
+        // Check for specific database errors
+        const originalMessage = ratingError.original?.message || ratingError.message || '';
+        
+        // Handle null constraint violations
+        if (originalMessage.includes('null value') || originalMessage.includes('NOT NULL')) {
+          return res.status(400).json({ 
+            error: 'Validation error',
+            message: 'Required fields are missing. Please check your input.',
+            details: process.env.NODE_ENV === 'development' ? originalMessage : undefined,
+          });
+        }
+        
+        // Handle foreign key violations
+        if (originalMessage.includes('foreign key') || originalMessage.includes('violates foreign key')) {
+          return res.status(400).json({ 
+            error: 'Invalid reference',
+            message: 'The school or parent reference is invalid.',
+            details: process.env.NODE_ENV === 'development' ? originalMessage : undefined,
+          });
+        }
+        
+        // Handle unique constraint violations (shouldn't happen due to transaction, but just in case)
+        if (originalMessage.includes('unique constraint') || originalMessage.includes('duplicate key')) {
+          // Try to update instead
+          try {
+            const existingRating = await SchoolRating.findOne({
+              where: {
+                schoolId: finalSchoolId,
+                parentId,
+              },
+            });
+            
+            if (existingRating) {
+              if (Object.keys(finalEvaluationData).length > 0) {
+                existingRating.evaluation = finalEvaluationData;
+                existingRating.stars = null;
+              } else if (starsNum !== null && starsNum !== undefined) {
+                existingRating.stars = starsNum;
+                existingRating.evaluation = {};
+              }
+              existingRating.comment = comment || null;
+              await existingRating.save();
+              
+              return res.json({
+                success: true,
+                message: 'School rating updated successfully',
+                data: existingRating.toJSON(),
+              });
+            }
+          } catch (updateError) {
+            logger.error('Error updating existing rating after database error', {
+              error: updateError.message,
+              stack: updateError.stack,
+            });
+          }
+        }
+        
         return res.status(500).json({ 
           error: 'Database error',
           message: 'A database error occurred. Please try again.',
-          details: process.env.NODE_ENV === 'development' ? ratingError.message : undefined,
+          details: process.env.NODE_ENV === 'development' ? {
+            message: ratingError.message,
+            originalMessage: ratingError.original?.message,
+            code: ratingError.original?.code,
+          } : undefined,
         });
       }
       
