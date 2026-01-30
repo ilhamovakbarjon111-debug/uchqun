@@ -1,14 +1,11 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "outputDirectory": "teacher/dist",
+  "outputDirectory": "dist",
   "installCommand": "npm install",
-  "redirects": [
-    { "source": "/favicon.ico", "destination": "/favicon.svg", "permanent": false },
-    { "source": "/favicon.png", "destination": "/favicon.svg", "permanent": false }
-  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
+
 
