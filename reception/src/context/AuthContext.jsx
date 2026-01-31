@@ -26,11 +26,15 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem('user', JSON.stringify(userData));
         } else {
           localStorage.removeItem('user');
+          setUser(null);
         }
-      } catch {
+      } catch (error) {
+        // Silently fail - user is not authenticated
         localStorage.removeItem('user');
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     checkAuth();
