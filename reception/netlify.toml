@@ -2,15 +2,10 @@
   command = "npm install && npm run build"
   publish = "dist"
 
-# SPA routing - redirect non-existent routes to index.html
-# CRITICAL: force = false ensures Netlify serves existing files (assets) FIRST
-# Only routes that don't match existing files will redirect to index.html
-# This prevents JavaScript modules from being served as HTML
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = false
 
 [build.environment]
   NODE_VERSION = "18"
