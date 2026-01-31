@@ -8,14 +8,6 @@ export default defineConfig({
   publicDir: 'public',
   build: {
     outDir: 'dist',
-    assetsDir: 'assets',
-    copyPublicDir: true,
-    rollupOptions: {
-      output: {
-        // Ensure proper chunking and asset handling
-        manualChunks: undefined,
-      },
-    },
   },
   server: {
     port: 5177,
