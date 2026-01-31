@@ -5,19 +5,14 @@ import { generateCsrfToken } from '../middleware/csrf.js';
 import logger from '../utils/logger.js';
 
 const generateTokens = (userId) => {
+  // Only generate access token - no refresh token needed
   const accessToken = jwt.sign(
     { userId, jti: crypto.randomUUID() },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE || '15m' }
+    { expiresIn: process.env.JWT_EXPIRE || '7d' } // Extended to 7 days instead of 15 minutes
   );
 
-  const refreshToken = jwt.sign(
-    { userId, jti: crypto.randomUUID() },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d' }
-  );
-
-  return { accessToken, refreshToken };
+  return { accessToken };
 };
 
 export const login = async (req, res) => {
@@ -135,10 +130,9 @@ export const login = async (req, res) => {
     }
 
     // Check if JWT_SECRET is configured
-    if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
-      logger.error('JWT secrets not configured', {
+    if (!process.env.JWT_SECRET) {
+      logger.error('JWT_SECRET not configured', {
         hasJWT_SECRET: !!process.env.JWT_SECRET,
-        hasJWT_REFRESH_SECRET: !!process.env.JWT_REFRESH_SECRET,
       });
       return res.status(500).json({ 
         error: 'Server configuration error',
@@ -146,7 +140,7 @@ export const login = async (req, res) => {
       });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user.id);
+    const { accessToken } = generateTokens(user.id);
 
     logger.info('Successful login', { userId: user.id, role: user.role });
 
@@ -159,10 +153,6 @@ export const login = async (req, res) => {
     };
 
     res.cookie('accessToken', accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
-    res.cookie('refreshToken', refreshToken, {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
@@ -183,7 +173,6 @@ export const login = async (req, res) => {
     res.json({
       success: true,
       accessToken,
-      refreshToken,
       csrfToken,
       user: user.toJSON(),
     });
@@ -204,89 +193,7 @@ export const login = async (req, res) => {
   }
 };
 
-export const refreshToken = async (req, res) => {
-  try {
-    // Read from cookie first, fall back to body
-    const token = req.cookies?.refreshToken || req.body?.refreshToken;
-
-    if (!token) {
-      return res.status(400).json({ error: 'Refresh token is required' });
-    }
-
-    // Verify JWT (no database query - much faster and simpler)
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-    } catch (jwtError) {
-      if (jwtError.name === 'JsonWebTokenError' || jwtError.name === 'TokenExpiredError') {
-        return res.status(401).json({ error: 'Invalid or expired refresh token' });
-      }
-      throw jwtError;
-    }
-
-    // Verify user still exists (optional check, but good for security)
-    const user = await User.findByPk(decoded.userId, {
-      attributes: ['id', 'email', 'role', 'name'],
-    });
-
-    if (!user) {
-      return res.status(401).json({ error: 'User not found' });
-    }
-
-    // Generate new tokens (no database operations needed)
-    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user.id);
-    const csrfToken = generateCsrfToken();
-
-    const isProduction = process.env.NODE_ENV === 'production';
-    const cookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      path: '/',
-    };
-
-    // Set cookies
-    res.cookie('accessToken', accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
-    res.cookie('refreshToken', newRefreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-    res.cookie('csrfToken', csrfToken, {
-      httpOnly: false,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    // Send response
-    res.json({
-      success: true,
-      accessToken,
-      csrfToken,
-    });
-  } catch (error) {
-    // Handle JWT errors
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: 'Invalid or expired refresh token' });
-    }
-    
-    // Log other errors
-    logger.error('Refresh token error', { 
-      error: error.message,
-      name: error.name,
-      stack: error.stack,
-    });
-    
-    // Send error response
-    if (!res.headersSent) {
-      res.status(500).json({ error: 'Token refresh failed' });
-    }
-  }
-};
+// Refresh token endpoint removed - access tokens now last 7 days
 
 export const logout = async (req, res) => {
   try {
@@ -299,7 +206,6 @@ export const logout = async (req, res) => {
       path: '/',
     };
     res.clearCookie('accessToken', cookieOptions);
-    res.clearCookie('refreshToken', cookieOptions);
     res.clearCookie('csrfToken', { ...cookieOptions, httpOnly: false });
 
     res.json({ success: true, message: 'Logged out successfully' });
