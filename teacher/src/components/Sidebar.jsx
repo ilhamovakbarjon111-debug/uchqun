@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import {
   Home,
   Users,
@@ -27,7 +28,29 @@ const Sidebar = ({ onClose }) => {
   const location = useLocation();
   const { user } = useAuth();
   const { t } = useTranslation();
-  const unreadChat = getUnreadTotalForPrefix('parent:', 'teacher');
+  const [unreadChat, setUnreadChat] = useState(0);
+
+  // Load unread chat count and refresh every 5 seconds
+  useEffect(() => {
+    let alive = true;
+    let intervalId;
+
+    const loadUnread = async () => {
+      if (!alive) return;
+      const count = await getUnreadTotalForPrefix('parent:', 'teacher');
+      if (alive) {
+        setUnreadChat(count);
+      }
+    };
+
+    loadUnread();
+    intervalId = setInterval(loadUnread, 5000);
+
+    return () => {
+      alive = false;
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, []);
 
   // Icon mapping per Mobile-icons.md
   const navigation = [
