@@ -41,6 +41,8 @@ const RefreshToken = sequelize.define('RefreshToken', {
   tableName: 'refresh_tokens',
   timestamps: true,
   underscored: false, // We're using explicit field mappings
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
 RefreshToken.hashToken = (token) => {
