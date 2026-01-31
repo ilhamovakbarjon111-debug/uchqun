@@ -168,24 +168,8 @@ export const login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Store refresh token hash in DB
-    // Wrap in try-catch to prevent login failure if table doesn't exist yet
-    try {
-      await RefreshToken.create({
-        tokenHash: RefreshToken.hashToken(refreshToken),
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      });
-    } catch (tokenError) {
-      // Log error but don't fail login - tokens are still set in cookies
-      logger.error('Failed to store refresh token in DB', {
-        error: tokenError.message,
-        stack: tokenError.stack,
-        userId: user.id,
-      });
-      console.warn('⚠ Failed to store refresh token in DB, but login continues');
-      // Continue with login - tokens are set in cookies, so user can still use the app
-    }
+    // Note: Refresh tokens are no longer stored in database for simplicity
+    // JWT verification is sufficient for security
 
     // Set CSRF token cookie (non-httpOnly so JS can read it)
     const csrfToken = generateCsrfToken();
@@ -222,9 +206,6 @@ export const login = async (req, res) => {
 };
 
 export const refreshToken = async (req, res) => {
-  // Set timeout to prevent client from closing connection
-  req.setTimeout(30000); // 30 seconds
-  
   try {
     // Read from cookie first, fall back to body
     const token = req.cookies?.refreshToken || req.body?.refreshToken;
@@ -233,7 +214,7 @@ export const refreshToken = async (req, res) => {
       return res.status(400).json({ error: 'Refresh token is required' });
     }
 
-    // Verify JWT first (fast operation, no DB)
+    // Verify JWT (no database query - much faster and simpler)
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
@@ -244,69 +225,18 @@ export const refreshToken = async (req, res) => {
       throw jwtError;
     }
 
-    // Parallel database queries for better performance
-    let user, storedToken;
-    try {
-      [user, storedToken] = await Promise.all([
-        User.findByPk(decoded.userId, {
-          attributes: ['id', 'email', 'role', 'name'],
-          raw: false, // Get instance for potential updates
-        }),
-        RefreshToken.verifyToken(token, decoded.userId),
-      ]);
-    } catch (dbError) {
-      logger.error('Database query error in refresh token', {
-        error: dbError.message,
-        stack: dbError.stack,
-        userId: decoded.userId,
-      });
-      throw dbError;
-    }
+    // Verify user still exists (optional check, but good for security)
+    const user = await User.findByPk(decoded.userId, {
+      attributes: ['id', 'email', 'role', 'name'],
+    });
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid refresh token' });
+      return res.status(401).json({ error: 'User not found' });
     }
 
-    if (!storedToken) {
-      return res.status(401).json({ error: 'Refresh token revoked or expired' });
-    }
-
-    // Issue new tokens (synchronous operation)
-    let accessToken, newRefreshToken, csrfToken;
-    try {
-      const tokens = generateTokens(user.id);
-      accessToken = tokens.accessToken;
-      newRefreshToken = tokens.refreshToken;
-      csrfToken = generateCsrfToken();
-    } catch (tokenError) {
-      logger.error('Token generation error', {
-        error: tokenError.message,
-        stack: tokenError.stack,
-        userId: user.id,
-      });
-      throw tokenError;
-    }
-
-    // Parallel database operations
-    try {
-      await Promise.all([
-        // Revoke old token (rotation)
-        storedToken.update({ revoked: true, revokedAt: new Date() }),
-        // Store new refresh token hash
-        RefreshToken.create({
-          tokenHash: RefreshToken.hashToken(newRefreshToken),
-          userId: user.id,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        }),
-      ]);
-    } catch (dbError) {
-      logger.error('Database update error in refresh token', {
-        error: dbError.message,
-        stack: dbError.stack,
-        userId: user.id,
-      });
-      throw dbError;
-    }
+    // Generate new tokens (no database operations needed)
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user.id);
+    const csrfToken = generateCsrfToken();
 
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
@@ -319,11 +249,11 @@ export const refreshToken = async (req, res) => {
     // Set cookies
     res.cookie('accessToken', accessToken, {
       ...cookieOptions,
-      maxAge: 15 * 60 * 1000,
+      maxAge: 15 * 60 * 1000, // 15 minutes
     });
     res.cookie('refreshToken', newRefreshToken, {
       ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
     res.cookie('csrfToken', csrfToken, {
       httpOnly: false,
@@ -333,39 +263,23 @@ export const refreshToken = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Send response immediately
+    // Send response
     res.json({
       success: true,
       accessToken,
       csrfToken,
     });
   } catch (error) {
-    // Handle specific errors
+    // Handle JWT errors
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Invalid or expired refresh token' });
     }
     
-    // Handle Sequelize errors
-    if (error.name === 'SequelizeDatabaseError' || error.name === 'SequelizeConnectionError') {
-      logger.error('Database error in refresh token', {
-        error: error.message,
-        name: error.name,
-        original: error.original?.message,
-        stack: error.stack,
-      });
-      if (!res.headersSent) {
-        return res.status(500).json({ error: 'Database error. Please try again.' });
-      }
-      return;
-    }
-    
-    // Log error with context
+    // Log other errors
     logger.error('Refresh token error', { 
       error: error.message,
       name: error.name,
       stack: error.stack,
-      tokenSource: req.body?.refreshToken ? 'from-body' : 'from-cookie',
-      hasToken: !!(req.cookies?.refreshToken || req.body?.refreshToken),
     });
     
     // Send error response
@@ -377,13 +291,7 @@ export const refreshToken = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    // Revoke all refresh tokens for this user
-    await RefreshToken.update(
-      { revoked: true, revokedAt: new Date() },
-      { where: { userId: req.user.id, revoked: false } }
-    );
-
-    // Clear all cookies
+    // Clear all cookies (no database operations needed)
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
       httpOnly: true,
