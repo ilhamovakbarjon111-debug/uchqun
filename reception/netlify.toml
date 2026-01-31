@@ -2,9 +2,8 @@
   command = "npm install && npm run build"
   publish = "dist"
 
-# SPA routing - redirect to index.html for non-file requests
-# Netlify automatically serves existing files (JS, CSS, images) correctly
-# The redirect only applies if the file doesn't exist
+# SPA routing - redirect to index.html for non-asset requests
+# Netlify serves existing files (assets) directly before applying redirects
 [[redirects]]
   from = "/*"
   to = "/index.html"

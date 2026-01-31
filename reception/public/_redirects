@@ -1,2 +1,4 @@
-# Don't redirect existing files - only redirect non-existent routes
+# Don't redirect assets - serve them directly
+/assets/*    /assets/:splat    200
+# Redirect all other routes to index.html for SPA routing
 /*    /index.html   200
