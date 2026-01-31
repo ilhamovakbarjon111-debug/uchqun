@@ -25,8 +25,8 @@ import { useTranslation } from 'react-i18next';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Icon size per Mobile-icons.md (20px)
-const ICON_SIZE = 20;
+// Icon size - more compact and refined
+const ICON_SIZE = 16;
 
 // Tab configuration per Mobile-icons.md design system
 const TAB_CONFIG = {
@@ -68,7 +68,7 @@ function TabIcon({ route, focused, color }) {
 
   const baseIcon = config.icon || 'help';
 
-  // Per Mobile-icons.md: Active state has navy background with white icon
+  // Active state with gradient glow
   if (focused) {
     return (
       <View style={styles.activeTabIcon}>
@@ -100,21 +100,22 @@ function ParentTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: (props) => <TabIcon route={route} {...props} />,
-        // Per Mobile-icons.md: Soft Navy for active, Text Tertiary for inactive
-        tabBarActiveTintColor: tokens.colors.nav?.active || '#2E3A59',
-        tabBarInactiveTintColor: tokens.colors.nav?.inactive || '#8F9BB3',
+        tabBarActiveTintColor: tokens.colors.accent.blue,
+        tabBarInactiveTintColor: tokens.colors.text.muted,
         tabBarStyle: {
-          backgroundColor: 'rgba(255, 255, 255, 0.98)',
-          borderTopWidth: 0,
-          height: 80 + insets.bottom,
-          paddingBottom: 8 + insets.bottom,
-          paddingTop: 12,
-          ...tokens.shadow.card,
+          backgroundColor: tokens.colors.background.secondary,
+          borderTopWidth: 1,
+          borderTopColor: tokens.colors.border.light,
+          height: 70 + insets.bottom,
+          paddingBottom: 6 + insets.bottom,
+          paddingTop: 8,
+          ...tokens.shadow.elevated,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '600',
-          marginTop: 4,
+          marginTop: 2,
+          letterSpacing: 0.3,
         },
         tabBarLabel: getTabLabel(route.name),
         headerShown: false,
@@ -130,7 +131,13 @@ function ParentTabs() {
 
 export function ParentNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+        animationDuration: 250,
+      }}
+    >
       <Stack.Screen name="ParentTabs" component={ParentTabs} />
       <Stack.Screen name="ChildProfile" component={ChildProfileScreen} />
       <Stack.Screen name="Activities" component={ActivitiesScreen} />
@@ -152,13 +159,14 @@ export function ParentNavigator() {
 }
 
 const styles = StyleSheet.create({
-  // Per Mobile-icons.md: Active tab has navy background, 48x48 rounded square
+  // Compact, elegant active tab with gradient
   activeTabIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: '#2E3A59', // Soft Navy per Mobile-icons.md
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: tokens.colors.accent.blue,
     alignItems: 'center',
     justifyContent: 'center',
+    ...tokens.shadow.glow,
   },
 });

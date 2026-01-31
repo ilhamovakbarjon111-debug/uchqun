@@ -1,25 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Image, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import { changeLanguage, getCurrentLanguage, getAvailableLanguages } from '../../i18n/config';
-import Card from '../../components/common/Card';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
-import TeacherBackground from '../../components/layout/TeacherBackground';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
 import { api } from '../../services/api';
-import { teacherService } from '../../services/teacherService';
 import { API_URL } from '../../config';
+
+function getAvatarUrl(avatar) {
+  if (!avatar) return null;
+  if (avatar.startsWith('http')) return avatar;
+  const base = (API_URL || '').replace(/\/api\/?$/, '');
+  return `${base}${avatar.startsWith('/') ? '' : '/'}${avatar}`;
+}
 
 export function SettingsScreen() {
   const { user, logout, refreshUser } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
   const navigation = useNavigation();
   const { t } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState('en');
 
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
   // Profile edit modal state
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -29,21 +38,25 @@ export function SettingsScreen() {
     phone: '',
   });
   const [profileLoading, setProfileLoading] = useState(false);
-  const [showMessageModal, setShowMessageModal] = useState(false);
-  const [messageSubject, setMessageSubject] = useState('');
-  const [messageText, setMessageText] = useState('');
-  const [sendingMessage, setSendingMessage] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-
-  function getAvatarUrl(avatar) {
-    if (!avatar) return null;
-    if (avatar.startsWith('http')) return avatar;
-    const base = (API_URL || '').replace(/\/api\/?$/, '');
-    return `${base}${avatar.startsWith('/') ? '' : '/'}${avatar}`;
-  }
 
   useEffect(() => {
     setCurrentLanguage(getCurrentLanguage());
+
+    // Entrance animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 60,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
 
   useEffect(() => {
@@ -56,10 +69,9 @@ export function SettingsScreen() {
     }
   }, [user]);
 
-
   const handleProfileUpdate = async () => {
     if (!profileData.firstName || !profileData.lastName) {
-      Alert.alert(t('common.error'), t('settings.nameRequired'));
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('settings.nameRequired', { defaultValue: 'First and last name are required' }));
       return;
     }
 
@@ -67,11 +79,11 @@ export function SettingsScreen() {
     try {
       await api.put('/user/profile', profileData);
       if (refreshUser) await refreshUser();
-      Alert.alert(t('common.success'), t('settings.profileUpdated'));
+      Alert.alert(t('common.success', { defaultValue: 'Success' }), t('settings.profileUpdated', { defaultValue: 'Profile updated successfully' }));
       setShowProfileModal(false);
     } catch (error) {
-      const message = error.response?.data?.message || t('settings.profileUpdateFailed');
-      Alert.alert(t('common.error'), message);
+      const message = error.response?.data?.message || t('settings.profileUpdateFailed', { defaultValue: 'Failed to update profile' });
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), message);
     } finally {
       setProfileLoading(false);
     }
@@ -79,7 +91,6 @@ export function SettingsScreen() {
 
   const handleAvatarUpload = async () => {
     try {
-      // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
@@ -89,7 +100,6 @@ export function SettingsScreen() {
         return;
       }
 
-      // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
@@ -107,7 +117,6 @@ export function SettingsScreen() {
       const match = /\.(\w+)$/.exec(filename);
       const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-      // Create FormData
       const formData = new FormData();
       formData.append('avatar', {
         uri: uri,
@@ -115,14 +124,12 @@ export function SettingsScreen() {
         type: type,
       });
 
-      // Upload to backend
       await api.put('/user/avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      // Refresh user data
       if (refreshUser) {
         await refreshUser();
       }
@@ -150,12 +157,12 @@ export function SettingsScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      t('profile.logoutTitle'),
-      t('profile.confirmLogout'),
+      t('profile.logoutTitle', { defaultValue: 'Logout' }),
+      t('profile.confirmLogout', { defaultValue: 'Are you sure you want to logout?' }),
       [
-        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('profile.no', { defaultValue: "No" }), style: 'cancel' },
         {
-          text: t('settings.logout'),
+          text: t('profile.yes', { defaultValue: 'Yes' }),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -169,148 +176,250 @@ export function SettingsScreen() {
     );
   };
 
-  // Helper for safe navigation
-  const safeNavigate = (screenName, params = {}) => {
-    try {
-      navigation.navigate(screenName, params);
-    } catch (error) {
-      console.error(`[TeacherSettings] Navigation error to ${screenName}:`, error);
-    }
-  };
-
-  const settingsItems = [
+  const settingsSections = [
     {
-      icon: 'person-outline',
-      title: t('settings.editProfile'),
-      onPress: () => setShowProfileModal(true),
+      title: t('settings.account', { defaultValue: 'Account' }),
+      items: [
+        {
+          icon: 'person-outline',
+          title: t('settings.editProfile', { defaultValue: 'Edit Profile' }),
+          subtitle: t('settings.editProfileDesc', { defaultValue: 'Update your personal information' }),
+          onPress: () => setShowProfileModal(true),
+          color: '#0EA5E9',
+        },
+        {
+          icon: 'briefcase-outline',
+          title: t('settings.myProfile', { defaultValue: 'My Profile' }),
+          subtitle: t('settings.viewProfile', { defaultValue: 'View professional profile' }),
+          onPress: () => navigation.navigate('Profile'),
+          color: '#06B6D4',
+        },
+      ],
     },
     {
-      icon: 'list-outline',
-      title: t('settings.responsibilities'),
-      onPress: () => safeNavigate('Responsibilities'),
+      title: t('settings.work', { defaultValue: 'Work' }),
+      items: [
+        {
+          icon: 'clipboard-outline',
+          title: t('settings.responsibilities', { defaultValue: 'Responsibilities' }),
+          subtitle: t('settings.viewResponsibilities', { defaultValue: 'View assigned duties' }),
+          onPress: () => navigation.navigate('Responsibilities'),
+          color: '#10B981',
+        },
+        {
+          icon: 'checkmark-done-outline',
+          title: t('settings.tasks', { defaultValue: 'Tasks' }),
+          subtitle: t('settings.viewTasks', { defaultValue: 'Manage your tasks' }),
+          onPress: () => navigation.navigate('Tasks'),
+          color: '#F59E0B',
+        },
+        {
+          icon: 'time-outline',
+          title: t('settings.workHistory', { defaultValue: 'Work History' }),
+          subtitle: t('settings.viewHistory', { defaultValue: 'Employment records' }),
+          onPress: () => navigation.navigate('WorkHistory'),
+          color: '#8B5CF6',
+        },
+      ],
     },
     {
-      icon: 'checkmark-circle-outline',
-      title: t('settings.tasks'),
-      onPress: () => safeNavigate('Tasks'),
-    },
-    {
-      icon: 'time-outline',
-      title: t('settings.workHistory'),
-      onPress: () => safeNavigate('WorkHistory'),
-    },
-    {
-      icon: 'mail-outline',
-      title: t('settings.contactAdmin'),
-      onPress: () => setShowMessageModal(true),
-    },
-    {
-      icon: 'information-circle-outline',
-      title: t('about.title'),
-      onPress: () => Alert.alert(t('about.title'), t('about.version')),
-    },
-    {
-      icon: 'log-out-outline',
-      title: t('settings.logout'),
-      onPress: handleLogout,
-      destructive: true,
+      title: t('settings.general', { defaultValue: 'General' }),
+      items: [
+        {
+          icon: isDark ? 'moon' : 'sunny',
+          title: t('settings.darkMode', { defaultValue: 'Dark Mode' }),
+          subtitle: t('settings.darkModeDesc', { defaultValue: isDark ? 'Switch to light theme' : 'Switch to dark theme' }),
+          onPress: toggleTheme,
+          color: isDark ? '#F59E0B' : '#0EA5E9',
+          hasToggle: true,
+        },
+        {
+          icon: 'information-circle-outline',
+          title: t('settings.about', { defaultValue: 'About' }),
+          subtitle: 'Uchqun Platform v1.0.0',
+          onPress: () => Alert.alert(t('settings.about', { defaultValue: 'About' }), 'Uchqun Platform v1.0.0\nSpecial Education School Management'),
+          color: '#64748B',
+        },
+        {
+          icon: 'log-out-outline',
+          title: t('profile.logoutTitle', { defaultValue: 'Logout' }),
+          subtitle: t('profile.logoutDesc', { defaultValue: 'Sign out of your account' }),
+          onPress: handleLogout,
+          color: '#EF4444',
+          destructive: true,
+        },
+      ],
     },
   ];
 
   return (
     <View style={styles.container}>
-      <TeacherBackground />
-      <ScreenHeader title={t('settings.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Card>
-          <View style={styles.userInfo}>
-            <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar}>
-              <View style={styles.avatar}>
-                {user?.avatar ? (
-                  <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.avatarImage} resizeMode="cover" />
-                ) : (
-                  <Text style={styles.avatarText}>
-                    {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
-                  </Text>
-                )}
-                {uploadingAvatar && (
-                  <View style={styles.uploadingOverlay}>
-                    <ActivityIndicator color="#fff" />
+      {/* Gradient background */}
+      <LinearGradient
+        colors={['#0F172A', '#1E293B', '#334155']}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* Header */}
+      <LinearGradient
+        colors={['#0EA5E9', '#06B6D4']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <View style={styles.headerIconContainer}>
+            <Ionicons name="settings" size={20} color="#FFFFFF" />
+          </View>
+          <Text style={styles.headerTitle}>{t('settings.title', { defaultValue: 'Settings' })}</Text>
+        </View>
+      </LinearGradient>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View
+          style={{
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }}
+        >
+          {/* Profile Card */}
+          <View style={styles.profileCard}>
+            <LinearGradient
+              colors={['rgba(51, 65, 85, 0.8)', 'rgba(30, 41, 59, 0.7)']}
+              style={styles.profileCardGradient}
+            >
+              <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar}>
+                <View style={styles.avatarContainer}>
+                  {user?.avatar ? (
+                    <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.avatarImage} resizeMode="cover" />
+                  ) : (
+                    <LinearGradient
+                      colors={['#0EA5E9', '#06B6D4']}
+                      style={styles.avatarGradient}
+                    >
+                      <Text style={styles.avatarText}>
+                        {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
+                      </Text>
+                    </LinearGradient>
+                  )}
+                  {uploadingAvatar && (
+                    <View style={styles.uploadingOverlay}>
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    </View>
+                  )}
+                  <View style={styles.cameraButton}>
+                    <Ionicons name="camera" size={12} color="#FFFFFF" />
                   </View>
-                )}
-                <View style={styles.cameraButton}>
-                  <Ionicons name="camera" size={14} color="#fff" />
+                </View>
+              </TouchableOpacity>
+              <View style={styles.profileInfo}>
+                <Text style={styles.profileName}>
+                  {user?.firstName ?? '—'} {user?.lastName ?? ''}
+                </Text>
+                <View style={styles.emailRow}>
+                  <Ionicons name="mail-outline" size={12} color={tokens.colors.text.muted} />
+                  <Text style={styles.profileEmail}>{user?.email ?? '—'}</Text>
+                </View>
+                <View style={styles.roleBadge}>
+                  <LinearGradient
+                    colors={['rgba(14, 165, 233, 0.15)', 'rgba(6, 182, 212, 0.15)']}
+                    style={styles.roleBadgeGradient}
+                  >
+                    <Ionicons name="people" size={12} color="#22D3EE" />
+                    <Text style={styles.roleText}>{t('dashboard.roleTeacher', { defaultValue: 'Teacher' })}</Text>
+                  </LinearGradient>
                 </View>
               </View>
-            </TouchableOpacity>
-            <View style={styles.userDetails}>
-              <Text style={styles.userName}>
-                {user?.firstName ?? '—'} {user?.lastName ?? ''}
-              </Text>
-              <Text style={styles.userEmail}>{user?.email ?? '—'}</Text>
-              <View style={styles.roleBadge}>
-                <Ionicons name="school" size={14} color={theme.Colors.primary.blue} />
-                <Text style={styles.roleText}>{t('dashboard.roleTeacher')}</Text>
-              </View>
+            </LinearGradient>
+          </View>
+
+          {/* Language Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="language-outline" size={18} color="#22D3EE" />
+              <Text style={styles.sectionTitle}>{t('settings.language', { defaultValue: 'Language' })}</Text>
+            </View>
+            <View style={styles.sectionCard}>
+              <LinearGradient
+                colors={['rgba(51, 65, 85, 0.6)', 'rgba(30, 41, 59, 0.5)']}
+                style={styles.sectionCardGradient}
+              >
+                {(getAvailableLanguages() || []).map((lang, index) => (
+                  <Pressable
+                    key={lang.code}
+                    style={({ pressed }) => [
+                      styles.languageItem,
+                      currentLanguage === lang.code && styles.languageItemActive,
+                      index === getAvailableLanguages().length - 1 && styles.lastItem,
+                      pressed && { opacity: 0.7 },
+                    ]}
+                    onPress={() => handleLanguageChange(lang.code)}
+                  >
+                    <View style={styles.languageInfo}>
+                      <Text style={styles.languageName}>{lang.nativeName}</Text>
+                      <Text style={styles.languageSubtitle}>{lang.name}</Text>
+                    </View>
+                    {currentLanguage === lang.code ? (
+                      <LinearGradient
+                        colors={['#0EA5E9', '#06B6D4']}
+                        style={styles.checkCircle}
+                      >
+                        <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                      </LinearGradient>
+                    ) : (
+                      <View style={styles.emptyCircle} />
+                    )}
+                  </Pressable>
+                ))}
+              </LinearGradient>
             </View>
           </View>
-        </Card>
 
-        <Card>
-          <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
-          {getAvailableLanguages().map((lang) => (
-            <Pressable
-              key={lang.code}
-              style={[
-                styles.languageItem,
-                currentLanguage === lang.code && styles.languageItemActive,
-              ]}
-              onPress={() => handleLanguageChange(lang.code)}
-            >
-              <View style={styles.languageInfo}>
-                <Text style={styles.languageName}>{lang.nativeName}</Text>
-                <Text style={styles.languageSubtitle}>{lang.name}</Text>
+          {/* Settings Sections */}
+          {settingsSections.map((section, sectionIndex) => (
+            <View key={sectionIndex} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>{section.title}</Text>
               </View>
-              {currentLanguage === lang.code && (
-                <Ionicons name="checkmark-circle" size={24} color={theme.Colors.primary.blue} />
-              )}
-            </Pressable>
-          ))}
-        </Card>
-
-        <Card>
-          <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
-          {settingsItems.map((item, index) => (
-            <Pressable
-              key={index}
-              style={styles.settingsItem}
-              onPress={item.onPress}
-            >
-              <View style={styles.settingsItemLeft}>
-                <Ionicons
-                  name={item.icon}
-                  size={22}
-                  color={item.destructive ? theme.Colors.status.error : theme.Colors.text.secondary}
-                />
-                <Text
-                  style={[
-                    styles.settingsItemText,
-                    item.destructive && styles.settingsItemTextDestructive,
-                  ]}
+              <View style={styles.sectionCard}>
+                <LinearGradient
+                  colors={['rgba(51, 65, 85, 0.6)', 'rgba(30, 41, 59, 0.5)']}
+                  style={styles.sectionCardGradient}
                 >
-                  {item.title}
-                </Text>
+                  {section.items.map((item, itemIndex) => (
+                    <Pressable
+                      key={itemIndex}
+                      style={({ pressed }) => [
+                        styles.settingsItem,
+                        itemIndex === section.items.length - 1 && styles.lastItem,
+                        pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
+                      ]}
+                      onPress={item.onPress}
+                    >
+                      <View style={[styles.iconCircle, { backgroundColor: `${item.color}20` }]}>
+                        <Ionicons name={item.icon} size={18} color={item.color} />
+                      </View>
+                      <View style={styles.settingsItemContent}>
+                        <Text style={[styles.settingsItemTitle, item.destructive && { color: '#FCA5A5' }]}>
+                          {item.title}
+                        </Text>
+                        {item.subtitle && (
+                          <Text style={styles.settingsItemSubtitle}>{item.subtitle}</Text>
+                        )}
+                      </View>
+                      <Ionicons name="chevron-forward" size={16} color={tokens.colors.text.muted} />
+                    </Pressable>
+                  ))}
+                </LinearGradient>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={theme.Colors.text.tertiary}
-              />
-            </Pressable>
+            </View>
           ))}
-        </Card>
+        </Animated.View>
       </ScrollView>
-
 
       {/* Profile Edit Modal */}
       <Modal
@@ -321,150 +430,101 @@ export function SettingsScreen() {
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          style={styles.modalContainer}
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('settings.editProfile')}</Text>
-              <TouchableOpacity onPress={() => setShowProfileModal(false)}>
-                <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.firstName')}</Text>
-              <TextInput
-                style={styles.textInput}
-                value={profileData.firstName}
-                onChangeText={(text) => setProfileData({ ...profileData, firstName: text })}
-                placeholder={t('settings.firstName')}
-                placeholderTextColor={theme.Colors.text.tertiary}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.lastName')}</Text>
-              <TextInput
-                style={styles.textInput}
-                value={profileData.lastName}
-                onChangeText={(text) => setProfileData({ ...profileData, lastName: text })}
-                placeholder={t('settings.lastName')}
-                placeholderTextColor={theme.Colors.text.tertiary}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.phone')}</Text>
-              <TextInput
-                style={styles.textInput}
-                value={profileData.phone}
-                onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
-                placeholder={t('settings.phone')}
-                placeholderTextColor={theme.Colors.text.tertiary}
-                keyboardType="phone-pad"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.email')}</Text>
-              <TextInput
-                style={[styles.textInput, styles.disabledInput]}
-                value={user?.email || ''}
-                editable={false}
-              />
-              <Text style={styles.helperText}>{t('settings.emailReadOnly')}</Text>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.saveButton, profileLoading && styles.saveButtonDisabled]}
-              onPress={handleProfileUpdate}
-              disabled={profileLoading}
-            >
-              {profileLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.saveButtonText}>{t('settings.save')}</Text>
-              )}
-            </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Contact Admin Modal */}
-      <Modal
-        visible={showMessageModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowMessageModal(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t('settings.contactAdmin')}</Text>
-                <TouchableOpacity onPress={() => setShowMessageModal(false)}>
-                  <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>{t('profile.subject')}</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={messageSubject}
-                  onChangeText={setMessageSubject}
-                  placeholder={t('profile.subjectPlaceholder')}
-                  placeholderTextColor={theme.Colors.text.tertiary}
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>{t('profile.message')}</Text>
-                <TextInput
-                  style={[styles.textInput, { height: 120, textAlignVertical: 'top' }]}
-                  value={messageText}
-                  onChangeText={setMessageText}
-                  placeholder={t('profile.messagePlaceholder')}
-                  placeholderTextColor={theme.Colors.text.tertiary}
-                  multiline
-                />
-              </View>
-
-              <TouchableOpacity
-                style={[styles.saveButton, sendingMessage && styles.saveButtonDisabled]}
-                onPress={async () => {
-                  if (!messageSubject.trim() || !messageText.trim()) {
-                    Alert.alert(t('common.error'), t('profile.messageRequired'));
-                    return;
-                  }
-                  setSendingMessage(true);
-                  try {
-                    await teacherService.sendMessage({ subject: messageSubject, message: messageText });
-                    Alert.alert(t('common.success'), t('profile.messageSent'));
-                    setShowMessageModal(false);
-                    setMessageSubject('');
-                    setMessageText('');
-                  } catch (error) {
-                    Alert.alert(t('common.error'), t('profile.messageError'));
-                  } finally {
-                    setSendingMessage(false);
-                  }
-                }}
-                disabled={sendingMessage}
+              <LinearGradient
+                colors={['rgba(51, 65, 85, 0.95)', 'rgba(30, 41, 59, 0.95)']}
+                style={styles.modalGradient}
               >
-                {sendingMessage ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.saveButtonText}>{t('profile.send')}</Text>
-                )}
-              </TouchableOpacity>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>{t('settings.editProfile', { defaultValue: 'Edit Profile' })}</Text>
+                  <TouchableOpacity onPress={() => setShowProfileModal(false)} hitSlop={10}>
+                    <Ionicons name="close" size={24} color={tokens.colors.text.white} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.modalBody}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>{t('settings.firstName', { defaultValue: 'First Name' })}</Text>
+                    <View style={styles.inputContainer}>
+                      <LinearGradient
+                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
+                        style={styles.inputGradient}
+                      >
+                        <TextInput
+                          style={styles.textInput}
+                          value={profileData.firstName}
+                          onChangeText={(text) => setProfileData({ ...profileData, firstName: text })}
+                          placeholder={t('settings.firstName', { defaultValue: 'First Name' })}
+                          placeholderTextColor={tokens.colors.text.muted}
+                        />
+                      </LinearGradient>
+                    </View>
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>{t('settings.lastName', { defaultValue: 'Last Name' })}</Text>
+                    <View style={styles.inputContainer}>
+                      <LinearGradient
+                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
+                        style={styles.inputGradient}
+                      >
+                        <TextInput
+                          style={styles.textInput}
+                          value={profileData.lastName}
+                          onChangeText={(text) => setProfileData({ ...profileData, lastName: text })}
+                          placeholder={t('settings.lastName', { defaultValue: 'Last Name' })}
+                          placeholderTextColor={tokens.colors.text.muted}
+                        />
+                      </LinearGradient>
+                    </View>
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>{t('settings.phone', { defaultValue: 'Phone' })}</Text>
+                    <View style={styles.inputContainer}>
+                      <LinearGradient
+                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
+                        style={styles.inputGradient}
+                      >
+                        <TextInput
+                          style={styles.textInput}
+                          value={profileData.phone}
+                          onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
+                          placeholder="+998 XX XXX XX XX"
+                          placeholderTextColor={tokens.colors.text.muted}
+                          keyboardType="phone-pad"
+                        />
+                      </LinearGradient>
+                    </View>
+                  </View>
+
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.saveButton,
+                      pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+                    ]}
+                    onPress={handleProfileUpdate}
+                    disabled={profileLoading}
+                  >
+                    <LinearGradient
+                      colors={profileLoading ? ['#475569', '#334155'] : ['#0EA5E9', '#06B6D4']}
+                      style={styles.saveButtonGradient}
+                    >
+                      {profileLoading ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <>
+                          <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+                          <Text style={styles.saveButtonText}>{t('settings.saveProfile', { defaultValue: 'Save Changes' })}</Text>
+                        </>
+                      )}
+                    </LinearGradient>
+                  </Pressable>
+                </View>
+              </LinearGradient>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -476,219 +536,302 @@ export function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
   },
-  content: {
-    padding: theme.Spacing.md,
+  header: {
+    paddingTop: 50,
+    paddingBottom: tokens.space.lg,
+    paddingHorizontal: tokens.space.xl,
+    ...tokens.shadow.soft,
   },
-  userInfo: {
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: tokens.space.sm,
   },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: theme.Colors.primary.blueBg,
+  headerIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+  },
+  headerTitle: {
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.text.white,
+    letterSpacing: -0.3,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: tokens.space.lg,
+    paddingBottom: tokens.space['3xl'],
+  },
+  profileCard: {
+    borderRadius: tokens.radius.xl,
+    marginBottom: tokens.space.xl,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.15)',
+    ...tokens.shadow.soft,
+  },
+  profileCardGradient: {
+    padding: tokens.space.xl,
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: tokens.space.md,
     position: 'relative',
+    overflow: 'hidden',
   },
   avatarImage: {
     width: '100%',
     height: '100%',
   },
+  avatarGradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarText: {
-    fontSize: theme.Typography.sizes['2xl'],
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.primary.blue,
+    fontSize: 28,
+    fontWeight: '700',
+    color: tokens.colors.text.white,
   },
   cameraButton: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: theme.Colors.primary.blue,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#0EA5E9',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: '#334155',
+    ...tokens.shadow.sm,
   },
   uploadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  userDetails: {
-    flex: 1,
+  profileInfo: {
+    alignItems: 'center',
   },
-  userName: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs / 2,
+  profileName: {
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.text.white,
+    marginBottom: tokens.space.xs,
+    letterSpacing: -0.3,
   },
-  userEmail: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    marginBottom: theme.Spacing.xs,
+  emailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.space.xs,
+    marginBottom: tokens.space.sm,
+  },
+  profileEmail: {
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.muted,
   },
   roleBadge: {
+    borderRadius: tokens.radius.pill,
+    overflow: 'hidden',
+  },
+  roleBadgeGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: theme.Colors.primary.blueBg,
-    paddingHorizontal: theme.Spacing.sm,
-    paddingVertical: theme.Spacing.xs / 2,
-    borderRadius: theme.BorderRadius.sm,
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.sm,
+    gap: tokens.space.xs,
   },
   roleText: {
-    fontSize: theme.Typography.sizes.xs,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.primary.blue,
-    marginLeft: theme.Spacing.xs / 2,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: '600',
+    color: '#22D3EE',
+    letterSpacing: 0.3,
+  },
+  section: {
+    marginBottom: tokens.space.xl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.space.sm,
+    marginBottom: tokens.space.md,
+    paddingHorizontal: tokens.space.sm,
   },
   sectionTitle: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.md,
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.white,
+    letterSpacing: -0.1,
   },
-  settingsItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: theme.Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
+  sectionCard: {
+    borderRadius: tokens.radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.1)',
   },
-  settingsItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  settingsItemText: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    marginLeft: theme.Spacing.md,
-    fontWeight: theme.Typography.weights.medium,
-  },
-  settingsItemTextDestructive: {
-    color: theme.Colors.status.error,
+  sectionCardGradient: {
+    padding: tokens.space.xs,
   },
   languageItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.Spacing.md,
-    paddingHorizontal: theme.Spacing.sm,
-    borderRadius: theme.BorderRadius.md,
-    marginBottom: theme.Spacing.xs,
+    padding: tokens.space.md,
+    borderRadius: tokens.radius.md,
+    marginBottom: tokens.space.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.1)',
   },
   languageItemActive: {
-    backgroundColor: theme.Colors.primary.blueBg,
+    backgroundColor: 'rgba(14, 165, 233, 0.15)',
+    borderColor: 'rgba(14, 165, 233, 0.3)',
   },
   languageInfo: {
     flex: 1,
   },
   languageName: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs / 2,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.white,
+    marginBottom: 2,
   },
   languageSubtitle: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.normal,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.muted,
+  },
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...tokens.shadow.sm,
+  },
+  emptyCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(148, 163, 184, 0.3)',
+  },
+  settingsItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: tokens.space.md,
+    borderRadius: tokens.radius.md,
+    marginBottom: tokens.space.xs,
+    gap: tokens.space.md,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsItemContent: {
+    flex: 1,
+  },
+  settingsItemTitle: {
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.white,
+    marginBottom: 2,
+  },
+  settingsItemSubtitle: {
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.muted,
+  },
+  lastItem: {
+    marginBottom: 0,
+  },
+  modalContainer: {
+    flex: 1,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: theme.Colors.background.primary,
-    borderTopLeftRadius: theme.BorderRadius.xl,
-    borderTopRightRadius: theme.BorderRadius.xl,
-    padding: theme.Spacing.lg,
+    borderTopLeftRadius: tokens.radius['2xl'],
+    borderTopRightRadius: tokens.radius['2xl'],
+    overflow: 'hidden',
     maxHeight: '80%',
+  },
+  modalGradient: {
+    padding: tokens.space.xl,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.Spacing.lg,
+    marginBottom: tokens.space.xl,
   },
   modalTitle: {
-    fontSize: theme.Typography.sizes.xl,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.text.white,
+    letterSpacing: -0.3,
   },
-  inputContainer: {
-    marginBottom: theme.Spacing.md,
+  modalBody: {
+    gap: tokens.space.lg,
+  },
+  inputGroup: {
+    gap: tokens.space.sm,
   },
   inputLabel: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.medium,
-    color: theme.Colors.text.secondary,
-    marginBottom: theme.Spacing.xs,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.white,
+    letterSpacing: 0.3,
+  },
+  inputContainer: {
+    borderRadius: tokens.radius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.2)',
+  },
+  inputGradient: {
+    padding: tokens.space.md,
   },
   textInput: {
-    backgroundColor: theme.Colors.background.secondary,
-    borderRadius: theme.BorderRadius.md,
-    padding: theme.Spacing.md,
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    borderWidth: 1,
-    borderColor: theme.Colors.border.light,
-  },
-  disabledInput: {
-    backgroundColor: theme.Colors.background.tertiary || '#f0f0f0',
-    color: theme.Colors.text.tertiary,
-  },
-  helperText: {
-    fontSize: theme.Typography.sizes.xs,
-    color: theme.Colors.text.tertiary,
-    marginTop: theme.Spacing.xs / 2,
-  },
-  passwordInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.Colors.background.secondary,
-    borderRadius: theme.BorderRadius.md,
-    paddingHorizontal: theme.Spacing.md,
-    borderWidth: 1,
-    borderColor: theme.Colors.border.light,
-  },
-  passwordInput: {
-    flex: 1,
-    paddingVertical: theme.Spacing.md,
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.white,
+    padding: 0,
   },
   saveButton: {
-    backgroundColor: theme.Colors.primary.blue,
-    borderRadius: theme.BorderRadius.md,
-    padding: theme.Spacing.md,
-    alignItems: 'center',
-    marginTop: theme.Spacing.md,
+    marginTop: tokens.space.md,
+    borderRadius: tokens.radius.md,
+    overflow: 'hidden',
+    ...tokens.shadow.glow,
   },
-  saveButtonDisabled: {
-    opacity: 0.7,
+  saveButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: tokens.space.lg,
+    gap: tokens.space.sm,
   },
   saveButtonText: {
-    color: '#fff',
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.bold,
+    fontSize: tokens.type.button.fontSize,
+    fontWeight: tokens.type.button.fontWeight,
+    color: tokens.colors.text.white,
+    letterSpacing: tokens.type.button.letterSpacing,
   },
 });

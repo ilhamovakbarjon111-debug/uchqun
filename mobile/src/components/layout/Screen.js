@@ -3,7 +3,8 @@ import { SafeAreaView, ScrollView, View, StyleSheet, Platform, KeyboardAvoidingV
 import BackgroundScene from './BackgroundScene';
 import TeacherBackground from './TeacherBackground';
 import FloatingAI from '../common/FloatingAI';
-import tokens from '../../styles/tokens';
+import { useThemeTokens } from '../../hooks/useThemeTokens';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
  * Screen - Base layout component for all screens
@@ -20,14 +21,27 @@ export default function Screen({
   aiContextHint = '', // Optional context hint for AI
   background = 'parent', // 'parent' or 'teacher'
 }) {
+  const tokens = useThemeTokens();
+  const { isDark } = useTheme();
   const BackgroundComponent = background === 'teacher' ? TeacherBackground : BackgroundScene;
-  
+
+  const dynamicStyles = {
+    safe: {
+      flex: 1,
+      backgroundColor: tokens.colors.background.primary,
+    },
+    veil: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.02)' : 'rgba(248, 250, 252, 0.03)',
+    },
+  };
+
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={dynamicStyles.safe}>
       <View style={styles.root}>
         <BackgroundComponent />
         {/* Subtle readability veil */}
-        <View pointerEvents="none" style={styles.veil} />
+        <View pointerEvents="none" style={dynamicStyles.veil} />
 
         {header}
 
@@ -69,25 +83,17 @@ export default function Screen({
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
   root: {
     flex: 1,
-  },
-  veil: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.12)',
   },
   container: {
     flex: 1,
   },
   padded: {
-    paddingHorizontal: tokens.space.xl,
-    paddingBottom: tokens.space['3xl'],
+    paddingHorizontal: 18, // tokens.space.xl
+    paddingBottom: 36, // tokens.space['3xl']
   },
   withHeader: {
-    paddingTop: tokens.space.sm,
+    paddingTop: 6, // tokens.space.sm
   },
 });

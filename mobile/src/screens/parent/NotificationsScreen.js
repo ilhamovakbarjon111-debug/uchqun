@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, Text, View, Pressable, ScrollView, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { notificationService } from '../../services/notificationService';
@@ -9,6 +9,78 @@ import Card from '../../components/common/Card';
 import ListRow from '../../components/common/ListRow';
 import Skeleton from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
+
+// Animated notification card component
+function AnimatedNotificationCard({ item, index, markAsRead }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        delay: index * 80, // Stagger by 80ms
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        delay: index * 80,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  return (
+    <Animated.View
+      style={{
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }],
+      }}
+    >
+      <Card
+        style={[
+          styles.card,
+          !item.isRead && styles.unreadCard
+        ]}
+      >
+        <Pressable onPress={() => markAsRead(item.id)}>
+          <ListRow
+            icon={item.isRead ? 'notifications-outline' : 'notifications'}
+            iconColor={!item.isRead ? tokens.colors.accent.blue : tokens.colors.text.muted}
+            title={item.title || 'Notification'}
+            subtitle={item.message}
+            time={formatTimestamp(item.createdAt)}
+            chevron={false}
+          />
+          {!item.isRead && (
+            <View style={styles.unreadBadge}>
+              <View style={styles.unreadDot} />
+            </View>
+          )}
+        </Pressable>
+      </Card>
+    </Animated.View>
+  );
+}
 
 export function NotificationsScreen() {
   const navigation = useNavigation();
@@ -39,22 +111,6 @@ export function NotificationsScreen() {
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
-  };
-
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp) return '';
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
   };
 
   const header = (
@@ -92,30 +148,13 @@ export function NotificationsScreen() {
           </Card>
         ) : (
           <View style={styles.list}>
-            {notifications.map((item) => (
-              <Card 
-                key={item.id?.toString() || Math.random()} 
-                style={[
-                  styles.card,
-                  !item.isRead && styles.unreadCard
-                ]}
-              >
-                <Pressable onPress={() => markAsRead(item.id)}>
-                  <ListRow
-                    icon={item.isRead ? 'notifications-outline' : 'notifications'}
-                    iconColor={!item.isRead ? tokens.colors.accent.blue : tokens.colors.text.muted}
-                    title={item.title || 'Notification'}
-                    subtitle={item.message}
-                    time={formatTimestamp(item.createdAt)}
-                    chevron={false}
-                  />
-                  {!item.isRead && (
-                    <View style={styles.unreadBadge}>
-                      <View style={styles.unreadDot} />
-                    </View>
-                  )}
-                </Pressable>
-              </Card>
+            {notifications.map((item, index) => (
+              <AnimatedNotificationCard
+                key={item.id?.toString() || Math.random()}
+                item={item}
+                index={index}
+                markAsRead={markAsRead}
+              />
             ))}
           </View>
         )}

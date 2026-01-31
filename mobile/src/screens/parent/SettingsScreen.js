@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, Alert, Modal, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { ScrollView, StyleSheet, Text, View, Pressable, Alert, Modal, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Image, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import { changeLanguage, getCurrentLanguage, getAvailableLanguages } from '../../i18n/config';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
-import Card from '../../components/common/Card';
-import ListRow from '../../components/common/ListRow';
-import Pill from '../../components/common/Pill';
 import { api } from '../../services/api';
 import { API_URL } from '../../config';
 
@@ -24,13 +21,15 @@ function getAvatarUrl(avatar) {
 
 export function SettingsScreen() {
   const { user, logout, refreshUser } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
   const navigation = useNavigation();
   const { t } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState('en');
-
-  // Get parent navigator to access stack screens
   const parentNavigation = navigation?.getParent?.();
 
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
   // Profile edit modal state
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -45,10 +44,24 @@ export function SettingsScreen() {
   });
   const [profileLoading, setProfileLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  
 
   useEffect(() => {
     setCurrentLanguage(getCurrentLanguage());
+
+    // Entrance animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 60,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
 
   useEffect(() => {
@@ -64,7 +77,6 @@ export function SettingsScreen() {
       });
     }
   }, [user]);
-
 
   const handleProfileUpdate = async () => {
     if (!profileData.firstName || !profileData.lastName) {
@@ -93,7 +105,6 @@ export function SettingsScreen() {
 
   const handleAvatarUpload = async () => {
     try {
-      // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
@@ -103,7 +114,6 @@ export function SettingsScreen() {
         return;
       }
 
-      // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
@@ -121,7 +131,6 @@ export function SettingsScreen() {
       const match = /\.(\w+)$/.exec(filename);
       const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-      // Create FormData
       const formData = new FormData();
       formData.append('avatar', {
         uri: uri,
@@ -129,14 +138,12 @@ export function SettingsScreen() {
         type: type,
       });
 
-      // Upload to backend
       await api.put('/user/avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      // Refresh user data
       if (refreshUser) {
         await refreshUser();
       }
@@ -156,7 +163,6 @@ export function SettingsScreen() {
     }
   };
 
-
   const handleLanguageChange = async (languageCode) => {
     await changeLanguage(languageCode);
     setCurrentLanguage(languageCode);
@@ -165,12 +171,12 @@ export function SettingsScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      t('profile.logoutTitle', { defaultValue: 'Chiqish' }),
-      t('profile.confirmLogout', { defaultValue: 'Chiqishni xohlaysizmi?' }),
+      t('profile.logoutTitle', { defaultValue: 'Logout' }),
+      t('profile.confirmLogout', { defaultValue: 'Are you sure you want to logout?' }),
       [
-        { text: t('profile.no', { defaultValue: "Yo'q" }), style: 'cancel' },
+        { text: t('profile.no', { defaultValue: "No" }), style: 'cancel' },
         {
-          text: t('profile.yes', { defaultValue: 'Ha' }),
+          text: t('profile.yes', { defaultValue: 'Yes' }),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -184,7 +190,6 @@ export function SettingsScreen() {
     );
   };
 
-  // Helper function to navigate to stack screens safely
   const navigateToStackScreen = (screenName) => {
     try {
       if (!screenName) {
@@ -195,7 +200,6 @@ export function SettingsScreen() {
         parentNavigation.navigate(screenName);
       } else {
         console.warn(`Cannot navigate to ${screenName}: Parent navigator not found`);
-        // Fallback: try direct navigation
         if (navigation?.navigate) {
           navigation.navigate(screenName);
         }
@@ -205,230 +209,250 @@ export function SettingsScreen() {
     }
   };
 
-  const settingsItems = [
+  const settingsSections = [
     {
-      icon: 'person-outline',
-      title: t('settings.editProfile', { defaultValue: 'Edit Profile' }),
-      onPress: () => setShowProfileModal(true),
+      title: t('settings.account', { defaultValue: 'Account' }),
+      items: [
+        {
+          icon: 'person-outline',
+          title: t('settings.editProfile', { defaultValue: 'Edit Profile' }),
+          subtitle: t('settings.editProfileDesc', { defaultValue: 'Update your personal information' }),
+          onPress: () => setShowProfileModal(true),
+          color: tokens.colors.accent.blue,
+        },
+        {
+          icon: 'notifications-outline',
+          title: t('settings.notifications', { defaultValue: 'Notifications' }),
+          subtitle: t('settings.notificationsDesc', { defaultValue: 'Manage notification preferences' }),
+          onPress: () => {}, // Handled inline
+          color: '#F59E0B',
+        },
+      ],
     },
     {
-      icon: 'help-circle-outline',
-      title: t('help.title', { defaultValue: 'Help & Support' }),
-      onPress: () => navigateToStackScreen('Help'),
+      title: t('settings.support', { defaultValue: 'Support' }),
+      items: [
+        {
+          icon: 'help-circle-outline',
+          title: t('help.title', { defaultValue: 'Help & Support' }),
+          subtitle: t('help.desc', { defaultValue: 'Get help and contact support' }),
+          onPress: () => navigateToStackScreen('Help'),
+          color: '#10B981',
+        },
+        {
+          icon: 'star-outline',
+          title: t('ratingPage.title', { defaultValue: "Rate Teacher" }),
+          subtitle: t('ratingPage.desc', { defaultValue: 'Share your feedback' }),
+          onPress: () => navigateToStackScreen('TeacherRating'),
+          color: '#F59E0B',
+        },
+        {
+          icon: 'school-outline',
+          title: t('schoolRatingPage.title', { defaultValue: 'Rate School' }),
+          subtitle: t('schoolRatingPage.desc', { defaultValue: 'Rate facilities and services' }),
+          onPress: () => navigateToStackScreen('SchoolRating'),
+          color: '#8B5CF6',
+        },
+      ],
     },
     {
-      icon: 'star-outline',
-      title: t('ratingPage.title', { defaultValue: "O'qituvchini baholash" }),
-      onPress: () => navigateToStackScreen('TeacherRating'),
-    },
-    {
-      icon: 'school-outline',
-      title: t('schoolRatingPage.title', { defaultValue: 'Maktabni baholash' }),
-      onPress: () => navigateToStackScreen('SchoolRating'),
-    },
-    {
-      icon: 'information-circle-outline',
-      title: t('settings.about', { defaultValue: 'Haqida' }),
-      onPress: () => Alert.alert(t('settings.about', { defaultValue: 'Haqida' }), 'Uchqun Platform v1.0.0'),
-    },
-    {
-      icon: 'log-out-outline',
-      title: t('profile.logoutTitle', { defaultValue: 'Chiqish' }),
-      onPress: handleLogout,
-      destructive: true,
+      title: t('settings.general', { defaultValue: 'General' }),
+      items: [
+        {
+          icon: isDark ? 'moon' : 'sunny',
+          title: t('settings.darkMode', { defaultValue: 'Dark Mode' }),
+          subtitle: t('settings.darkModeDesc', { defaultValue: isDark ? 'Switch to light theme' : 'Switch to dark theme' }),
+          onPress: toggleTheme,
+          color: isDark ? '#F59E0B' : '#6366F1',
+          hasToggle: true,
+        },
+        {
+          icon: 'information-circle-outline',
+          title: t('settings.about', { defaultValue: 'About' }),
+          subtitle: 'Uchqun Platform v1.0.0',
+          onPress: () => Alert.alert(t('settings.about', { defaultValue: 'About' }), 'Uchqun Platform v1.0.0\nSpecial Education School Management'),
+          color: '#64748B',
+        },
+        {
+          icon: 'log-out-outline',
+          title: t('profile.logoutTitle', { defaultValue: 'Logout' }),
+          subtitle: t('profile.logoutDesc', { defaultValue: 'Sign out of your account' }),
+          onPress: handleLogout,
+          color: '#EF4444',
+          destructive: true,
+        },
+      ],
     },
   ];
 
-  const header = (
-    <View style={styles.headerContainer}>
+  return (
+    <View style={styles.container}>
+      {/* Gradient background */}
       <LinearGradient
-        colors={[tokens.colors.accent.blue, tokens.colors.accent.blueVibrant]}
+        colors={['#0F172A', '#1E293B', '#334155']}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* Header */}
+      <LinearGradient
+        colors={['#6366F1', '#8B5CF6']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
+        style={styles.header}
       >
-        <View style={styles.placeholder} />
-        <View style={styles.headerTitleContainer}>
+        <View style={styles.headerContent}>
           <View style={styles.headerIconContainer}>
-            <Ionicons name="settings" size={24} color="#fff" />
+            <Ionicons name="settings" size={20} color="#FFFFFF" />
           </View>
-          <Text style={styles.topBarTitle} allowFontScaling={true}>{t('settings.title', { defaultValue: 'Sozlamalar' })}</Text>
+          <Text style={styles.headerTitle}>{t('settings.title', { defaultValue: 'Settings' })}</Text>
         </View>
-        <View style={styles.placeholder} />
       </LinearGradient>
-    </View>
-  );
 
-  return (
-    <Screen scroll={true} padded={true} header={header}>
-        {/* User Info Card - Enhanced */}
-        <Card style={styles.card} variant="elevated" shadow="soft">
-          <View style={styles.userInfo}>
-            <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar}>
-              <View style={styles.avatarWrapper}>
-                {user?.avatar ? (
-                  <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.avatarImage} resizeMode="cover" />
-                ) : (
-                  <LinearGradient
-                    colors={[tokens.colors.accent.blue + '30', tokens.colors.accent.blue + '15']}
-                    style={styles.avatar}
-                  >
-                    <Text style={styles.avatarText}>
-                      {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
-                    </Text>
-                  </LinearGradient>
-                )}
-                {uploadingAvatar && (
-                  <View style={styles.uploadingOverlay}>
-                    <ActivityIndicator color="#fff" />
-                  </View>
-                )}
-                <View style={styles.cameraButton}>
-                  <Ionicons name="camera" size={14} color="#fff" />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <View style={styles.userDetails}>
-              <Text style={styles.userName} allowFontScaling={true}>
-                {user?.firstName ?? '—'} {user?.lastName ?? ''}
-              </Text>
-              <View style={styles.emailContainer}>
-                <Ionicons name="mail-outline" size={14} color={tokens.colors.text.secondary} />
-                <Text style={styles.userEmail} allowFontScaling={true}>{user?.email ?? '—'}</Text>
-              </View>
-              <Pill style={styles.roleBadge}>
-                <Ionicons name="people" size={14} color={tokens.colors.accent.blue} />
-                <Text style={styles.roleText} allowFontScaling={true}>{t('dashboard.roleParent')}</Text>
-              </Pill>
-            </View>
-          </View>
-        </Card>
-
-        {/* Language Selector Card - Enhanced */}
-        <Card style={styles.card} variant="elevated" shadow="soft">
-          <Text style={styles.sectionTitle} allowFontScaling={true}>{t('settings.language')}</Text>
-          {(getAvailableLanguages() || []).map((lang) => (
-            <Pressable
-              key={lang.code}
-              style={({ pressed }) => [
-                styles.languageItem,
-                currentLanguage === lang.code && styles.languageItemActive,
-                pressed && styles.languageItemPressed,
-              ]}
-              onPress={() => handleLanguageChange(lang.code)}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View
+          style={{
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }}
+        >
+          {/* Profile Card */}
+          <View style={styles.profileCard}>
+            <LinearGradient
+              colors={['rgba(51, 65, 85, 0.8)', 'rgba(30, 41, 59, 0.7)']}
+              style={styles.profileCardGradient}
             >
-              <View style={styles.languageInfo}>
-                <Text style={styles.languageName} allowFontScaling={true}>{lang.nativeName}</Text>
-                <Text style={styles.languageSubtitle} allowFontScaling={true}>{lang.name}</Text>
-              </View>
-              {currentLanguage === lang.code && (
-                <View style={styles.checkmarkContainer}>
-                  <Ionicons name="checkmark-circle" size={24} color={tokens.colors.accent.blue} />
+              <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar}>
+                <View style={styles.avatarContainer}>
+                  {user?.avatar ? (
+                    <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.avatarImage} resizeMode="cover" />
+                  ) : (
+                    <LinearGradient
+                      colors={['#8B5CF6', '#6366F1']}
+                      style={styles.avatarGradient}
+                    >
+                      <Text style={styles.avatarText}>
+                        {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
+                      </Text>
+                    </LinearGradient>
+                  )}
+                  {uploadingAvatar && (
+                    <View style={styles.uploadingOverlay}>
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    </View>
+                  )}
+                  <View style={styles.cameraButton}>
+                    <Ionicons name="camera" size={12} color="#FFFFFF" />
+                  </View>
                 </View>
-              )}
-            </Pressable>
-          ))}
-        </Card>
-
-        {/* Notification Preferences Card */}
-        <Card style={styles.card} variant="elevated" shadow="soft">
-          <View style={styles.sectionHeader}>
-            <Ionicons name="notifications-outline" size={24} color={tokens.colors.accent.blue} />
-            <Text style={styles.sectionTitle} allowFontScaling={true}>{t('settings.notifications', { defaultValue: 'Notifications' })}</Text>
-          </View>
-          
-          <Pressable
-            style={styles.notificationItem}
-            onPress={() => setProfileData({
-              ...profileData,
-              notificationPreferences: {
-                ...profileData.notificationPreferences,
-                email: !profileData.notificationPreferences.email,
-              },
-            })}
-          >
-            <View style={styles.notificationContent}>
-              <Text style={styles.notificationTitle} allowFontScaling={true}>
-                {t('settings.emailNotifications', { defaultValue: 'Email Notifications' })}
-              </Text>
-              <Text style={styles.notificationDesc} allowFontScaling={true}>
-                {t('settings.emailNotificationsDesc', { defaultValue: 'Receive updates via email' })}
-              </Text>
-            </View>
-            <View style={[
-              styles.checkbox,
-              profileData.notificationPreferences.email && styles.checkboxActive
-            ]}>
-              {profileData.notificationPreferences.email && (
-                <Ionicons name="checkmark" size={16} color="#fff" />
-              )}
-            </View>
-          </Pressable>
-
-          <Pressable
-            style={styles.notificationItem}
-            onPress={() => setProfileData({
-              ...profileData,
-              notificationPreferences: {
-                ...profileData.notificationPreferences,
-                push: !profileData.notificationPreferences.push,
-              },
-            })}
-          >
-            <View style={styles.notificationContent}>
-              <Text style={styles.notificationTitle} allowFontScaling={true}>
-                {t('settings.pushNotifications', { defaultValue: 'Push Notifications' })}
-              </Text>
-              <Text style={styles.notificationDesc} allowFontScaling={true}>
-                {t('settings.pushNotificationsDesc', { defaultValue: 'Receive push notifications' })}
-              </Text>
-            </View>
-            <View style={[
-              styles.checkbox,
-              profileData.notificationPreferences.push && styles.checkboxActive
-            ]}>
-              {profileData.notificationPreferences.push && (
-                <Ionicons name="checkmark" size={16} color="#fff" />
-              )}
-            </View>
-          </Pressable>
-
-          <Pressable
-            style={styles.savePreferencesButton}
-            onPress={handleProfileUpdate}
-            disabled={profileLoading}
-          >
-            {profileLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="save-outline" size={20} color="#fff" />
-                <Text style={styles.savePreferencesText} allowFontScaling={true}>
-                  {t('settings.savePreferences', { defaultValue: 'Save Preferences' })}
+              </TouchableOpacity>
+              <View style={styles.profileInfo}>
+                <Text style={styles.profileName}>
+                  {user?.firstName ?? '—'} {user?.lastName ?? ''}
                 </Text>
-              </>
-            )}
-          </Pressable>
-        </Card>
+                <View style={styles.emailRow}>
+                  <Ionicons name="mail-outline" size={12} color={tokens.colors.text.muted} />
+                  <Text style={styles.profileEmail}>{user?.email ?? '—'}</Text>
+                </View>
+                <View style={styles.roleBadge}>
+                  <LinearGradient
+                    colors={['rgba(99, 102, 241, 0.15)', 'rgba(139, 92, 246, 0.15)']}
+                    style={styles.roleBadgeGradient}
+                  >
+                    <Ionicons name="people" size={12} color="#A78BFA" />
+                    <Text style={styles.roleText}>{t('dashboard.roleParent', { defaultValue: 'Parent' })}</Text>
+                  </LinearGradient>
+                </View>
+              </View>
+            </LinearGradient>
+          </View>
 
-        {/* Settings Items Card - Enhanced */}
-        <Card style={styles.card} variant="elevated" shadow="soft">
-          <Text style={styles.sectionTitle} allowFontScaling={true}>{t('settings.account', { defaultValue: 'Account' })}</Text>
-          {settingsItems.map((item, index) => (
-            <ListRow
-              key={index}
-              icon={item.icon}
-              iconColor={item.destructive ? tokens.colors.semantic.error : tokens.colors.accent.blue}
-              title={item.title}
-              onPress={item.onPress}
-              style={[
-                styles.settingsItem,
-                index === settingsItems.length - 1 && styles.lastItem,
-              ]}
-            />
+          {/* Language Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="language-outline" size={18} color="#A78BFA" />
+              <Text style={styles.sectionTitle}>{t('settings.language', { defaultValue: 'Language' })}</Text>
+            </View>
+            <View style={styles.sectionCard}>
+              <LinearGradient
+                colors={['rgba(51, 65, 85, 0.6)', 'rgba(30, 41, 59, 0.5)']}
+                style={styles.sectionCardGradient}
+              >
+                {(getAvailableLanguages() || []).map((lang, index) => (
+                  <Pressable
+                    key={lang.code}
+                    style={({ pressed }) => [
+                      styles.languageItem,
+                      currentLanguage === lang.code && styles.languageItemActive,
+                      index === getAvailableLanguages().length - 1 && styles.lastItem,
+                      pressed && { opacity: 0.7 },
+                    ]}
+                    onPress={() => handleLanguageChange(lang.code)}
+                  >
+                    <View style={styles.languageInfo}>
+                      <Text style={styles.languageName}>{lang.nativeName}</Text>
+                      <Text style={styles.languageSubtitle}>{lang.name}</Text>
+                    </View>
+                    {currentLanguage === lang.code ? (
+                      <LinearGradient
+                        colors={['#8B5CF6', '#6366F1']}
+                        style={styles.checkCircle}
+                      >
+                        <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                      </LinearGradient>
+                    ) : (
+                      <View style={styles.emptyCircle} />
+                    )}
+                  </Pressable>
+                ))}
+              </LinearGradient>
+            </View>
+          </View>
+
+          {/* Settings Sections */}
+          {settingsSections.map((section, sectionIndex) => (
+            <View key={sectionIndex} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>{section.title}</Text>
+              </View>
+              <View style={styles.sectionCard}>
+                <LinearGradient
+                  colors={['rgba(51, 65, 85, 0.6)', 'rgba(30, 41, 59, 0.5)']}
+                  style={styles.sectionCardGradient}
+                >
+                  {section.items.map((item, itemIndex) => (
+                    <Pressable
+                      key={itemIndex}
+                      style={({ pressed }) => [
+                        styles.settingsItem,
+                        itemIndex === section.items.length - 1 && styles.lastItem,
+                        pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
+                      ]}
+                      onPress={item.onPress}
+                    >
+                      <View style={[styles.iconCircle, { backgroundColor: `${item.color}20` }]}>
+                        <Ionicons name={item.icon} size={18} color={item.color} />
+                      </View>
+                      <View style={styles.settingsItemContent}>
+                        <Text style={[styles.settingsItemTitle, item.destructive && { color: '#FCA5A5' }]}>
+                          {item.title}
+                        </Text>
+                        {item.subtitle && (
+                          <Text style={styles.settingsItemSubtitle}>{item.subtitle}</Text>
+                        )}
+                      </View>
+                      <Ionicons name="chevron-forward" size={16} color={tokens.colors.text.muted} />
+                    </Pressable>
+                  ))}
+                </LinearGradient>
+              </View>
+            </View>
           ))}
-        </Card>
-
+        </Animated.View>
+      </ScrollView>
 
       {/* Profile Edit Modal */}
       <Modal
@@ -439,244 +463,352 @@ export function SettingsScreen() {
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          style={styles.modalContainer}
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('settings.editProfile', { defaultValue: 'Edit Profile' })}</Text>
-              <TouchableOpacity onPress={() => setShowProfileModal(false)}>
-                <Ionicons name="close" size={24} color={tokens.colors.text.secondary} />
-              </TouchableOpacity>
-            </View>
+              <LinearGradient
+                colors={['rgba(51, 65, 85, 0.95)', 'rgba(30, 41, 59, 0.95)']}
+                style={styles.modalGradient}
+              >
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>{t('settings.editProfile', { defaultValue: 'Edit Profile' })}</Text>
+                  <TouchableOpacity onPress={() => setShowProfileModal(false)} hitSlop={10}>
+                    <Ionicons name="close" size={24} color={tokens.colors.text.white} />
+                  </TouchableOpacity>
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.firstName', { defaultValue: 'First Name' })}</Text>
-              <TextInput
-                style={styles.textInput}
-                value={profileData.firstName}
-                onChangeText={(text) => setProfileData({ ...profileData, firstName: text })}
-                placeholder={t('settings.firstName', { defaultValue: 'First Name' })}
-                placeholderTextColor={tokens.colors.text.tertiary}
-              />
-            </View>
+                <View style={styles.modalBody}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>{t('settings.firstName', { defaultValue: 'First Name' })}</Text>
+                    <View style={styles.inputContainer}>
+                      <LinearGradient
+                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
+                        style={styles.inputGradient}
+                      >
+                        <TextInput
+                          style={styles.textInput}
+                          value={profileData.firstName}
+                          onChangeText={(text) => setProfileData({ ...profileData, firstName: text })}
+                          placeholder={t('settings.firstName', { defaultValue: 'First Name' })}
+                          placeholderTextColor={tokens.colors.text.muted}
+                        />
+                      </LinearGradient>
+                    </View>
+                  </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.lastName', { defaultValue: 'Last Name' })}</Text>
-              <TextInput
-                style={styles.textInput}
-                value={profileData.lastName}
-                onChangeText={(text) => setProfileData({ ...profileData, lastName: text })}
-                placeholder={t('settings.lastName', { defaultValue: 'Last Name' })}
-                placeholderTextColor={tokens.colors.text.tertiary}
-              />
-            </View>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>{t('settings.lastName', { defaultValue: 'Last Name' })}</Text>
+                    <View style={styles.inputContainer}>
+                      <LinearGradient
+                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
+                        style={styles.inputGradient}
+                      >
+                        <TextInput
+                          style={styles.textInput}
+                          value={profileData.lastName}
+                          onChangeText={(text) => setProfileData({ ...profileData, lastName: text })}
+                          placeholder={t('settings.lastName', { defaultValue: 'Last Name' })}
+                          placeholderTextColor={tokens.colors.text.muted}
+                        />
+                      </LinearGradient>
+                    </View>
+                  </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.phone', { defaultValue: 'Phone' })}</Text>
-              <TextInput
-                style={styles.textInput}
-                value={profileData.phone}
-                onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
-                placeholder="+998 XX XXX XX XX"
-                placeholderTextColor={tokens.colors.text.tertiary}
-                keyboardType="phone-pad"
-              />
-            </View>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>{t('settings.phone', { defaultValue: 'Phone' })}</Text>
+                    <View style={styles.inputContainer}>
+                      <LinearGradient
+                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
+                        style={styles.inputGradient}
+                      >
+                        <TextInput
+                          style={styles.textInput}
+                          value={profileData.phone}
+                          onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
+                          placeholder="+998 XX XXX XX XX"
+                          placeholderTextColor={tokens.colors.text.muted}
+                          keyboardType="phone-pad"
+                        />
+                      </LinearGradient>
+                    </View>
+                  </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t('settings.email', { defaultValue: 'Email' })}</Text>
-              <TextInput
-                style={[styles.textInput, styles.disabledInput]}
-                value={user?.email || ''}
-                editable={false}
-              />
-              <Text style={styles.helperText}>{t('settings.emailReadOnly', { defaultValue: 'Email cannot be changed' })}</Text>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.saveButton, profileLoading && styles.saveButtonDisabled]}
-              onPress={handleProfileUpdate}
-              disabled={profileLoading}
-            >
-              {profileLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="save-outline" size={20} color="#fff" />
-                  <Text style={styles.saveButtonText}>{t('settings.saveProfile', { defaultValue: 'Save Profile' })}</Text>
-                </>
-              )}
-            </TouchableOpacity>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.saveButton,
+                      pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+                    ]}
+                    onPress={handleProfileUpdate}
+                    disabled={profileLoading}
+                  >
+                    <LinearGradient
+                      colors={profileLoading ? ['#475569', '#334155'] : ['#8B5CF6', '#6366F1']}
+                      style={styles.saveButtonGradient}
+                    >
+                      {profileLoading ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <>
+                          <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+                          <Text style={styles.saveButtonText}>{t('settings.saveProfile', { defaultValue: 'Save Changes' })}</Text>
+                        </>
+                      )}
+                    </LinearGradient>
+                  </Pressable>
+                </View>
+              </LinearGradient>
             </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
-
-    </Screen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    overflow: 'hidden',
-  },
-  headerGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: tokens.space.lg,
-    paddingVertical: tokens.space.md,
-    paddingTop: tokens.space.xl,
-    paddingBottom: tokens.space.lg,
-  },
-  headerTitleContainer: {
+  container: {
     flex: 1,
+  },
+  header: {
+    paddingTop: 50,
+    paddingBottom: tokens.space.lg,
+    paddingHorizontal: tokens.space.xl,
+    ...tokens.shadow.soft,
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: tokens.space.md,
+    gap: tokens.space.sm,
   },
   headerIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  placeholder: {
-    width: 44,
-  },
-  topBarTitle: {
+  headerTitle: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h2.fontWeight,
-    color: '#fff',
+    color: tokens.colors.text.white,
+    letterSpacing: -0.3,
   },
-  card: {
-    marginBottom: tokens.space.lg,
+  scrollView: {
+    flex: 1,
   },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  scrollContent: {
+    padding: tokens.space.lg,
+    paddingBottom: tokens.space['3xl'],
   },
-  avatarWrapper: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    marginRight: tokens.space.md,
+  profileCard: {
+    borderRadius: tokens.radius.xl,
+    marginBottom: tokens.space.xl,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.15)',
     ...tokens.shadow.soft,
-    position: 'relative',
   },
-  avatar: {
-    width: '100%',
-    height: '100%',
+  profileCardGradient: {
+    padding: tokens.space.xl,
     alignItems: 'center',
-    justifyContent: 'center',
+  },
+  avatarContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: tokens.space.md,
+    position: 'relative',
+    overflow: 'hidden',
   },
   avatarImage: {
     width: '100%',
     height: '100%',
   },
+  avatarGradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarText: {
-    fontSize: tokens.type.h1.fontSize,
-    fontWeight: tokens.type.h1.fontWeight,
-    color: tokens.colors.accent.blue,
+    fontSize: 28,
+    fontWeight: '700',
+    color: tokens.colors.text.white,
   },
-  userDetails: {
-    flex: 1,
-    minWidth: 0,
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#6366F1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#334155',
+    ...tokens.shadow.sm,
   },
-  userName: {
+  uploadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileInfo: {
+    alignItems: 'center',
+  },
+  profileName: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.primary,
+    color: tokens.colors.text.white,
     marginBottom: tokens.space.xs,
+    letterSpacing: -0.3,
   },
-  emailContainer: {
+  emailRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: tokens.space.xs,
     marginBottom: tokens.space.sm,
   },
-  userEmail: {
+  profileEmail: {
     fontSize: tokens.type.sub.fontSize,
-    fontWeight: tokens.type.sub.fontWeight,
-    color: tokens.colors.text.secondary,
-    flex: 1,
+    color: tokens.colors.text.muted,
   },
   roleBadge: {
+    borderRadius: tokens.radius.pill,
+    overflow: 'hidden',
+  },
+  roleBadgeGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.sm,
     gap: tokens.space.xs,
-    backgroundColor: `${tokens.colors.accent.blue}15`,
   },
   roleText: {
     fontSize: tokens.type.sub.fontSize,
-    fontWeight: tokens.type.sub.fontWeight,
-    color: tokens.colors.accent.blue,
+    fontWeight: '600',
+    color: '#A78BFA',
+    letterSpacing: 0.3,
+  },
+  section: {
+    marginBottom: tokens.space.xl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.space.sm,
+    marginBottom: tokens.space.md,
+    paddingHorizontal: tokens.space.sm,
   },
   sectionTitle: {
     fontSize: tokens.type.h3.fontSize,
     fontWeight: tokens.type.h3.fontWeight,
-    color: tokens.colors.text.primary,
-    marginBottom: tokens.space.md,
+    color: tokens.colors.text.white,
+    letterSpacing: -0.1,
   },
-  settingsItem: {
-    marginBottom: 0,
+  sectionCard: {
+    borderRadius: tokens.radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.1)',
   },
-  lastItem: {
-    borderBottomWidth: 0,
+  sectionCardGradient: {
+    padding: tokens.space.xs,
   },
   languageItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: tokens.space.md,
-    paddingHorizontal: tokens.space.md,
-    borderRadius: tokens.radius.lg,
-    marginBottom: tokens.space.sm,
-    borderWidth: 2,
-    borderColor: tokens.colors.border.light,
+    padding: tokens.space.md,
+    borderRadius: tokens.radius.md,
+    marginBottom: tokens.space.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.1)',
   },
   languageItemActive: {
-    backgroundColor: tokens.colors.accent[50],
-    borderColor: tokens.colors.accent.blue,
-  },
-  languageItemPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
-  },
-  checkmarkContainer: {
-    paddingLeft: tokens.space.sm,
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    borderColor: 'rgba(139, 92, 246, 0.3)',
   },
   languageInfo: {
     flex: 1,
   },
   languageName: {
     fontSize: tokens.type.body.fontSize,
-    fontWeight: tokens.type.h3.fontWeight,
-    color: tokens.colors.text.primary,
-    marginBottom: tokens.space.xs / 2,
+    fontWeight: '600',
+    color: tokens.colors.text.white,
+    marginBottom: 2,
   },
   languageSubtitle: {
     fontSize: tokens.type.sub.fontSize,
-    fontWeight: tokens.type.sub.fontWeight,
-    color: tokens.colors.text.secondary,
+    color: tokens.colors.text.muted,
+  },
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...tokens.shadow.sm,
+  },
+  emptyCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(148, 163, 184, 0.3)',
+  },
+  settingsItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: tokens.space.md,
+    borderRadius: tokens.radius.md,
+    marginBottom: tokens.space.xs,
+    gap: tokens.space.md,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsItemContent: {
+    flex: 1,
+  },
+  settingsItemTitle: {
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.white,
+    marginBottom: 2,
+  },
+  settingsItemSubtitle: {
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.muted,
+  },
+  lastItem: {
+    marginBottom: 0,
+  },
+  modalContainer: {
+    flex: 1,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: tokens.colors.surface.card,
-    borderTopLeftRadius: tokens.radius.xl,
-    borderTopRightRadius: tokens.radius.xl,
-    padding: tokens.space.xl,
+    borderTopLeftRadius: tokens.radius['2xl'],
+    borderTopRightRadius: tokens.radius['2xl'],
+    overflow: 'hidden',
     maxHeight: '80%',
+  },
+  modalGradient: {
+    padding: tokens.space.xl,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -687,141 +819,52 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.primary,
+    color: tokens.colors.text.white,
+    letterSpacing: -0.3,
   },
-  inputContainer: {
-    marginBottom: tokens.space.md,
+  modalBody: {
+    gap: tokens.space.lg,
+  },
+  inputGroup: {
+    gap: tokens.space.sm,
   },
   inputLabel: {
     fontSize: tokens.type.sub.fontSize,
-    fontWeight: tokens.type.h3.fontWeight,
-    color: tokens.colors.text.secondary,
-    marginBottom: tokens.space.xs,
+    fontWeight: '600',
+    color: tokens.colors.text.white,
+    letterSpacing: 0.3,
+  },
+  inputContainer: {
+    borderRadius: tokens.radius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.2)',
+  },
+  inputGradient: {
+    padding: tokens.space.md,
   },
   textInput: {
-    backgroundColor: tokens.colors.surface.secondary,
-    borderRadius: tokens.radius.md,
-    padding: tokens.space.md,
     fontSize: tokens.type.body.fontSize,
-    color: tokens.colors.text.primary,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.light,
-  },
-  disabledInput: {
-    backgroundColor: tokens.colors.surface.tertiary || '#f0f0f0',
-    color: tokens.colors.text.tertiary,
-  },
-  helperText: {
-    fontSize: tokens.type.caption.fontSize,
-    color: tokens.colors.text.tertiary,
-    marginTop: tokens.space.xs / 2,
+    color: tokens.colors.text.white,
+    padding: 0,
   },
   saveButton: {
-    backgroundColor: tokens.colors.accent.blue,
-    borderRadius: tokens.radius.md,
-    padding: tokens.space.md,
-    alignItems: 'center',
     marginTop: tokens.space.md,
+    borderRadius: tokens.radius.md,
+    overflow: 'hidden',
+    ...tokens.shadow.glow,
   },
-  saveButtonDisabled: {
-    opacity: 0.7,
+  saveButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: tokens.space.lg,
+    gap: tokens.space.sm,
   },
   saveButtonText: {
-    color: '#fff',
-    fontSize: tokens.type.body.fontSize,
-    fontWeight: tokens.type.h3.fontWeight,
-    marginLeft: tokens.space.sm,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.space.sm,
-    marginBottom: tokens.space.md,
-  },
-  notificationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: tokens.space.md,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.border.light,
-  },
-  notificationContent: {
-    flex: 1,
-    marginRight: tokens.space.md,
-  },
-  notificationTitle: {
-    fontSize: tokens.type.body.fontSize,
-    fontWeight: tokens.type.h3.fontWeight,
-    color: tokens.colors.text.primary,
-    marginBottom: tokens.space.xs / 2,
-  },
-  notificationDesc: {
-    fontSize: tokens.type.sub.fontSize,
-    color: tokens.colors.text.secondary,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: tokens.colors.border.medium,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxActive: {
-    backgroundColor: tokens.colors.accent.blue,
-    borderColor: tokens.colors.accent.blue,
-  },
-  savePreferencesButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: tokens.colors.accent.blue,
-    borderRadius: tokens.radius.md,
-    padding: tokens.space.md,
-    marginTop: tokens.space.md,
-    gap: tokens.space.sm,
-  },
-  savePreferencesText: {
-    color: '#fff',
-    fontSize: tokens.type.body.fontSize,
-    fontWeight: tokens.type.h3.fontWeight,
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: tokens.colors.accent.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  uploadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  passwordInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  passwordInput: {
-    paddingRight: 50,
-  },
-  eyeButton: {
-    position: 'absolute',
-    right: tokens.space.md,
-    padding: tokens.space.xs,
+    fontSize: tokens.type.button.fontSize,
+    fontWeight: tokens.type.button.fontWeight,
+    color: tokens.colors.text.white,
+    letterSpacing: tokens.type.button.letterSpacing,
   },
 });
