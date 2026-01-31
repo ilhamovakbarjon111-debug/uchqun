@@ -4,11 +4,11 @@
 
 # SPA routing - all routes should serve index.html
 # This ensures React Router works correctly on refresh
+# Force redirect for all routes to index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = true
 
 [build.environment]
   NODE_VERSION = "18"
