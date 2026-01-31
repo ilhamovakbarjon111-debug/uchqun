@@ -245,13 +245,23 @@ export const refreshToken = async (req, res) => {
     }
 
     // Parallel database queries for better performance
-    const [user, storedToken] = await Promise.all([
-      User.findByPk(decoded.userId, {
-        attributes: ['id', 'email', 'role', 'name'],
-        raw: false, // Get instance for potential updates
-      }),
-      RefreshToken.verifyToken(token, decoded.userId),
-    ]);
+    let user, storedToken;
+    try {
+      [user, storedToken] = await Promise.all([
+        User.findByPk(decoded.userId, {
+          attributes: ['id', 'email', 'role', 'name'],
+          raw: false, // Get instance for potential updates
+        }),
+        RefreshToken.verifyToken(token, decoded.userId),
+      ]);
+    } catch (dbError) {
+      logger.error('Database query error in refresh token', {
+        error: dbError.message,
+        stack: dbError.stack,
+        userId: decoded.userId,
+      });
+      throw dbError;
+    }
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid refresh token' });
@@ -262,20 +272,41 @@ export const refreshToken = async (req, res) => {
     }
 
     // Issue new tokens (synchronous operation)
-    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user.id);
-    const csrfToken = generateCsrfToken();
+    let accessToken, newRefreshToken, csrfToken;
+    try {
+      const tokens = generateTokens(user.id);
+      accessToken = tokens.accessToken;
+      newRefreshToken = tokens.refreshToken;
+      csrfToken = generateCsrfToken();
+    } catch (tokenError) {
+      logger.error('Token generation error', {
+        error: tokenError.message,
+        stack: tokenError.stack,
+        userId: user.id,
+      });
+      throw tokenError;
+    }
 
     // Parallel database operations
-    await Promise.all([
-      // Revoke old token (rotation)
-      storedToken.update({ revoked: true, revokedAt: new Date() }),
-      // Store new refresh token hash
-      RefreshToken.create({
-        tokenHash: RefreshToken.hashToken(newRefreshToken),
+    try {
+      await Promise.all([
+        // Revoke old token (rotation)
+        storedToken.update({ revoked: true, revokedAt: new Date() }),
+        // Store new refresh token hash
+        RefreshToken.create({
+          tokenHash: RefreshToken.hashToken(newRefreshToken),
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        }),
+      ]);
+    } catch (dbError) {
+      logger.error('Database update error in refresh token', {
+        error: dbError.message,
+        stack: dbError.stack,
         userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      }),
-    ]);
+      });
+      throw dbError;
+    }
 
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
@@ -314,11 +345,27 @@ export const refreshToken = async (req, res) => {
       return res.status(401).json({ error: 'Invalid or expired refresh token' });
     }
     
+    // Handle Sequelize errors
+    if (error.name === 'SequelizeDatabaseError' || error.name === 'SequelizeConnectionError') {
+      logger.error('Database error in refresh token', {
+        error: error.message,
+        name: error.name,
+        original: error.original?.message,
+        stack: error.stack,
+      });
+      if (!res.headersSent) {
+        return res.status(500).json({ error: 'Database error. Please try again.' });
+      }
+      return;
+    }
+    
     // Log error with context
     logger.error('Refresh token error', { 
-      error: error.message, 
+      error: error.message,
+      name: error.name,
       stack: error.stack,
-      userId: req.body?.refreshToken ? 'from-body' : 'from-cookie',
+      tokenSource: req.body?.refreshToken ? 'from-body' : 'from-cookie',
+      hasToken: !!(req.cookies?.refreshToken || req.body?.refreshToken),
     });
     
     // Send error response

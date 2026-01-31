@@ -48,23 +48,29 @@ RefreshToken.hashToken = (token) => {
 };
 
 RefreshToken.verifyToken = async (token, userId) => {
-  const hash = RefreshToken.hashToken(token);
-  const now = new Date();
-  
-  // Optimized query with expiration check in WHERE clause
-  const record = await RefreshToken.findOne({
-    where: { 
-      tokenHash: hash, 
-      userId, 
-      revoked: false,
-      expiresAt: {
-        [Op.gt]: now, // expiresAt > now
+  try {
+    const hash = RefreshToken.hashToken(token);
+    const now = new Date();
+    
+    // Optimized query with expiration check in WHERE clause
+    const record = await RefreshToken.findOne({
+      where: { 
+        tokenHash: hash, 
+        userId, 
+        revoked: false,
+        expiresAt: {
+          [Op.gt]: now, // expiresAt > now
+        },
       },
-    },
-  });
-  
-  // If record found, it's valid (expiration already checked in query)
-  return record;
+    });
+    
+    // If record found, it's valid (expiration already checked in query)
+    return record;
+  } catch (error) {
+    // Log error but don't throw - let controller handle it
+    console.error('RefreshToken.verifyToken error:', error.message);
+    return null;
+  }
 };
 
 export default RefreshToken;
