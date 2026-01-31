@@ -2,10 +2,8 @@
   command = "npm install && npm run build"
   publish = "dist"
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Note: _redirects file in public folder handles SPA routing
+# Netlify automatically serves existing files (assets) before applying redirects
 
 [build.environment]
   NODE_VERSION = "18"
