@@ -2,32 +2,13 @@
   command = "npm install && npm run build"
   publish = "dist"
 
-# SPA routing - redirect to index.html, but exclude static assets
-# Static assets (JS, CSS, images) are served directly by Netlify
-# Only redirect if the file doesn't exist
-[[redirects]]
-  from = "/assets/*"
-  to = "/assets/:splat"
-  status = 200
-  force = false
-
-[[redirects]]
-  from = "/*.js"
-  to = "/:splat.js"
-  status = 200
-  force = false
-
-[[redirects]]
-  from = "/*.css"
-  to = "/:splat.css"
-  status = 200
-  force = false
-
+# SPA routing - redirect to index.html for non-file requests
+# Netlify automatically serves existing files (assets) before applying redirects
+# The redirect only applies if the file doesn't exist
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = false
 
 [build.environment]
   NODE_VERSION = "18"
