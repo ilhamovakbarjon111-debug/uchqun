@@ -1,1 +1,2 @@
+# Don't redirect existing files - only redirect non-existent routes
 /*    /index.html   200

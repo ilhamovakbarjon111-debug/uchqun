@@ -3,7 +3,8 @@
   publish = "dist"
 
 # SPA routing - redirect to index.html for non-file requests
-# Netlify automatically serves static assets (JS, CSS, images) correctly
+# Netlify automatically serves existing files (JS, CSS, images) correctly
+# The redirect only applies if the file doesn't exist
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -27,17 +28,19 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# Headers for JavaScript files (including modules)
 [[headers]]
-  for = "/*.js"
+  for = "/assets/*.js"
   [headers.values]
-    Content-Type = "application/javascript"
+    Content-Type = "application/javascript; charset=utf-8"
 
 [[headers]]
-  for = "/*.mjs"
+  for = "/assets/*.mjs"
   [headers.values]
-    Content-Type = "application/javascript"
+    Content-Type = "application/javascript; charset=utf-8"
 
+# Headers for CSS files
 [[headers]]
-  for = "/*.css"
+  for = "/assets/*.css"
   [headers.values]
-    Content-Type = "text/css"
+    Content-Type = "text/css; charset=utf-8"
