@@ -2,14 +2,10 @@
   command = "npm install && npm run build"
   publish = "dist"
 
-# SPA routing - redirect to index.html
-# Netlify serves existing files (assets) before applying redirects
-# So JavaScript/CSS files will be served correctly
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = false
 
 [build.environment]
   NODE_VERSION = "18"
