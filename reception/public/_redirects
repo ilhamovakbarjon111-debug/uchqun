@@ -1,5 +1,0 @@
-# Netlify redirects for SPA routing
-# Assets are served directly by Netlify before redirects are applied
-# Only non-existent routes redirect to index.html
-
-/*    /index.html   200
