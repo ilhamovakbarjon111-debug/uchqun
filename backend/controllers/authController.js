@@ -222,6 +222,9 @@ export const login = async (req, res) => {
 };
 
 export const refreshToken = async (req, res) => {
+  // Set timeout to prevent client from closing connection
+  req.setTimeout(30000); // 30 seconds
+  
   try {
     // Read from cookie first, fall back to body
     const token = req.cookies?.refreshToken || req.body?.refreshToken;
@@ -230,31 +233,49 @@ export const refreshToken = async (req, res) => {
       return res.status(400).json({ error: 'Refresh token is required' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-    const user = await User.findByPk(decoded.userId);
+    // Verify JWT first (fast operation, no DB)
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    } catch (jwtError) {
+      if (jwtError.name === 'JsonWebTokenError' || jwtError.name === 'TokenExpiredError') {
+        return res.status(401).json({ error: 'Invalid or expired refresh token' });
+      }
+      throw jwtError;
+    }
+
+    // Parallel database queries for better performance
+    const [user, storedToken] = await Promise.all([
+      User.findByPk(decoded.userId, {
+        attributes: ['id', 'email', 'role', 'name'],
+        raw: false, // Get instance for potential updates
+      }),
+      RefreshToken.verifyToken(token, decoded.userId),
+    ]);
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid refresh token' });
     }
 
-    // Verify token against DB
-    const storedToken = await RefreshToken.verifyToken(token, user.id);
     if (!storedToken) {
       return res.status(401).json({ error: 'Refresh token revoked or expired' });
     }
 
-    // Revoke old token (rotation)
-    await storedToken.update({ revoked: true, revokedAt: new Date() });
-
-    // Issue new tokens
+    // Issue new tokens (synchronous operation)
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(user.id);
+    const csrfToken = generateCsrfToken();
 
-    // Store new refresh token hash
-    await RefreshToken.create({
-      tokenHash: RefreshToken.hashToken(newRefreshToken),
-      userId: user.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+    // Parallel database operations
+    await Promise.all([
+      // Revoke old token (rotation)
+      storedToken.update({ revoked: true, revokedAt: new Date() }),
+      // Store new refresh token hash
+      RefreshToken.create({
+        tokenHash: RefreshToken.hashToken(newRefreshToken),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      }),
+    ]);
 
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
@@ -264,6 +285,7 @@ export const refreshToken = async (req, res) => {
       path: '/',
     };
 
+    // Set cookies
     res.cookie('accessToken', accessToken, {
       ...cookieOptions,
       maxAge: 15 * 60 * 1000,
@@ -272,9 +294,6 @@ export const refreshToken = async (req, res) => {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
-    // Refresh CSRF token
-    const csrfToken = generateCsrfToken();
     res.cookie('csrfToken', csrfToken, {
       httpOnly: false,
       secure: isProduction,
@@ -283,17 +302,29 @@ export const refreshToken = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    // Send response immediately
     res.json({
       success: true,
       accessToken,
       csrfToken,
     });
   } catch (error) {
+    // Handle specific errors
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Invalid or expired refresh token' });
     }
-    logger.error('Refresh token error', { error: error.message, stack: error.stack });
-    res.status(500).json({ error: 'Token refresh failed' });
+    
+    // Log error with context
+    logger.error('Refresh token error', { 
+      error: error.message, 
+      stack: error.stack,
+      userId: req.body?.refreshToken ? 'from-body' : 'from-cookie',
+    });
+    
+    // Send error response
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Token refresh failed' });
+    }
   }
 };
 

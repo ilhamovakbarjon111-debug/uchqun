@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes, Op } from 'sequelize';
 import crypto from 'crypto';
 import sequelize from '../config/database.js';
 
@@ -49,14 +49,21 @@ RefreshToken.hashToken = (token) => {
 
 RefreshToken.verifyToken = async (token, userId) => {
   const hash = RefreshToken.hashToken(token);
+  const now = new Date();
+  
+  // Optimized query with expiration check in WHERE clause
   const record = await RefreshToken.findOne({
-    where: { tokenHash: hash, userId, revoked: false },
+    where: { 
+      tokenHash: hash, 
+      userId, 
+      revoked: false,
+      expiresAt: {
+        [Op.gt]: now, // expiresAt > now
+      },
+    },
   });
-  if (!record) return null;
-  if (record.expiresAt < new Date()) {
-    await record.update({ revoked: true, revokedAt: new Date() });
-    return null;
-  }
+  
+  // If record found, it's valid (expiration already checked in query)
   return record;
 };
 
