@@ -1,4 +1,3 @@
-# Don't redirect assets - serve them directly
-/assets/*    /assets/:splat    200
-# Redirect all other routes to index.html for SPA routing
+# Netlify automatically serves existing files (assets) before applying redirects
+# So we only need to redirect non-existent routes to index.html for SPA routing
 /*    /index.html   200
