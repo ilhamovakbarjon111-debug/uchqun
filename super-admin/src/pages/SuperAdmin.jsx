@@ -364,7 +364,21 @@ const SuperAdmin = () => {
       let errorMessage = 'Government foydalanuvchisini yaratishda xatolik';
       
       if (error.response?.status === 403) {
-        errorMessage = error.response?.data?.error || 'Ruxsat yo\'q. Faqat Admin foydalanuvchilari government yaratishi mumkin.';
+        const errorData = error.response?.data;
+        if (errorData?.message) {
+          errorMessage = errorData.message;
+        } else if (errorData?.error) {
+          errorMessage = errorData.error;
+        } else {
+          errorMessage = 'Ruxsat yo\'q. Faqat Admin foydalanuvchilari government yaratishi mumkin.';
+        }
+        
+        // Log detailed error for debugging
+        console.error('403 Forbidden details:', {
+          error: errorData,
+          requiredRoles: errorData?.requiredRoles,
+          currentRole: errorData?.currentRole,
+        });
       } else if (error.response?.status === 401) {
         errorMessage = 'Kirish talab qilinadi. Iltimos, qayta kiring.';
       } else if (error.response?.data?.error) {
