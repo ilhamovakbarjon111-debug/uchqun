@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/User.js';
-import RefreshToken from '../models/RefreshToken.js';
 import { generateCsrfToken } from '../middleware/csrf.js';
 import logger from '../utils/logger.js';
 
