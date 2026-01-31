@@ -32,22 +32,26 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle token refresh
+// Response interceptor - redirect to login on 401 (no refresh token)
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
+    // On 401, redirect to login (no refresh token endpoint)
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      try {
-        // Cookie-based refresh — server reads refreshToken from cookie
-        await axios.post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true });
-        return api(originalRequest);
-      } catch {
+      // Don't redirect for auth endpoints
+      const isAuthEndpoint = originalRequest?.url?.includes('/auth/login') || 
+                            originalRequest?.url?.includes('/auth/logout');
+      
+      if (!isAuthEndpoint) {
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        const isLoginPage = window.location.pathname === '/login' || window.location.pathname.startsWith('/login');
+        if (!isLoginPage) {
+          window.location.href = '/login';
+        }
       }
     }
 

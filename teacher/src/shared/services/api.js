@@ -41,19 +41,11 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // Don't try to refresh for auth endpoints - just reject
+      // Don't redirect for auth endpoints
       const isAuthEndpoint = originalRequest?.url?.includes('/auth/login') || 
-                            originalRequest?.url?.includes('/auth/refresh') ||
                             originalRequest?.url?.includes('/auth/logout');
       
-      if (isAuthEndpoint) {
-        return Promise.reject(error);
-      }
-
-      try {
-        await axios.post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true });
-        return api(originalRequest);
-      } catch {
+      if (!isAuthEndpoint) {
         localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
