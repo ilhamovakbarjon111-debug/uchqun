@@ -4,7 +4,6 @@
 
 # SPA routing - redirect non-existent routes to index.html
 # Netlify automatically serves existing files (assets) before applying redirects
-# force = false (default) ensures assets are served first, then redirect applies
 [[redirects]]
   from = "/*"
   to = "/index.html"
