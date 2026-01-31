@@ -58,6 +58,15 @@ api.interceptors.response.use(
       }
     }
 
+    // On 403, log the error for debugging
+    if (error.response?.status === 403) {
+      console.error('403 Forbidden error:', {
+        url: originalRequest?.url,
+        method: originalRequest?.method,
+        error: error.response?.data,
+      });
+    }
+
     return Promise.reject(error);
   }
 );

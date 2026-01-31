@@ -361,10 +361,22 @@ const SuperAdmin = () => {
       }
     } catch (error) {
       console.error('Create government error:', error);
-      const errorMessage = error.response?.data?.error 
-        || error.response?.data?.details?.join(', ')
-        || error.message
-        || 'Government foydalanuvchisini yaratishda xatolik';
+      let errorMessage = 'Government foydalanuvchisini yaratishda xatolik';
+      
+      if (error.response?.status === 403) {
+        errorMessage = error.response?.data?.error || 'Ruxsat yo\'q. Faqat Admin foydalanuvchilari government yaratishi mumkin.';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Kirish talab qilinadi. Iltimos, qayta kiring.';
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.details) {
+        errorMessage = Array.isArray(error.response.data.details) 
+          ? error.response.data.details.join(', ')
+          : error.response.data.details;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       showError(errorMessage);
     } finally {
       setGovLoading(false);
