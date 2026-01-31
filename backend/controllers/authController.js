@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/User.js';
-import { generateCsrfToken } from '../middleware/csrf.js';
 import logger from '../utils/logger.js';
 
 const generateTokens = (userId) => {
@@ -159,21 +158,11 @@ export const login = async (req, res) => {
 
     // Note: Refresh tokens are no longer stored in database for simplicity
     // JWT verification is sufficient for security
-
-    // Set CSRF token cookie (non-httpOnly so JS can read it)
-    const csrfToken = generateCsrfToken();
-    res.cookie('csrfToken', csrfToken, {
-      httpOnly: false,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    // CSRF protection removed - using Bearer token authentication instead
 
     res.json({
       success: true,
       accessToken,
-      csrfToken,
       user: user.toJSON(),
     });
   } catch (error) {

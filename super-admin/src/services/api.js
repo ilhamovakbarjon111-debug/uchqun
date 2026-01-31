@@ -10,23 +10,12 @@ const api = axios.create({
   withCredentials: true,
 });
 
-function getCookie(name) {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? match[2] : null;
-}
-
 api.interceptors.request.use(
   (config) => {
     // Add Super Admin secret key if configured (for creating admins)
     const superAdminKey = import.meta.env.VITE_SUPER_ADMIN_SECRET_KEY;
     if (superAdminKey) {
       config.headers['x-super-admin-key'] = superAdminKey;
-    }
-    if (['post', 'put', 'delete', 'patch'].includes(config.method)) {
-      const csrfToken = getCookie('csrfToken');
-      if (csrfToken) {
-        config.headers['X-CSRF-Token'] = csrfToken;
-      }
     }
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];

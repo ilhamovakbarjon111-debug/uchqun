@@ -13,26 +13,9 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Add Bearer token from localStorage to all requests
-    // This automatically bypasses CSRF protection on the backend
     const accessToken = localStorage.getItem('accessToken');
     if (accessToken) {
       config.headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-    
-    // Also add CSRF token from cookie as fallback (for cookie-based auth)
-    // Helper function to get cookie value
-    const getCookie = (name) => {
-      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-      return match ? match[2] : null;
-    };
-    
-    // Add CSRF token for POST/PUT/DELETE requests if available
-    // Bearer token takes priority, but CSRF token is added as fallback
-    if (['post', 'put', 'delete', 'patch'].includes(config.method?.toLowerCase())) {
-      const csrfToken = getCookie('csrfToken') || localStorage.getItem('csrfToken');
-      if (csrfToken && !config.headers['X-CSRF-Token']) {
-        config.headers['X-CSRF-Token'] = csrfToken;
-      }
     }
     
     if (config.data instanceof FormData) {

@@ -10,20 +10,9 @@ const api = axios.create({
   withCredentials: true, // Send HttpOnly cookies with every request
 });
 
-function getCookie(name) {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? match[2] : null;
-}
-
-// Request interceptor — CSRF token + FormData content-type
+// Request interceptor — FormData content-type
 api.interceptors.request.use(
   (config) => {
-    if (['post', 'put', 'delete', 'patch'].includes(config.method)) {
-      const csrfToken = getCookie('csrfToken');
-      if (csrfToken) {
-        config.headers['X-CSRF-Token'] = csrfToken;
-      }
-    }
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
