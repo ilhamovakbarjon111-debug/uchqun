@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, AppState } from 'react-native';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, AppState, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -24,6 +24,53 @@ export function ParentDashboardScreen() {
   const [stats, setStats] = useState(null);
   const [children, setChildren] = useState([]);
   const [selectedChildId, setSelectedChildId] = useState(null);
+
+  // Animation refs
+  const headerFadeAnim = useRef(new Animated.Value(0)).current;
+  const headerSlideAnim = useRef(new Animated.Value(30)).current;
+  const statsFadeAnim = useRef(new Animated.Value(0)).current;
+  const statsSlideAnim = useRef(new Animated.Value(20)).current;
+  const childrenFadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Entrance animations
+  useEffect(() => {
+    Animated.stagger(150, [
+      // Header animation
+      Animated.parallel([
+        Animated.timing(headerFadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.spring(headerSlideAnim, {
+          toValue: 0,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Stats animation
+      Animated.parallel([
+        Animated.timing(statsFadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.spring(statsSlideAnim, {
+          toValue: 0,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Children animation
+      Animated.timing(childrenFadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   // Real-time data loading - reload when screen is focused or child changes
   useFocusEffect(
@@ -165,9 +212,17 @@ export function ParentDashboardScreen() {
   return (
     <Screen scroll={true} padded={false} header={null} background="parent">
       {/* Welcome Header Card - Premium Gradient Design */}
-      <View style={styles.headerWrapper}>
-        <Card 
-          variant="gradient" 
+      <Animated.View
+        style={[
+          styles.headerWrapper,
+          {
+            opacity: headerFadeAnim,
+            transform: [{ translateY: headerSlideAnim }],
+          },
+        ]}
+      >
+        <Card
+          variant="gradient"
           gradientColors={['#3b82f6', '#2563eb']}
           style={styles.headerCard}
           padding="xl"
@@ -202,10 +257,18 @@ export function ParentDashboardScreen() {
             </Text>
           </View>
         </Card>
-      </View>
+      </Animated.View>
 
       {/* Overview Cards - Modern Grid Design */}
-      <View style={styles.statsSection}>
+      <Animated.View
+        style={[
+          styles.statsSection,
+          {
+            opacity: statsFadeAnim,
+            transform: [{ translateY: statsSlideAnim }],
+          },
+        ]}
+      >
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle} allowFontScaling={true}>{t('dashboard.overview')}</Text>
         </View>
@@ -248,11 +311,16 @@ export function ParentDashboardScreen() {
             </Pressable>
           ))}
         </View>
-      </View>
+      </Animated.View>
 
       {/* Child Selector - Enhanced Design */}
       {children.length > 0 && (
-        <View style={styles.childrenSection}>
+        <Animated.View
+          style={[
+            styles.childrenSection,
+            { opacity: childrenFadeAnim },
+          ]}
+        >
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle} allowFontScaling={true}>{t('dashboard.myChildren')}</Text>
             <Text style={styles.sectionSubtitle}>{children.length} {t('dashboard.children') || 'farzand'}</Text>
@@ -314,7 +382,7 @@ export function ParentDashboardScreen() {
               </Pressable>
             ))}
           </View>
-        </View>
+        </Animated.View>
       )}
     </Screen>
   );

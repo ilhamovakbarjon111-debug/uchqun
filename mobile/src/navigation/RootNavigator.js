@@ -97,8 +97,12 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator 
-        screenOptions={{ headerShown: false }}
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          animation: 'fade',
+          animationDuration: 300,
+        }}
         initialRouteName={initialRoute}
       >
         <Stack.Screen 

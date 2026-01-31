@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { ScrollView, StyleSheet, Text, View, Pressable, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -21,6 +21,46 @@ export function TeacherDashboardScreen() {
   const [tasks, setTasks] = useState([]);
   const [children, setChildren] = useState([]);
   const [parentsData, setParentsData] = useState([]);
+
+  // Animation refs
+  const headerFadeAnim = useRef(new Animated.Value(0)).current;
+  const headerSlideAnim = useRef(new Animated.Value(30)).current;
+  const statsFadeAnim = useRef(new Animated.Value(0)).current;
+  const statsSlideAnim = useRef(new Animated.Value(20)).current;
+
+  // Entrance animations
+  useEffect(() => {
+    Animated.stagger(150, [
+      // Header animation
+      Animated.parallel([
+        Animated.timing(headerFadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.spring(headerSlideAnim, {
+          toValue: 0,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Stats animation
+      Animated.parallel([
+        Animated.timing(statsFadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.spring(statsSlideAnim, {
+          toValue: 0,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  }, []);
 
   // Helper for safe navigation
   const safeNavigate = (screenName, params = {}) => {
@@ -199,12 +239,18 @@ export function TeacherDashboardScreen() {
   return (
     <Screen scroll={true} padded={false} header={header} background="teacher">
       {/* Welcome Header Card - Like website (Gradient Blue) */}
-      <Card 
-        variant="gradient" 
-        gradientColors={['#3B82F6', '#2563EB']}
-        style={styles.headerCard}
-        padding="lg"
+      <Animated.View
+        style={{
+          opacity: headerFadeAnim,
+          transform: [{ translateY: headerSlideAnim }],
+        }}
       >
+        <Card
+          variant="gradient"
+          gradientColors={['#3B82F6', '#2563EB']}
+          style={styles.headerCard}
+          padding="lg"
+        >
         <View style={styles.headerContent}>
           <View style={styles.roleBadge}>
             <Ionicons name="people" size={16} color={tokens.colors.text.white} />
@@ -218,9 +264,18 @@ export function TeacherDashboardScreen() {
           </Text>
         </View>
       </Card>
+      </Animated.View>
 
       {/* Overview Section - Like website */}
-      <View style={styles.overviewSection}>
+      <Animated.View
+        style={[
+          styles.overviewSection,
+          {
+            opacity: statsFadeAnim,
+            transform: [{ translateY: statsSlideAnim }],
+          },
+        ]}
+      >
         <Text style={styles.sectionTitle} allowFontScaling={true}>{t('dashboard.overview') || 'Overview'}</Text>
         <View style={styles.statsContainer}>
           {statCards.map((stat, index) => (
@@ -248,7 +303,7 @@ export function TeacherDashboardScreen() {
             </Pressable>
           ))}
         </View>
-      </View>
+      </Animated.View>
     </Screen>
   );
 }

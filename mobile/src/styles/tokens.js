@@ -1,60 +1,142 @@
 /**
  * Design Tokens - Premium Joyful Design System
  * Elegant, child-friendly, with delightful micro-interactions
+ * Supports both Light and Dark modes
  */
 
-export const tokens = {
-  colors: {
-    // Core text colors
-    text: {
-      primary: "#1E293B",
-      secondary: "#64748B",
-      muted: "#8F9BB3",    // Updated to match Mobile-icons.md Text Tertiary
-      tertiary: "#8F9BB3", // Alias for muted
-      white: "#FFFFFF",
-      inverse: "#F8FAFC",
-    },
+// Light theme colors
+const lightColors = {
+  // Core text colors - darker for better readability on light backgrounds
+  text: {
+    primary: "#0F172A",
+    secondary: "#475569",
+    muted: "#64748B",
+    tertiary: "#94A3B8",
+    white: "#FFFFFF",
+    inverse: "#F8FAFC",
+  },
 
-    // Navigation colors (from Mobile-icons.md)
-    nav: {
-      active: "#2E3A59",     // Soft Navy
-      inactive: "#8F9BB3",   // Text Tertiary
-      background: "#FFFFFF",
-    },
+  // Light backgrounds - soft, not harsh white
+  background: {
+    primary: "#F8FAFC",      // Soft off-white
+    secondary: "#F1F5F9",    // Light slate
+    tertiary: "#E2E8F0",     // Slightly darker slate
+    soft: "#FFFFFF",         // Pure white for cards
+    gradient: ["#F8FAFC", "#F1F5F9", "#E2E8F0"],
+    parentGradient: ["#6366F1", "#8B5CF6", "#EC4899"],
+    teacherGradient: ["#0EA5E9", "#06B6D4", "#14B8A6"],
+  },
 
-    // Glassmorphism cards
-    card: {
-      base: "rgba(255, 255, 255, 0.88)",
-      elevated: "rgba(255, 255, 255, 0.95)",
-      border: "rgba(255, 255, 255, 0.6)",
-      borderLight: "rgba(255, 255, 255, 0.3)",
-    },
+  // Navigation colors
+  nav: {
+    active: "#6366F1",
+    inactive: "#64748B",
+    background: "#FFFFFF",
+  },
 
-    // Surface colors (for modals, overlays, etc.)
-    surface: {
-      card: "rgba(255, 255, 255, 0.95)",
-      secondary: "#F9FAFB",
-      tertiary: "#F3F4F6",
-    },
+  // Glassmorphism cards - light and airy
+  card: {
+    base: "rgba(255, 255, 255, 0.9)",
+    elevated: "rgba(255, 255, 255, 0.95)",
+    light: "rgba(248, 250, 252, 0.85)",
+    border: "rgba(148, 163, 184, 0.2)",
+    borderLight: "rgba(148, 163, 184, 0.1)",
+  },
 
-    // Border colors
-    border: {
-      light: "#E5E7EB",
-      medium: "#D1D5DB",
-      dark: "#9CA3AF",
-    },
+  // Surface colors
+  surface: {
+    card: "rgba(255, 255, 255, 0.9)",
+    secondary: "#F1F5F9",
+    tertiary: "#E2E8F0",
+    overlay: "rgba(15, 23, 42, 0.75)",
+  },
 
-    // Primary accent - vibrant blue
+  // Border colors
+  border: {
+    light: "rgba(148, 163, 184, 0.2)",
+    medium: "rgba(148, 163, 184, 0.3)",
+    dark: "rgba(148, 163, 184, 0.5)",
+  },
+};
+
+// Dark theme colors - improved contrast
+const darkColors = {
+  // Core text colors - much lighter for visibility on dark backgrounds
+  text: {
+    primary: "#F8FAFC",      // Very light for primary text
+    secondary: "#CBD5E1",    // Light slate for secondary
+    muted: "#94A3B8",        // Medium slate for muted
+    tertiary: "#64748B",     // Darker slate for tertiary
+    white: "#FFFFFF",
+    inverse: "#0F172A",
+  },
+
+  // Dark backgrounds
+  background: {
+    primary: "#0F172A",      // Deep slate
+    secondary: "#1E293B",    // Dark slate
+    tertiary: "#334155",     // Medium slate
+    soft: "#475569",         // Lighter slate
+    gradient: ["#0F172A", "#1E293B", "#334155"],
+    parentGradient: ["#6366F1", "#8B5CF6", "#EC4899"],
+    teacherGradient: ["#0EA5E9", "#06B6D4", "#14B8A6"],
+  },
+
+  // Navigation colors
+  nav: {
+    active: "#818CF8",       // Lighter indigo for visibility
+    inactive: "#94A3B8",     // Light slate
+    background: "#1E293B",   // Dark slate
+  },
+
+  // Glassmorphism cards - lighter for better visibility
+  card: {
+    base: "rgba(51, 65, 85, 0.8)",         // Lighter dark glass
+    elevated: "rgba(71, 85, 105, 0.85)",   // Even lighter for elevation
+    light: "rgba(248, 250, 252, 0.1)",     // Subtle light overlay
+    border: "rgba(148, 163, 184, 0.3)",    // More visible borders
+    borderLight: "rgba(148, 163, 184, 0.15)",
+  },
+
+  // Surface colors
+  surface: {
+    card: "rgba(51, 65, 85, 0.8)",
+    secondary: "#1E293B",
+    tertiary: "#334155",
+    overlay: "rgba(15, 23, 42, 0.9)",
+  },
+
+  // Border colors - more visible in dark mode
+  border: {
+    light: "rgba(148, 163, 184, 0.25)",
+    medium: "rgba(148, 163, 184, 0.35)",
+    dark: "rgba(148, 163, 184, 0.5)",
+  },
+};
+
+// Function to get theme colors
+export function getThemeColors(isDark = false) {
+  return isDark ? darkColors : lightColors;
+}
+
+// Get complete tokens for a theme
+export function getTokens(isDark = false) {
+  const colors = isDark ? darkColors : lightColors;
+
+  return {
+    colors: {
+      ...colors,
+      // Primary accent - vibrant indigo
     accent: {
-      blue: "#3B82F6",
-      blueSoft: "#93C5FD",
-      blueVibrant: "#2563EB",
-      50: "#EFF6FF",
-      100: "#DBEAFE",
-      200: "#BFDBFE",
-      500: "#3B82F6",
-      600: "#2563EB",
-      700: "#1D4ED8",
+      blue: "#6366F1",
+      blueSoft: "#A5B4FC",
+      blueVibrant: "#4F46E5",
+      50: "#EEF2FF",
+      100: "#E0E7FF",
+      200: "#C7D2FE",
+      500: "#6366F1",
+      600: "#4F46E5",
+      700: "#4338CA",
     },
 
     // Semantic colors
@@ -109,37 +191,37 @@ export const tokens = {
     },
   },
 
-  // Spacing scale
+  // Spacing scale - more compact and elegant
   space: {
     xs: 4,
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 24,
-    "2xl": 32,
-    "3xl": 48,
-    "4xl": 64,
+    sm: 6,
+    md: 10,
+    lg: 14,
+    xl: 18,
+    "2xl": 24,
+    "3xl": 36,
+    "4xl": 48,
   },
 
   // Alias for spacing
   spacing: {
     xs: 4,
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 24,
-    "2xl": 32,
-    "3xl": 48,
-    "4xl": 64,
+    sm: 6,
+    md: 10,
+    lg: 14,
+    xl: 18,
+    "2xl": 24,
+    "3xl": 36,
+    "4xl": 48,
   },
 
-  // Border radius
+  // Border radius - more refined
   radius: {
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 24,
-    "2xl": 32,
+    sm: 6,
+    md: 10,
+    lg: 14,
+    xl: 18,
+    "2xl": 24,
     pill: 999,
     full: 999,
   },
@@ -165,17 +247,17 @@ export const tokens = {
     },
   },
 
-  // Type presets
+  // Type presets - more refined and elegant
   type: {
-    hero: { fontSize: 32, fontWeight: "800", letterSpacing: -0.5, lineHeight: 38 },
-    h1: { fontSize: 26, fontWeight: "700", letterSpacing: -0.3, lineHeight: 32 },
-    h2: { fontSize: 20, fontWeight: "700", letterSpacing: -0.2, lineHeight: 26 },
-    h3: { fontSize: 17, fontWeight: "600", letterSpacing: 0, lineHeight: 22 },
-    body: { fontSize: 15, fontWeight: "500", letterSpacing: 0, lineHeight: 22 },
-    bodyLarge: { fontSize: 17, fontWeight: "500", letterSpacing: 0, lineHeight: 24 },
-    sub: { fontSize: 13, fontWeight: "500", letterSpacing: 0.1, lineHeight: 18 },
-    caption: { fontSize: 11, fontWeight: "600", letterSpacing: 0.3, lineHeight: 14 },
-    button: { fontSize: 15, fontWeight: "600", letterSpacing: 0.2, lineHeight: 20 },
+    hero: { fontSize: 28, fontWeight: "700", letterSpacing: -0.8, lineHeight: 34 },
+    h1: { fontSize: 22, fontWeight: "700", letterSpacing: -0.5, lineHeight: 28 },
+    h2: { fontSize: 18, fontWeight: "600", letterSpacing: -0.3, lineHeight: 24 },
+    h3: { fontSize: 15, fontWeight: "600", letterSpacing: -0.1, lineHeight: 20 },
+    body: { fontSize: 14, fontWeight: "400", letterSpacing: 0, lineHeight: 20 },
+    bodyLarge: { fontSize: 15, fontWeight: "500", letterSpacing: 0, lineHeight: 22 },
+    sub: { fontSize: 12, fontWeight: "500", letterSpacing: 0.1, lineHeight: 16 },
+    caption: { fontSize: 10, fontWeight: "600", letterSpacing: 0.4, lineHeight: 13 },
+    button: { fontSize: 14, fontWeight: "600", letterSpacing: 0.3, lineHeight: 18 },
   },
 
   // Shadows with color options
@@ -238,30 +320,43 @@ export const tokens = {
     },
   },
 
-  // Animation timing
+  // Animation timing - smoother and more refined
   animation: {
-    fast: 150,
-    normal: 250,
-    slow: 400,
-    spring: { damping: 15, stiffness: 150 },
+    instant: 100,
+    fast: 200,
+    normal: 300,
+    slow: 500,
+    verySlow: 700,
+    spring: { damping: 18, stiffness: 180 },
+    springGentle: { damping: 25, stiffness: 120 },
+    easing: {
+      easeInOut: [0.4, 0, 0.2, 1],
+      easeOut: [0, 0, 0.2, 1],
+      easeIn: [0.4, 0, 1, 1],
+      sharp: [0.4, 0, 0.6, 1],
+    },
   },
 
-  // Touch targets (accessibility)
+  // Touch targets (accessibility) - more compact
   touchTarget: {
-    min: 44,
-    comfortable: 48,
+    min: 40,
+    comfortable: 44,
   },
 
-  // Icon sizes
+  // Icon sizes - more refined
   icon: {
-    xs: 16,
-    sm: 20,
-    md: 24,
-    lg: 32,
-    xl: 40,
-    "2xl": 56,
+    xs: 14,
+    sm: 16,
+    md: 20,
+    lg: 24,
+    xl: 32,
+    "2xl": 48,
   },
-};
+  };
+}
+
+// Default tokens (light theme)
+export const tokens = getTokens(false);
 
 // Joyful icon mapping - maps generic names to fun alternatives
 export const joyfulIcons = {

@@ -26,9 +26,10 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 import theme from '../styles/theme';
+import tokens from '../styles/tokens';
 
-// Icon size per Mobile-icons.md (20px)
-const ICON_SIZE = 20;
+// Icon size - more compact and refined
+const ICON_SIZE = 16;
 
 const TAB_LABELS = {
   Dashboard: 'nav.dashboard',
@@ -64,16 +65,17 @@ function TeacherTabs() {
           const baseIcon = iconMap[routeName] || 'help';
           const iconName = focused ? baseIcon : `${baseIcon}-outline`;
 
-          // Per Mobile-icons.md: Active state has navy background with white icon
+          // Compact, elegant active tab with gradient
           if (focused) {
             return (
               <View style={{
-                width: 48,
-                height: 48,
-                borderRadius: 16,
-                backgroundColor: theme.Colors.navigation.activeBackground,
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                backgroundColor: '#0EA5E9',
                 alignItems: 'center',
                 justifyContent: 'center',
+                ...tokens.shadow.glow,
               }}>
                 <Ionicons name={baseIcon} size={ICON_SIZE} color="#FFFFFF" />
               </View>
@@ -82,21 +84,22 @@ function TeacherTabs() {
 
           return <Ionicons name={iconName} size={ICON_SIZE} color={color} />;
         },
-        tabBarActiveTintColor: theme.Colors.navigation.active,
-        tabBarInactiveTintColor: theme.Colors.navigation.inactive,
+        tabBarActiveTintColor: '#0EA5E9',
+        tabBarInactiveTintColor: tokens.colors.text.muted,
         tabBarStyle: {
-          backgroundColor: theme.Colors.navigation.background,
+          backgroundColor: tokens.colors.background.secondary,
           borderTopWidth: 1,
-          borderTopColor: theme.Colors.border.light,
-          height: 80 + insets.bottom,
-          paddingBottom: 10 + insets.bottom,
-          paddingTop: 12,
-          ...theme.Colors.shadow.md,
+          borderTopColor: tokens.colors.border.light,
+          height: 70 + insets.bottom,
+          paddingBottom: 6 + insets.bottom,
+          paddingTop: 8,
+          ...tokens.shadow.elevated,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '600',
-          marginTop: 4,
+          marginTop: 2,
+          letterSpacing: 0.3,
         },
         headerShown: false,
       })}
@@ -111,7 +114,13 @@ function TeacherTabs() {
 
 export function TeacherNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+        animationDuration: 250,
+      }}
+    >
       <Stack.Screen name="TeacherTabs" component={TeacherTabs} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Responsibilities" component={ResponsibilitiesScreen} />

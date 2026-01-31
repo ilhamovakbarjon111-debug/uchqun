@@ -41,18 +41,18 @@ export default function FloatingAI({ contextHint = '' }) {
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef(null);
 
-  // Pulse animation for the floating button
+  // Elegant pulse and glow animation
   useEffect(() => {
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.1,
-          duration: 1500,
+          toValue: 1.15,
+          duration: 2000,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
-          duration: 1500,
+          duration: 2000,
           useNativeDriver: true,
         }),
       ])
@@ -113,19 +113,32 @@ export default function FloatingAI({ contextHint = '' }) {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - Elegant Orb Design */}
       <Animated.View style={[styles.fabContainer, { transform: [{ scale: pulseAnim }] }]}>
-        <Pressable onPress={() => setIsOpen(true)} style={styles.fabPressable}>
+        <Pressable
+          onPress={() => setIsOpen(true)}
+          style={({ pressed }) => [
+            styles.fabPressable,
+            pressed && { transform: [{ scale: 0.95 }] }
+          ]}
+        >
+          {/* Outer glow ring */}
+          <View style={styles.glowRing}>
+            <LinearGradient
+              colors={['rgba(139, 92, 246, 0.3)', 'rgba(99, 102, 241, 0.2)', 'rgba(59, 130, 246, 0.1)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.glowGradient}
+            />
+          </View>
+          {/* Main orb */}
           <LinearGradient
-            colors={['#8B5CF6', '#6366F1', '#3B82F6']}
+            colors={['#A78BFA', '#8B5CF6', '#6366F1']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.fab}
           >
-            <Text style={styles.fabEmoji}>🤖</Text>
-            <View style={styles.fabSparkle}>
-              <Text style={styles.sparkleText}>✨</Text>
-            </View>
+            <Ionicons name="sparkles" size={22} color="#FFFFFF" />
           </LinearGradient>
         </Pressable>
       </Animated.View>
@@ -276,31 +289,33 @@ export default function FloatingAI({ contextHint = '' }) {
 const styles = StyleSheet.create({
   fabContainer: {
     position: 'absolute',
-    bottom: 100,
-    right: 20,
+    bottom: 90,
+    right: 18,
     zIndex: 1000,
   },
   fabPressable: {
-    ...tokens.shadow.elevated,
-  },
-  fab: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
     position: 'relative',
   },
-  fabEmoji: {
-    fontSize: 28,
-  },
-  fabSparkle: {
+  glowRing: {
     position: 'absolute',
-    top: -2,
-    right: -2,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    top: -8,
+    left: -8,
   },
-  sparkleText: {
-    fontSize: 16,
+  glowGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 32,
+  },
+  fab: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...tokens.shadow.glow,
   },
   modalContainer: {
     flex: 1,
