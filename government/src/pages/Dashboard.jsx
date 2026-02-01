@@ -11,7 +11,7 @@ import {
   Star,
   DollarSign,
   AlertTriangle,
-  TrendingUp,
+  Award,
   BarChart3,
   Shield,
 } from 'lucide-react';
@@ -60,6 +60,14 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  const LEVEL_COLORS = {
+    5: 'bg-green-100 text-green-800',
+    4: 'bg-blue-100 text-blue-800',
+    3: 'bg-yellow-100 text-yellow-800',
+    2: 'bg-orange-100 text-orange-800',
+    1: 'bg-red-100 text-red-800',
+  };
 
   const overviewCards = [
     {
@@ -220,49 +228,56 @@ const Dashboard = () => {
           <div className="space-y-4">
             {schools
               .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
-              .map((school) => (
-                <div
-                  key={school.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Building2 className="w-5 h-5 text-blue-600" />
-                        <h3 className="font-bold text-gray-900">{school.name}</h3>
+              .map((school) => {
+                const level = school.governmentLevel || 1;
+                return (
+                  <div
+                    key={school.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Building2 className="w-5 h-5 text-blue-600" />
+                          <h3 className="font-bold text-gray-900">{school.name}</h3>
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${LEVEL_COLORS[level]}`}>
+                            <Award className="w-3 h-3" />
+                            {t('schools.level', { defaultValue: 'Daraja' })} {level}
+                          </span>
+                        </div>
+                        {school.address && (
+                          <p className="text-sm text-gray-600 mb-2">{school.address}</p>
+                        )}
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <span>
+                            {t('dashboard.students', { defaultValue: 'O\'quvchilar' })}: {school.studentsCount || 0}
+                          </span>
+                          <span>
+                            {t('dashboard.ratings', { defaultValue: 'Baholar' })}: {school.ratingsCount || 0}
+                          </span>
+                        </div>
                       </div>
-                      {school.address && (
-                        <p className="text-sm text-gray-600 mb-2">{school.address}</p>
-                      )}
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span>
-                          {t('dashboard.students', { defaultValue: 'O\'quvchilar' })}: {school.studentsCount || 0}
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-5 h-5 ${
+                                star <= Math.round(school.averageRating || 0)
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'fill-gray-200 text-gray-200'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-lg font-bold text-gray-900 ml-2">
+                          {(school.averageRating || 0).toFixed(1)}
                         </span>
-                        <span>
-                          {t('dashboard.ratings', { defaultValue: 'Baholar' })}: {school.ratingsCount || 0}
-                        </span>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-5 h-5 ${
-                              star <= Math.round(school.averageRating || 0)
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'fill-gray-200 text-gray-200'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-lg font-bold text-gray-900 ml-2">
-                        {(school.averageRating || 0).toFixed(1)}
-                      </span>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
           </div>
         )}
       </Card>
