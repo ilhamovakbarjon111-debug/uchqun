@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
+import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext(null);
 
@@ -23,11 +24,16 @@ export const useNotification = () => {
 };
 
 export const NotificationProvider = ({ children }) => {
+  const { isAuthenticated } = useAuth();
   const [count, setCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
+    if (!isAuthenticated) {
+      setCount(0);
+      return;
+    }
     try {
       const response = await api.get('/notifications/count');
       setCount(response.data?.count || response.data?.data?.count || 0);
@@ -35,9 +41,14 @@ export const NotificationProvider = ({ children }) => {
       console.error('Error loading notification count:', error);
       setCount(0);
     }
-  };
+  }, [isAuthenticated]);
 
-  const loadAllNotifications = async () => {
+  const loadAllNotifications = useCallback(async () => {
+    if (!isAuthenticated) {
+      setNotifications([]);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const response = await api.get('/notifications');
@@ -50,16 +61,24 @@ export const NotificationProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      // Reset state when not authenticated
+      setCount(0);
+      setNotifications([]);
+      setLoading(false);
+      return;
+    }
+
     loadNotifications();
-    // Refresh every 30 seconds
+    // Refresh every 60 seconds when authenticated
     const interval = setInterval(loadNotifications, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated, loadNotifications]);
 
-  const markAsRead = async (id) => {
+  const markAsRead = useCallback(async (id) => {
     try {
       await api.put(`/notifications/${id}/read`);
       await loadNotifications();
@@ -67,9 +86,9 @@ export const NotificationProvider = ({ children }) => {
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
-  };
+  }, [loadNotifications, loadAllNotifications]);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     try {
       await api.put('/notifications/read-all');
       await loadNotifications();
@@ -77,9 +96,9 @@ export const NotificationProvider = ({ children }) => {
     } catch (error) {
       console.error('Error marking all as read:', error);
     }
-  };
+  }, [loadNotifications, loadAllNotifications]);
 
-  const deleteNotification = async (id) => {
+  const deleteNotification = useCallback(async (id) => {
     try {
       await api.delete(`/notifications/${id}`);
       await loadNotifications();
@@ -87,26 +106,26 @@ export const NotificationProvider = ({ children }) => {
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
-  };
+  }, [loadNotifications, loadAllNotifications]);
 
-  const refreshNotifications = () => {
+  const refreshNotifications = useCallback(() => {
     loadNotifications();
     loadAllNotifications();
-  };
+  }, [loadNotifications, loadAllNotifications]);
+
+  const value = useMemo(() => ({
+    count,
+    notifications,
+    loading,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    refreshNotifications,
+    loadAllNotifications,
+  }), [count, notifications, loading, markAsRead, markAllAsRead, deleteNotification, refreshNotifications, loadAllNotifications]);
 
   return (
-    <NotificationContext.Provider
-      value={{ 
-        count, 
-        notifications,
-        loading,
-        markAsRead,
-        markAllAsRead,
-        deleteNotification,
-        refreshNotifications,
-        loadAllNotifications,
-      }}
-    >
+    <NotificationContext.Provider value={value}>
       {children}
     </NotificationContext.Provider>
   );

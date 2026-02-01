@@ -16,6 +16,7 @@ import {
   getMyMessages,
   getMyGroups,
   getTeacherRatings,
+  getAIAdvice,
 } from '../controllers/teacherController.js';
 import { sendMessage } from '../controllers/superAdminController.js';
 import {
@@ -70,6 +71,9 @@ router.get('/groups', getMyGroups);
 
 // Teacher ratings
 router.get('/ratings', getTeacherRatings);
+
+// AI Chat
+router.post('/ai/chat', getAIAdvice);
 
 // Send message to super-admin
 router.post('/message-to-super-admin', sendMessage);

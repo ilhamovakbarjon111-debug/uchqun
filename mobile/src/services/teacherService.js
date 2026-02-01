@@ -167,4 +167,15 @@ export const teacherService = {
     const data = extractResponseData(response);
     return Array.isArray(data) ? data : [];
   },
+
+  // AI Chat
+  // Backend returns: { success: true, response: "..." }
+  aiChat: async (message, lang = 'en', messages = []) => {
+    const response = await api.post('/teacher/ai/chat', {
+      message,
+      lang,
+      messages,
+    });
+    return response.data;
+  },
 };

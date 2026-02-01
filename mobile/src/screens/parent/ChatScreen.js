@@ -43,7 +43,8 @@ export function ChatScreen() {
     };
 
     load();
-    intervalId = setInterval(load, 5000);
+    // Poll for new messages every 15 seconds (reduced from 5s to prevent performance issues)
+    intervalId = setInterval(load, 15000);
 
     return () => {
       alive = false;
@@ -70,11 +71,35 @@ export function ChatScreen() {
     const trimmed = inputText.trim();
     if (!trimmed) return;
     if (!conversationId) return;
-    await addMessage('parent', trimmed, conversationId);
-    justSentRef.current = true;
-    const msgs = await loadMessages(conversationId);
-    setMessages(Array.isArray(msgs) ? msgs : []);
+
+    // Clear input immediately for better UX
     setInputText('');
+
+    // Optimistically add message to UI
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage = {
+      id: tempId,
+      content: trimmed,
+      senderRole: 'parent',
+      conversationId,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true,
+    };
+
+    setMessages(prev => [...prev, optimisticMessage]);
+    justSentRef.current = true;
+
+    // Send to server
+    const result = await addMessage('parent', trimmed, conversationId);
+
+    // Replace optimistic message with real one
+    if (result) {
+      setMessages(prev => prev.map(m => m.id === tempId ? result : m));
+    } else {
+      // If failed, reload messages to get clean state
+      const msgs = await loadMessages(conversationId);
+      setMessages(Array.isArray(msgs) ? msgs : []);
+    }
   };
 
   const handleSaveEdit = async (msgId) => {

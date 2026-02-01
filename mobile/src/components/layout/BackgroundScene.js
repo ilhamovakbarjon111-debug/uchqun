@@ -6,24 +6,32 @@ import { useTheme } from "../../context/ThemeContext";
 export default function BackgroundScene() {
   const { isDark } = useTheme();
 
-  // Light theme colors
+  // Light theme colors - Nature theme with trees and grass
   const lightColors = {
-    sky: ["#E0E7FF", "#F0F4FF", "#F8FAFC"],
-    hill1: ["#C7D2FE", "#E0E7FF"],
-    hill2: "#DDD6FE",
+    sky: ["#87CEEB", "#B0E0E6", "#E0F2F1"], // Sky blue to light cyan
+    hill1: ["#4CAF50", "#66BB6A"], // Green hills
+    hill2: "#81C784", // Lighter green
+    grass: "#2E7D32", // Dark green grass
+    trees: "#1B5E20", // Dark green trees
+    treeTrunk: "#5D4037", // Brown tree trunks
     clouds: "#FFFFFF",
-    sparkles: "#A5B4FC",
-    moon: "#EDE9FE",
+    sparkles: "#FFD700", // Golden sparkles for sun
+    moon: "#FFEB3B", // Yellow sun
+    sunRays: "#FFF9C4", // Light yellow sun rays
   };
 
-  // Dark theme colors
+  // Dark theme colors - Deep dark theme
   const darkColors = {
-    sky: ["#1E293B", "#334155", "#475569"],
-    hill1: ["#4F46E5", "#6366F1"],
-    hill2: "#6366F1",
-    clouds: "#334155",
-    sparkles: "#A5B4FC",
-    moon: "#E0E7FF",
+    sky: ["#0F172A", "#1E293B", "#334155"], // Very dark slate
+    hill1: ["#1E293B", "#334155"], // Dark hills
+    hill2: "#475569", // Slightly lighter
+    grass: "#1E293B", // Dark grass
+    trees: "#0F172A", // Very dark trees
+    treeTrunk: "#1E293B", // Dark tree trunks
+    clouds: "#1E293B", // Dark clouds
+    sparkles: "#818CF8", // Light indigo sparkles
+    moon: "#E0E7FF", // Light moon
+    sunRays: "#334155", // Dark rays
   };
 
   const colors = isDark ? darkColors : lightColors;
@@ -38,8 +46,12 @@ export default function BackgroundScene() {
             <Stop offset="1" stopColor={colors.sky[2]} />
           </LinearGradient>
           <LinearGradient id="hill" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={colors.hill1[0]} stopOpacity={isDark ? "0.3" : "0.5"} />
-            <Stop offset="1" stopColor={colors.hill1[1]} stopOpacity={isDark ? "0.2" : "0.4"} />
+            <Stop offset="0" stopColor={colors.hill1[0]} stopOpacity={isDark ? "0.4" : "0.7"} />
+            <Stop offset="1" stopColor={colors.hill1[1]} stopOpacity={isDark ? "0.3" : "0.6"} />
+          </LinearGradient>
+          <LinearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={colors.grass} stopOpacity={isDark ? "0.3" : "0.8"} />
+            <Stop offset="1" stopColor={colors.grass} stopOpacity={isDark ? "0.2" : "0.9"} />
           </LinearGradient>
         </Defs>
 
@@ -54,10 +66,28 @@ export default function BackgroundScene() {
         <Circle cx="150" cy="380" r="1.5" fill={colors.sparkles} opacity={isDark ? "0.28" : "0.48"} />
 
         {/* moon/sun */}
-        <Circle cx="330" cy="110" r="26" fill={colors.moon} opacity={isDark ? "0.2" : "0.8"} />
-        <Circle cx="322" cy="104" r="4" fill={isDark ? "#1E293B" : "#1E40AF"} opacity="0.3" />
-        <Circle cx="340" cy="104" r="4" fill={isDark ? "#1E293B" : "#1E40AF"} opacity="0.3" />
-        <Path d="M322 122 Q330 128 338 122" stroke={isDark ? "#1E293B" : "#1E40AF"} strokeWidth="3" fill="none" opacity="0.3" />
+        {!isDark && (
+          <>
+            {/* Sun rays in light mode */}
+            <Path d="M330 60 L330 50" stroke={colors.sunRays} strokeWidth="2" opacity="0.4" />
+            <Path d="M360 110 L370 110" stroke={colors.sunRays} strokeWidth="2" opacity="0.4" />
+            <Path d="M330 160 L330 170" stroke={colors.sunRays} strokeWidth="2" opacity="0.4" />
+            <Path d="M300 110 L290 110" stroke={colors.sunRays} strokeWidth="2" opacity="0.4" />
+            <Path d="M345 75 L352 68" stroke={colors.sunRays} strokeWidth="2" opacity="0.4" />
+            <Path d="M315 75 L308 68" stroke={colors.sunRays} strokeWidth="2" opacity="0.4" />
+            <Path d="M345 145 L352 152" stroke={colors.sunRays} strokeWidth="2" opacity="0.4" />
+            <Path d="M315 145 L308 152" stroke={colors.sunRays} strokeWidth="2" opacity="0.4" />
+          </>
+        )}
+        <Circle cx="330" cy="110" r={isDark ? "20" : "24"} fill={colors.moon} opacity={isDark ? "0.15" : "0.9"} />
+        {isDark && (
+          <>
+            {/* Moon craters in dark mode */}
+            <Circle cx="325" cy="105" r="3" fill="#1E293B" opacity="0.3" />
+            <Circle cx="335" cy="108" r="2" fill="#1E293B" opacity="0.2" />
+            <Circle cx="328" cy="115" r="2.5" fill="#1E293B" opacity="0.25" />
+          </>
+        )}
 
         {/* clouds */}
         <Path
@@ -75,7 +105,44 @@ export default function BackgroundScene() {
 
         {/* hills */}
         <Path d="M0 640 C80 560 170 690 260 610 C320 560 360 590 390 565 L390 844 L0 844 Z" fill="url(#hill)" opacity="1" />
-        <Path d="M0 700 C90 630 170 760 265 675 C320 645 350 665 390 642 L390 844 L0 844 Z" fill={colors.hill2} opacity={isDark ? "0.15" : "0.35"} />
+        <Path d="M0 700 C90 630 170 760 265 675 C320 645 350 665 390 642 L390 844 L0 844 Z" fill={colors.hill2} opacity={isDark ? "0.2" : "0.5"} />
+        
+        {/* Grass layer in light mode */}
+        {!isDark && (
+          <>
+            <Path d="M0 750 L390 750 L390 844 L0 844 Z" fill="url(#grass)" />
+            {/* Grass details */}
+            <Path d="M20 750 Q25 745 30 750 Q35 755 40 750" stroke={colors.grass} strokeWidth="1.5" fill="none" opacity="0.6" />
+            <Path d="M60 750 Q65 745 70 750 Q75 755 80 750" stroke={colors.grass} strokeWidth="1.5" fill="none" opacity="0.6" />
+            <Path d="M100 750 Q105 745 110 750 Q115 755 120 750" stroke={colors.grass} strokeWidth="1.5" fill="none" opacity="0.6" />
+            <Path d="M140 750 Q145 745 150 750 Q155 755 160 750" stroke={colors.grass} strokeWidth="1.5" fill="none" opacity="0.6" />
+            <Path d="M180 750 Q185 745 190 750 Q195 755 200 750" stroke={colors.grass} strokeWidth="1.5" fill="none" opacity="0.6" />
+            <Path d="M220 750 Q225 745 230 750 Q235 755 240 750" stroke={colors.grass} strokeWidth="1.5" fill="none" opacity="0.6" />
+            <Path d="M260 750 Q265 745 270 750 Q275 755 280 750" stroke={colors.grass} strokeWidth="1.5" fill="none" opacity="0.6" />
+            <Path d="M300 750 Q305 745 310 750 Q315 755 320 750" stroke={colors.grass} strokeWidth="1.5" fill="none" opacity="0.6" />
+            <Path d="M340 750 Q345 745 350 750 Q355 755 360 750" stroke={colors.grass} strokeWidth="1.5" fill="none" opacity="0.6" />
+          </>
+        )}
+        
+        {/* Trees in light mode */}
+        {!isDark && (
+          <>
+            {/* Tree 1 - Left side */}
+            <Path d="M50 680 L50 720 L45 720 L45 680 Z" fill={colors.treeTrunk} opacity="0.8" />
+            <Path d="M30 680 Q50 650 70 680 Q50 640 30 680" fill={colors.trees} opacity="0.7" />
+            <Path d="M35 660 Q50 635 65 660 Q50 625 35 660" fill={colors.trees} opacity="0.8" />
+            
+            {/* Tree 2 - Right side */}
+            <Path d="M320 690 L320 730 L315 730 L315 690 Z" fill={colors.treeTrunk} opacity="0.8" />
+            <Path d="M300 690 Q320 660 340 690 Q320 650 300 690" fill={colors.trees} opacity="0.7" />
+            <Path d="M305 670 Q320 645 335 670 Q320 635 305 670" fill={colors.trees} opacity="0.8" />
+            
+            {/* Tree 3 - Center */}
+            <Path d="M180 700 L180 740 L175 740 L175 700 Z" fill={colors.treeTrunk} opacity="0.8" />
+            <Path d="M160 700 Q180 670 200 700 Q180 660 160 700" fill={colors.trees} opacity="0.7" />
+            <Path d="M165 680 Q180 655 195 680 Q180 645 165 680" fill={colors.trees} opacity="0.8" />
+          </>
+        )}
       </Svg>
     </View>
   );

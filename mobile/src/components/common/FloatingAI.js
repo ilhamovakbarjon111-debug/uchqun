@@ -12,25 +12,32 @@ import {
   Modal,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import tokens from '../../styles/tokens';
+import { useThemeTokens } from '../../hooks/useThemeTokens';
+import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { parentService } from '../../services/parentService';
+import { teacherService } from '../../services/teacherService';
 
 const QUICK_PROMPTS = [
-  { emoji: '📊', text: "How is my child doing today?" },
-  { emoji: '🍎', text: "What did my child eat?" },
-  { emoji: '🎨', text: "What activities were done?" },
-  { emoji: '💡', text: "Any tips for me?" },
+  { emoji: '📊', text: "Farzandim bugun qanday?" },
+  { emoji: '🍎', text: "Farzandim nima yedi?" },
+  { emoji: '🎨', text: "Qanday mashg'ulotlar o'tkazildi?" },
+  { emoji: '💡', text: "Menga maslahatlar?" },
 ];
 
 export default function FloatingAI({ contextHint = '' }) {
+  const tokens = useThemeTokens();
+  const { isDark } = useTheme();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Hi! I'm Uchi, your AI helper! 🌟 Ask me anything about your child's day!",
+      content: "Salom! Men Uchi, sizning AI yordamchingizman! 🌟 Farzandingiz haqida har qanday savolni bering!",
     },
   ]);
   const [inputText, setInputText] = useState('');
@@ -91,14 +98,19 @@ export default function FloatingAI({ contextHint = '' }) {
         ? `Context: ${contextHint}\n\nQuestion: ${messageToSend}`
         : messageToSend;
 
-      const response = await parentService.aiChat(fullMessage);
-      const aiMessage = response?.advice || response?.message || response?.data?.advice || "I'm thinking... 🤔";
+      // Use appropriate service based on user role
+      const isTeacher = user?.role === 'teacher';
+      const service = isTeacher ? teacherService : parentService;
+
+      const response = await service.aiChat(fullMessage, 'uz', messages);
+      const aiMessage = response?.response || response?.data?.response || response?.advice || response?.message || "Kechirasiz, javob olishda xatolik yuz berdi. 🔄";
 
       setMessages(prev => [...prev, { role: 'assistant', content: aiMessage }]);
     } catch (error) {
+      console.error('[FloatingAI] Error sending message:', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "Oops! Something went wrong. Try again? 🔄"
+        content: "Kechirasiz, xatolik yuz berdi. Yana urinib ko'ring? 🔄"
       }]);
     } finally {
       setLoading(false);
@@ -110,6 +122,8 @@ export default function FloatingAI({ contextHint = '' }) {
     inputRange: [0, 1],
     outputRange: ['0deg', '180deg'],
   });
+
+  const styles = getStyles(tokens, isDark);
 
   return (
     <>
@@ -138,7 +152,11 @@ export default function FloatingAI({ contextHint = '' }) {
             end={{ x: 1, y: 1 }}
             style={styles.fab}
           >
-            <Ionicons name="sparkles" size={22} color="#FFFFFF" />
+            <Image
+              source={require('../../../assets/icon.png')}
+              style={styles.fabIcon}
+              resizeMode="contain"
+            />
           </LinearGradient>
         </Pressable>
       </Animated.View>
@@ -286,7 +304,7 @@ export default function FloatingAI({ contextHint = '' }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (tokens, isDark) => StyleSheet.create({
   fabContainer: {
     position: 'absolute',
     bottom: 90,
@@ -317,16 +335,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...tokens.shadow.glow,
   },
+  fabIcon: {
+    width: 30,
+    height: 30,
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
   },
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.4)',
   },
   chatContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.colors.background.primary,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     height: '75%',
@@ -380,7 +402,7 @@ const styles = StyleSheet.create({
   },
   promptsScroll: {
     maxHeight: 50,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: tokens.colors.background.secondary,
   },
   promptsContainer: {
     paddingHorizontal: 16,
@@ -391,12 +413,12 @@ const styles = StyleSheet.create({
   promptChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: tokens.colors.background.primary,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: tokens.colors.accent[100],
+    borderColor: isDark ? tokens.colors.border.light : tokens.colors.accent[100],
     marginRight: 8,
     ...tokens.shadow.xs,
   },
@@ -412,7 +434,7 @@ const styles = StyleSheet.create({
   },
   messagesContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: tokens.colors.background.secondary,
   },
   messagesContent: {
     padding: 16,
@@ -446,7 +468,7 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   aiContent: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.colors.background.primary,
     borderBottomLeftRadius: 6,
     ...tokens.shadow.sm,
   },
@@ -474,13 +496,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     padding: 12,
     paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-    backgroundColor: '#fff',
+    backgroundColor: tokens.colors.background.primary,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: tokens.colors.border.light,
   },
   input: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: tokens.colors.background.secondary,
     borderRadius: 24,
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -488,7 +510,7 @@ const styles = StyleSheet.create({
     maxHeight: 100,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: tokens.colors.border.light,
     color: tokens.colors.text.primary,
   },
   sendButton: {

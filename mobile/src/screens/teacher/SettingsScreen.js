@@ -124,25 +124,31 @@ export function SettingsScreen() {
         type: type,
       });
 
-      await api.put('/user/avatar', formData, {
+      console.log('[Avatar Upload] Uploading avatar:', { filename, type, uri: uri.substring(0, 50) });
+
+      const response = await api.put('/user/avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
+
+      console.log('[Avatar Upload] Success:', response.data);
 
       if (refreshUser) {
         await refreshUser();
       }
 
       Alert.alert(
-        t('common.success', { defaultValue: 'Success' }),
-        t('profile.avatarUpdated', { defaultValue: 'Avatar updated successfully' })
+        t('common.success', { defaultValue: 'Muvaffaqiyatli' }),
+        t('profile.avatarUpdated', { defaultValue: 'Avatar muvaffaqiyatli yangilandi' })
       );
     } catch (error) {
-      console.error('Avatar upload error:', error);
+      console.error('[Avatar Upload] Error:', error);
+      console.error('[Avatar Upload] Error response:', error?.response?.data);
+      const errorMessage = error?.response?.data?.error || error?.message || t('profile.uploadError', { defaultValue: 'Avatar yuklashda xatolik' });
       Alert.alert(
-        t('common.error', { defaultValue: 'Error' }),
-        error.response?.data?.error || t('profile.uploadError', { defaultValue: 'Failed to upload avatar' })
+        t('common.error', { defaultValue: 'Xatolik' }),
+        errorMessage
       );
     } finally {
       setUploadingAvatar(false);
@@ -177,25 +183,6 @@ export function SettingsScreen() {
   };
 
   const settingsSections = [
-    {
-      title: t('settings.account', { defaultValue: 'Account' }),
-      items: [
-        {
-          icon: 'person-outline',
-          title: t('settings.editProfile', { defaultValue: 'Edit Profile' }),
-          subtitle: t('settings.editProfileDesc', { defaultValue: 'Update your personal information' }),
-          onPress: () => setShowProfileModal(true),
-          color: '#0EA5E9',
-        },
-        {
-          icon: 'briefcase-outline',
-          title: t('settings.myProfile', { defaultValue: 'My Profile' }),
-          subtitle: t('settings.viewProfile', { defaultValue: 'View professional profile' }),
-          onPress: () => navigation.navigate('Profile'),
-          color: '#06B6D4',
-        },
-      ],
-    },
     {
       title: t('settings.work', { defaultValue: 'Work' }),
       items: [
@@ -286,57 +273,6 @@ export function SettingsScreen() {
             transform: [{ translateY: slideAnim }],
           }}
         >
-          {/* Profile Card */}
-          <View style={styles.profileCard}>
-            <LinearGradient
-              colors={['rgba(51, 65, 85, 0.8)', 'rgba(30, 41, 59, 0.7)']}
-              style={styles.profileCardGradient}
-            >
-              <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar}>
-                <View style={styles.avatarContainer}>
-                  {user?.avatar ? (
-                    <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.avatarImage} resizeMode="cover" />
-                  ) : (
-                    <LinearGradient
-                      colors={['#0EA5E9', '#06B6D4']}
-                      style={styles.avatarGradient}
-                    >
-                      <Text style={styles.avatarText}>
-                        {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
-                      </Text>
-                    </LinearGradient>
-                  )}
-                  {uploadingAvatar && (
-                    <View style={styles.uploadingOverlay}>
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    </View>
-                  )}
-                  <View style={styles.cameraButton}>
-                    <Ionicons name="camera" size={12} color="#FFFFFF" />
-                  </View>
-                </View>
-              </TouchableOpacity>
-              <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>
-                  {user?.firstName ?? '—'} {user?.lastName ?? ''}
-                </Text>
-                <View style={styles.emailRow}>
-                  <Ionicons name="mail-outline" size={12} color={tokens.colors.text.muted} />
-                  <Text style={styles.profileEmail}>{user?.email ?? '—'}</Text>
-                </View>
-                <View style={styles.roleBadge}>
-                  <LinearGradient
-                    colors={['rgba(14, 165, 233, 0.15)', 'rgba(6, 182, 212, 0.15)']}
-                    style={styles.roleBadgeGradient}
-                  >
-                    <Ionicons name="people" size={12} color="#22D3EE" />
-                    <Text style={styles.roleText}>{t('dashboard.roleTeacher', { defaultValue: 'Teacher' })}</Text>
-                  </LinearGradient>
-                </View>
-              </View>
-            </LinearGradient>
-          </View>
-
           {/* Language Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>

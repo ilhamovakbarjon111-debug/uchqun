@@ -132,31 +132,38 @@ export function SettingsScreen() {
       const type = match ? `image/${match[1]}` : 'image/jpeg';
 
       const formData = new FormData();
+      // Properly format the file for React Native
       formData.append('avatar', {
         uri: uri,
         name: filename,
         type: type,
       });
 
-      await api.put('/user/avatar', formData, {
+      console.log('[Avatar Upload] Uploading avatar:', { filename, type, uri: uri.substring(0, 50) });
+
+      const response = await api.put('/user/avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
+
+      console.log('[Avatar Upload] Success:', response.data);
 
       if (refreshUser) {
         await refreshUser();
       }
 
       Alert.alert(
-        t('common.success', { defaultValue: 'Success' }),
-        t('profile.avatarUpdated', { defaultValue: 'Avatar updated successfully' })
+        t('common.success', { defaultValue: 'Muvaffaqiyatli' }),
+        t('profile.avatarUpdated', { defaultValue: 'Avatar muvaffaqiyatli yangilandi' })
       );
     } catch (error) {
-      console.error('Avatar upload error:', error);
+      console.error('[Avatar Upload] Error:', error);
+      console.error('[Avatar Upload] Error response:', error?.response?.data);
+      const errorMessage = error?.response?.data?.error || error?.message || t('profile.uploadError', { defaultValue: 'Avatar yuklashda xatolik' });
       Alert.alert(
-        t('common.error', { defaultValue: 'Error' }),
-        error.response?.data?.error || t('profile.uploadError', { defaultValue: 'Failed to upload avatar' })
+        t('common.error', { defaultValue: 'Xatolik' }),
+        errorMessage
       );
     } finally {
       setUploadingAvatar(false);
@@ -214,13 +221,6 @@ export function SettingsScreen() {
       title: t('settings.account', { defaultValue: 'Account' }),
       items: [
         {
-          icon: 'person-outline',
-          title: t('settings.editProfile', { defaultValue: 'Edit Profile' }),
-          subtitle: t('settings.editProfileDesc', { defaultValue: 'Update your personal information' }),
-          onPress: () => setShowProfileModal(true),
-          color: tokens.colors.accent.blue,
-        },
-        {
           icon: 'notifications-outline',
           title: t('settings.notifications', { defaultValue: 'Notifications' }),
           subtitle: t('settings.notificationsDesc', { defaultValue: 'Manage notification preferences' }),
@@ -230,28 +230,14 @@ export function SettingsScreen() {
       ],
     },
     {
-      title: t('settings.support', { defaultValue: 'Support' }),
+      title: t('settings.support', { defaultValue: 'Yordam' }),
       items: [
         {
           icon: 'help-circle-outline',
-          title: t('help.title', { defaultValue: 'Help & Support' }),
-          subtitle: t('help.desc', { defaultValue: 'Get help and contact support' }),
+          title: t('help.title', { defaultValue: 'Yordam va qo\'llab-quvvatlash' }),
+          subtitle: t('help.desc', { defaultValue: 'Yordam olish va qo\'llab-quvvatlash bilan bog\'lanish' }),
           onPress: () => navigateToStackScreen('Help'),
           color: '#10B981',
-        },
-        {
-          icon: 'star-outline',
-          title: t('ratingPage.title', { defaultValue: "Rate Teacher" }),
-          subtitle: t('ratingPage.desc', { defaultValue: 'Share your feedback' }),
-          onPress: () => navigateToStackScreen('TeacherRating'),
-          color: '#F59E0B',
-        },
-        {
-          icon: 'school-outline',
-          title: t('schoolRatingPage.title', { defaultValue: 'Rate School' }),
-          subtitle: t('schoolRatingPage.desc', { defaultValue: 'Rate facilities and services' }),
-          onPress: () => navigateToStackScreen('SchoolRating'),
-          color: '#8B5CF6',
         },
       ],
     },
