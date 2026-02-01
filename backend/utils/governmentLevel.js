@@ -77,17 +77,21 @@ export function computeAverageRating(ratings) {
  * Level 4: 4.0 – 4.49
  * Level 3: 3.0 – 3.99
  * Level 2: 2.0 – 2.99
- * Level 1: < 2.0
+ * Level 1: 0.01 – 1.99
+ * null:    no ratings (unrated)
  *
  * @param {number} averageRating - The school's average rating (0–5)
- * @returns {number} Government level (1–5)
+ * @param {number} [ratingsCount] - Number of ratings (if 0, returns null)
+ * @returns {number|null} Government level (1–5), or null if unrated
  */
-export function getGovernmentLevel(averageRating) {
+export function getGovernmentLevel(averageRating, ratingsCount) {
+  if (ratingsCount !== undefined && ratingsCount === 0) return null;
   if (averageRating >= 4.5) return 5;
   if (averageRating >= 4.0) return 4;
   if (averageRating >= 3.0) return 3;
   if (averageRating >= 2.0) return 2;
-  return 1;
+  if (averageRating > 0) return 1;
+  return null;
 }
 
 /**
