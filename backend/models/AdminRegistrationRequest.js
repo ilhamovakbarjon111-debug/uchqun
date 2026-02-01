@@ -10,12 +10,10 @@ const AdminRegistrationRequest = sequelize.define('AdminRegistrationRequest', {
   firstName: {
     type: DataTypes.STRING,
     allowNull: false,
-    comment: 'Admin first name',
   },
   lastName: {
     type: DataTypes.STRING,
     allowNull: false,
-    comment: 'Admin last name',
   },
   email: {
     type: DataTypes.STRING,
@@ -24,53 +22,43 @@ const AdminRegistrationRequest = sequelize.define('AdminRegistrationRequest', {
     validate: {
       isEmail: true,
     },
-    comment: 'Admin email address',
   },
   phone: {
     type: DataTypes.STRING,
     allowNull: false,
-    comment: 'Admin phone number',
   },
   certificateFile: {
     type: DataTypes.STRING,
     allowNull: true,
-    comment: 'Path to uploaded certificate (guvohnoma) file',
   },
   passportFile: {
     type: DataTypes.STRING,
     allowNull: true,
-    comment: 'Path to uploaded passport or ID card file',
   },
   passportNumber: {
     type: DataTypes.STRING,
     allowNull: true,
-    comment: 'Passport serial number (optional if passport file is provided)',
   },
   passportSeries: {
     type: DataTypes.STRING,
     allowNull: true,
-    comment: 'Passport series (if applicable)',
   },
   location: {
     type: DataTypes.STRING,
     allowNull: true,
-    comment: 'Location/address of the admin',
   },
   region: {
     type: DataTypes.STRING,
     allowNull: true,
-    comment: 'Region/state of the admin',
   },
   city: {
     type: DataTypes.STRING,
     allowNull: true,
-    comment: 'City of the admin',
   },
   status: {
     type: DataTypes.ENUM('pending', 'approved', 'rejected'),
     defaultValue: 'pending',
     allowNull: false,
-    comment: 'Status of the registration request',
   },
   reviewedBy: {
     type: DataTypes.UUID,
@@ -79,17 +67,14 @@ const AdminRegistrationRequest = sequelize.define('AdminRegistrationRequest', {
       model: 'users',
       key: 'id',
     },
-    comment: 'Super-admin who reviewed this request',
   },
   reviewedAt: {
     type: DataTypes.DATE,
     allowNull: true,
-    comment: 'When the request was reviewed',
   },
   rejectionReason: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Reason for rejection (if rejected)',
   },
   approvedUserId: {
     type: DataTypes.UUID,
@@ -98,7 +83,6 @@ const AdminRegistrationRequest = sequelize.define('AdminRegistrationRequest', {
       model: 'users',
       key: 'id',
     },
-    comment: 'User ID created after approval',
   },
 }, {
   tableName: 'admin_registration_requests',

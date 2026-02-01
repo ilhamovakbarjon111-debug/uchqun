@@ -31,6 +31,12 @@ export function SettingsScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
+  // Password change modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
   // Profile edit modal state
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -100,6 +106,38 @@ export function SettingsScreen() {
       Alert.alert(t('common.error', { defaultValue: 'Error' }), message);
     } finally {
       setProfileLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('settings.allFieldsRequired', { defaultValue: 'All fields are required' }));
+      return;
+    }
+    if (passwordData.newPassword.length < 8) {
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('settings.passwordMinLength', { defaultValue: 'Password must be at least 8 characters' }));
+      return;
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('settings.passwordsMismatch', { defaultValue: 'New passwords do not match' }));
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await api.put('/user/password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      Alert.alert(t('common.success', { defaultValue: 'Success' }), t('settings.passwordChanged', { defaultValue: 'Password changed successfully' }));
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setShowPasswords({ current: false, new: false, confirm: false });
+      setShowPasswordModal(false);
+    } catch (error) {
+      const message = error.response?.data?.message || t('settings.passwordChangeFailed', { defaultValue: 'Failed to change password' });
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), message);
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -219,6 +257,13 @@ export function SettingsScreen() {
           subtitle: t('settings.editProfileDesc', { defaultValue: 'Update your personal information' }),
           onPress: () => setShowProfileModal(true),
           color: tokens.colors.accent.blue,
+        },
+        {
+          icon: 'lock-closed-outline',
+          title: t('settings.changePassword', { defaultValue: 'Change Password' }),
+          subtitle: t('settings.changePasswordDesc', { defaultValue: 'Update your account password' }),
+          onPress: () => setShowPasswordModal(true),
+          color: '#EF4444',
         },
         {
           icon: 'notifications-outline',
@@ -453,6 +498,96 @@ export function SettingsScreen() {
           ))}
         </Animated.View>
       </ScrollView>
+
+      {/* Password Change Modal */}
+      <Modal
+        visible={showPasswordModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowPasswordModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <LinearGradient
+                colors={['rgba(51, 65, 85, 0.95)', 'rgba(30, 41, 59, 0.95)']}
+                style={styles.modalGradient}
+              >
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>{t('settings.changePassword', { defaultValue: 'Change Password' })}</Text>
+                  <TouchableOpacity onPress={() => setShowPasswordModal(false)} hitSlop={10}>
+                    <Ionicons name="close" size={24} color={tokens.colors.text.white} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.modalBody}>
+                  {[
+                    { key: 'currentPassword', label: t('settings.currentPassword', { defaultValue: 'Current Password' }), showKey: 'current' },
+                    { key: 'newPassword', label: t('settings.newPassword', { defaultValue: 'New Password' }), showKey: 'new' },
+                    { key: 'confirmPassword', label: t('settings.confirmPassword', { defaultValue: 'Confirm Password' }), showKey: 'confirm' },
+                  ].map((field) => (
+                    <View key={field.key} style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>{field.label}</Text>
+                      <View style={styles.inputContainer}>
+                        <LinearGradient
+                          colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
+                          style={styles.passwordInputGradient}
+                        >
+                          <TextInput
+                            style={styles.passwordTextInput}
+                            value={passwordData[field.key]}
+                            onChangeText={(text) => setPasswordData({ ...passwordData, [field.key]: text })}
+                            placeholder={field.label}
+                            placeholderTextColor={tokens.colors.text.muted}
+                            secureTextEntry={!showPasswords[field.showKey]}
+                            autoCapitalize="none"
+                          />
+                          <TouchableOpacity
+                            onPress={() => setShowPasswords({ ...showPasswords, [field.showKey]: !showPasswords[field.showKey] })}
+                            hitSlop={8}
+                          >
+                            <Ionicons
+                              name={showPasswords[field.showKey] ? 'eye-off-outline' : 'eye-outline'}
+                              size={20}
+                              color={tokens.colors.text.muted}
+                            />
+                          </TouchableOpacity>
+                        </LinearGradient>
+                      </View>
+                    </View>
+                  ))}
+
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.saveButton,
+                      pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+                    ]}
+                    onPress={handlePasswordChange}
+                    disabled={passwordLoading}
+                  >
+                    <LinearGradient
+                      colors={passwordLoading ? ['#475569', '#334155'] : ['#EF4444', '#DC2626']}
+                      style={styles.saveButtonGradient}
+                    >
+                      {passwordLoading ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <>
+                          <Ionicons name="lock-closed" size={18} color="#FFFFFF" />
+                          <Text style={styles.saveButtonText}>{t('settings.updatePassword', { defaultValue: 'Update Password' })}</Text>
+                        </>
+                      )}
+                    </LinearGradient>
+                  </Pressable>
+                </View>
+              </LinearGradient>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* Profile Edit Modal */}
       <Modal
@@ -866,5 +1001,16 @@ const styles = StyleSheet.create({
     fontWeight: tokens.type.button.fontWeight,
     color: tokens.colors.text.white,
     letterSpacing: tokens.type.button.letterSpacing,
+  },
+  passwordInputGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: tokens.space.md,
+  },
+  passwordTextInput: {
+    flex: 1,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.white,
+    padding: 0,
   },
 });

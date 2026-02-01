@@ -24,7 +24,6 @@ const TeacherWorkHistory = sequelize.define('TeacherWorkHistory', {
       key: 'id',
     },
     onDelete: 'CASCADE',
-    comment: 'Teacher user this work history belongs to',
   },
   title: {
     type: DataTypes.STRING,
@@ -42,7 +41,6 @@ const TeacherWorkHistory = sequelize.define('TeacherWorkHistory', {
   deadline: {
     type: DataTypes.DATE,
     allowNull: true,
-    comment: 'Deadline for this work item',
   },
   status: {
     type: DataTypes.ENUM('pending', 'in_progress', 'completed', 'overdue', 'cancelled'),
