@@ -3,6 +3,7 @@ import School from '../models/School.js';
 import SchoolRating from '../models/SchoolRating.js';
 import User from '../models/User.js';
 import Child from '../models/Child.js';
+import Group from '../models/Group.js';
 import Payment from '../models/Payment.js';
 import TherapyUsage from '../models/TherapyUsage.js';
 import AIWarning from '../models/AIWarning.js';
@@ -141,82 +142,73 @@ export const getSchoolsStats = async (req, res) => {
     const { region, district, limit = 50, offset = 0 } = req.query;
 
     const where = { isActive: true };
-    // Note: School model doesn't have region/district fields yet
-    // This would need to be added to the School model
 
-    let schools;
-    try {
-      schools = await School.findAndCountAll({
-        where,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        include: [
-          {
-            model: SchoolRating,
-            as: 'ratings',
-            required: false,
-          },
-          {
-            model: Child,
-            as: 'schoolChildren',
-            required: false,
-          },
-        ],
-      });
-    } catch (includeError) {
-      // Fallback: get schools without includes if association fails
-      logger.warn('School include failed, using fallback', { error: includeError.message });
-      schools = await School.findAndCountAll({
-        where,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-      });
-    }
+    const schools = await School.findAndCountAll({
+      where,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+    });
 
     const schoolsWithStats = await Promise.all(schools.rows.map(async (school) => {
       try {
-        const ratings = school.ratings || [];
+        // Find children by schoolId OR by matching school name text field
+        const children = await Child.findAll({
+          where: {
+            [Op.or]: [
+              { schoolId: school.id },
+              { school: { [Op.iLike]: school.name } },
+            ],
+          },
+        });
+
+        // Count unique teachers via children's groups
+        const groupIds = [...new Set(children.map(c => c.groupId).filter(Boolean))];
+        let teachersCount = 0;
+        if (groupIds.length > 0) {
+          teachersCount = await Group.count({
+            where: { id: { [Op.in]: groupIds } },
+            col: 'teacherId',
+            distinct: true,
+          });
+        }
+
+        // Get ratings
+        const ratings = await SchoolRating.findAll({
+          where: { schoolId: school.id },
+        });
+
         const avgRating = ratings.length > 0
           ? (ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / ratings.length).toFixed(2)
           : 0;
-        const studentsCount = school.schoolChildren?.length || 0;
+
+        // Backfill schoolId on children that matched by name but have null schoolId
+        const childrenToUpdate = children.filter(c => !c.schoolId);
+        if (childrenToUpdate.length > 0) {
+          await Child.update(
+            { schoolId: school.id },
+            { where: { id: { [Op.in]: childrenToUpdate.map(c => c.id) } } },
+          );
+        }
 
         return {
           ...school.toJSON(),
           averageRating: parseFloat(avgRating),
           ratingsCount: ratings.length,
-          studentsCount,
+          studentsCount: children.length,
+          teachersCount,
         };
       } catch (mapError) {
-        // Fallback: get stats separately if map fails
-        try {
-          const [ratings, children] = await Promise.all([
-            SchoolRating.findAll({ where: { schoolId: school.id } }),
-            Child.findAll({ where: { schoolId: school.id } }),
-          ]);
-          
-          const avgRating = ratings.length > 0
-            ? (ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / ratings.length).toFixed(2)
-            : 0;
-
-          return {
-            ...school.toJSON(),
-            averageRating: parseFloat(avgRating),
-            ratingsCount: ratings.length,
-            studentsCount: children.length,
-          };
-        } catch (fallbackError) {
-          logger.error('Fallback stats fetch failed', { 
-            schoolId: school.id, 
-            error: fallbackError.message 
-          });
-          return {
-            ...school.toJSON(),
-            averageRating: 0,
-            ratingsCount: 0,
-            studentsCount: 0,
-          };
-        }
+        logger.error('School stats map failed', {
+          schoolId: school.id,
+          error: mapError.message,
+        });
+        return {
+          ...school.toJSON(),
+          averageRating: 0,
+          ratingsCount: 0,
+          studentsCount: 0,
+          teachersCount: 0,
+        };
       }
     }));
 
@@ -230,12 +222,12 @@ export const getSchoolsStats = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Get schools stats error', { 
-      error: error.message, 
+    logger.error('Get schools stats error', {
+      error: error.message,
       stack: error.stack,
       userId: req.user?.id,
     });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch schools statistics',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });

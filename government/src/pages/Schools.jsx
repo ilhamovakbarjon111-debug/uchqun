@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { Building2, Star, Users } from 'lucide-react';
+import { Building2, Star, Users, GraduationCap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const Schools = () => {
@@ -78,6 +78,12 @@ const Schools = () => {
                     {t('schools.students', { defaultValue: 'O\'quvchilar' })}:
                   </span>
                   <span className="font-semibold text-gray-900">{school.studentsCount || 0}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">
+                    {t('schools.teachers', { defaultValue: 'O\'qituvchilar' })}:
+                  </span>
+                  <span className="font-semibold text-gray-900">{school.teachersCount || 0}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">
