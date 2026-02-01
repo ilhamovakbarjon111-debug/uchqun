@@ -24,7 +24,6 @@ const ParentActivity = sequelize.define('ParentActivity', {
       key: 'id',
     },
     onDelete: 'CASCADE',
-    comment: 'Parent user this activity belongs to',
   },
   title: {
     type: DataTypes.STRING,

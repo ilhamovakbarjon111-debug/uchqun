@@ -42,17 +42,14 @@ const TherapyUsage = sequelize.define('TherapyUsage', {
   startTime: {
     type: DataTypes.DATE,
     allowNull: false,
-    comment: 'Boshlanish vaqti',
   },
   endTime: {
     type: DataTypes.DATE,
     allowNull: true,
-    comment: 'Tugash vaqti',
   },
   duration: {
     type: DataTypes.INTEGER,
     allowNull: true,
-    comment: 'Davomiyligi (daqiqalarda)',
   },
   progress: {
     type: DataTypes.INTEGER,
@@ -61,12 +58,10 @@ const TherapyUsage = sequelize.define('TherapyUsage', {
       min: 0,
       max: 100,
     },
-    comment: 'Taraqqiyot foizi',
   },
   notes: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Qo\'shimcha eslatmalar',
   },
   rating: {
     type: DataTypes.INTEGER,
@@ -75,12 +70,10 @@ const TherapyUsage = sequelize.define('TherapyUsage', {
       min: 1,
       max: 5,
     },
-    comment: 'Foydalanuvchi reytingi',
   },
   feedback: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Foydalanuvchi fikri',
   },
 }, {
   tableName: 'therapy_usages',

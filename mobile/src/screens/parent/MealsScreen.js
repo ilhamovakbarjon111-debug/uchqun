@@ -325,6 +325,43 @@ export function MealsScreen() {
               ))}
             </View>
 
+            {/* Nutrition Summary */}
+            {filteredMeals.length > 0 && (
+              <Card style={styles.summaryCard} variant="elevated" shadow="soft">
+                <LinearGradient
+                  colors={[tokens.colors.semantic.warning + '20', tokens.colors.joy.peach + '15']}
+                  style={styles.summaryGradient}
+                >
+                  <Text style={styles.summaryTitle}>Kunlik xulosasi</Text>
+                  <View style={styles.summaryRow}>
+                    <View style={styles.summaryItem}>
+                      <View style={[styles.summaryIcon, { backgroundColor: tokens.colors.accent.blue + '20' }]}>
+                        <Text style={styles.summaryEmoji}>🍽️</Text>
+                      </View>
+                      <Text style={styles.summaryValue}>{filteredMeals.length}</Text>
+                      <Text style={styles.summaryLabel}>Jami</Text>
+                    </View>
+                    <View style={styles.summaryDivider} />
+                    <View style={styles.summaryItem}>
+                      <View style={[styles.summaryIcon, { backgroundColor: tokens.colors.semantic.successSoft }]}>
+                        <Text style={styles.summaryEmoji}>✅</Text>
+                      </View>
+                      <Text style={styles.summaryValue}>{filteredMeals.filter((m) => m.eaten).length}</Text>
+                      <Text style={styles.summaryLabel}>Yeyilgan</Text>
+                    </View>
+                    <View style={styles.summaryDivider} />
+                    <View style={styles.summaryItem}>
+                      <View style={[styles.summaryIcon, { backgroundColor: tokens.colors.semantic.errorSoft }]}>
+                        <Text style={styles.summaryEmoji}>❌</Text>
+                      </View>
+                      <Text style={styles.summaryValue}>{filteredMeals.filter((m) => !m.eaten).length}</Text>
+                      <Text style={styles.summaryLabel}>Tashlab yuborilgan</Text>
+                    </View>
+                  </View>
+                </LinearGradient>
+              </Card>
+            )}
+
             {/* Meals List */}
             {filteredMeals.length === 0 ? (
               <Card style={styles.emptyCard}>
@@ -666,5 +703,54 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     marginTop: tokens.space.xl,
+  },
+  summaryCard: {
+    marginBottom: tokens.space.lg,
+    overflow: 'hidden',
+  },
+  summaryGradient: {
+    padding: tokens.space.lg,
+    borderRadius: tokens.radius.lg,
+  },
+  summaryTitle: {
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.md,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  summaryItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  summaryIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: tokens.space.xs,
+  },
+  summaryEmoji: {
+    fontSize: 18,
+  },
+  summaryValue: {
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h1.fontWeight,
+    color: tokens.colors.text.primary,
+  },
+  summaryLabel: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.text.secondary,
+    marginTop: 2,
+  },
+  summaryDivider: {
+    width: 1,
+    height: 48,
+    backgroundColor: tokens.colors.border.light,
   },
 });

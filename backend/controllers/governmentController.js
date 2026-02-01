@@ -291,59 +291,78 @@ export const getStudentsStats = async (req, res) => {
 };
 
 /**
- * Get ratings statistics
+ * Get ratings statistics - schools ranked by average rating
  * GET /api/government/ratings
  */
 export const getRatingsStats = async (req, res) => {
   try {
-    const { schoolId, startDate, endDate } = req.query;
+    const { startDate, endDate } = req.query;
 
-    const where = {};
-    if (schoolId) {
-      where.schoolId = schoolId;
-    }
+    const ratingWhere = {};
     if (startDate || endDate) {
-      where.createdAt = {};
+      ratingWhere.createdAt = {};
       if (startDate) {
-        where.createdAt[Op.gte] = new Date(startDate);
+        ratingWhere.createdAt[Op.gte] = new Date(startDate);
       }
       if (endDate) {
-        where.createdAt[Op.lte] = new Date(endDate);
+        ratingWhere.createdAt[Op.lte] = new Date(endDate);
       }
     }
 
-    const ratings = await SchoolRating.findAll({
-      where,
+    // Get all active schools with their ratings
+    const schools = await School.findAll({
+      where: { isActive: true },
       include: [
         {
-          model: School,
-          as: 'school',
+          model: SchoolRating,
+          as: 'ratings',
           required: false,
+          where: Object.keys(ratingWhere).length > 0 ? ratingWhere : undefined,
         },
       ],
     });
 
-    // Calculate statistics
-    const totalRatings = ratings.length;
-    const avgRating = totalRatings > 0
-      ? (ratings.reduce((sum, r) => sum + r.stars, 0) / totalRatings).toFixed(2)
-      : 0;
+    // Aggregate and rank schools by average rating
+    const rankedSchools = schools
+      .map((school) => {
+        const ratings = school.ratings || [];
+        const totalRatings = ratings.length;
+        const avgRating = totalRatings > 0
+          ? ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / totalRatings
+          : 0;
 
-    const ratingDistribution = {
-      5: ratings.filter(r => r.stars === 5).length,
-      4: ratings.filter(r => r.stars === 4).length,
-      3: ratings.filter(r => r.stars === 3).length,
-      2: ratings.filter(r => r.stars === 2).length,
-      1: ratings.filter(r => r.stars === 1).length,
-    };
+        const distribution = {
+          5: ratings.filter(r => r.stars === 5).length,
+          4: ratings.filter(r => r.stars === 4).length,
+          3: ratings.filter(r => r.stars === 3).length,
+          2: ratings.filter(r => r.stars === 2).length,
+          1: ratings.filter(r => r.stars === 1).length,
+        };
+
+        return {
+          id: school.id,
+          name: school.name,
+          address: school.address,
+          averageRating: parseFloat(avgRating.toFixed(2)),
+          ratingsCount: totalRatings,
+          distribution,
+        };
+      })
+      .sort((a, b) => b.averageRating - a.averageRating || b.ratingsCount - a.ratingsCount);
+
+    // Overall stats
+    const allRatings = schools.flatMap(s => s.ratings || []);
+    const totalRatings = allRatings.length;
+    const overallAvg = totalRatings > 0
+      ? (allRatings.reduce((sum, r) => sum + (r.stars || 0), 0) / totalRatings).toFixed(2)
+      : 0;
 
     res.json({
       success: true,
       data: {
         total: totalRatings,
-        average: parseFloat(avgRating),
-        distribution: ratingDistribution,
-        ratings: ratings.slice(0, 100), // Limit response size
+        average: parseFloat(overallAvg),
+        schools: rankedSchools,
       },
     });
   } catch (error) {

@@ -14,49 +14,40 @@ const BusinessStats = sequelize.define('BusinessStats', {
       model: 'users',
       key: 'id',
     },
-    comment: 'Tadbirkor ID',
   },
   statType: {
     type: DataTypes.ENUM('overview', 'users', 'schools', 'revenue', 'subscriptions', 'usage', 'engagement', 'custom'),
     allowNull: false,
-    comment: 'Statistika turi',
   },
   period: {
     type: DataTypes.ENUM('daily', 'weekly', 'monthly', 'quarterly', 'yearly'),
     allowNull: false,
-    comment: 'Davr',
   },
   periodStart: {
     type: DataTypes.DATE,
     allowNull: false,
-    comment: 'Davr boshlanishi',
   },
   periodEnd: {
     type: DataTypes.DATE,
     allowNull: false,
-    comment: 'Davr tugashi',
   },
   data: {
     type: DataTypes.JSONB,
     allowNull: false,
-    comment: 'Statistika ma\'lumotlari',
   },
   summary: {
     type: DataTypes.JSONB,
     allowNull: true,
-    comment: 'Umumiy xulosa',
   },
   isPublic: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
     allowNull: false,
-    comment: 'Ommaviy statistika',
   },
   generatedAt: {
     type: DataTypes.DATE,
     allowNull: false,
     defaultValue: DataTypes.NOW,
-    comment: 'Yaratilgan vaqti',
   },
 }, {
   tableName: 'business_stats',
