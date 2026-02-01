@@ -151,4 +151,20 @@ export const teacherService = {
     }
     return null;
   },
+
+  // Groups
+  // Backend returns: { success: true, data: [...] }
+  getGroups: async () => {
+    const response = await api.get('/teacher/groups');
+    const data = extractResponseData(response);
+    return Array.isArray(data) ? data : [];
+  },
+
+  // Teacher Ratings
+  // Backend returns: { success: true, data: [...] }
+  getTeacherRatings: async () => {
+    const response = await api.get('/teacher/ratings');
+    const data = extractResponseData(response);
+    return Array.isArray(data) ? data : [];
+  },
 };

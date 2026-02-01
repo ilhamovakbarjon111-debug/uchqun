@@ -35,6 +35,7 @@ const TAB_LABELS = {
   Dashboard: 'nav.dashboard',
   Parents: 'nav.parents',
   Chat: 'nav.chat',
+  Profile: 'nav.profile',
   Settings: 'nav.settings',
 };
 
@@ -59,6 +60,7 @@ function TeacherTabs() {
             Dashboard: 'home',      // Home icon
             Parents: 'people',      // Users icon
             Chat: 'chatbubble-ellipses', // Chat icon
+            Profile: 'person',      // Profile icon
             Settings: 'settings',   // Settings icon
           };
 
@@ -107,6 +109,7 @@ function TeacherTabs() {
       <Tab.Screen name="Dashboard" component={TeacherDashboardScreen} />
       <Tab.Screen name="Parents" component={ParentsListScreen} />
       <Tab.Screen name="Chat" component={ChatScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );

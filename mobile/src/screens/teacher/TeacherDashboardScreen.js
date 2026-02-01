@@ -192,13 +192,6 @@ export function TeacherDashboardScreen() {
 
   const statCards = [
     {
-      title: t('dashboard.parents'),
-      value: stats?.parents || 0,
-      icon: 'people',
-      color: tokens.colors.accent.blue,
-      onPress: () => safeNavigateToTab('Parents'),
-    },
-    {
       title: t('dashboard.activities'),
       value: stats?.activities || 0,
       icon: 'checkmark-circle',

@@ -541,7 +541,7 @@ export const getParentById = async (req, res) => {
 /**
  * Get teacher's messages to super-admin
  * GET /api/teacher/messages
- * 
+ *
  * Business Logic:
  * - Teacher can view their own messages sent to super-admin
  * - Includes replies from super-admin
@@ -560,6 +560,91 @@ export const getMyMessages = async (req, res) => {
   } catch (error) {
     logger.error('Get my messages error', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+};
+
+/**
+ * Get teacher's groups
+ * GET /api/teacher/groups
+ *
+ * Business Logic:
+ * - Teacher can view all groups they are responsible for
+ * - Includes group details and parent count
+ */
+export const getMyGroups = async (req, res) => {
+  try {
+    const groups = await Group.findAll({
+      where: { teacherId: req.user.id },
+      include: [
+        {
+          model: User,
+          as: 'teacher',
+          attributes: ['id', 'firstName', 'lastName', 'email'],
+        },
+      ],
+      order: [['name', 'ASC']],
+    });
+
+    // Get parent count for each group
+    const groupsWithCounts = await Promise.all(
+      groups.map(async (group) => {
+        const parentCount = await User.count({
+          where: {
+            role: 'parent',
+            groupId: group.id,
+          },
+        });
+        return {
+          ...group.toJSON(),
+          parentCount,
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      data: groupsWithCounts,
+    });
+  } catch (error) {
+    logger.error('Get my groups error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch groups' });
+  }
+};
+
+/**
+ * Get teacher ratings (global leaderboard)
+ * GET /api/teacher/ratings
+ *
+ * Business Logic:
+ * - Shows all teachers with their ratings
+ * - Sorted by rating descending
+ * - Current teacher's position is highlighted in frontend
+ */
+export const getTeacherRatings = async (req, res) => {
+  try {
+    const teachers = await User.findAll({
+      where: { role: 'teacher' },
+      attributes: ['id', 'firstName', 'lastName', 'email', 'avatar', 'rating', 'totalRatings'],
+      order: [
+        ['rating', 'DESC'],
+        ['totalRatings', 'DESC'],
+        ['firstName', 'ASC'],
+      ],
+    });
+
+    // Add rank to each teacher
+    const teachersWithRank = teachers.map((teacher, index) => ({
+      ...teacher.toJSON(),
+      rank: index + 1,
+    }));
+
+    res.json({
+      success: true,
+      data: teachersWithRank,
+    });
+  } catch (error) {
+    logger.error('Get teacher ratings error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch teacher ratings' });
   }
 };
 

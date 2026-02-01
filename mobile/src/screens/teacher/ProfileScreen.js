@@ -25,6 +25,9 @@ export function ProfileScreen() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [groups, setGroups] = useState([]);
+  const [parents, setParents] = useState([]);
+  const [ratings, setRatings] = useState([]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
@@ -34,8 +37,16 @@ export function ProfileScreen() {
   const loadProfile = async () => {
     try {
       setLoading(true);
-      const data = await teacherService.getProfile();
-      setProfile(data);
+      const [profileData, groupsData, parentsData, ratingsData] = await Promise.all([
+        teacherService.getProfile(),
+        teacherService.getGroups(),
+        teacherService.getParents(),
+        teacherService.getTeacherRatings(),
+      ]);
+      setProfile(profileData);
+      setGroups(groupsData);
+      setParents(parentsData);
+      setRatings(ratingsData);
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
@@ -195,6 +206,119 @@ export function ProfileScreen() {
             </View>
           </Card>
         )}
+
+        {/* Groups Section */}
+        {groups.length > 0 && (
+          <Card>
+            <Text style={styles.sectionTitle}>My Groups</Text>
+            {groups.map((group, index) => (
+              <View
+                key={group.id}
+                style={[
+                  styles.listItem,
+                  index === groups.length - 1 && styles.lastListItem,
+                ]}
+              >
+                <View style={styles.listIconContainer}>
+                  <Ionicons name="people" size={20} color={theme.Colors.primary.blue} />
+                </View>
+                <View style={styles.listContent}>
+                  <Text style={styles.listTitle}>{group.name}</Text>
+                  {group.description && (
+                    <Text style={styles.listSubtitle}>{group.description}</Text>
+                  )}
+                  <Text style={styles.listMeta}>
+                    {group.parentCount || 0} parents • Capacity: {group.capacity}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </Card>
+        )}
+
+        {/* Parents Section */}
+        {parents.length > 0 && (
+          <Card>
+            <Text style={styles.sectionTitle}>My Parents ({parents.length})</Text>
+            {parents.slice(0, 5).map((parent, index) => (
+              <View
+                key={parent.id}
+                style={[
+                  styles.listItem,
+                  index === Math.min(4, parents.length - 1) && styles.lastListItem,
+                ]}
+              >
+                <View style={styles.listIconContainer}>
+                  <Ionicons name="person" size={20} color={theme.Colors.primary.blue} />
+                </View>
+                <View style={styles.listContent}>
+                  <Text style={styles.listTitle}>
+                    {parent.firstName} {parent.lastName}
+                  </Text>
+                  {parent.email && (
+                    <Text style={styles.listSubtitle}>{parent.email}</Text>
+                  )}
+                  {parent.children && parent.children.length > 0 && (
+                    <Text style={styles.listMeta}>
+                      {parent.children.length} {parent.children.length === 1 ? 'child' : 'children'}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))}
+            {parents.length > 5 && (
+              <Text style={styles.moreText}>
+                +{parents.length - 5} more parents
+              </Text>
+            )}
+          </Card>
+        )}
+
+        {/* Teacher Ratings Section */}
+        {ratings.length > 0 && (
+          <Card>
+            <Text style={styles.sectionTitle}>Teacher Ratings</Text>
+            {ratings.slice(0, 10).map((teacher, index) => {
+              const isCurrentTeacher = teacher.id === user?.id;
+              return (
+                <View
+                  key={teacher.id}
+                  style={[
+                    styles.ratingItem,
+                    isCurrentTeacher && styles.currentTeacherItem,
+                    index === Math.min(9, ratings.length - 1) && styles.lastListItem,
+                  ]}
+                >
+                  <View style={styles.rankContainer}>
+                    <Text style={[styles.rankText, isCurrentTeacher && styles.currentTeacherRank]}>
+                      #{teacher.rank}
+                    </Text>
+                  </View>
+                  <View style={styles.ratingContent}>
+                    <Text style={[styles.listTitle, isCurrentTeacher && styles.currentTeacherName]}>
+                      {teacher.firstName} {teacher.lastName}
+                      {isCurrentTeacher && ' (You)'}
+                    </Text>
+                    <View style={styles.ratingRow}>
+                      <Ionicons name="star" size={14} color="#FFA500" />
+                      <Text style={styles.ratingText}>
+                        {teacher.rating?.toFixed(1) || '0.0'}
+                      </Text>
+                      <Text style={styles.ratingCount}>
+                        ({teacher.totalRatings || 0} ratings)
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+            {ratings.length > 10 && (
+              <Text style={styles.moreText}>
+                +{ratings.length - 10} more teachers
+              </Text>
+            )}
+          </Card>
+        )}
       </ScrollView>
     </View>
   );
@@ -309,5 +433,102 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: theme.Typography.sizes.sm,
     color: theme.Colors.text.secondary,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: theme.Spacing.md,
+    paddingBottom: theme.Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.Colors.border.light,
+  },
+  lastListItem: {
+    borderBottomWidth: 0,
+    marginBottom: 0,
+    paddingBottom: 0,
+  },
+  listIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.Colors.primary.blueBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.Spacing.sm,
+  },
+  listContent: {
+    flex: 1,
+  },
+  listTitle: {
+    fontSize: theme.Typography.sizes.base,
+    fontWeight: theme.Typography.weights.semibold,
+    color: theme.Colors.text.primary,
+    marginBottom: theme.Spacing.xs / 2,
+  },
+  listSubtitle: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.text.secondary,
+    marginBottom: theme.Spacing.xs / 2,
+  },
+  listMeta: {
+    fontSize: theme.Typography.sizes.xs,
+    color: theme.Colors.text.muted,
+  },
+  moreText: {
+    fontSize: theme.Typography.sizes.sm,
+    color: theme.Colors.primary.blue,
+    textAlign: 'center',
+    marginTop: theme.Spacing.sm,
+    fontWeight: theme.Typography.weights.medium,
+  },
+  ratingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.Spacing.md,
+    paddingBottom: theme.Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.Colors.border.light,
+  },
+  currentTeacherItem: {
+    backgroundColor: theme.Colors.primary.blueBg,
+    marginHorizontal: -theme.Spacing.md,
+    paddingHorizontal: theme.Spacing.md,
+    paddingVertical: theme.Spacing.sm,
+    borderRadius: theme.BorderRadius.md,
+  },
+  rankContainer: {
+    width: 40,
+    alignItems: 'center',
+    marginRight: theme.Spacing.sm,
+  },
+  rankText: {
+    fontSize: theme.Typography.sizes.lg,
+    fontWeight: theme.Typography.weights.bold,
+    color: theme.Colors.text.secondary,
+  },
+  currentTeacherRank: {
+    color: theme.Colors.primary.blue,
+  },
+  ratingContent: {
+    flex: 1,
+  },
+  currentTeacherName: {
+    color: theme.Colors.primary.blue,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.Spacing.xs / 2,
+  },
+  ratingText: {
+    fontSize: theme.Typography.sizes.sm,
+    fontWeight: theme.Typography.weights.semibold,
+    color: theme.Colors.text.primary,
+    marginLeft: theme.Spacing.xs / 2,
+  },
+  ratingCount: {
+    fontSize: theme.Typography.sizes.xs,
+    color: theme.Colors.text.muted,
+    marginLeft: theme.Spacing.xs,
   },
 });
