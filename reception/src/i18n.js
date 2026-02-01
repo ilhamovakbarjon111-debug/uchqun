@@ -14,6 +14,8 @@ i18n
     },
     backend: {
       loadPath: '/locales/{{lng}}/common.json',
+      allowMultiLoading: false,
+      crossDomain: false,
     },
     react: {
       useSuspense: false,

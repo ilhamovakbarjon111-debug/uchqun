@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   Home,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../context/NotificationContext';
+import { getUnreadCount } from '../../shared/services/chatStore';
 import uzParent from '../locales/uz/common.json';
 import ruParent from '../locales/ru/common.json';
 import enParent from '../locales/en/common.json';
@@ -35,6 +37,7 @@ const Sidebar = ({ onClose }) => {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const { count, refreshNotifications } = useNotification();
+  const [unreadChat, setUnreadChat] = useState(0);
   
   // Get parent translations directly to avoid merge conflicts
   const parentTranslations = {
@@ -52,6 +55,29 @@ const Sidebar = ({ onClose }) => {
     return value || defaultValue || key;
   };
 
+  // Load unread chat count and refresh every 5 seconds
+  useEffect(() => {
+    let alive = true;
+    let intervalId;
+
+    const loadUnread = async () => {
+      if (!user?.id || !alive) return;
+      const conversationId = `parent:${user.id}`;
+      const count = await getUnreadCount(conversationId, 'parent');
+      if (alive) {
+        setUnreadChat(count);
+      }
+    };
+
+    loadUnread();
+    intervalId = setInterval(loadUnread, 5000);
+
+    return () => {
+      alive = false;
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [user?.id]);
+
   // Icon mapping per Mobile-icons.md
   const navigation = [
     { name: t('nav.profile'), href: '/child', icon: UserCircle },
@@ -61,7 +87,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.rating'), href: '/rating', icon: Star },
     { name: t('nav.therapy', { defaultValue: 'Terapiya' }), href: '/therapy', icon: Music },
     { name: t('nav.aiChat'), href: '/ai-chat', icon: Heart },
-    { name: t('nav.chat'), href: '/chat', icon: MessageCircle },
+    { name: t('nav.chat'), href: '/chat', icon: MessageCircle, badge: unreadChat },
     { name: t('nav.notifications', { defaultValue: 'Notifications' }), href: '/notifications', icon: Bell, badge: count },
     { name: t('nav.settings', { defaultValue: 'Sozlamalar' }), href: '/settings', icon: Settings },
   ];

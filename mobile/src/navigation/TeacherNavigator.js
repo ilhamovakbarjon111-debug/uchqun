@@ -35,6 +35,7 @@ const TAB_LABELS = {
   Dashboard: 'nav.dashboard',
   Parents: 'nav.parents',
   Chat: 'nav.chat',
+  Profile: 'nav.profile',
   Settings: 'nav.settings',
 };
 
@@ -59,11 +60,22 @@ function TeacherTabs() {
             Dashboard: 'home',      // Home icon
             Parents: 'people',      // Users icon
             Chat: 'chatbubble-ellipses', // Chat icon
+            Profile: 'person',      // Profile icon
             Settings: 'settings',   // Settings icon
+          };
+
+          // Color mapping for each tab
+          const colorMap = {
+            Dashboard: '#0EA5E9',   // Blue
+            Parents: '#9333EA',     // Purple
+            Chat: '#22D3EE',        // Light blue
+            Profile: '#52B788',     // Green
+            Settings: '#64748B',    // Gray
           };
 
           const baseIcon = iconMap[routeName] || 'help';
           const iconName = focused ? baseIcon : `${baseIcon}-outline`;
+          const activeColor = colorMap[routeName] || '#0EA5E9';
 
           // Compact, elegant active tab with gradient
           if (focused) {
@@ -72,7 +84,7 @@ function TeacherTabs() {
                 width: 40,
                 height: 40,
                 borderRadius: 12,
-                backgroundColor: '#0EA5E9',
+                backgroundColor: activeColor,
                 alignItems: 'center',
                 justifyContent: 'center',
                 ...tokens.shadow.glow,
@@ -82,7 +94,7 @@ function TeacherTabs() {
             );
           }
 
-          return <Ionicons name={iconName} size={ICON_SIZE} color={color} />;
+          return <Ionicons name={iconName} size={ICON_SIZE} color={activeColor} />;
         },
         tabBarActiveTintColor: '#0EA5E9',
         tabBarInactiveTintColor: tokens.colors.text.muted,
@@ -107,6 +119,7 @@ function TeacherTabs() {
       <Tab.Screen name="Dashboard" component={TeacherDashboardScreen} />
       <Tab.Screen name="Parents" component={ParentsListScreen} />
       <Tab.Screen name="Chat" component={ChatScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );

@@ -10,6 +10,7 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { teacherService } from '../../services/teacherService';
@@ -77,112 +78,132 @@ export function ParentsListScreen() {
         }
       }}
     >
-      <Card>
-        <View style={styles.parentHeader}>
-          <View style={styles.parentAvatar}>
-            <Text style={styles.parentAvatarText}>
-              {item.firstName?.charAt(0)}
-              {item.lastName?.charAt(0)}
-            </Text>
-          </View>
-          <View style={styles.parentContent}>
-            <Text style={styles.name}>
-              {item.firstName} {item.lastName}
-            </Text>
+      <View style={styles.cardWrapper}>
+        <LinearGradient
+          colors={['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.85)']}
+          style={styles.cardGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.parentHeader}>
+            <View style={styles.parentAvatar}>
+              <Text style={styles.parentAvatarText}>
+                {item.firstName?.charAt(0)}
+                {item.lastName?.charAt(0)}
+              </Text>
+            </View>
+            <View style={styles.parentContent}>
+              <Text style={styles.name}>
+                {item.firstName} {item.lastName}
+              </Text>
 
-            {/* Contact Info Row */}
-            <View style={styles.contactRow}>
-              {item.email && (
-                <View style={styles.contactItem}>
-                  <Ionicons name="mail-outline" size={14} color={theme.Colors.text.secondary} />
-                  <Text style={styles.contactText} numberOfLines={1}>
-                    {item.email}
-                  </Text>
+              {/* Contact Info Row */}
+              <View style={styles.contactRow}>
+                {item.email && (
+                  <View style={styles.contactItem}>
+                    <Ionicons name="mail-outline" size={14} color={theme.Colors.text.secondary} />
+                    <Text style={styles.contactText} numberOfLines={1}>
+                      {item.email}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Phone Number */}
+              {item.phone && (
+                <View style={styles.phoneRow}>
+                  <View style={styles.phoneItem}>
+                    <Ionicons name="call-outline" size={14} color="#9333EA" />
+                    <Text style={styles.phoneText}>{item.phone}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.callButton}
+                    onPress={() => handleCall(item.phone)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons name="call" size={16} color={theme.Colors.text.inverse} />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Group Badge */}
+              {item.group && (
+                <View style={styles.groupBadge}>
+                  <Ionicons name="school-outline" size={12} color="#9333EA" />
+                  <Text style={styles.groupText}>{item.group.name}</Text>
                 </View>
               )}
             </View>
-
-            {/* Phone Number */}
-            {item.phone && (
-              <View style={styles.phoneRow}>
-                <View style={styles.phoneItem}>
-                  <Ionicons name="call-outline" size={14} color={theme.Colors.primary.blue} />
-                  <Text style={styles.phoneText}>{item.phone}</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.callButton}
-                  onPress={() => handleCall(item.phone)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons name="call" size={16} color={theme.Colors.text.inverse} />
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* Group Badge */}
-            {item.group && (
-              <View style={styles.groupBadge}>
-                <Ionicons name="school-outline" size={12} color={theme.Colors.primary.blue} />
-                <Text style={styles.groupText}>{item.group.name}</Text>
-              </View>
-            )}
+            <Ionicons name="chevron-forward" size={20} color={theme.Colors.text.secondary} />
           </View>
-          <Ionicons name="chevron-forward" size={20} color={theme.Colors.text.secondary} />
-        </View>
 
-        {/* Children Section */}
-        {item.children && item.children.length > 0 && (
-          <View style={styles.childrenSection}>
-            <View style={styles.childrenHeader}>
-              <Ionicons name="people-outline" size={14} color={theme.Colors.text.secondary} />
-              <Text style={styles.childrenCount}>
-                {t('parentsPage.children', { count: item.children.length })}
-              </Text>
+          {/* Children Section */}
+          {item.children && item.children.length > 0 && (
+            <View style={styles.childrenSection}>
+              <View style={styles.childrenHeader}>
+                <Ionicons name="people-outline" size={14} color={theme.Colors.text.secondary} />
+                <Text style={styles.childrenCount}>
+                  {t('parentsPage.children', { count: item.children.length })}
+                </Text>
+              </View>
+              <View style={styles.childrenList}>
+                {item.children.map((child, index) => (
+                  <View key={child.id || index} style={styles.childChip}>
+                    <Text style={styles.childChipText}>
+                      {child.firstName} {child.lastName?.charAt(0)}.
+                    </Text>
+                    {child.class && (
+                      <Text style={styles.childClass}>({child.class})</Text>
+                    )}
+                  </View>
+                ))}
+              </View>
             </View>
-            <View style={styles.childrenList}>
-              {item.children.map((child, index) => (
-                <View key={child.id || index} style={styles.childChip}>
-                  <Text style={styles.childChipText}>
-                    {child.firstName} {child.lastName?.charAt(0)}.
-                  </Text>
-                  {child.class && (
-                    <Text style={styles.childClass}>({child.class})</Text>
-                  )}
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-      </Card>
+          )}
+        </LinearGradient>
+      </View>
     </Pressable>
   );
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={['#9333EA', '#7C3AED', '#6D28D9']}
+        style={styles.backgroundGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
       <ScreenHeader title={t('parentsPage.title')} showBack={false} />
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <View style={styles.searchInputWrapper}>
-          <Ionicons name="search" size={20} color={theme.Colors.text.secondary} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('parentsPage.searchPlaceholder')}
-            placeholderTextColor={theme.Colors.text.tertiary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color={theme.Colors.text.secondary} />
-            </TouchableOpacity>
-          )}
-        </View>
-        <Text style={styles.resultCount}>
-          {filteredParents.length} {t('parentsPage.results')}
-        </Text>
+        <LinearGradient
+          colors={['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.9)']}
+          style={styles.searchGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.searchInputWrapper}>
+            <Ionicons name="search" size={20} color={theme.Colors.text.secondary} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t('parentsPage.searchPlaceholder')}
+              placeholderTextColor={theme.Colors.text.tertiary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={theme.Colors.text.secondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+          <Text style={styles.resultCount}>
+            {filteredParents.length} {t('parentsPage.results')}
+          </Text>
+        </LinearGradient>
       </View>
 
       {filteredParents.length === 0 ? (
@@ -212,14 +233,42 @@ export function ParentsListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+  },
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
   },
   searchContainer: {
-    paddingHorizontal: theme.Spacing.md,
-    paddingVertical: theme.Spacing.sm,
-    backgroundColor: theme.Colors.background.card,
     marginHorizontal: theme.Spacing.md,
     marginTop: theme.Spacing.sm,
+    borderRadius: theme.BorderRadius.md,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  searchGradient: {
+    paddingHorizontal: theme.Spacing.md,
+    paddingVertical: theme.Spacing.sm,
+    borderRadius: theme.BorderRadius.md,
+  },
+  cardWrapper: {
+    marginBottom: theme.Spacing.md,
+    borderRadius: theme.BorderRadius.md,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardGradient: {
+    padding: theme.Spacing.md,
     borderRadius: theme.BorderRadius.md,
   },
   searchInputWrapper: {
@@ -299,7 +348,7 @@ const styles = StyleSheet.create({
   },
   phoneText: {
     fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.primary.blue,
+    color: '#9333EA',
     fontWeight: theme.Typography.weights.medium,
   },
   callButton: {
@@ -313,7 +362,7 @@ const styles = StyleSheet.create({
   groupBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.Colors.primary.blueBg,
+    backgroundColor: 'rgba(147, 51, 234, 0.1)',
     paddingHorizontal: theme.Spacing.sm,
     paddingVertical: 4,
     borderRadius: 12,
@@ -323,7 +372,7 @@ const styles = StyleSheet.create({
   },
   groupText: {
     fontSize: theme.Typography.sizes.xs,
-    color: theme.Colors.primary.blue,
+    color: '#9333EA',
     fontWeight: theme.Typography.weights.semibold,
   },
   childrenSection: {

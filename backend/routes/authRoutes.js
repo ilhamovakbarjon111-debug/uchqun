@@ -1,7 +1,7 @@
 import express from 'express';
-import { login, refreshToken, getMe, logout } from '../controllers/authController.js';
+import { login, getMe, logout } from '../controllers/authController.js';
 import { authenticate } from '../middleware/auth.js';
-import { loginValidator, refreshTokenValidator } from '../validators/authValidator.js';
+import { loginValidator } from '../validators/authValidator.js';
 import { handleValidationErrors } from '../middleware/validation.js';
 import { submitRegistrationRequest } from '../controllers/adminRegistrationController.js';
 import { uploadDocuments, handleUploadError, debugMulter } from '../middleware/upload.js';
@@ -33,14 +33,6 @@ const router = express.Router();
  *       401:
  *         description: Invalid credentials
  *
- * /auth/refresh:
- *   post:
- *     summary: Refresh access token
- *     tags: [Auth]
- *     responses:
- *       200:
- *         description: Token refreshed
- *
  * /auth/me:
  *   get:
  *     summary: Get current user profile
@@ -55,7 +47,6 @@ const router = express.Router();
  *         description: Not authenticated
  */
 router.post('/login', loginValidator, handleValidationErrors, login);
-router.post('/refresh', refreshTokenValidator, handleValidationErrors, refreshToken);
 router.get('/me', authenticate, getMe);
 router.post('/logout', authenticate, logout);
 

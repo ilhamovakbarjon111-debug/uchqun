@@ -178,8 +178,7 @@ app.use(cors({
     'Origin',
     'Access-Control-Request-Method',
     'Access-Control-Request-Headers',
-    'x-migration-secret',
-    'X-CSRF-Token'
+    'x-migration-secret'
   ],
   exposedHeaders: [
     'Authorization',
@@ -195,6 +194,22 @@ app.use(cors({
 // Request logging (should be after body parsing but before routes)
 app.use(requestLogger);
 
+// Request timeout middleware - prevent 499 errors
+app.use((req, res, next) => {
+  // Set timeout to 30 seconds for all requests
+  req.setTimeout(30000, () => {
+    if (!res.headersSent) {
+      logger.warn('Request timeout', { 
+        method: req.method, 
+        path: req.path,
+        ip: req.ip 
+      });
+      res.status(504).json({ error: 'Request timeout' });
+    }
+  });
+  next();
+});
+
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -203,21 +218,7 @@ app.use(cookieParser());
 // Sanitize request body strings (XSS prevention)
 app.use(sanitizeBody);
 
-// CSRF protection (double-submit cookie)
-import { verifyCsrfToken } from './middleware/csrf.js';
-app.use((req, res, next) => {
-  // Skip CSRF for auth, health, chat, media, child, and parent paths
-  // Parent paths use Bearer token auth from frontend, so CSRF is not needed
-  if (req.path.startsWith('/api/auth') || 
-      req.path.startsWith('/health') ||
-      req.path.startsWith('/api/chat') ||
-      req.path.startsWith('/api/media') ||
-      req.path.startsWith('/api/child') ||
-      req.path.startsWith('/api/parent')) {
-    return next();
-  }
-  verifyCsrfToken(req, res, next);
-});
+// CSRF protection removed - using Bearer token authentication instead
 
 // Serve local uploads (works for both fallback and misconfigured remote storage)
 

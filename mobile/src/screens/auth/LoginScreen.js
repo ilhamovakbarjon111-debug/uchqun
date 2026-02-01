@@ -10,9 +10,11 @@ import {
   View,
   Animated,
   Dimensions,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { clearAuth } from '../../storage/authStorage';
 import { API_URL } from '../../config';
@@ -21,6 +23,7 @@ import tokens from '../../styles/tokens';
 const { width } = Dimensions.get('window');
 
 export function LoginScreen() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -93,7 +96,7 @@ export function LoginScreen() {
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPassword = typeof password === 'string' ? password.trim() : String(password || '').trim();
     if (!trimmedEmail || !trimmedPassword) {
-      setError('Please enter email and password');
+      setError(t('login.fillAllFields', { defaultValue: 'Iltimos, email va parolni kiriting' }));
       return;
     }
     setError('');
@@ -102,7 +105,7 @@ export function LoginScreen() {
       await clearAuth();
       await login(trimmedEmail, trimmedPassword);
     } catch (e) {
-      let msg = 'Login failed. Please check your credentials and try again.';
+      let msg = t('login.invalid', { defaultValue: 'Email yoki parol noto\'g\'ri' });
 
       if (e?.response?.data?.error) {
         msg = e.response.data.error;
@@ -111,7 +114,7 @@ export function LoginScreen() {
       } else if (e?.message && !e.message.includes('Network')) {
         msg = e.message;
       } else if (e?.message?.includes('Network')) {
-        msg = 'Could not connect to server. Please check your internet connection.';
+        msg = t('login.networkError', { defaultValue: 'Serverga ulanib bo\'lmadi. Internet aloqasini tekshiring.' });
       }
       setError(msg);
       if (__DEV__) {
@@ -181,11 +184,15 @@ export function LoginScreen() {
                 end={{ x: 1, y: 1 }}
                 style={styles.iconGradient}
               >
-                <Ionicons name="sparkles" size={36} color="#FFFFFF" />
+                <Image
+                  source={require('../../../assets/icon.png')}
+                  style={styles.appIcon}
+                  resizeMode="contain"
+                />
               </LinearGradient>
             </View>
-            <Text style={styles.title}>Uchqun Platform</Text>
-            <Text style={styles.subtitle}>Special Education School Management</Text>
+            <Text style={styles.title}>{t('login.title', { defaultValue: 'Uchqun Portal' })}</Text>
+            <Text style={styles.subtitle}>{t('login.subtitle', { defaultValue: 'Maxsus ta\'lim maktabi boshqaruvi' })}</Text>
           </View>
 
           {/* Glassmorphic card */}
@@ -206,7 +213,7 @@ export function LoginScreen() {
               <View style={styles.form}>
                 {/* Email input */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Email Address</Text>
+                  <Text style={styles.label}>{t('login.email', { defaultValue: 'Email manzil' })}</Text>
                   <View style={styles.inputContainer}>
                     <LinearGradient
                       colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
@@ -222,7 +229,7 @@ export function LoginScreen() {
                         autoCorrect={false}
                         keyboardType="email-address"
                         textContentType="username"
-                        placeholder="your@email.com"
+                        placeholder={t('login.emailPlaceholder', { defaultValue: 'sizning@email.com' })}
                         placeholderTextColor={tokens.colors.text.muted}
                         style={styles.input}
                       />
@@ -232,7 +239,7 @@ export function LoginScreen() {
 
                 {/* Password input */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Password</Text>
+                  <Text style={styles.label}>{t('login.password', { defaultValue: 'Parol' })}</Text>
                   <View style={styles.inputContainer}>
                     <LinearGradient
                       colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
@@ -246,7 +253,7 @@ export function LoginScreen() {
                         onChangeText={setPassword}
                         secureTextEntry={!showPassword}
                         textContentType="password"
-                        placeholder="Enter your password"
+                        placeholder={t('login.passwordPlaceholder', { defaultValue: 'Parolni kiriting' })}
                         placeholderTextColor={tokens.colors.text.muted}
                         style={[styles.input, styles.inputWithIcon]}
                       />
@@ -287,7 +294,7 @@ export function LoginScreen() {
                       <ActivityIndicator color="#FFFFFF" size="small" />
                     ) : (
                       <>
-                        <Text style={styles.buttonText}>Sign In</Text>
+                        <Text style={styles.buttonText}>{t('login.submit', { defaultValue: 'Kirish' })}</Text>
                         <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
                       </>
                     )}
@@ -300,7 +307,7 @@ export function LoginScreen() {
           {/* Footer hint */}
           <Text style={styles.footerText}>
             <Ionicons name="shield-checkmark-outline" size={12} color={tokens.colors.text.muted} />
-            {' '}Secure authentication with JWT
+            {' '}{t('login.secureAuth', { defaultValue: 'JWT bilan xavfsiz autentifikatsiya' })}
           </Text>
         </Animated.View>
       </KeyboardAvoidingView>
@@ -355,6 +362,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...tokens.shadow.glow,
+  },
+  appIcon: {
+    width: 50,
+    height: 50,
   },
   title: {
     fontSize: tokens.type.hero.fontSize,

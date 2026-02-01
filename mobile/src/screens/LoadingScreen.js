@@ -2,8 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 
 export function LoadingScreen() {
+  const { t } = useTranslation();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -103,7 +105,7 @@ export function LoadingScreen() {
 
         {/* App name */}
         <Text style={styles.appName}>Uchqun</Text>
-        <Text style={styles.tagline}>Making learning joyful ✨</Text>
+        <Text style={styles.tagline}>{t('loading.tagline', { defaultValue: 'O\'qishni qiziqarli qilamiz ✨' })}</Text>
 
         {/* Loading dots */}
         <View style={styles.dotsContainer}>
@@ -131,7 +133,7 @@ export function LoadingScreen() {
           ))}
         </View>
 
-        <Text style={styles.loadingText}>Loading your world...</Text>
+        <Text style={styles.loadingText}>{t('loading.message', { defaultValue: 'Yuklanmoqda...' })}</Text>
       </Animated.View>
 
       {/* Bottom decoration */}

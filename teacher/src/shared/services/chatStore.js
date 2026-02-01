@@ -40,8 +40,34 @@ export async function getUnreadCount(conversationId, role = 'parent') {
 }
 
 export async function getUnreadTotalForPrefix(prefix = 'parent:', role = 'teacher') {
-  // Not implemented for server-side yet; fallback to zero
-  return 0;
+  try {
+    // For teacher role, get all parent conversations and count unread messages
+    if (role === 'teacher') {
+      // Get all parents (conversations) for this teacher
+      const res = await api.get('/teacher/parents');
+      const parents = res.data?.parents || [];
+      
+      let totalUnread = 0;
+      for (const parent of parents) {
+        const convoId = `parent:${parent.id}`;
+        const msgs = await loadMessages(convoId);
+        const unread = msgs.filter((m) => m.senderRole !== 'teacher' && !m.readByTeacher).length;
+        totalUnread += unread;
+      }
+      return totalUnread;
+    }
+    
+    // For parent role, get their own conversation
+    if (role === 'parent' && prefix === 'parent:') {
+      // This will be handled by the parent component using getUnreadCount
+      return 0;
+    }
+    
+    return 0;
+  } catch (e) {
+    console.warn('getUnreadTotalForPrefix error', e?.response?.status, e?.response?.data);
+    return 0;
+  }
 }
 
 export async function listConversations() {

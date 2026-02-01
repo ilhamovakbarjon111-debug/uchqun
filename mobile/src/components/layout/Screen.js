@@ -32,7 +32,7 @@ export default function Screen({
     },
     veil: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.02)' : 'rgba(248, 250, 252, 0.03)',
+      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(248, 250, 252, 0.1)', // Darker veil in dark mode for better contrast
     },
   };
 

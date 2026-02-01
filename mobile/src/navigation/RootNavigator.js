@@ -14,24 +14,33 @@ export function RootNavigator() {
   const { bootstrapping, isAuthenticated, user, isTeacher, isParent, isAdmin, isReception } = useAuth();
   const navigationRef = useRef(null);
   const prevAuthRef = useRef(undefined);
+  const prevRoleRef = useRef(undefined);
+
+  // Stable role identifier to prevent re-renders
+  const userRole = user?.role;
 
   // Handle navigation when auth state changes
   useEffect(() => {
     if (bootstrapping) {
       prevAuthRef.current = undefined;
+      prevRoleRef.current = undefined;
       return;
     }
 
     // Initialize on first render
     if (prevAuthRef.current === undefined) {
       prevAuthRef.current = isAuthenticated;
+      prevRoleRef.current = userRole;
       return;
     }
 
-    // Skip if auth state hasn't changed
-    if (prevAuthRef.current === isAuthenticated) return;
+    // Skip if neither auth state nor role has changed
+    if (prevAuthRef.current === isAuthenticated && prevRoleRef.current === userRole) {
+      return;
+    }
 
     prevAuthRef.current = isAuthenticated;
+    prevRoleRef.current = userRole;
 
     // Navigate after a short delay to ensure state is ready
     const timer = setTimeout(() => {
@@ -69,7 +78,7 @@ export function RootNavigator() {
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated, bootstrapping, user, isTeacher, isParent, isAdmin, isReception]);
+  }, [isAuthenticated, bootstrapping, userRole, isTeacher, isParent, isAdmin, isReception]);
 
   if (bootstrapping) {
     return <LoadingScreen />;

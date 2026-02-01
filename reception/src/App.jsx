@@ -18,7 +18,7 @@ const AppRoutes = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -61,6 +61,17 @@ function App() {
       </AuthProvider>
     </BrowserRouter>
   );
+}
+
+// Error boundary for better error handling
+if (import.meta.env.PROD) {
+  window.addEventListener('error', (event) => {
+    console.error('Global error:', event.error);
+  });
+  
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled promise rejection:', event.reason);
+  });
 }
 
 export default App;
