@@ -46,12 +46,21 @@
     "notFound": "Школы не найдены",
     "students": "Ученики",
     "ratings": "Рейтинги",
-    "averageRating": "Средний рейтинг"
+    "averageRating": "Средний рейтинг",
+    "totalSchools": "Всего школ",
+    "totalReviews": "Всего отзывов",
+    "globalAverage": "Общий средний рейтинг",
+    "level": "Уровень"
   },
   "ratings": {
     "title": "Рейтинги",
     "subtitle": "Рейтинги школ",
     "notFound": "Рейтинги не найдены",
+    "totalRatings": "Всего оценок",
+    "overallAverage": "Общее среднее",
+    "ratingsCount": "Количество оценок",
+    "stars": "звёзд",
+    "level": "Уровень",
     "school": "Школа",
     "student": "Ученик",
     "parent": "Родитель",

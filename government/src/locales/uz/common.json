@@ -46,12 +46,21 @@
     "notFound": "Maktablar topilmadi",
     "students": "O'quvchilar",
     "ratings": "Baholar",
-    "averageRating": "O'rtacha reyting"
+    "averageRating": "O'rtacha reyting",
+    "totalSchools": "Jami maktablar",
+    "totalReviews": "Jami baholar",
+    "globalAverage": "Umumiy o'rtacha reyting",
+    "level": "Daraja"
   },
   "ratings": {
     "title": "Reytinglar",
     "subtitle": "Maktablar reytinglari",
     "notFound": "Reytinglar topilmadi",
+    "totalRatings": "Jami baholar",
+    "overallAverage": "Umumiy o'rtacha",
+    "ratingsCount": "Baholar soni",
+    "stars": "yulduz",
+    "level": "Daraja",
     "school": "Maktab",
     "student": "O'quvchi",
     "parent": "Ota-ona",
