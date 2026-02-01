@@ -46,12 +46,21 @@
     "notFound": "No schools found",
     "students": "Students",
     "ratings": "Ratings",
-    "averageRating": "Average Rating"
+    "averageRating": "Average Rating",
+    "totalSchools": "Total Schools",
+    "totalReviews": "Total Reviews",
+    "globalAverage": "Overall Average Rating",
+    "level": "Level"
   },
   "ratings": {
     "title": "Ratings",
     "subtitle": "School ratings",
     "notFound": "No ratings found",
+    "totalRatings": "Total Ratings",
+    "overallAverage": "Overall Average",
+    "ratingsCount": "Ratings Count",
+    "stars": "stars",
+    "level": "Level",
     "school": "School",
     "student": "Student",
     "parent": "Parent",
