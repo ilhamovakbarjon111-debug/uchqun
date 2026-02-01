@@ -8,7 +8,7 @@ import TherapyUsage from '../models/TherapyUsage.js';
 import AIWarning from '../models/AIWarning.js';
 import { Op } from 'sequelize';
 import logger from '../utils/logger.js';
-import { getGovernmentLevel, sortSchoolsByRating } from '../utils/governmentLevel.js';
+import { getGovernmentLevel, sortSchoolsByRating, computeRatingScore, computeAverageRating } from '../utils/governmentLevel.js';
 
 /**
  * Get overview statistics
@@ -36,10 +36,18 @@ export const getOverview = async (req, res) => {
       logger.warn('Failed to count schools', { error: error.message });
     }
 
-    // Get total students
+    // Get total students (only those linked to active schools)
     let studentsCount = 0;
     try {
-      studentsCount = await Child.count();
+      studentsCount = await Child.count({
+        include: [{
+          model: School,
+          as: 'childSchool',
+          attributes: [],
+          where: { isActive: true },
+          required: true,
+        }],
+      });
     } catch (error) {
       logger.warn('Failed to count students', { error: error.message });
     }
@@ -64,16 +72,14 @@ export const getOverview = async (req, res) => {
       logger.warn('Failed to count parents', { error: error.message });
     }
 
-    // Get average school rating
+    // Get average school rating (supports both stars and evaluation formats)
     let avgRating = 0;
     try {
       const ratings = await SchoolRating.findAll({
-        attributes: ['stars'],
+        attributes: ['stars', 'evaluation'],
       });
-      if (ratings.length > 0) {
-        const sum = ratings.reduce((acc, r) => acc + (r.stars || 0), 0);
-        avgRating = parseFloat((sum / ratings.length).toFixed(2));
-      }
+      const result = computeAverageRating(ratings);
+      avgRating = result.average;
     } catch (error) {
       logger.warn('Failed to calculate average rating', { error: error.message });
     }
@@ -150,11 +156,12 @@ export const getSchoolsStats = async (req, res) => {
         where,
         limit: parseInt(limit),
         offset: parseInt(offset),
+        distinct: true,
         include: [
           {
             model: SchoolRating,
             as: 'ratings',
-            attributes: ['stars'],
+            attributes: ['stars', 'evaluation'],
             required: false,
           },
           {
@@ -188,7 +195,7 @@ export const getSchoolsStats = async (req, res) => {
       } else {
         try {
           const [ratingRows, childRows] = await Promise.all([
-            SchoolRating.findAll({ where: { schoolId: school.id }, attributes: ['stars'] }),
+            SchoolRating.findAll({ where: { schoolId: school.id }, attributes: ['stars', 'evaluation'] }),
             Child.count({ where: { schoolId: school.id } }),
           ]);
           ratings = ratingRows;
@@ -203,10 +210,9 @@ export const getSchoolsStats = async (req, res) => {
         }
       }
 
-      const ratingsCount = ratings.length;
-      const avgRating = ratingsCount > 0
-        ? parseFloat((ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / ratingsCount).toFixed(1))
-        : 0;
+      const ratingResult = computeAverageRating(ratings);
+      const ratingsCount = ratingResult.count;
+      const avgRating = ratingResult.average;
 
       const { id, name, type, address, phone, email, description, isActive, createdAt } = school.toJSON();
 
@@ -215,7 +221,7 @@ export const getSchoolsStats = async (req, res) => {
         averageRating: avgRating,
         ratingsCount,
         studentsCount,
-        governmentLevel: getGovernmentLevel(avgRating),
+        governmentLevel: getGovernmentLevel(avgRating, ratingsCount),
       };
     }));
 
@@ -322,59 +328,94 @@ export const getRatingsStats = async (req, res) => {
     }
 
     // Get all active schools with their ratings
-    const schools = await School.findAll({
-      where: { isActive: true },
-      include: [
-        {
-          model: SchoolRating,
-          as: 'ratings',
-          required: false,
-          where: Object.keys(ratingWhere).length > 0 ? ratingWhere : undefined,
-        },
-      ],
-    });
-
-    // Aggregate and rank schools by average rating
-    const mappedSchools = schools.map((school) => {
-      const ratings = school.ratings || [];
-      const totalRatings = ratings.length;
-      const avgRating = totalRatings > 0
-        ? ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / totalRatings
-        : 0;
-
-      const distribution = {
-        5: ratings.filter(r => r.stars === 5).length,
-        4: ratings.filter(r => r.stars === 4).length,
-        3: ratings.filter(r => r.stars === 3).length,
-        2: ratings.filter(r => r.stars === 2).length,
-        1: ratings.filter(r => r.stars === 1).length,
+    let schools;
+    let ratingsIncluded = true;
+    try {
+      const includeOptions = {
+        model: SchoolRating,
+        as: 'ratings',
+        attributes: ['stars', 'evaluation'],
+        required: false,
       };
+      if (Object.keys(ratingWhere).length > 0) {
+        includeOptions.where = ratingWhere;
+      }
+      schools = await School.findAll({
+        where: { isActive: true },
+        include: [includeOptions],
+      });
+    } catch (includeError) {
+      logger.warn('Ratings include failed, using fallback', { error: includeError.message });
+      ratingsIncluded = false;
+      schools = await School.findAll({
+        where: { isActive: true },
+      });
+    }
+
+    // Aggregate and rank schools by average rating (supports both stars and evaluation)
+    const mappedSchools = await Promise.all(schools.map(async (school) => {
+      let ratings;
+      if (ratingsIncluded && school.ratings !== undefined) {
+        ratings = school.ratings || [];
+      } else {
+        try {
+          const ratingQuery = { schoolId: school.id };
+          if (Object.keys(ratingWhere).length > 0) {
+            Object.assign(ratingQuery, ratingWhere);
+          }
+          ratings = await SchoolRating.findAll({
+            where: ratingQuery,
+            attributes: ['stars', 'evaluation'],
+          });
+        } catch (fallbackError) {
+          logger.error('Per-school ratings fallback failed', {
+            schoolId: school.id,
+            error: fallbackError.message,
+          });
+          ratings = [];
+        }
+      }
+      const ratingResult = computeAverageRating(ratings);
+
+      // Build distribution by mapping each rating to its effective star bucket
+      const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+      ratings.forEach(r => {
+        const score = computeRatingScore(r);
+        if (score !== null) {
+          const bucket = Math.min(5, Math.max(1, Math.round(score)));
+          distribution[bucket]++;
+        }
+      });
 
       return {
         id: school.id,
         name: school.name,
         address: school.address,
-        averageRating: parseFloat(avgRating.toFixed(1)),
-        ratingsCount: totalRatings,
+        averageRating: ratingResult.average,
+        ratingsCount: ratingResult.count,
         distribution,
-        governmentLevel: getGovernmentLevel(avgRating),
+        governmentLevel: getGovernmentLevel(ratingResult.average, ratingResult.count),
       };
-    });
+    }));
 
     const rankedSchools = sortSchoolsByRating(mappedSchools);
 
-    // Overall stats
-    const allRatings = schools.flatMap(s => s.ratings || []);
-    const totalRatings = allRatings.length;
-    const overallAvg = totalRatings > 0
-      ? (allRatings.reduce((sum, r) => sum + (r.stars || 0), 0) / totalRatings).toFixed(2)
+    // Overall stats — recompute from mapped data to avoid stale include data
+    let totalRatingsCount = 0;
+    let weightedSum = 0;
+    mappedSchools.forEach((s) => {
+      totalRatingsCount += s.ratingsCount;
+      weightedSum += s.averageRating * s.ratingsCount;
+    });
+    const overallAverage = totalRatingsCount > 0
+      ? parseFloat((weightedSum / totalRatingsCount).toFixed(1))
       : 0;
 
     res.json({
       success: true,
       data: {
-        total: totalRatings,
-        average: parseFloat(overallAvg),
+        total: totalRatingsCount,
+        average: overallAverage,
         schools: rankedSchools,
       },
     });
@@ -676,17 +717,15 @@ async function getOverviewData(region, district, startDate, endDate) {
   const teachersCount = await User.count({ where: { role: 'teacher' } });
   const parentsCount = await User.count({ where: { role: 'parent' } });
   
-  const ratings = await SchoolRating.findAll();
-  const avgRating = ratings.length > 0
-    ? (ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length).toFixed(2)
-    : 0;
+  const ratings = await SchoolRating.findAll({ attributes: ['stars', 'evaluation'] });
+  const ratingResult = computeAverageRating(ratings);
 
   return {
     schools: schoolsCount,
     students: studentsCount,
     teachers: teachersCount,
     parents: parentsCount,
-    averageRating: parseFloat(avgRating),
+    averageRating: ratingResult.average,
   };
 }
 
@@ -864,24 +903,18 @@ export const getAdminDetails = async (req, res) => {
       }
     }
 
-    // Get school ratings
+    // Get school ratings (supports both stars and evaluation formats)
     const schoolIds = schools.map(s => s.id);
-    let ratings = [];
-    let avgRating = 0;
+    let ratingsResult = { average: 0, count: 0 };
     if (schoolIds.length > 0) {
       try {
-        ratings = await SchoolRating.findAll({
+        const ratings = await SchoolRating.findAll({
           where: { schoolId: { [Op.in]: schoolIds } },
-          attributes: ['stars'],
+          attributes: ['stars', 'evaluation'],
         });
-        if (ratings.length > 0) {
-          const sum = ratings.reduce((acc, r) => acc + (r.stars || 0), 0);
-          avgRating = parseFloat((sum / ratings.length).toFixed(1));
-        }
+        ratingsResult = computeAverageRating(ratings);
       } catch (error) {
         logger.warn('Failed to fetch ratings for admin', { error: error.message, adminId: id });
-        ratings = [];
-        avgRating = 0;
       }
     }
 
@@ -906,8 +939,8 @@ export const getAdminDetails = async (req, res) => {
           parents: parents.length,
           students: studentsCount,
           totalRevenue,
-          averageRating: parseFloat(avgRating),
-          ratingsCount: ratings.length,
+          averageRating: ratingsResult.average,
+          ratingsCount: ratingsResult.count,
         },
         receptions: receptions.map(r => r.toJSON()),
         schools: schools.map(s => s.toJSON()),

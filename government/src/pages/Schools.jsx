@@ -11,6 +11,7 @@ const LEVEL_COLORS = {
   3: 'bg-yellow-100 text-yellow-800',
   2: 'bg-orange-100 text-orange-800',
   1: 'bg-red-100 text-red-800',
+  0: 'bg-gray-100 text-gray-500',
 };
 
 const Schools = () => {
@@ -114,9 +115,12 @@ const Schools = () => {
                     </div>
                   </div>
                   {/* Government level badge */}
-                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${LEVEL_COLORS[level]}`}>
+                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${LEVEL_COLORS[level] || LEVEL_COLORS[0]}`}>
                     <Award className="w-3 h-3" />
-                    {t('schools.level', { defaultValue: 'Daraja' })} {level}
+                    {level
+                      ? `${t('schools.level', { defaultValue: 'Daraja' })} ${level}`
+                      : t('schools.unrated', { defaultValue: 'Baholanmagan' })
+                    }
                   </span>
                 </div>
                 <div className="space-y-2">
