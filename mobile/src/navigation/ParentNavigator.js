@@ -11,7 +11,7 @@ import { ActivitiesScreen } from '../screens/parent/ActivitiesScreen';
 import { MealsScreen } from '../screens/parent/MealsScreen';
 import { MediaScreen } from '../screens/parent/MediaScreen';
 import { ChatScreen } from '../screens/parent/ChatScreen';
-import { TeacherRatingScreen } from '../screens/parent/TeacherRatingScreen';
+
 import { SchoolRatingScreen } from '../screens/parent/SchoolRatingScreen';
 import { SettingsScreen } from '../screens/parent/SettingsScreen';
 import { ParentProfileScreen } from '../screens/parent/ParentProfileScreen';
@@ -152,7 +152,7 @@ export function ParentNavigator() {
       <Stack.Screen name="Meals" component={MealsScreen} />
       <Stack.Screen name="Media" component={MediaScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
-      <Stack.Screen name="TeacherRating" component={TeacherRatingScreen} />
+
       <Stack.Screen name="SchoolRating" component={SchoolRatingScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="Therapy" component={TherapyScreen} />

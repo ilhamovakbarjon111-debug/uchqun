@@ -124,11 +124,11 @@ const Profile = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-700">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black text-white drop-shadow-sm">{t('profile.title', { defaultValue: 'Profile' })}</h1>
-          <p className="text-gray-500 text-sm">{t('profile.subtitle', { defaultValue: 'Manage your account' })}</p>
+          <p className="text-white/90 font-medium mt-1 drop-shadow-sm">{t('profile.subtitle', { defaultValue: 'Manage your account' })}</p>
         </div>
         <div className="flex items-center gap-3">
           <LanguageSwitcher />

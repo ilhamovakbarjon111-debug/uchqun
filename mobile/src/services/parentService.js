@@ -65,16 +65,6 @@ export const parentService = {
   },
 
   // Ratings
-  getRating: async () => {
-    const response = await api.get('/parent/ratings');
-    return extractResponseData(response);
-  },
-
-  rateTeacher: async (data) => {
-    const response = await api.post('/parent/ratings', data);
-    return extractResponseData(response);
-  },
-
   getSchoolRating: async () => {
     const response = await api.get('/parent/school-rating');
     return extractResponseData(response);

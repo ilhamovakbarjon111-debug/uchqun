@@ -8,7 +8,7 @@ import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
 
 export function ParentDetailScreen() {
   const route = useRoute();
@@ -24,7 +24,7 @@ export function ParentDetailScreen() {
         <View style={styles.content}>
           <Card>
             <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle-outline" size={48} color={theme.Colors.status.error} />
+              <Ionicons name="alert-circle-outline" size={48} color={tokens.colors.semantic.error} />
               <Text style={styles.errorText}>Missing parentId parameter</Text>
             </View>
           </Card>
@@ -86,7 +86,7 @@ export function ParentDetailScreen() {
             </View>
             {parent.group && (
               <View style={styles.groupBadge}>
-                <Ionicons name="school-outline" size={14} color={theme.Colors.primary.blue} />
+                <Ionicons name="school-outline" size={14} color={tokens.colors.accent.blue} />
                 <Text style={styles.groupBadgeText}>{parent.group.name}</Text>
               </View>
             )}
@@ -97,7 +97,7 @@ export function ParentDetailScreen() {
           {/* Name */}
           <View style={styles.infoRow}>
             <View style={styles.iconContainer}>
-              <Ionicons name="person-outline" size={18} color={theme.Colors.text.secondary} />
+              <Ionicons name="person-outline" size={18} color={tokens.colors.text.secondary} />
             </View>
             <View style={styles.infoContent}>
               <Text style={styles.label}>{t('parentsPage.name') || 'Name'}</Text>
@@ -111,14 +111,14 @@ export function ParentDetailScreen() {
           {parent.email && (
             <TouchableOpacity style={styles.infoRow} onPress={() => handleEmail(parent.email)}>
               <View style={styles.iconContainer}>
-                <Ionicons name="mail-outline" size={18} color={theme.Colors.primary.blue} />
+                <Ionicons name="mail-outline" size={18} color={tokens.colors.accent.blue} />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.label}>{t('parentsPage.email') || 'Email'}</Text>
                 <Text style={[styles.value, styles.linkValue]}>{parent.email}</Text>
               </View>
               <View style={styles.actionButton}>
-                <Ionicons name="send-outline" size={16} color={theme.Colors.primary.blue} />
+                <Ionicons name="send-outline" size={16} color={tokens.colors.accent.blue} />
               </View>
             </TouchableOpacity>
           )}
@@ -127,14 +127,14 @@ export function ParentDetailScreen() {
           {parent.phone && (
             <TouchableOpacity style={styles.infoRow} onPress={() => handleCall(parent.phone)}>
               <View style={styles.iconContainer}>
-                <Ionicons name="call-outline" size={18} color={theme.Colors.status.success} />
+                <Ionicons name="call-outline" size={18} color={tokens.colors.semantic.success} />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.label}>{t('parentsPage.phone') || 'Phone'}</Text>
                 <Text style={[styles.value, styles.phoneValue]}>{parent.phone}</Text>
               </View>
               <View style={[styles.actionButton, styles.callActionButton]}>
-                <Ionicons name="call" size={16} color={theme.Colors.text.inverse} />
+                <Ionicons name="call" size={16} color={tokens.colors.text.white} />
               </View>
             </TouchableOpacity>
           )}
@@ -143,7 +143,7 @@ export function ParentDetailScreen() {
           {parent.address && (
             <View style={styles.infoRow}>
               <View style={styles.iconContainer}>
-                <Ionicons name="location-outline" size={18} color={theme.Colors.text.secondary} />
+                <Ionicons name="location-outline" size={18} color={tokens.colors.text.secondary} />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.label}>{t('parentsPage.address') || 'Address'}</Text>
@@ -157,7 +157,7 @@ export function ParentDetailScreen() {
         {parent.children && Array.isArray(parent.children) && parent.children.length > 0 && (
           <Card>
             <View style={styles.sectionHeader}>
-              <Ionicons name="people" size={20} color={theme.Colors.primary.blue} />
+              <Ionicons name="people" size={20} color={tokens.colors.accent.blue} />
               <Text style={styles.sectionTitle}>{t('parentsPage.children') || 'Children'}</Text>
               <View style={styles.countBadge}>
                 <Text style={styles.countText}>{parent.children.length}</Text>
@@ -184,7 +184,7 @@ export function ParentDetailScreen() {
                   <View style={styles.childDetails}>
                     {child.dateOfBirth && (
                       <View style={styles.childDetailItem}>
-                        <Ionicons name="calendar-outline" size={12} color={theme.Colors.text.secondary} />
+                        <Ionicons name="calendar-outline" size={12} color={tokens.colors.text.secondary} />
                         <Text style={styles.childDetailText}>
                           {new Date(child.dateOfBirth).toLocaleDateString()}
                         </Text>
@@ -196,7 +196,7 @@ export function ParentDetailScreen() {
                         <Ionicons
                           name={child.gender === 'male' ? 'male-outline' : 'female-outline'}
                           size={12}
-                          color={theme.Colors.text.secondary}
+                          color={tokens.colors.text.secondary}
                         />
                         <Text style={styles.childDetailText}>{child.gender}</Text>
                       </View>
@@ -204,21 +204,21 @@ export function ParentDetailScreen() {
 
                     {child.school && (
                       <View style={styles.childDetailItem}>
-                        <Ionicons name="school-outline" size={12} color={theme.Colors.text.secondary} />
+                        <Ionicons name="school-outline" size={12} color={tokens.colors.text.secondary} />
                         <Text style={styles.childDetailText}>{child.school}</Text>
                       </View>
                     )}
 
                     {child.class && (
                       <View style={styles.childDetailItem}>
-                        <Ionicons name="book-outline" size={12} color={theme.Colors.text.secondary} />
+                        <Ionicons name="book-outline" size={12} color={tokens.colors.text.secondary} />
                         <Text style={styles.childDetailText}>{child.class}</Text>
                       </View>
                     )}
 
                     {child.teacher && (
                       <View style={styles.childDetailItem}>
-                        <Ionicons name="person-outline" size={12} color={theme.Colors.text.secondary} />
+                        <Ionicons name="person-outline" size={12} color={tokens.colors.text.secondary} />
                         <Text style={styles.childDetailText}>{child.teacher}</Text>
                       </View>
                     )}
@@ -230,7 +230,7 @@ export function ParentDetailScreen() {
                       <Ionicons
                         name="medical-outline"
                         size={12}
-                        color={theme.Colors.status.warning}
+                        color={tokens.colors.semantic.warning}
                       />
                       <Text style={styles.disabilityText}>{child.disabilityType}</Text>
                     </View>
@@ -250,161 +250,161 @@ export function ParentDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+    backgroundColor: tokens.colors.surface.secondary,
   },
   content: {
-    padding: theme.Spacing.md,
+    padding: tokens.space.md,
   },
   errorContainer: {
-    padding: theme.Spacing.xl,
+    padding: tokens.space.xl,
     alignItems: 'center',
   },
   errorText: {
-    marginTop: theme.Spacing.md,
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.secondary,
+    marginTop: tokens.space.md,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.secondary,
   },
   avatarContainer: {
     alignItems: 'center',
-    marginBottom: theme.Spacing.lg,
+    marginBottom: tokens.space.lg,
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: theme.Colors.cards.parents + '20',
+    backgroundColor: tokens.colors.accent.blue + '20',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: theme.Typography.sizes['2xl'],
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.cards.parents,
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.accent.blue,
   },
   groupBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.Colors.primary.blueBg,
-    paddingHorizontal: theme.Spacing.md,
+    backgroundColor: tokens.colors.accent[50],
+    paddingHorizontal: tokens.space.md,
     paddingVertical: 6,
     borderRadius: 16,
-    marginTop: theme.Spacing.sm,
+    marginTop: tokens.space.sm,
     gap: 6,
   },
   groupBadgeText: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.primary.blue,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.accent.blue,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.Spacing.md,
-    gap: theme.Spacing.sm,
+    marginBottom: tokens.space.md,
+    gap: tokens.space.sm,
   },
   sectionTitle: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.bodyLarge.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.primary,
     flex: 1,
   },
   countBadge: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: theme.Colors.primary.blue,
+    backgroundColor: tokens.colors.accent.blue,
     alignItems: 'center',
     justifyContent: 'center',
   },
   countText: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.inverse,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.white,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.Spacing.md,
-    paddingBottom: theme.Spacing.md,
+    marginBottom: tokens.space.md,
+    paddingBottom: tokens.space.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
+    borderBottomColor: tokens.colors.border.light,
   },
   iconContainer: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: theme.Colors.background.secondary,
+    backgroundColor: tokens.colors.surface.secondary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   infoContent: {
     flex: 1,
   },
   label: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
     marginBottom: 2,
   },
   value: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    fontWeight: theme.Typography.weights.medium,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   linkValue: {
-    color: theme.Colors.primary.blue,
+    color: tokens.colors.accent.blue,
   },
   phoneValue: {
-    color: theme.Colors.status.success,
-    fontWeight: theme.Typography.weights.semibold,
+    color: tokens.colors.semantic.success,
+    fontWeight: tokens.typography.fontWeight.semibold,
   },
   actionButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: theme.Colors.primary.blueBg,
+    backgroundColor: tokens.colors.accent[50],
     alignItems: 'center',
     justifyContent: 'center',
   },
   callActionButton: {
-    backgroundColor: theme.Colors.status.success,
+    backgroundColor: tokens.colors.semantic.success,
   },
   childItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingVertical: theme.Spacing.md,
+    paddingVertical: tokens.space.md,
   },
   childItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
+    borderBottomColor: tokens.colors.border.light,
   },
   childAvatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: theme.Colors.primary.blueBg,
+    backgroundColor: tokens.colors.accent[50],
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   childAvatarText: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.primary.blue,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.accent.blue,
   },
   childContent: {
     flex: 1,
   },
   childName: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs,
   },
   childDetails: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.Spacing.sm,
+    gap: tokens.space.sm,
   },
   childDetailItem: {
     flexDirection: 'row',
@@ -412,24 +412,24 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   childDetailText: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
   },
   disabilityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.Colors.status.warning + '15',
-    paddingHorizontal: theme.Spacing.sm,
+    backgroundColor: tokens.colors.semantic.warning + '15',
+    paddingHorizontal: tokens.space.sm,
     paddingVertical: 4,
     borderRadius: 12,
     alignSelf: 'flex-start',
-    marginTop: theme.Spacing.sm,
+    marginTop: tokens.space.sm,
     gap: 4,
   },
   disabilityText: {
-    fontSize: theme.Typography.sizes.xs,
-    color: theme.Colors.status.warning,
-    fontWeight: theme.Typography.weights.semibold,
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.semantic.warning,
+    fontWeight: tokens.typography.fontWeight.semibold,
   },
   bottomSpacer: {
     height: 100,

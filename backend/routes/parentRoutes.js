@@ -11,8 +11,6 @@ import {
   getMyProfile,
   getParentData,
   getAIAdvice,
-  rateMyTeacher,
-  getMyRating,
   rateSchool,
   getMySchoolRating,
   getSchools,
@@ -49,8 +47,6 @@ router.get('/meals/:id', authenticate, requireParent, getMealById);
 router.get('/media', authenticate, requireParent, getMyMedia);
 router.get('/media/:id', authenticate, requireParent, getMediaById);
 router.get('/profile', authenticate, requireParent, getMyProfile);
-router.get('/ratings', authenticate, requireParent, getMyRating);
-router.post('/ratings', authenticate, requireParent, rateMyTeacher);
 router.get('/school-rating', authenticate, requireParent, getMySchoolRating);
 router.post('/school-rating', authenticate, requireParent, rateSchool);
 router.get('/schools', authenticate, requireParent, getSchools);

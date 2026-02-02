@@ -19,7 +19,7 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 import TeacherBackground from '../../components/layout/TeacherBackground';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
 
 const EMOTIONAL_STATE_KEYS = [
   'stable',
@@ -213,7 +213,7 @@ export function MonitoringJournalScreen() {
 
         {children.length === 0 ? (
           <Card style={styles.emptyCard}>
-            <Ionicons name="people-outline" size={48} color={theme.Colors.text.tertiary} />
+            <Ionicons name="people-outline" size={48} color={tokens.colors.text.tertiary} />
             <Text style={styles.emptyText}>{t('parentsPage.noParentsFound')}</Text>
           </Card>
         ) : (
@@ -223,7 +223,7 @@ export function MonitoringJournalScreen() {
               <Card key={child.id} style={styles.childCard}>
                 <View style={styles.childHeader}>
                   <View style={styles.childIconWrap}>
-                    <Ionicons name="person" size={24} color={theme.Colors.primary.blue} />
+                    <Ionicons name="person" size={24} color={tokens.colors.accent.blue} />
                   </View>
                   <View style={styles.childInfo}>
                     <Text style={styles.childName}>
@@ -240,12 +240,12 @@ export function MonitoringJournalScreen() {
                 <View style={styles.statusRow}>
                   {todayRecord ? (
                     <View style={styles.statusBadge}>
-                      <Ionicons name="checkmark-circle" size={18} color={theme.Colors.status.success} />
+                      <Ionicons name="checkmark-circle" size={18} color={tokens.colors.semantic.success} />
                       <Text style={styles.statusTextOk}>{t('monitoring.assessedToday')}</Text>
                     </View>
                   ) : (
                     <View style={styles.statusBadge}>
-                      <Ionicons name="ellipse-outline" size={18} color={theme.Colors.text.tertiary} />
+                      <Ionicons name="ellipse-outline" size={18} color={tokens.colors.text.tertiary} />
                       <Text style={styles.statusText}>{t('monitoring.notAssessedToday')}</Text>
                     </View>
                   )}
@@ -257,7 +257,7 @@ export function MonitoringJournalScreen() {
                   <Ionicons
                     name={todayRecord ? 'pencil' : 'add'}
                     size={18}
-                    color={theme.Colors.text.inverse}
+                    color={tokens.colors.text.white}
                   />
                   <Text style={styles.assessButtonText}>
                     {todayRecord ? t('monitoring.edit') : t('monitoring.assess')}
@@ -278,14 +278,14 @@ export function MonitoringJournalScreen() {
                 {editingRecord ? t('monitoring.editModal') : t('monitoring.createModal')}
               </Text>
               <TouchableOpacity onPress={handleCloseModal}>
-                <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
+                <Ionicons name="close" size={24} color={tokens.colors.text.secondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
               {selectedChild && (
                 <View style={styles.selectedChildBox}>
-                  <Ionicons name="person" size={20} color={theme.Colors.primary.blue} />
+                  <Ionicons name="person" size={20} color={tokens.colors.accent.blue} />
                   <View>
                     <Text style={styles.selectedChildName}>
                       {selectedChild.firstName} {selectedChild.lastName}
@@ -301,7 +301,7 @@ export function MonitoringJournalScreen() {
                 value={formData.date}
                 onChangeText={(text) => setFormData((prev) => ({ ...prev, date: text }))}
                 placeholder="YYYY-MM-DD"
-                placeholderTextColor={theme.Colors.text.tertiary}
+                placeholderTextColor={tokens.colors.text.tertiary}
               />
 
               <Text style={styles.label}>{t('monitoring.emotionalState')}</Text>
@@ -314,7 +314,7 @@ export function MonitoringJournalScreen() {
                   <Ionicons
                     name={formData.emotionalState[key] ? 'checkbox' : 'square-outline'}
                     size={22}
-                    color={formData.emotionalState[key] ? theme.Colors.primary.blue : theme.Colors.text.tertiary}
+                    color={formData.emotionalState[key] ? tokens.colors.accent.blue : tokens.colors.text.tertiary}
                   />
                   <Text style={styles.checkLabel}>{t(`monitoring.emotionalStates.${key}`)}</Text>
                 </Pressable>
@@ -326,7 +326,7 @@ export function MonitoringJournalScreen() {
                 value={formData.notes}
                 onChangeText={(text) => setFormData((prev) => ({ ...prev, notes: text }))}
                 placeholder={t('monitoring.notesPlaceholder')}
-                placeholderTextColor={theme.Colors.text.tertiary}
+                placeholderTextColor={tokens.colors.text.tertiary}
                 multiline
               />
 
@@ -336,7 +336,7 @@ export function MonitoringJournalScreen() {
                 value={formData.teacherSignature}
                 onChangeText={(text) => setFormData((prev) => ({ ...prev, teacherSignature: text }))}
                 placeholder={t('monitoring.teacherSignaturePlaceholder')}
-                placeholderTextColor={theme.Colors.text.tertiary}
+                placeholderTextColor={tokens.colors.text.tertiary}
               />
             </ScrollView>
 
@@ -350,14 +350,14 @@ export function MonitoringJournalScreen() {
                 disabled={saving}
               >
                 {saving ? (
-                  <ActivityIndicator size="small" color={theme.Colors.text.inverse} />
+                  <ActivityIndicator size="small" color={tokens.colors.text.white} />
                 ) : (
                   <Text style={styles.saveBtnText}>{t('monitoring.save')}</Text>
                 )}
               </Pressable>
               {editingRecord && (
                 <Pressable style={styles.deleteBtn} onPress={handleDelete}>
-                  <Ionicons name="trash-outline" size={18} color={theme.Colors.status.error} />
+                  <Ionicons name="trash-outline" size={18} color={tokens.colors.semantic.error} />
                   <Text style={styles.deleteBtnText}>{t('monitoring.delete')}</Text>
                 </Pressable>
               )}
@@ -370,139 +370,139 @@ export function MonitoringJournalScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.Colors.background.secondary },
+  container: { flex: 1, backgroundColor: tokens.colors.surface.secondary },
   scroll: { flex: 1 },
-  content: { padding: theme.Spacing.md, paddingBottom: theme.Spacing.xl * 2 },
+  content: { padding: tokens.space.md, paddingBottom: tokens.space.xl * 2 },
   subtitle: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    marginBottom: theme.Spacing.lg,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
+    marginBottom: tokens.space.lg,
   },
   emptyCard: {
     alignItems: 'center',
-    padding: theme.Spacing.xl,
+    padding: tokens.space.xl,
   },
-  emptyText: { marginTop: theme.Spacing.sm, color: theme.Colors.text.secondary },
-  childCard: { marginBottom: theme.Spacing.md },
-  childHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: theme.Spacing.sm },
+  emptyText: { marginTop: tokens.space.sm, color: tokens.colors.text.secondary },
+  childCard: { marginBottom: tokens.space.md },
+  childHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: tokens.space.sm },
   childIconWrap: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: theme.Colors.primary.blueBg,
+    backgroundColor: tokens.colors.accent[50],
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.sm,
+    marginRight: tokens.space.sm,
   },
   childInfo: { flex: 1 },
   childName: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.bodyLarge.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.primary,
   },
-  childParent: { fontSize: theme.Typography.sizes.sm, color: theme.Colors.text.secondary },
-  childMeta: { fontSize: theme.Typography.sizes.xs, color: theme.Colors.text.tertiary },
-  statusRow: { marginBottom: theme.Spacing.sm },
+  childParent: { fontSize: tokens.type.sub.fontSize, color: tokens.colors.text.secondary },
+  childMeta: { fontSize: tokens.type.caption.fontSize, color: tokens.colors.text.tertiary },
+  statusRow: { marginBottom: tokens.space.sm },
   statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  statusText: { fontSize: theme.Typography.sizes.sm, color: theme.Colors.text.tertiary },
-  statusTextOk: { fontSize: theme.Typography.sizes.sm, color: theme.Colors.status.success, fontWeight: '600' },
+  statusText: { fontSize: tokens.type.sub.fontSize, color: tokens.colors.text.tertiary },
+  statusTextOk: { fontSize: tokens.type.sub.fontSize, color: tokens.colors.semantic.success, fontWeight: '600' },
   assessButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: theme.Colors.primary.blue,
-    paddingVertical: theme.Spacing.sm,
-    paddingHorizontal: theme.Spacing.md,
-    borderRadius: theme.BorderRadius.sm,
+    backgroundColor: tokens.colors.accent.blue,
+    paddingVertical: tokens.space.sm,
+    paddingHorizontal: tokens.space.md,
+    borderRadius: tokens.radius.sm,
   },
   assessButtonPressed: { opacity: 0.8 },
-  assessButtonText: { color: theme.Colors.text.inverse, fontWeight: '600', fontSize: theme.Typography.sizes.sm },
+  assessButtonText: { color: tokens.colors.text.white, fontWeight: '600', fontSize: tokens.type.sub.fontSize },
 
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.Spacing.md,
+    padding: tokens.space.md,
   },
   modalBox: {
-    backgroundColor: theme.Colors.background.card,
-    borderRadius: theme.BorderRadius.lg,
+    backgroundColor: tokens.colors.card.base,
+    borderRadius: tokens.radius.lg,
     width: '100%',
     maxHeight: '90%',
-    ...theme.Colors.shadow.lg,
+    ...tokens.shadow.elevated,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: theme.Spacing.md,
+    padding: tokens.space.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
+    borderBottomColor: tokens.colors.border.light,
   },
   modalTitle: {
-    fontSize: theme.Typography.sizes.xl,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.primary,
   },
-  modalScroll: { maxHeight: 400, padding: theme.Spacing.md },
+  modalScroll: { maxHeight: 400, padding: tokens.space.md },
   selectedChildBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.Colors.primary.blueBg,
-    padding: theme.Spacing.sm,
-    borderRadius: theme.BorderRadius.sm,
-    marginBottom: theme.Spacing.md,
-    gap: theme.Spacing.sm,
+    backgroundColor: tokens.colors.accent[50],
+    padding: tokens.space.sm,
+    borderRadius: tokens.radius.sm,
+    marginBottom: tokens.space.md,
+    gap: tokens.space.sm,
   },
-  selectedChildName: { fontWeight: '600', color: theme.Colors.text.primary },
-  selectedChildParent: { fontSize: theme.Typography.sizes.sm, color: theme.Colors.text.secondary },
+  selectedChildName: { fontWeight: '600', color: tokens.colors.text.primary },
+  selectedChildParent: { fontSize: tokens.type.sub.fontSize, color: tokens.colors.text.secondary },
   label: {
-    fontSize: theme.Typography.sizes.sm,
+    fontSize: tokens.type.sub.fontSize,
     fontWeight: '600',
-    color: theme.Colors.text.secondary,
-    marginBottom: theme.Spacing.xs,
-    marginTop: theme.Spacing.sm,
+    color: tokens.colors.text.secondary,
+    marginBottom: tokens.space.xs,
+    marginTop: tokens.space.sm,
   },
   input: {
     borderWidth: 1,
-    borderColor: theme.Colors.border.medium,
-    borderRadius: theme.BorderRadius.sm,
-    padding: theme.Spacing.sm,
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    backgroundColor: theme.Colors.background.primary,
+    borderColor: tokens.colors.border.medium,
+    borderRadius: tokens.radius.sm,
+    padding: tokens.space.sm,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
+    backgroundColor: tokens.colors.surface.card,
   },
   textArea: { height: 80, textAlignVertical: 'top' },
   checkRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 10 },
-  checkLabel: { flex: 1, fontSize: theme.Typography.sizes.sm, color: theme.Colors.text.primary },
+  checkLabel: { flex: 1, fontSize: tokens.type.sub.fontSize, color: tokens.colors.text.primary },
   modalActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.Spacing.sm,
-    padding: theme.Spacing.md,
+    gap: tokens.space.sm,
+    padding: tokens.space.md,
     borderTopWidth: 1,
-    borderTopColor: theme.Colors.border.light,
+    borderTopColor: tokens.colors.border.light,
   },
-  cancelBtn: { paddingVertical: theme.Spacing.sm, paddingHorizontal: theme.Spacing.md },
-  cancelBtnText: { color: theme.Colors.text.secondary, fontWeight: '600' },
+  cancelBtn: { paddingVertical: tokens.space.sm, paddingHorizontal: tokens.space.md },
+  cancelBtnText: { color: tokens.colors.text.secondary, fontWeight: '600' },
   saveBtn: {
-    backgroundColor: theme.Colors.primary.blue,
-    paddingVertical: theme.Spacing.sm,
-    paddingHorizontal: theme.Spacing.lg,
-    borderRadius: theme.BorderRadius.sm,
+    backgroundColor: tokens.colors.accent.blue,
+    paddingVertical: tokens.space.sm,
+    paddingHorizontal: tokens.space.lg,
+    borderRadius: tokens.radius.sm,
   },
   saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { color: theme.Colors.text.inverse, fontWeight: '600' },
+  saveBtnText: { color: tokens.colors.text.white, fontWeight: '600' },
   deleteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: theme.Spacing.sm,
-    paddingHorizontal: theme.Spacing.md,
-    backgroundColor: theme.Colors.status.error + '20',
-    borderRadius: theme.BorderRadius.sm,
+    paddingVertical: tokens.space.sm,
+    paddingHorizontal: tokens.space.md,
+    backgroundColor: tokens.colors.semantic.error + '20',
+    borderRadius: tokens.radius.sm,
   },
-  deleteBtnText: { color: theme.Colors.status.error, fontWeight: '600' },
+  deleteBtnText: { color: tokens.colors.semantic.error, fontWeight: '600' },
 });

@@ -7,7 +7,6 @@ import { teacherService } from '../../services/teacherService';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import theme from '../../styles/theme';
 import tokens from '../../styles/tokens';
 import { API_URL } from '../../config';
 import { api } from '../../services/api';

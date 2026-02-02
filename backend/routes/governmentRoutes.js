@@ -4,7 +4,6 @@ import {
   getSchoolsStats,
   getStudentsStats,
   getRatingsStats,
-  getPaymentsStats,
   generateStats,
   getSavedStats,
   getAdmins,
@@ -28,9 +27,6 @@ router.get('/students', getStudentsStats);
 
 // Ratings statistics
 router.get('/ratings', getRatingsStats);
-
-// Payments statistics
-router.get('/payments', getPaymentsStats);
 
 // Generate and save statistics
 router.post('/stats/generate', generateStats);

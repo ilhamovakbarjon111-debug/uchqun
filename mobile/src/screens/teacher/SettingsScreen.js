@@ -191,7 +191,7 @@ export function SettingsScreen() {
           title: t('settings.responsibilities', { defaultValue: 'Responsibilities' }),
           subtitle: t('settings.viewResponsibilities', { defaultValue: 'View assigned duties' }),
           onPress: () => navigation.navigate('Responsibilities'),
-          color: '#10B981',
+          color: tokens.colors.semantic.success,
         },
         {
           icon: 'checkmark-done-outline',
