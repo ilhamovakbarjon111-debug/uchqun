@@ -18,70 +18,57 @@ const PushNotification = sequelize.define('PushNotification', {
   deviceToken: {
     type: DataTypes.TEXT,
     allowNull: false,
-    comment: 'Foydalanuvchi qurilma tokeni',
   },
   platform: {
     type: DataTypes.ENUM('ios', 'android', 'web'),
     allowNull: false,
-    comment: 'Platforma',
   },
   title: {
     type: DataTypes.STRING(500),
     allowNull: false,
-    comment: 'Xabarnoma sarlavhasi',
   },
   body: {
     type: DataTypes.TEXT,
     allowNull: false,
-    comment: 'Xabarnoma matni',
   },
   data: {
     type: DataTypes.JSONB,
     allowNull: true,
-    comment: 'Qo\'shimcha ma\'lumotlar',
   },
   notificationType: {
     type: DataTypes.ENUM('activity', 'meal', 'media', 'rating', 'warning', 'message', 'system', 'payment', 'therapy', 'other'),
     allowNull: false,
-    comment: 'Xabarnoma turi',
   },
   priority: {
     type: DataTypes.ENUM('low', 'normal', 'high'),
     defaultValue: 'normal',
     allowNull: false,
-    comment: 'Xabarnoma ustuvorligi',
   },
   status: {
     type: DataTypes.ENUM('pending', 'sent', 'delivered', 'failed', 'opened'),
     defaultValue: 'pending',
     allowNull: false,
-    comment: 'Xabarnoma holati',
   },
   sentAt: {
     type: DataTypes.DATE,
     allowNull: true,
-    comment: 'Yuborilgan vaqti',
   },
   deliveredAt: {
     type: DataTypes.DATE,
     allowNull: true,
-    comment: 'Yetkazilgan vaqti',
   },
   openedAt: {
     type: DataTypes.DATE,
     allowNull: true,
-    comment: 'Ochilgan vaqti',
   },
   errorMessage: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Xato xabari (agar mavjud bo\'lsa)',
   },
   retryCount: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
     allowNull: false,
-    comment: 'Qayta urinishlar soni',
   },
 }, {
   tableName: 'push_notifications',

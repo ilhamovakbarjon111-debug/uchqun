@@ -8,6 +8,7 @@ import TherapyUsage from '../models/TherapyUsage.js';
 import AIWarning from '../models/AIWarning.js';
 import { Op } from 'sequelize';
 import logger from '../utils/logger.js';
+import { getGovernmentLevel, sortSchoolsByRating, computeRatingScore, computeAverageRating } from '../utils/governmentLevel.js';
 
 /**
  * Get overview statistics
@@ -35,10 +36,18 @@ export const getOverview = async (req, res) => {
       logger.warn('Failed to count schools', { error: error.message });
     }
 
-    // Get total students
+    // Get total students (only those linked to active schools)
     let studentsCount = 0;
     try {
-      studentsCount = await Child.count();
+      studentsCount = await Child.count({
+        include: [{
+          model: School,
+          as: 'childSchool',
+          attributes: [],
+          where: { isActive: true },
+          required: true,
+        }],
+      });
     } catch (error) {
       logger.warn('Failed to count students', { error: error.message });
     }
@@ -63,16 +72,14 @@ export const getOverview = async (req, res) => {
       logger.warn('Failed to count parents', { error: error.message });
     }
 
-    // Get average school rating
+    // Get average school rating (supports both stars and evaluation formats)
     let avgRating = 0;
     try {
       const ratings = await SchoolRating.findAll({
-        attributes: ['stars'],
+        attributes: ['stars', 'evaluation'],
       });
-      if (ratings.length > 0) {
-        const sum = ratings.reduce((acc, r) => acc + (r.stars || 0), 0);
-        avgRating = parseFloat((sum / ratings.length).toFixed(2));
-      }
+      const result = computeAverageRating(ratings);
+      avgRating = result.average;
     } catch (error) {
       logger.warn('Failed to calculate average rating', { error: error.message });
     }
@@ -138,104 +145,115 @@ export const getOverview = async (req, res) => {
  */
 export const getSchoolsStats = async (req, res) => {
   try {
-    const { region, district, limit = 50, offset = 0 } = req.query;
+    const { limit = 50, offset = 0 } = req.query;
 
     const where = { isActive: true };
-    // Note: School model doesn't have region/district fields yet
-    // This would need to be added to the School model
 
     let schools;
+    let includesLoaded = true;
     try {
       schools = await School.findAndCountAll({
         where,
         limit: parseInt(limit),
         offset: parseInt(offset),
+        distinct: true,
         include: [
           {
             model: SchoolRating,
             as: 'ratings',
+            attributes: ['stars', 'evaluation'],
             required: false,
           },
           {
             model: Child,
             as: 'schoolChildren',
+            attributes: ['id'],
             required: false,
           },
         ],
+        order: [['name', 'ASC']],
       });
     } catch (includeError) {
-      // Fallback: get schools without includes if association fails
       logger.warn('School include failed, using fallback', { error: includeError.message });
+      includesLoaded = false;
       schools = await School.findAndCountAll({
         where,
         limit: parseInt(limit),
         offset: parseInt(offset),
+        order: [['name', 'ASC']],
       });
     }
 
     const schoolsWithStats = await Promise.all(schools.rows.map(async (school) => {
-      try {
-        const ratings = school.ratings || [];
-        const avgRating = ratings.length > 0
-          ? (ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / ratings.length).toFixed(2)
-          : 0;
-        const studentsCount = school.schoolChildren?.length || 0;
+      let ratings;
+      let studentsCount;
 
-        return {
-          ...school.toJSON(),
-          averageRating: parseFloat(avgRating),
-          ratingsCount: ratings.length,
-          studentsCount,
-        };
-      } catch (mapError) {
-        // Fallback: get stats separately if map fails
+      // If includes loaded, use eager-loaded data; otherwise query per school
+      if (includesLoaded && school.ratings !== undefined) {
+        ratings = school.ratings || [];
+        studentsCount = (school.schoolChildren || []).length;
+      } else {
         try {
-          const [ratings, children] = await Promise.all([
-            SchoolRating.findAll({ where: { schoolId: school.id } }),
-            Child.findAll({ where: { schoolId: school.id } }),
+          const [ratingRows, childRows] = await Promise.all([
+            SchoolRating.findAll({ where: { schoolId: school.id }, attributes: ['stars', 'evaluation'] }),
+            Child.count({ where: { schoolId: school.id } }),
           ]);
-          
-          const avgRating = ratings.length > 0
-            ? (ratings.reduce((sum, r) => sum + (r.stars || 0), 0) / ratings.length).toFixed(2)
-            : 0;
-
-          return {
-            ...school.toJSON(),
-            averageRating: parseFloat(avgRating),
-            ratingsCount: ratings.length,
-            studentsCount: children.length,
-          };
+          ratings = ratingRows;
+          studentsCount = childRows;
         } catch (fallbackError) {
-          logger.error('Fallback stats fetch failed', { 
-            schoolId: school.id, 
-            error: fallbackError.message 
+          logger.error('Per-school stats fallback failed', {
+            schoolId: school.id,
+            error: fallbackError.message,
           });
-          return {
-            ...school.toJSON(),
-            averageRating: 0,
-            ratingsCount: 0,
-            studentsCount: 0,
-          };
+          ratings = [];
+          studentsCount = 0;
         }
       }
+
+      const ratingResult = computeAverageRating(ratings);
+      const ratingsCount = ratingResult.count;
+      const avgRating = ratingResult.average;
+
+      const { id, name, type, address, phone, email, description, isActive, createdAt } = school.toJSON();
+
+      return {
+        id, name, type, address, phone, email, description, isActive, createdAt,
+        averageRating: avgRating,
+        ratingsCount,
+        studentsCount,
+        governmentLevel: getGovernmentLevel(avgRating, ratingsCount),
+      };
     }));
+
+    // Global stats (weighted average by review count)
+    let totalReviews = 0;
+    let weightedSum = 0;
+    schoolsWithStats.forEach((s) => {
+      totalReviews += s.ratingsCount;
+      weightedSum += s.averageRating * s.ratingsCount;
+    });
+    const globalAverageRating = totalReviews > 0
+      ? parseFloat((weightedSum / totalReviews).toFixed(1))
+      : 0;
 
     res.json({
       success: true,
       data: {
         schools: schoolsWithStats,
         total: schools.count,
+        totalReviews,
+        globalAverageRating,
         limit: parseInt(limit),
         offset: parseInt(offset),
       },
     });
   } catch (error) {
-    logger.error('Get schools stats error', { 
-      error: error.message, 
+    logger.error('Get schools stats error', {
+      error: error.message,
       stack: error.stack,
       userId: req.user?.id,
     });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch schools statistics',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
@@ -291,59 +309,114 @@ export const getStudentsStats = async (req, res) => {
 };
 
 /**
- * Get ratings statistics
+ * Get ratings statistics - schools ranked by average rating
  * GET /api/government/ratings
  */
 export const getRatingsStats = async (req, res) => {
   try {
-    const { schoolId, startDate, endDate } = req.query;
+    const { startDate, endDate } = req.query;
 
-    const where = {};
-    if (schoolId) {
-      where.schoolId = schoolId;
-    }
+    const ratingWhere = {};
     if (startDate || endDate) {
-      where.createdAt = {};
+      ratingWhere.createdAt = {};
       if (startDate) {
-        where.createdAt[Op.gte] = new Date(startDate);
+        ratingWhere.createdAt[Op.gte] = new Date(startDate);
       }
       if (endDate) {
-        where.createdAt[Op.lte] = new Date(endDate);
+        ratingWhere.createdAt[Op.lte] = new Date(endDate);
       }
     }
 
-    const ratings = await SchoolRating.findAll({
-      where,
-      include: [
-        {
-          model: School,
-          as: 'school',
-          required: false,
-        },
-      ],
+    // Get all active schools with their ratings
+    let schools;
+    let ratingsIncluded = true;
+    try {
+      const includeOptions = {
+        model: SchoolRating,
+        as: 'ratings',
+        attributes: ['stars', 'evaluation'],
+        required: false,
+      };
+      if (Object.keys(ratingWhere).length > 0) {
+        includeOptions.where = ratingWhere;
+      }
+      schools = await School.findAll({
+        where: { isActive: true },
+        include: [includeOptions],
+      });
+    } catch (includeError) {
+      logger.warn('Ratings include failed, using fallback', { error: includeError.message });
+      ratingsIncluded = false;
+      schools = await School.findAll({
+        where: { isActive: true },
+      });
+    }
+
+    // Aggregate and rank schools by average rating (supports both stars and evaluation)
+    const mappedSchools = await Promise.all(schools.map(async (school) => {
+      let ratings;
+      if (ratingsIncluded && school.ratings !== undefined) {
+        ratings = school.ratings || [];
+      } else {
+        try {
+          const ratingQuery = { schoolId: school.id };
+          if (Object.keys(ratingWhere).length > 0) {
+            Object.assign(ratingQuery, ratingWhere);
+          }
+          ratings = await SchoolRating.findAll({
+            where: ratingQuery,
+            attributes: ['stars', 'evaluation'],
+          });
+        } catch (fallbackError) {
+          logger.error('Per-school ratings fallback failed', {
+            schoolId: school.id,
+            error: fallbackError.message,
+          });
+          ratings = [];
+        }
+      }
+      const ratingResult = computeAverageRating(ratings);
+
+      // Build distribution by mapping each rating to its effective star bucket
+      const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+      ratings.forEach(r => {
+        const score = computeRatingScore(r);
+        if (score !== null) {
+          const bucket = Math.min(5, Math.max(1, Math.round(score)));
+          distribution[bucket]++;
+        }
+      });
+
+      return {
+        id: school.id,
+        name: school.name,
+        address: school.address,
+        averageRating: ratingResult.average,
+        ratingsCount: ratingResult.count,
+        distribution,
+        governmentLevel: getGovernmentLevel(ratingResult.average, ratingResult.count),
+      };
+    }));
+
+    const rankedSchools = sortSchoolsByRating(mappedSchools);
+
+    // Overall stats — recompute from mapped data to avoid stale include data
+    let totalRatingsCount = 0;
+    let weightedSum = 0;
+    mappedSchools.forEach((s) => {
+      totalRatingsCount += s.ratingsCount;
+      weightedSum += s.averageRating * s.ratingsCount;
     });
-
-    // Calculate statistics
-    const totalRatings = ratings.length;
-    const avgRating = totalRatings > 0
-      ? (ratings.reduce((sum, r) => sum + r.stars, 0) / totalRatings).toFixed(2)
+    const overallAverage = totalRatingsCount > 0
+      ? parseFloat((weightedSum / totalRatingsCount).toFixed(1))
       : 0;
-
-    const ratingDistribution = {
-      5: ratings.filter(r => r.stars === 5).length,
-      4: ratings.filter(r => r.stars === 4).length,
-      3: ratings.filter(r => r.stars === 3).length,
-      2: ratings.filter(r => r.stars === 2).length,
-      1: ratings.filter(r => r.stars === 1).length,
-    };
 
     res.json({
       success: true,
       data: {
-        total: totalRatings,
-        average: parseFloat(avgRating),
-        distribution: ratingDistribution,
-        ratings: ratings.slice(0, 100), // Limit response size
+        total: totalRatingsCount,
+        average: overallAverage,
+        schools: rankedSchools,
       },
     });
   } catch (error) {
@@ -644,17 +717,15 @@ async function getOverviewData(region, district, startDate, endDate) {
   const teachersCount = await User.count({ where: { role: 'teacher' } });
   const parentsCount = await User.count({ where: { role: 'parent' } });
   
-  const ratings = await SchoolRating.findAll();
-  const avgRating = ratings.length > 0
-    ? (ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length).toFixed(2)
-    : 0;
+  const ratings = await SchoolRating.findAll({ attributes: ['stars', 'evaluation'] });
+  const ratingResult = computeAverageRating(ratings);
 
   return {
     schools: schoolsCount,
     students: studentsCount,
     teachers: teachersCount,
     parents: parentsCount,
-    averageRating: parseFloat(avgRating),
+    averageRating: ratingResult.average,
   };
 }
 
@@ -832,24 +903,18 @@ export const getAdminDetails = async (req, res) => {
       }
     }
 
-    // Get school ratings
+    // Get school ratings (supports both stars and evaluation formats)
     const schoolIds = schools.map(s => s.id);
-    let ratings = [];
-    let avgRating = 0;
+    let ratingsResult = { average: 0, count: 0 };
     if (schoolIds.length > 0) {
       try {
-        ratings = await SchoolRating.findAll({
+        const ratings = await SchoolRating.findAll({
           where: { schoolId: { [Op.in]: schoolIds } },
-          attributes: ['stars'],
+          attributes: ['stars', 'evaluation'],
         });
-        if (ratings.length > 0) {
-          const sum = ratings.reduce((acc, r) => acc + (r.stars || 0), 0);
-          avgRating = parseFloat((sum / ratings.length).toFixed(1));
-        }
+        ratingsResult = computeAverageRating(ratings);
       } catch (error) {
         logger.warn('Failed to fetch ratings for admin', { error: error.message, adminId: id });
-        ratings = [];
-        avgRating = 0;
       }
     }
 
@@ -874,8 +939,8 @@ export const getAdminDetails = async (req, res) => {
           parents: parents.length,
           students: studentsCount,
           totalRevenue,
-          averageRating: parseFloat(avgRating),
-          ratingsCount: ratings.length,
+          averageRating: ratingsResult.average,
+          ratingsCount: ratingsResult.count,
         },
         receptions: receptions.map(r => r.toJSON()),
         schools: schools.map(s => s.toJSON()),

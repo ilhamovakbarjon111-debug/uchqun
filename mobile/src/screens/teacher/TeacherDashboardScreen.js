@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -192,13 +193,6 @@ export function TeacherDashboardScreen() {
 
   const statCards = [
     {
-      title: t('dashboard.parents'),
-      value: stats?.parents || 0,
-      icon: 'people',
-      color: tokens.colors.accent.blue,
-      onPress: () => safeNavigateToTab('Parents'),
-    },
-    {
       title: t('dashboard.activities'),
       value: stats?.activities || 0,
       icon: 'checkmark-circle',
@@ -237,78 +231,74 @@ export function TeacherDashboardScreen() {
   );
 
   return (
-    <Screen scroll={true} padded={false} header={header} background="teacher">
-      {/* Welcome Header Card - Like website (Gradient Blue) */}
-      <Animated.View
-        style={{
-          opacity: headerFadeAnim,
-          transform: [{ translateY: headerSlideAnim }],
-        }}
-      >
-        <Card
-          variant="gradient"
-          gradientColors={['#3B82F6', '#2563EB']}
-          style={styles.headerCard}
-          padding="lg"
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#0EA5E9', '#06B6D4', '#0284C7']}
+        style={styles.backgroundGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+      <Screen scroll={true} padded={false} header={header} background="transparent">
+        {/* Stats Cards - Semi-transparent cards */}
+        <Animated.View
+          style={[
+            styles.overviewSection,
+            {
+              opacity: statsFadeAnim,
+              transform: [{ translateY: statsSlideAnim }],
+            },
+          ]}
         >
-        <View style={styles.headerContent}>
-          <View style={styles.roleBadge}>
-            <Ionicons name="people" size={16} color={tokens.colors.text.white} />
-            <Text style={styles.roleText}>
-              {(user?.role || '').toLowerCase() === 'admin' ? t('dashboard.roleAdmin') : t('dashboard.roleTeacher')}
-            </Text>
-          </View>
-          <Text style={styles.greetingText}>{t('dashboard.welcome')}</Text>
-          <Text style={styles.nameText} allowFontScaling={true}>
-            {user?.firstName ?? '—'} {user?.lastName ?? ''}
-          </Text>
-        </View>
-      </Card>
-      </Animated.View>
-
-      {/* Overview Section - Like website */}
-      <Animated.View
-        style={[
-          styles.overviewSection,
-          {
-            opacity: statsFadeAnim,
-            transform: [{ translateY: statsSlideAnim }],
-          },
-        ]}
-      >
-        <Text style={styles.sectionTitle} allowFontScaling={true}>{t('dashboard.overview') || 'Overview'}</Text>
-        <View style={styles.statsContainer}>
-          {statCards.map((stat, index) => (
-            <Pressable 
-              key={index} 
-              onPress={stat.onPress}
-              style={({ pressed }) => [
-                styles.statCard,
-                pressed && styles.statCardPressed,
-              ]}
-            >
-              <Card variant="elevated" style={styles.statCardInner} padding="md">
-                <View style={styles.statCardContent}>
-                  <View style={[styles.statIconContainer, { backgroundColor: stat.color + '15' }]}>
-                    <Ionicons name={stat.icon} size={24} color={stat.color} />
-                  </View>
-                  <View style={styles.statTextContainer}>
-                    <Text style={styles.statValue} allowFontScaling={true}>
-                      {stat.value != null && stat.value !== '' ? stat.value : '—'}
-                    </Text>
-                    <Text style={styles.statTitle} allowFontScaling={true}>{stat.title}</Text>
-                  </View>
+          <View style={styles.statsContainer}>
+            {statCards.map((stat, index) => (
+              <Pressable
+                key={index}
+                onPress={stat.onPress}
+                style={({ pressed }) => [
+                  styles.statCard,
+                  pressed && styles.statCardPressed,
+                ]}
+              >
+                <View style={styles.statCardInner}>
+                  <LinearGradient
+                    colors={['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.85)']}
+                    style={styles.statCardGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <View style={styles.statCardContent}>
+                      <View style={[styles.statIconContainer, { backgroundColor: stat.color + '15' }]}>
+                        <Ionicons name={stat.icon} size={24} color={stat.color} />
+                      </View>
+                      <View style={styles.statTextContainer}>
+                        <Text style={styles.statValue} allowFontScaling={true}>
+                          {stat.value != null && stat.value !== '' ? stat.value : '—'}
+                        </Text>
+                        <Text style={styles.statTitle} allowFontScaling={true}>{stat.title}</Text>
+                      </View>
+                    </View>
+                  </LinearGradient>
                 </View>
-              </Card>
-            </Pressable>
-          ))}
-        </View>
-      </Animated.View>
-    </Screen>
+              </Pressable>
+            ))}
+          </View>
+        </Animated.View>
+      </Screen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -324,13 +314,23 @@ const styles = StyleSheet.create({
   topBarTitle: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.primary,
+    color: tokens.colors.text.white,
   },
-  // Header Card - Gradient Blue like website
+  // Header Card - Semi-transparent with gradient
   headerCard: {
     marginHorizontal: tokens.space.md,
     marginTop: tokens.space.md,
     marginBottom: tokens.space.lg,
+    borderRadius: tokens.radius.xl,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  headerCardGradient: {
+    padding: tokens.space.lg,
     borderRadius: tokens.radius.xl,
   },
   headerContent: {
@@ -392,6 +392,18 @@ const styles = StyleSheet.create({
   },
   statCardInner: {
     width: '100%',
+    minHeight: 100,
+    borderRadius: tokens.radius.lg,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statCardGradient: {
+    padding: tokens.space.md,
+    borderRadius: tokens.radius.lg,
     minHeight: 100,
   },
   statCardContent: {

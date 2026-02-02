@@ -10,11 +10,27 @@ import Screen from '../../components/layout/Screen';
 import Card from '../../components/common/Card';
 import Skeleton from '../../components/common/Skeleton';
 
+const CRITERIA_KEYS = [
+  'officiallyRegistered',
+  'qualifiedSpecialists',
+  'individualPlan',
+  'safeEnvironment',
+  'medicalRequirements',
+  'developmentalActivities',
+  'foodQuality',
+  'regularInformation',
+  'clearPayments',
+  'kindAttitude',
+];
+
+const DEFAULT_EVALUATION = Object.fromEntries(CRITERIA_KEYS.map((k) => [k, false]));
+
 export function SchoolRatingScreen() {
   const navigation = useNavigation();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(null);
+  const [evaluation, setEvaluation] = useState({ ...DEFAULT_EVALUATION });
   const [selectedRating, setSelectedRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -28,6 +44,9 @@ export function SchoolRatingScreen() {
       setLoading(true);
       const data = await parentService.getSchoolRating();
       setRating(data);
+      if (data?.evaluation) {
+        setEvaluation({ ...DEFAULT_EVALUATION, ...data.evaluation });
+      }
       if (data?.rating) {
         setSelectedRating(data.rating);
       }
@@ -41,15 +60,25 @@ export function SchoolRatingScreen() {
     }
   };
 
+  const toggleCriterion = (key) => {
+    setEvaluation((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const hasAnyCriteria = CRITERIA_KEYS.some((k) => evaluation[k]);
+
   const submitRating = async () => {
-    if (selectedRating === 0) {
+    if (!hasAnyCriteria && selectedRating === 0) {
       Alert.alert(t('common.error'), t('schoolRatingPage.errorRequired'));
       return;
     }
-    
+
     try {
       setSubmitting(true);
-      await parentService.rateSchool({ rating: selectedRating, comment });
+      await parentService.rateSchool({
+        evaluation,
+        rating: selectedRating || null,
+        comment,
+      });
       Alert.alert(t('common.success'), t('schoolRatingPage.success'));
       await loadRating();
     } catch (error) {
@@ -73,6 +102,8 @@ export function SchoolRatingScreen() {
       <View style={styles.placeholder} />
     </View>
   );
+
+  const canSubmit = hasAnyCriteria || selectedRating > 0;
 
   return (
     <Screen scroll={true} padded={true} header={header}>
@@ -117,33 +148,64 @@ export function SchoolRatingScreen() {
               </Card>
             )}
 
-            {/* Rating Card */}
+            {/* Evaluation Checklist Card */}
             <Card style={styles.card} variant="elevated" shadow="soft">
               <LinearGradient
                 colors={[tokens.colors.accent.blue + '20', tokens.colors.accent.blue + '10']}
                 style={styles.iconContainer}
               >
-                <Ionicons name="school" size={48} color={tokens.colors.accent.blue} />
+                <Ionicons name="clipboard-outline" size={48} color={tokens.colors.accent.blue} />
               </LinearGradient>
-              <Text style={styles.title} allowFontScaling={true}>{t('schoolRatingPage.starsLabel')}</Text>
-              <Text style={styles.description} allowFontScaling={true}>
-                {t('schoolRatingPage.subtitle')}
+              <Text style={styles.title} allowFontScaling={true}>
+                {t('schoolRatingPage.evaluationLabel')}
               </Text>
-              <View style={styles.ratingContainer}>
-                {[1, 2, 3, 4, 5].map((star) => (
+              <Text style={styles.description} allowFontScaling={true}>
+                {t('schoolRatingPage.evaluationSubtitle')}
+              </Text>
+
+              {/* Criteria Checklist */}
+              <View style={styles.checklistContainer}>
+                {CRITERIA_KEYS.map((key) => (
                   <Pressable
-                    key={star}
-                    onPress={() => setSelectedRating(star)}
-                    style={styles.starButton}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    key={key}
+                    style={styles.checkRow}
+                    onPress={() => toggleCriterion(key)}
+                    hitSlop={{ top: 2, bottom: 2 }}
                   >
                     <Ionicons
-                      name={star <= selectedRating ? 'star' : 'star-outline'}
-                      size={44}
-                      color={star <= selectedRating ? tokens.colors.semantic.warning : tokens.colors.border.medium}
+                      name={evaluation[key] ? 'checkbox' : 'square-outline'}
+                      size={24}
+                      color={evaluation[key] ? tokens.colors.semantic.success : tokens.colors.border.medium}
                     />
+                    <Text style={[styles.checkLabel, evaluation[key] && styles.checkLabelActive]} allowFontScaling={true}>
+                      {t(`schoolRatingPage.criteria.${key}`)}
+                    </Text>
                   </Pressable>
                 ))}
+              </View>
+
+              {/* Star Rating (Optional) */}
+              <View style={styles.starSection}>
+                <View style={styles.separatorLine} />
+                <Text style={styles.optionalStarsLabel} allowFontScaling={true}>
+                  {t('schoolRatingPage.starsLabel')}
+                </Text>
+                <View style={styles.ratingContainer}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Pressable
+                      key={star}
+                      onPress={() => setSelectedRating(star === selectedRating ? 0 : star)}
+                      style={styles.starButton}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Ionicons
+                        name={star <= selectedRating ? 'star' : 'star-outline'}
+                        size={36}
+                        color={star <= selectedRating ? tokens.colors.semantic.warning : tokens.colors.border.medium}
+                      />
+                    </Pressable>
+                  ))}
+                </View>
               </View>
 
               {/* Comment Input */}
@@ -163,19 +225,19 @@ export function SchoolRatingScreen() {
                 />
               </View>
 
-              <Pressable 
+              <Pressable
                 style={[
-                  styles.submitButton, 
-                  selectedRating === 0 && styles.submitButtonDisabled,
+                  styles.submitButton,
+                  !canSubmit && styles.submitButtonDisabled,
                   submitting && styles.submitButtonDisabled,
-                ]} 
+                ]}
                 onPress={submitRating}
-                disabled={selectedRating === 0 || submitting}
+                disabled={!canSubmit || submitting}
               >
-                <Text 
+                <Text
                   style={[
                     styles.submitButtonText,
-                    (selectedRating === 0 || submitting) && styles.submitButtonTextDisabled,
+                    (!canSubmit || submitting) && styles.submitButtonTextDisabled,
                   ]}
                   allowFontScaling={true}
                 >
@@ -185,21 +247,50 @@ export function SchoolRatingScreen() {
             </Card>
 
             {/* Previous Rating */}
-            {rating?.yourRating && (
+            {rating?.yourRating != null && (
               <Card style={styles.previousCard} variant="elevated" shadow="soft">
                 <Text style={styles.previousTitle} allowFontScaling={true}>
                   {t('schoolRatingPage.yourRating')}
                 </Text>
-                <View style={styles.previousRating}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Ionicons
-                      key={star}
-                      name={star <= rating.yourRating ? 'star' : 'star-outline'}
-                      size={20}
-                      color={star <= rating.yourRating ? tokens.colors.semantic.warning : tokens.colors.border.medium}
-                    />
-                  ))}
-                </View>
+
+                {/* Previous Evaluation Criteria */}
+                {rating.yourEvaluation && (
+                  <View style={styles.previousCriteriaList}>
+                    {CRITERIA_KEYS.map((key) => (
+                      <View key={key} style={styles.previousCriteriaRow}>
+                        <Ionicons
+                          name={rating.yourEvaluation[key] ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={18}
+                          color={rating.yourEvaluation[key] ? tokens.colors.semantic.success : tokens.colors.border.medium}
+                        />
+                        <Text
+                          style={[
+                            styles.previousCriteriaLabel,
+                            rating.yourEvaluation[key] && styles.previousCriteriaLabelActive,
+                          ]}
+                          allowFontScaling={true}
+                        >
+                          {t(`schoolRatingPage.criteria.${key}`)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Previous Star Rating (legacy or optional) */}
+                {rating.yourRating > 0 && (
+                  <View style={styles.previousStars}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Ionicons
+                        key={star}
+                        name={star <= rating.yourRating ? 'star' : 'star-outline'}
+                        size={20}
+                        color={star <= rating.yourRating ? tokens.colors.semantic.warning : tokens.colors.border.medium}
+                      />
+                    ))}
+                  </View>
+                )}
+
                 {rating.yourComment && (
                   <Text style={styles.previousComment} allowFontScaling={true}>
                     "{rating.yourComment}"
@@ -344,12 +435,53 @@ const styles = StyleSheet.create({
     marginBottom: tokens.space.xl,
     paddingHorizontal: tokens.space.md,
   },
+  // Checklist
+  checklistContainer: {
+    width: '100%',
+    marginBottom: tokens.space.lg,
+  },
+  checkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: tokens.space.md,
+    paddingHorizontal: tokens.space.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.colors.border.light,
+    gap: tokens.space.md,
+  },
+  checkLabel: {
+    flex: 1,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.secondary,
+    lineHeight: tokens.type.body.lineHeight,
+  },
+  checkLabelActive: {
+    color: tokens.colors.text.primary,
+    fontWeight: '500',
+  },
+  // Star section
+  starSection: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: tokens.space.lg,
+  },
+  separatorLine: {
+    width: '100%',
+    height: 1,
+    backgroundColor: tokens.colors.border.light,
+    marginBottom: tokens.space.lg,
+  },
+  optionalStarsLabel: {
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.secondary,
+    marginBottom: tokens.space.md,
+  },
   ratingContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: tokens.space.sm,
-    marginBottom: tokens.space.lg,
   },
   starButton: {
     padding: tokens.space.xs,
@@ -404,9 +536,27 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.h3.fontSize,
     fontWeight: tokens.type.h3.fontWeight,
     color: tokens.colors.text.primary,
-    marginBottom: tokens.space.sm,
+    marginBottom: tokens.space.md,
   },
-  previousRating: {
+  previousCriteriaList: {
+    width: '100%',
+    marginBottom: tokens.space.md,
+  },
+  previousCriteriaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: tokens.space.sm,
+    gap: tokens.space.sm,
+  },
+  previousCriteriaLabel: {
+    flex: 1,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.muted,
+  },
+  previousCriteriaLabelActive: {
+    color: tokens.colors.text.primary,
+  },
+  previousStars: {
     flexDirection: 'row',
     gap: 4,
     marginBottom: tokens.space.sm,

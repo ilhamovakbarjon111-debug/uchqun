@@ -24,7 +24,6 @@ const ParentMeal = sequelize.define('ParentMeal', {
       key: 'id',
     },
     onDelete: 'CASCADE',
-    comment: 'Parent user this meal belongs to',
   },
   mealDate: {
     type: DataTypes.DATE,
@@ -49,7 +48,6 @@ const ParentMeal = sequelize.define('ParentMeal', {
   notes: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Dietary restrictions, allergies, etc.',
   },
 }, {
   tableName: 'parent_meals',

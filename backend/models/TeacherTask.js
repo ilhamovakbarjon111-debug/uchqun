@@ -24,7 +24,6 @@ const TeacherTask = sequelize.define('TeacherTask', {
       key: 'id',
     },
     onDelete: 'CASCADE',
-    comment: 'Teacher user this task belongs to',
   },
   title: {
     type: DataTypes.STRING,

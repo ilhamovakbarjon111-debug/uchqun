@@ -57,7 +57,6 @@ const Document = sequelize.define('Document', {
       model: 'users',
       key: 'id',
     },
-    comment: 'Admin user who reviewed this document',
   },
   reviewedAt: {
     type: DataTypes.DATE,
@@ -66,7 +65,6 @@ const Document = sequelize.define('Document', {
   rejectionReason: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Reason for rejection if status is rejected',
   },
 }, {
   tableName: 'documents',

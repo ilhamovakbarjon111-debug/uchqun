@@ -10,13 +10,11 @@ const School = sequelize.define('School', {
   name: {
     type: DataTypes.STRING(500),
     allowNull: false,
-    comment: 'Maktab yoki bog\'cha nomi',
   },
   type: {
     type: DataTypes.ENUM('school', 'kindergarten', 'both'),
     defaultValue: 'both',
     allowNull: false,
-    comment: 'Maktab, bog\'cha yoki ikkalasi',
   },
   address: {
     type: DataTypes.TEXT,

@@ -37,17 +37,6 @@ export default function TeacherBackground() {
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <Svg width="100%" height="100%" viewBox="0 0 390 844" preserveAspectRatio="none">
         <Defs>
-          {/* Main gradient */}
-          <LinearGradient id="teacherGradient" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0%" stopColor={colors.main[0]} />
-            <Stop offset="40%" stopColor={colors.main[1]} />
-            <Stop offset="70%" stopColor={colors.main[2]} />
-            <Stop offset="100%" stopColor={colors.main[3]} />
-          </LinearGradient>
-  return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <Svg width="100%" height="100%" viewBox="0 0 390 844" preserveAspectRatio="none">
-        <Defs>
           {/* Main gradient - Dark slate with cyan/teal accents */}
           <LinearGradient id="teacherGradient" x1="0" y1="0" x2="1" y2="1">
             <Stop offset="0%" stopColor="#1E293B" />

@@ -14,12 +14,16 @@ import BackgroundScene from '../../components/layout/BackgroundScene';
 import Screen from '../../components/layout/Screen';
 import tokens from '../../styles/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../../context/ThemeContext';
+import { useThemeTokens } from '../../hooks/useThemeTokens';
 
 export function ParentDashboardScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
   const { t } = useTranslation();
   const { count = 0, refreshNotifications } = useNotification();
+  const { isDark } = useTheme();
+  const themeTokens = useThemeTokens();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [children, setChildren] = useState([]);
@@ -76,7 +80,7 @@ export function ParentDashboardScreen() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-      
+
       // Set up auto-refresh every 30 seconds when screen is focused
       const interval = setInterval(() => {
         loadData();
@@ -85,10 +89,6 @@ export function ParentDashboardScreen() {
       return () => clearInterval(interval);
     }, [selectedChildId])
   );
-
-  useEffect(() => {
-    loadData();
-  }, [selectedChildId]); // Reload when child selection changes
 
   // Auto-refresh when app comes to foreground
   useEffect(() => {
@@ -270,7 +270,7 @@ export function ParentDashboardScreen() {
         ]}
       >
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle} allowFontScaling={true}>{t('dashboard.overview')}</Text>
+          <Text style={[styles.sectionTitle, { color: themeTokens.colors.text.primary }]} allowFontScaling={true}>{t('dashboard.overview')}</Text>
         </View>
         <View style={styles.statsContainer}>
           {statCards.map((stat, index) => (
@@ -282,11 +282,21 @@ export function ParentDashboardScreen() {
                 pressed && styles.statCardPressed,
               ]}
             >
-              <Card style={styles.statCardInner} variant="elevated" padding="lg" shadow="soft">
+              <Card 
+                style={[
+                  styles.statCardInner,
+                  {
+                    backgroundColor: isDark ? themeTokens.colors.surface.card : themeTokens.colors.surface.card,
+                  }
+                ]} 
+                variant="elevated" 
+                padding="lg" 
+                shadow="soft"
+              >
                 <View style={styles.statCardContent}>
                   {/* Modern Icon Container with Gradient */}
                   <LinearGradient
-                    colors={getIconGradientColors(stat.color)}
+                    colors={getIconGradientColors(stat.color, isDark)}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.statIconGradient}
@@ -295,15 +305,15 @@ export function ParentDashboardScreen() {
                   </LinearGradient>
                   
                   <View style={styles.statTextContainer}>
-                    <Text style={styles.statValue} allowFontScaling={true}>{stat.value}</Text>
-                    <Text style={styles.statTitle} allowFontScaling={true} numberOfLines={2}>{stat.title}</Text>
+                    <Text style={[styles.statValue, { color: themeTokens.colors.text.primary }]} allowFontScaling={true}>{stat.value}</Text>
+                    <Text style={[styles.statTitle, { color: themeTokens.colors.text.secondary }]} allowFontScaling={true} numberOfLines={2}>{stat.title}</Text>
                   </View>
                   
                   <View style={styles.statChevronContainer}>
                     <Ionicons 
                       name="chevron-forward" 
                       size={18} 
-                      color={tokens.colors.text.tertiary} 
+                      color={themeTokens.colors.text.tertiary} 
                     />
                   </View>
                 </View>
@@ -322,8 +332,8 @@ export function ParentDashboardScreen() {
           ]}
         >
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle} allowFontScaling={true}>{t('dashboard.myChildren')}</Text>
-            <Text style={styles.sectionSubtitle}>{children.length} {t('dashboard.children') || 'farzand'}</Text>
+            <Text style={[styles.sectionTitle, { color: themeTokens.colors.text.primary }]} allowFontScaling={true}>{t('dashboard.myChildren')}</Text>
+            <Text style={[styles.sectionSubtitle, { color: themeTokens.colors.text.secondary }]}>{children.length} {t('dashboard.children') || 'farzand'}</Text>
           </View>
           <View style={styles.childrenList}>
             {children.map((child) => (
@@ -358,13 +368,13 @@ export function ParentDashboardScreen() {
                       </Text>
                     </LinearGradient>
                     <View style={styles.childInfo}>
-                      <Text style={styles.childName} allowFontScaling={true} numberOfLines={1}>
+                      <Text style={[styles.childName, { color: themeTokens.colors.text.primary }]} allowFontScaling={true} numberOfLines={1}>
                         {child.firstName} {child.lastName}
                       </Text>
                       {child.dateOfBirth && (
                         <View style={styles.childAgeContainer}>
-                          <Ionicons name="calendar-outline" size={12} color={tokens.colors.text.secondary} />
-                          <Text style={styles.childAge} allowFontScaling={true}>
+                          <Ionicons name="calendar-outline" size={12} color={themeTokens.colors.text.secondary} />
+                          <Text style={[styles.childAge, { color: themeTokens.colors.text.secondary }]} allowFontScaling={true}>
                             {new Date().getFullYear() - new Date(child.dateOfBirth).getFullYear()} {t('dashboard.yearsOld')}
                           </Text>
                         </View>
@@ -374,7 +384,7 @@ export function ParentDashboardScreen() {
                       <Ionicons 
                         name="chevron-forward" 
                         size={20} 
-                        color={selectedChildId === child.id ? tokens.colors.accent.blue : tokens.colors.text.tertiary} 
+                        color={selectedChildId === child.id ? themeTokens.colors.accent.blue : themeTokens.colors.text.tertiary} 
                       />
                     </View>
                   </View>
@@ -486,12 +496,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.primary,
     marginBottom: tokens.space.xs,
   },
   sectionSubtitle: {
     fontSize: tokens.type.caption.fontSize,
-    color: tokens.colors.text.secondary,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -500,9 +508,8 @@ const styles = StyleSheet.create({
     gap: tokens.space.md,
   },
   statCard: {
-    flex: 1,
-    minWidth: '30%',
-    maxWidth: '48%',
+    width: '48%', // Fixed width to ensure all 4 cards are same size (2x2 grid)
+    aspectRatio: 1.1, // Maintain consistent card proportions
   },
   statCardPressed: {
     opacity: 0.9,
@@ -533,13 +540,11 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 30,
     fontWeight: '800',
-    color: tokens.colors.text.primary,
     marginBottom: tokens.space.xs / 2,
     letterSpacing: -0.8,
   },
   statTitle: {
     fontSize: tokens.type.sub.fontSize,
-    color: tokens.colors.text.secondary,
     fontWeight: tokens.type.h3.fontWeight,
     lineHeight: 18,
   },
@@ -600,7 +605,6 @@ const styles = StyleSheet.create({
   childName: {
     fontSize: tokens.type.bodyLarge.fontSize,
     fontWeight: tokens.type.h3.fontWeight,
-    color: tokens.colors.text.primary,
     marginBottom: tokens.space.xs / 2,
   },
   childAgeContainer: {
@@ -610,7 +614,6 @@ const styles = StyleSheet.create({
   },
   childAge: {
     fontSize: tokens.type.sub.fontSize,
-    color: tokens.colors.text.secondary,
   },
   childChevron: {
     paddingLeft: tokens.space.sm,
@@ -618,8 +621,19 @@ const styles = StyleSheet.create({
 });
 
 // Helper function to get gradient colors for icon containers (like website)
-function getIconGradientColors(baseColor) {
-  // Map colors to gradient pairs like website (from-blue-50 to-blue-100)
+function getIconGradientColors(baseColor, isDark = false) {
+  if (isDark) {
+    // Dark mode gradients - more subtle
+    const darkGradientMap = {
+      [tokens.colors.semantic.success]: ['rgba(16, 185, 129, 0.2)', 'rgba(16, 185, 129, 0.15)'], // Green gradients
+      [tokens.colors.semantic.warning]: ['rgba(245, 158, 11, 0.2)', 'rgba(245, 158, 11, 0.15)'], // Orange/Amber gradients
+      '#8b5cf6': ['rgba(139, 92, 246, 0.2)', 'rgba(139, 92, 246, 0.15)'], // Purple gradients
+    };
+    const defaultDarkGradient = ['rgba(59, 130, 246, 0.2)', 'rgba(59, 130, 246, 0.15)'];
+    return darkGradientMap[baseColor] || defaultDarkGradient;
+  }
+  
+  // Light mode gradients - vibrant
   const gradientMap = {
     [tokens.colors.semantic.success]: ['#D1FAE5', '#A7F3D0'], // Green gradients
     [tokens.colors.semantic.warning]: ['#FEF3C7', '#FDE68A'], // Orange/Amber gradients

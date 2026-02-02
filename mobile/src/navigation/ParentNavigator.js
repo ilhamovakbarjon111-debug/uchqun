@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ParentDashboardScreen } from '../screens/parent/ParentDashboardScreen';
+import { RatingScreen } from '../screens/parent/RatingScreen';
 import { ChildProfileScreen } from '../screens/parent/ChildProfileScreen';
 import { ActivitiesScreen } from '../screens/parent/ActivitiesScreen';
 import { MealsScreen } from '../screens/parent/MealsScreen';
@@ -13,6 +14,7 @@ import { ChatScreen } from '../screens/parent/ChatScreen';
 import { TeacherRatingScreen } from '../screens/parent/TeacherRatingScreen';
 import { SchoolRatingScreen } from '../screens/parent/SchoolRatingScreen';
 import { SettingsScreen } from '../screens/parent/SettingsScreen';
+import { ParentProfileScreen } from '../screens/parent/ParentProfileScreen';
 import { NotificationsScreen } from '../screens/parent/NotificationsScreen';
 import { TherapyScreen } from '../screens/parent/TherapyScreen';
 import { PaymentsScreen } from '../screens/parent/PaymentsScreen';
@@ -41,6 +43,10 @@ const TAB_CONFIG = {
   Chat: {
     icon: 'chatbubble-ellipses',
     label: 'Chat',
+  },
+  Profile: {
+    icon: 'person',
+    label: 'Profile',
   },
   Settings: {
     icon: 'settings',
@@ -91,6 +97,7 @@ function ParentTabs() {
       Dashboard: t('nav.dashboard'),
       Rating: t('nav.rating'),
       Chat: t('nav.chat'),
+      Profile: t('nav.profile'),
       Settings: t('nav.menu'),
     };
     return labelMap[routeName] || routeName;
@@ -122,8 +129,9 @@ function ParentTabs() {
       })}
     >
       <Tab.Screen name="Dashboard" component={ParentDashboardScreen} />
-      <Tab.Screen name="Rating" component={TeacherRatingScreen} />
+      <Tab.Screen name="Rating" component={RatingScreen} />
       <Tab.Screen name="Chat" component={ChatScreen} />
+      <Tab.Screen name="Profile" component={ParentProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );

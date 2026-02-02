@@ -10,50 +10,41 @@ const Therapy = sequelize.define('Therapy', {
   title: {
     type: DataTypes.STRING(500),
     allowNull: false,
-    comment: 'Terapiya nomi',
   },
   description: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Terapiya tavsifi',
   },
   therapyType: {
     type: DataTypes.ENUM('music', 'video', 'content', 'art', 'physical', 'speech', 'occupational', 'other'),
     allowNull: false,
-    comment: 'Terapiya turi',
   },
   contentUrl: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Musiqa, video yoki content URL',
   },
   contentType: {
     type: DataTypes.ENUM('audio', 'video', 'image', 'document', 'interactive', 'link'),
     allowNull: true,
-    comment: 'Content turi',
   },
   duration: {
     type: DataTypes.INTEGER,
     allowNull: true,
-    comment: 'Davomiyligi (daqiqalarda)',
   },
   ageGroup: {
     type: DataTypes.ENUM('infant', 'toddler', 'preschool', 'school_age', 'adolescent', 'all'),
     defaultValue: 'all',
     allowNull: false,
-    comment: 'Yosh guruhi',
   },
   difficultyLevel: {
     type: DataTypes.ENUM('beginner', 'intermediate', 'advanced', 'all'),
     defaultValue: 'all',
     allowNull: false,
-    comment: 'Qiyinlik darajasi',
   },
   tags: {
     type: DataTypes.ARRAY(DataTypes.STRING),
     allowNull: true,
     defaultValue: [],
-    comment: 'Teglar',
   },
   createdBy: {
     type: DataTypes.UUID,
@@ -62,7 +53,6 @@ const Therapy = sequelize.define('Therapy', {
       model: 'users',
       key: 'id',
     },
-    comment: 'Yaratgan foydalanuvchi',
   },
   isActive: {
     type: DataTypes.BOOLEAN,
@@ -73,7 +63,6 @@ const Therapy = sequelize.define('Therapy', {
     type: DataTypes.INTEGER,
     defaultValue: 0,
     allowNull: false,
-    comment: 'Foydalanish soni',
   },
   rating: {
     type: DataTypes.DECIMAL(3, 2),
@@ -83,13 +72,11 @@ const Therapy = sequelize.define('Therapy', {
       min: 0,
       max: 5,
     },
-    comment: 'O\'rtacha reyting',
   },
   ratingCount: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
     allowNull: false,
-    comment: 'Reytinglar soni',
   },
 }, {
   tableName: 'therapies',

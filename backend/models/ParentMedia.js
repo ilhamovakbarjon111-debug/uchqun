@@ -24,7 +24,6 @@ const ParentMedia = sequelize.define('ParentMedia', {
       key: 'id',
     },
     onDelete: 'CASCADE',
-    comment: 'Parent user this media belongs to',
   },
   fileName: {
     type: DataTypes.STRING,

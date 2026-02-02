@@ -151,4 +151,31 @@ export const teacherService = {
     }
     return null;
   },
+
+  // Groups
+  // Backend returns: { success: true, data: [...] }
+  getGroups: async () => {
+    const response = await api.get('/teacher/groups');
+    const data = extractResponseData(response);
+    return Array.isArray(data) ? data : [];
+  },
+
+  // Teacher Ratings
+  // Backend returns: { success: true, data: [...] }
+  getTeacherRatings: async () => {
+    const response = await api.get('/teacher/ratings');
+    const data = extractResponseData(response);
+    return Array.isArray(data) ? data : [];
+  },
+
+  // AI Chat
+  // Backend returns: { success: true, response: "..." }
+  aiChat: async (message, lang = 'en', messages = []) => {
+    const response = await api.post('/teacher/ai/chat', {
+      message,
+      lang,
+      messages,
+    });
+    return response.data;
+  },
 };

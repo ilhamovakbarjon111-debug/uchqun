@@ -14,38 +14,31 @@ const SuperAdminMessage = sequelize.define('SuperAdminMessage', {
       model: 'users',
       key: 'id',
     },
-    comment: 'User who sent the message (parent, teacher, admin, reception)',
   },
   subject: {
     type: DataTypes.STRING(500),
     allowNull: false,
-    comment: 'Message subject',
   },
   message: {
     type: DataTypes.TEXT,
     allowNull: false,
-    comment: 'Message content',
   },
   isRead: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
     allowNull: false,
-    comment: 'Whether super-admin has read this message',
   },
   readAt: {
     type: DataTypes.DATE,
     allowNull: true,
-    comment: 'When super-admin read the message',
   },
   reply: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: 'Super-admin reply to the message',
   },
   repliedAt: {
     type: DataTypes.DATE,
     allowNull: true,
-    comment: 'When super-admin replied',
   },
 }, {
   tableName: 'super_admin_messages',

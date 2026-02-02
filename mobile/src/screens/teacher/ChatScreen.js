@@ -1,23 +1,24 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { useThemeTokens } from '../../hooks/useThemeTokens';
 import { teacherService } from '../../services/teacherService';
 import { loadMessages, addMessage, markRead, updateMessage, deleteMessage } from '../../services/chatStore';
-import { api } from '../../services/api';
-import theme from '../../styles/theme';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
-import TeacherBackground from '../../components/layout/TeacherBackground';
+import Screen from '../../components/layout/Screen';
 
 export function ChatScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const tokens = useThemeTokens();
+  const styles = getStyles(tokens);
   const [loading, setLoading] = useState(true);
   const [parents, setParents] = useState([]);
   const [selectedParent, setSelectedParent] = useState(null);
@@ -45,6 +46,8 @@ export function ChatScreen() {
         }
       } catch (err) {
         console.error('Failed to load parents for chat', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchParents();
@@ -65,7 +68,8 @@ export function ChatScreen() {
     };
 
     load();
-    intervalId = setInterval(load, 5000);
+    // Poll for new messages every 15 seconds (reduced from 5s to prevent performance issues)
+    intervalId = setInterval(load, 15000);
 
     return () => {
       alive = false;
@@ -95,12 +99,37 @@ export function ChatScreen() {
       Alert.alert(t('common.error'), t('chat.selectParent') || 'Please select a parent');
       return;
     }
+
     const convoId = `parent:${selectedParent.id}`;
-    await addMessage('teacher', trimmed, convoId);
-    justSentRef.current = true;
-    const msgs = await loadMessages(convoId);
-    setMessages(Array.isArray(msgs) ? msgs : []);
+
+    // Clear input immediately for better UX
     setInputText('');
+
+    // Optimistically add message to UI
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage = {
+      id: tempId,
+      content: trimmed,
+      senderRole: 'teacher',
+      conversationId: convoId,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true,
+    };
+
+    setMessages(prev => [...prev, optimisticMessage]);
+    justSentRef.current = true;
+
+    // Send to server
+    const result = await addMessage('teacher', trimmed, convoId);
+
+    // Replace optimistic message with real one
+    if (result) {
+      setMessages(prev => prev.map(m => m.id === tempId ? result : m));
+    } else {
+      // If failed, reload messages to get clean state
+      const msgs = await loadMessages(convoId);
+      setMessages(Array.isArray(msgs) ? msgs : []);
+    }
   };
 
   const handleSaveEdit = async (msgId) => {
@@ -144,11 +173,35 @@ export function ChatScreen() {
     return <LoadingSpinner />;
   }
 
+  const header = (
+    <View style={styles.header}>
+      <LinearGradient
+        colors={['rgba(255, 255, 255, 0.98)', 'rgba(255, 255, 255, 0.95)']}
+        style={styles.headerGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <View style={styles.headerContent}>
+          <View style={[styles.headerIconContainer, { backgroundColor: '#22D3EE' + '20' }]}>
+            <Ionicons name="chatbubbles" size={20} color="#22D3EE" />
+          </View>
+          <Text style={[styles.headerTitle, { color: tokens.colors.text.primary }]}>
+            {t('chat.title', { defaultValue: 'Chat' })}
+          </Text>
+        </View>
+      </LinearGradient>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <TeacherBackground />
-      <ScreenHeader title={t('chat.title')} />
-      
+      <LinearGradient
+        colors={['#F0F9FF', '#E0F2FE', '#BAE6FD']}
+        style={styles.backgroundGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+      <Screen scroll={false} padded={false} showAI={false} background="transparent" header={header}>
       {/* Parent selector - Like website */}
       {parents.length > 0 && (
         <View style={styles.parentSelector}>
@@ -234,14 +287,14 @@ export function ChatScreen() {
                                 }}
                                 disabled={busyId === msg.id}
                               >
-                                <Ionicons name="pencil" size={16} color={isYou ? '#fff' : theme.Colors.text.secondary} />
+                                <Ionicons name="pencil" size={16} color={isYou ? '#fff' : tokens.colors.text.secondary} />
                               </Pressable>
                             )}
                             <Pressable
                               onPress={() => setConfirmDeleteId(msg.id)}
                               disabled={busyId === msg.id}
                             >
-                              <Ionicons name="trash-outline" size={16} color={isYou ? '#fff' : theme.Colors.status.error} />
+                              <Ionicons name="trash-outline" size={16} color={isYou ? '#fff' : tokens.colors.semantic.error} />
                             </Pressable>
                           </View>
                         )}
@@ -292,7 +345,7 @@ export function ChatScreen() {
               style={styles.scrollToBottom}
               onPress={() => messagesWrapRef.current?.scrollToEnd({ animated: true })}
             >
-              <Ionicons name="arrow-down" size={20} color={theme.Colors.text.primary} />
+              <Ionicons name="arrow-down" size={20} color={tokens.colors.text.primary} />
             </Pressable>
           )}
 
@@ -306,7 +359,7 @@ export function ChatScreen() {
                 value={inputText}
                 onChangeText={setInputText}
                 placeholder={t('chat.placeholder') || 'Write a message...'}
-                placeholderTextColor={theme.Colors.text.tertiary}
+                placeholderTextColor={tokens.colors.text.tertiary}
                 multiline
                 maxLength={500}
               />
@@ -315,7 +368,7 @@ export function ChatScreen() {
                 onPress={handleSend}
                 disabled={!inputText.trim()}
               >
-                <Ionicons name="send" size={20} color={theme.Colors.text.inverse} />
+                <Ionicons name="send" size={20} color={tokens.colors.text.inverse} />
               </Pressable>
             </View>
           </KeyboardAvoidingView>
@@ -346,238 +399,285 @@ export function ChatScreen() {
           </View>
         </View>
       )}
+      </Screen>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
-  },
-  parentSelector: {
-    backgroundColor: theme.Colors.background.card,
-    padding: theme.Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
-  },
-  parentLabel: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.medium,
-    color: theme.Colors.text.secondary,
-    marginBottom: theme.Spacing.sm,
-  },
-  parentSelectContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.Spacing.sm,
-  },
-  parentOption: {
-    paddingHorizontal: theme.Spacing.md,
-    paddingVertical: theme.Spacing.sm,
-    borderRadius: theme.BorderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.Colors.border.medium,
-    backgroundColor: theme.Colors.background.secondary,
-  },
-  parentOptionActive: {
-    backgroundColor: theme.Colors.primary.blue,
-    borderColor: theme.Colors.primary.blue,
-  },
-  parentOptionText: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.primary,
-  },
-  parentOptionTextActive: {
-    color: theme.Colors.text.inverse,
-  },
-  messagesContainer: {
-    flex: 1,
-  },
-  messagesContent: {
-    padding: theme.Spacing.md,
-    paddingBottom: theme.Spacing.md,
-  },
-  messageRow: {
-    alignItems: 'flex-start',
-    marginBottom: theme.Spacing.md,
-  },
-  ownMessageRow: {
-    alignItems: 'flex-end',
-  },
-  messageBubble: {
-    maxWidth: '85%',
-    padding: theme.Spacing.md,
-    borderRadius: theme.BorderRadius.lg,
-    ...theme.Colors.shadow.sm,
-  },
-  ownMessageBubble: {
-    backgroundColor: theme.Colors.primary.blue,
-    borderBottomRightRadius: theme.BorderRadius.xs,
-  },
-  otherMessageBubble: {
-    backgroundColor: theme.Colors.background.card,
-    borderBottomLeftRadius: theme.BorderRadius.xs,
-  },
-  messageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.Spacing.xs,
-  },
-  messageSender: {
-    fontSize: theme.Typography.sizes.xs,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.secondary,
-  },
-  messageActions: {
-    flexDirection: 'row',
-    gap: theme.Spacing.sm,
-  },
-  messageText: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    lineHeight: 20,
-  },
-  ownMessageText: {
-    color: theme.Colors.text.inverse,
-  },
-  editContainer: {
-    marginTop: theme.Spacing.sm,
-  },
-  editInput: {
-    backgroundColor: theme.Colors.background.secondary,
-    borderRadius: theme.BorderRadius.md,
-    padding: theme.Spacing.sm,
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    borderWidth: 1,
-    borderColor: theme.Colors.border.medium,
-    minHeight: 60,
-    textAlignVertical: 'top',
-  },
-  editActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: theme.Spacing.sm,
-    marginTop: theme.Spacing.sm,
-  },
-  editCancel: {
-    paddingHorizontal: theme.Spacing.md,
-    paddingVertical: theme.Spacing.sm,
-  },
-  editCancelText: {
-    color: theme.Colors.text.secondary,
-    fontSize: theme.Typography.sizes.sm,
-  },
-  editSave: {
-    backgroundColor: theme.Colors.primary.blue,
-    paddingHorizontal: theme.Spacing.md,
-    paddingVertical: theme.Spacing.sm,
-    borderRadius: theme.BorderRadius.sm,
-  },
-  editSaveText: {
-    color: theme.Colors.text.inverse,
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.semibold,
-  },
-  scrollToBottom: {
-    position: 'absolute',
-    bottom: 80,
-    right: theme.Spacing.md,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.Colors.background.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.Colors.shadow.md,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: theme.Spacing.md,
-    backgroundColor: theme.Colors.background.card,
-    borderTopWidth: 1,
-    borderTopColor: theme.Colors.border.light,
-    alignItems: 'flex-end',
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: theme.Colors.border.medium,
-    borderRadius: theme.BorderRadius.xl,
-    paddingHorizontal: theme.Spacing.md,
-    paddingVertical: theme.Spacing.sm,
-    marginRight: theme.Spacing.sm,
-    maxHeight: 100,
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    backgroundColor: theme.Colors.background.secondary,
-  },
-  sendButton: {
-    backgroundColor: theme.Colors.primary.blue,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...theme.Colors.shadow.sm,
-  },
-  sendButtonDisabled: {
-    opacity: 0.5,
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  modalContent: {
-    backgroundColor: theme.Colors.background.card,
-    borderRadius: theme.BorderRadius.lg,
-    padding: theme.Spacing.lg,
-    width: '80%',
-    maxWidth: 400,
-    ...theme.Colors.shadow.lg,
-  },
-  modalTitle: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.sm,
-  },
-  modalText: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.secondary,
-    marginBottom: theme.Spacing.lg,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: theme.Spacing.md,
-  },
-  modalCancel: {
-    paddingHorizontal: theme.Spacing.lg,
-    paddingVertical: theme.Spacing.sm,
-  },
-  modalCancelText: {
-    color: theme.Colors.text.secondary,
-    fontSize: theme.Typography.sizes.base,
-  },
-  modalDelete: {
-    backgroundColor: theme.Colors.status.error,
-    paddingHorizontal: theme.Spacing.lg,
-    paddingVertical: theme.Spacing.sm,
-    borderRadius: theme.BorderRadius.sm,
-  },
-  modalDeleteText: {
-    color: theme.Colors.text.inverse,
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.semibold,
-  },
-});
+function getStyles(tokens) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    backgroundGradient: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+    },
+    header: {
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    headerGradient: {
+      paddingHorizontal: 24,
+      paddingTop: 16,
+      paddingBottom: 16,
+    },
+    headerContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    headerIconContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 12,
+    },
+    headerTitle: {
+      fontSize: 24,
+      fontWeight: '700',
+      letterSpacing: -0.5,
+    },
+    parentSelector: {
+      backgroundColor: 'rgba(255, 255, 255, 0.85)',
+      padding: tokens.space.md,
+      borderBottomWidth: 1,
+      borderBottomColor: 'rgba(203, 213, 225, 0.3)',
+    },
+    parentLabel: {
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.medium,
+      color: tokens.colors.text.secondary,
+      marginBottom: tokens.space.sm,
+    },
+    parentSelectContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: tokens.space.sm,
+    },
+    parentOption: {
+      paddingHorizontal: tokens.space.md,
+      paddingVertical: tokens.space.sm,
+      borderRadius: tokens.radius.md,
+      borderWidth: 1,
+      borderColor: 'rgba(203, 213, 225, 0.5)',
+      backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    },
+    parentOptionActive: {
+      backgroundColor: '#22D3EE',
+      borderColor: '#22D3EE',
+    },
+    parentOptionText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.text.primary,
+    },
+    parentOptionTextActive: {
+      color: tokens.colors.text.inverse,
+    },
+    messagesContainer: {
+      flex: 1,
+    },
+    messagesContent: {
+      padding: tokens.space.md,
+      paddingBottom: tokens.space.md,
+    },
+    messageRow: {
+      alignItems: 'flex-start',
+      marginBottom: tokens.space.md,
+    },
+    ownMessageRow: {
+      alignItems: 'flex-end',
+    },
+    messageBubble: {
+      maxWidth: '85%',
+      padding: tokens.space.md,
+      borderRadius: tokens.radius.lg,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+    ownMessageBubble: {
+      backgroundColor: '#22D3EE',
+      borderBottomRightRadius: tokens.radius.xs,
+    },
+    otherMessageBubble: {
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderBottomLeftRadius: tokens.radius.xs,
+    },
+    messageHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: tokens.space.xs,
+    },
+    messageSender: {
+      fontSize: tokens.typography.fontSize.xs,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.text.secondary,
+    },
+    messageActions: {
+      flexDirection: 'row',
+      gap: tokens.space.sm,
+    },
+    messageText: {
+      fontSize: tokens.typography.fontSize.base,
+      color: tokens.colors.text.primary,
+      lineHeight: 20,
+    },
+    ownMessageText: {
+      color: tokens.colors.text.inverse,
+    },
+    editContainer: {
+      marginTop: tokens.space.sm,
+    },
+    editInput: {
+      backgroundColor: tokens.colors.background.secondary,
+      borderRadius: tokens.radius.md,
+      padding: tokens.space.sm,
+      fontSize: tokens.typography.fontSize.base,
+      color: tokens.colors.text.primary,
+      borderWidth: 1,
+      borderColor: tokens.colors.border.medium,
+      minHeight: 60,
+      textAlignVertical: 'top',
+    },
+    editActions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: tokens.space.sm,
+      marginTop: tokens.space.sm,
+    },
+    editCancel: {
+      paddingHorizontal: tokens.space.md,
+      paddingVertical: tokens.space.sm,
+    },
+    editCancelText: {
+      color: tokens.colors.text.secondary,
+      fontSize: tokens.typography.fontSize.sm,
+    },
+    editSave: {
+      backgroundColor: tokens.colors.accent.blue,
+      paddingHorizontal: tokens.space.md,
+      paddingVertical: tokens.space.sm,
+      borderRadius: tokens.radius.sm,
+    },
+    editSaveText: {
+      color: tokens.colors.text.inverse,
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.semibold,
+    },
+    scrollToBottom: {
+      position: 'absolute',
+      bottom: 80,
+      right: tokens.space.md,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: tokens.colors.card.base,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...tokens.shadow.soft,
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      padding: tokens.space.md,
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      borderTopWidth: 1,
+      borderTopColor: 'rgba(203, 213, 225, 0.3)',
+      alignItems: 'flex-end',
+    },
+    input: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: 'rgba(203, 213, 225, 0.5)',
+      borderRadius: tokens.radius.xl,
+      paddingHorizontal: tokens.space.md,
+      paddingVertical: tokens.space.sm,
+      marginRight: tokens.space.sm,
+      maxHeight: 100,
+      fontSize: tokens.typography.fontSize.base,
+      color: tokens.colors.text.primary,
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    },
+    sendButton: {
+      backgroundColor: '#22D3EE',
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 3,
+      elevation: 3,
+    },
+    sendButtonDisabled: {
+      opacity: 0.5,
+    },
+    modalOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000,
+    },
+    modalContent: {
+      backgroundColor: tokens.colors.card.base,
+      borderRadius: tokens.radius.lg,
+      padding: tokens.space.lg,
+      width: '80%',
+      maxWidth: 400,
+      ...tokens.shadow.card,
+    },
+    modalTitle: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: tokens.colors.text.primary,
+      marginBottom: tokens.space.sm,
+    },
+    modalText: {
+      fontSize: tokens.typography.fontSize.base,
+      color: tokens.colors.text.secondary,
+      marginBottom: tokens.space.lg,
+    },
+    modalActions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: tokens.space.md,
+    },
+    modalCancel: {
+      paddingHorizontal: tokens.space.lg,
+      paddingVertical: tokens.space.sm,
+    },
+    modalCancelText: {
+      color: tokens.colors.text.secondary,
+      fontSize: tokens.typography.fontSize.base,
+    },
+    modalDelete: {
+      backgroundColor: tokens.colors.semantic.error,
+      paddingHorizontal: tokens.space.lg,
+      paddingVertical: tokens.space.sm,
+      borderRadius: tokens.radius.sm,
+    },
+    modalDeleteText: {
+      color: tokens.colors.text.inverse,
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+    },
+  });
+}

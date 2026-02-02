@@ -3,8 +3,42 @@
  * Based on Mobile-icons.md design specification
  */
 
-// Import tokens first (must be at top for proper module initialization)
-import tokens from './tokens';
+// Import tokens using ES6 import (proper module initialization)
+import importedTokens from './tokens';
+
+// Defensive check: ensure tokens is properly initialized
+const safeTokens = (importedTokens && importedTokens.colors) ? importedTokens : {
+  colors: {
+    nav: { active: '#2E3A59', inactive: '#8F9BB3', background: '#ffffff' },
+    accent: { blue: '#2563eb', blueSoft: '#3b82f6', blueVibrant: '#1e40af', 50: '#eff6ff' },
+    text: { primary: '#111827', secondary: '#6b7280', tertiary: '#9ca3af', white: '#ffffff', muted: '#d1d5db' },
+    joy: { skySoft: '#E8F4FD', mintSoft: '#E5F7F0', peachSoft: '#FFF0E5', lavender: '#8b5cf6' },
+    semantic: { success: '#10b981', warning: '#f59e0b', error: '#ef4444', info: '#3b82f6' },
+    surface: { card: '#ffffff', secondary: '#f9fafb', tertiary: '#f3f4f6' },
+    card: { base: '#ffffff', border: 'rgba(255, 255, 255, 0.5)' },
+    border: { light: '#e5e7eb', medium: '#d1d5db', dark: '#9ca3af' },
+  },
+  type: {
+    caption: { fontSize: 12 },
+    sub: { fontSize: 14 },
+    body: { fontSize: 16 },
+    bodyLarge: { fontSize: 18 },
+    h3: { fontSize: 20 },
+    h2: { fontSize: 24 },
+    h1: { fontSize: 30 },
+  },
+  space: { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, '2xl': 48 },
+  radius: { sm: 8, md: 12, lg: 16, xl: 20, full: 9999 },
+  shadow: {
+    sm: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
+    md: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 4 },
+    lg: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 8 },
+  },
+};
+
+if (!importedTokens || !importedTokens.colors) {
+  console.warn('[theme.js] tokens not properly initialized, using fallback values');
+}
 
 export const Colors = {
   // Primary Colors (Updated per Mobile-icons.md)
@@ -249,80 +283,99 @@ export const CommonStyles = {
 };
 
 // Create theme object compatible with old code
+// Use safe property access to prevent crashes during module initialization
+const safeGet = (obj, path, defaultValue = '#000000') => {
+  try {
+    const keys = path.split('.');
+    let result = obj;
+    for (const key of keys) {
+      if (result == null || typeof result !== 'object') {
+        console.warn(`[theme.js] Safe access failed at path: ${path}, using default`);
+        return defaultValue;
+      }
+      result = result[key];
+    }
+    return result != null ? result : defaultValue;
+  } catch (error) {
+    console.warn(`[theme.js] Error accessing path: ${path}`, error);
+    return defaultValue;
+  }
+};
+
 const ThemeColors = {
   primary: {
-    navy: tokens.colors.nav.active,
-    blue: tokens.colors.accent.blue,
-    blueLight: tokens.colors.accent.blueSoft,
-    blueDark: tokens.colors.accent.blueVibrant,
-    blueBg: tokens.colors.accent[50],
+    navy: safeGet(safeTokens, 'colors.nav.active', '#2E3A59'),
+    blue: safeGet(safeTokens, 'colors.accent.blue', '#2563eb'),
+    blueLight: safeGet(safeTokens, 'colors.accent.blueSoft', '#3b82f6'),
+    blueDark: safeGet(safeTokens, 'colors.accent.blueVibrant', '#1e40af'),
+    blueBg: safeGet(safeTokens, 'colors.accent.50', '#eff6ff'),
   },
   design: {
-    softNavy: tokens.colors.nav.active,
-    textTertiary: tokens.colors.text.tertiary,
-    powderBlue: tokens.colors.joy.skySoft,
-    mintMist: tokens.colors.joy.mintSoft,
-    blushPeach: tokens.colors.joy.peachSoft,
-    glassBackground: tokens.colors.card.base,
-    glassBorder: tokens.colors.card.border,
+    softNavy: safeGet(safeTokens, 'colors.nav.active', '#2E3A59'),
+    textTertiary: safeGet(safeTokens, 'colors.text.tertiary', '#8F9BB3'),
+    powderBlue: safeGet(safeTokens, 'colors.joy.skySoft', '#E8F4FD'),
+    mintMist: safeGet(safeTokens, 'colors.joy.mintSoft', '#E5F7F0'),
+    blushPeach: safeGet(safeTokens, 'colors.joy.peachSoft', '#FFF0E5'),
+    glassBackground: safeGet(safeTokens, 'colors.card.base', 'rgba(255, 255, 255, 0.8)'),
+    glassBorder: safeGet(safeTokens, 'colors.card.border', 'rgba(255, 255, 255, 0.5)'),
   },
   cards: {
-    parents: tokens.colors.accent.blue,
-    activities: tokens.colors.semantic.success,
-    meals: tokens.colors.semantic.warning,
-    media: tokens.colors.joy.lavender,
+    parents: safeGet(safeTokens, 'colors.accent.blue', '#2563eb'),
+    activities: safeGet(safeTokens, 'colors.semantic.success', '#10b981'),
+    meals: safeGet(safeTokens, 'colors.semantic.warning', '#f59e0b'),
+    media: safeGet(safeTokens, 'colors.joy.lavender', '#8b5cf6'),
   },
   status: {
-    success: tokens.colors.semantic.success,
-    warning: tokens.colors.semantic.warning,
-    error: tokens.colors.semantic.error,
-    info: tokens.colors.semantic.info,
+    success: safeGet(safeTokens, 'colors.semantic.success', '#10b981'),
+    warning: safeGet(safeTokens, 'colors.semantic.warning', '#f59e0b'),
+    error: safeGet(safeTokens, 'colors.semantic.error', '#ef4444'),
+    info: safeGet(safeTokens, 'colors.semantic.info', '#3b82f6'),
   },
   background: {
-    primary: tokens.colors.surface.card,
-    secondary: tokens.colors.surface.secondary,
-    tertiary: tokens.colors.surface.tertiary,
-    card: tokens.colors.card.base,
+    primary: safeGet(safeTokens, 'colors.surface.card', '#ffffff'),
+    secondary: safeGet(safeTokens, 'colors.surface.secondary', '#f9fafb'),
+    tertiary: safeGet(safeTokens, 'colors.surface.tertiary', '#f3f4f6'),
+    card: safeGet(safeTokens, 'colors.card.base', '#ffffff'),
   },
   text: {
-    primary: tokens.colors.text.primary,
-    secondary: tokens.colors.text.secondary,
-    tertiary: tokens.colors.text.tertiary,
-    inverse: tokens.colors.text.white,
-    disabled: tokens.colors.text.muted,
+    primary: safeGet(safeTokens, 'colors.text.primary', '#111827'),
+    secondary: safeGet(safeTokens, 'colors.text.secondary', '#6b7280'),
+    tertiary: safeGet(safeTokens, 'colors.text.tertiary', '#9ca3af'),
+    inverse: safeGet(safeTokens, 'colors.text.white', '#ffffff'),
+    disabled: safeGet(safeTokens, 'colors.text.muted', '#d1d5db'),
   },
   border: {
-    light: tokens.colors.border.light,
-    medium: tokens.colors.border.medium,
-    dark: tokens.colors.border.dark,
+    light: safeGet(safeTokens, 'colors.border.light', '#e5e7eb'),
+    medium: safeGet(safeTokens, 'colors.border.medium', '#d1d5db'),
+    dark: safeGet(safeTokens, 'colors.border.dark', '#9ca3af'),
   },
   progress: {
-    background: tokens.colors.border.light,
-    fill: tokens.colors.accent.blue,
-    success: tokens.colors.semantic.success,
+    background: safeGet(safeTokens, 'colors.border.light', '#e5e7eb'),
+    fill: safeGet(safeTokens, 'colors.accent.blue', '#2563eb'),
+    success: safeGet(safeTokens, 'colors.semantic.success', '#10b981'),
   },
   navigation: {
-    active: tokens.colors.nav.active,
-    inactive: tokens.colors.nav.inactive,
-    background: tokens.colors.nav.background,
-    activeBackground: tokens.colors.nav.active,
+    active: safeGet(safeTokens, 'colors.nav.active', '#2E3A59'),
+    inactive: safeGet(safeTokens, 'colors.nav.inactive', '#8F9BB3'),
+    background: safeGet(safeTokens, 'colors.nav.background', '#ffffff'),
+    activeBackground: safeGet(safeTokens, 'colors.nav.active', '#2E3A59'),
   },
   shadow: {
-    sm: tokens.shadow.sm,
-    md: tokens.shadow.md,
-    lg: tokens.shadow.lg,
+    sm: safeGet(safeTokens, 'shadow.sm', { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 }),
+    md: safeGet(safeTokens, 'shadow.md', { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 4 }),
+    lg: safeGet(safeTokens, 'shadow.lg', { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 8 }),
   },
 };
 
 const ThemeTypography = {
   sizes: {
-    xs: tokens.type.caption.fontSize,
-    sm: tokens.type.sub.fontSize,
-    base: tokens.type.body.fontSize,
-    lg: tokens.type.bodyLarge.fontSize,
-    xl: tokens.type.h3.fontSize,
-    '2xl': tokens.type.h2.fontSize,
-    '3xl': tokens.type.h1.fontSize,
+    xs: safeGet(safeTokens, 'type.caption.fontSize', 12),
+    sm: safeGet(safeTokens, 'type.sub.fontSize', 14),
+    base: safeGet(safeTokens, 'type.body.fontSize', 16),
+    lg: safeGet(safeTokens, 'type.bodyLarge.fontSize', 18),
+    xl: safeGet(safeTokens, 'type.h3.fontSize', 20),
+    '2xl': safeGet(safeTokens, 'type.h2.fontSize', 24),
+    '3xl': safeGet(safeTokens, 'type.h1.fontSize', 30),
   },
   weights: {
     normal: '400',
@@ -338,32 +391,32 @@ const ThemeTypography = {
 };
 
 const ThemeSpacing = {
-  xs: tokens.space.xs,
-  sm: tokens.space.sm,
-  md: tokens.space.md,
-  lg: tokens.space.lg,
-  xl: tokens.space.xl,
-  '2xl': tokens.space['2xl'],
+  xs: safeGet(safeTokens, 'space.xs', 4),
+  sm: safeGet(safeTokens, 'space.sm', 8),
+  md: safeGet(safeTokens, 'space.md', 16),
+  lg: safeGet(safeTokens, 'space.lg', 24),
+  xl: safeGet(safeTokens, 'space.xl', 32),
+  '2xl': safeGet(safeTokens, 'space.2xl', 48),
 };
 
 const ThemeBorderRadius = {
   xs: 4,
-  sm: tokens.radius.sm,
-  md: tokens.radius.md,
-  lg: tokens.radius.lg,
-  xl: tokens.radius.xl,
-  full: tokens.radius.full,
+  sm: safeGet(safeTokens, 'radius.sm', 8),
+  md: safeGet(safeTokens, 'radius.md', 12),
+  lg: safeGet(safeTokens, 'radius.lg', 16),
+  xl: safeGet(safeTokens, 'radius.xl', 20),
+  full: safeGet(safeTokens, 'radius.full', 9999),
 };
 
 const ThemeLayout = {
   headerHeight: 60,
-  headerPadding: tokens.space.md,
-  cardPadding: tokens.space.md,
-  cardMargin: tokens.space.md,
-  cardBorderRadius: tokens.radius.md,
+  headerPadding: safeGet(safeTokens, 'space.md', 16),
+  cardPadding: safeGet(safeTokens, 'space.md', 16),
+  cardMargin: safeGet(safeTokens, 'space.md', 16),
+  cardBorderRadius: safeGet(safeTokens, 'radius.md', 12),
   bottomNavHeight: 70,
-  screenPadding: tokens.space.md,
-  sectionSpacing: tokens.space.lg,
+  screenPadding: safeGet(safeTokens, 'space.md', 16),
+  sectionSpacing: safeGet(safeTokens, 'space.lg', 24),
 };
 
 // Common Styles using theme values

@@ -92,6 +92,21 @@ const User = sequelize.define('User', {
       key: 'id',
     },
   },
+  // Teacher rating system
+  rating: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    defaultValue: 0,
+    validate: {
+      min: 0,
+      max: 5,
+    },
+  },
+  totalRatings: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 0,
+  },
 }, {
   tableName: 'users',
   timestamps: true,

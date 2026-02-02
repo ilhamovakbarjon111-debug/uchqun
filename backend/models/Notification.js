@@ -40,7 +40,6 @@ const Notification = sequelize.define('Notification', {
   relatedId: {
     type: DataTypes.UUID,
     allowNull: true,
-    comment: 'ID of the related item (activity, meal, media, etc.)',
   },
   relatedType: {
     type: DataTypes.ENUM('activity', 'meal', 'media', 'progress'),
