@@ -17,21 +17,17 @@ import {
   EyeOff,
   Globe,
   LogOut,
-  Camera
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useRef } from 'react';
 
 const Settings = () => {
   const { user, setUser, logout } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
   const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://uchqun-production.up.railway.app';
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -145,56 +141,6 @@ const Settings = () => {
     navigate('/login');
   };
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleAvatarUpload = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      showError(t('profile.invalidImage', { defaultValue: 'Faqat rasm fayllari qabul qilinadi' }));
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showError(t('profile.imageTooLarge', { defaultValue: 'Rasm hajmi 5MB dan katta bo\'lmasligi kerak' }));
-      return;
-    }
-
-    try {
-      setUploadingAvatar(true);
-      
-      // Create FormData for multipart upload
-      const formData = new FormData();
-      formData.append('avatar', file);
-
-      // Upload to backend
-      const response = await api.put('/user/avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      // Update user in context
-      if (setUser) {
-        setUser(response.data);
-      }
-      
-      success(t('profile.avatarUpdated', { defaultValue: 'Rasm muvaffaqiyatli yuklandi' }));
-    } catch (err) {
-      console.error('Avatar yuklash xatolik:', err);
-      showError(err.response?.data?.error || t('profile.uploadError', { defaultValue: 'Rasm yuklashda xatolik yuz berdi' }));
-    } finally {
-      setUploadingAvatar(false);
-      // Reset file input
-      event.target.value = '';
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-96">
@@ -221,40 +167,18 @@ const Settings = () => {
             <h2 className="text-xl font-bold text-gray-900">{t('settings.profileInfo', { defaultValue: 'Profil ma\'lumotlari' })}</h2>
           </div>
 
-          {/* Avatar Upload */}
+          {/* Avatar Display */}
           <div className="mb-6 flex items-center gap-4">
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-2xl font-bold overflow-hidden shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={handleAvatarClick}>
-                {user?.avatar ? (
-                  <img src={user.avatar.startsWith('http') ? user.avatar : `${API_BASE.replace(/\/api\/?$/, '')}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span>{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
-                )}
-                {uploadingAvatar && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  </div>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={handleAvatarClick}
-                className="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-md"
-                title={t('profile.changeAvatar', { defaultValue: 'Rasmni o\'zgartirish' })}
-              >
-                <Camera className="w-4 h-4" />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                className="hidden"
-              />
+            <div className="w-20 h-20 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-2xl font-bold overflow-hidden shrink-0">
+              {user?.avatar ? (
+                <img src={user.avatar.startsWith('http') ? user.avatar : `${API_BASE.replace(/\/api\/?$/, '')}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span>{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
+              )}
             </div>
             <div>
               <p className="text-sm font-medium text-gray-700">{t('profile.profilePicture', { defaultValue: 'Profil rasmi' })}</p>
-              <p className="text-xs text-gray-500">{t('profile.clickToChange', { defaultValue: 'Rasmni o\'zgartirish uchun bosing' })}</p>
+              <p className="text-xs text-gray-500">{t('profile.changeInProfile', { defaultValue: 'Rasmni profil sahifasida o\'zgartirishingiz mumkin' })}</p>
             </div>
           </div>
 
