@@ -11,7 +11,6 @@ import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import Screen from '../../components/layout/Screen';
 import tokens from '../../styles/tokens';
-import theme from '../../styles/theme';
 
 export function TeacherDashboardScreen() {
   const { user, isTeacher, isAdmin, isReception } = useAuth();
@@ -104,7 +103,7 @@ export function TeacherDashboardScreen() {
       const fetchCount = async (path) => {
         try {
           if (childIds.length > 0) {
-            const requests = childIds.map((id) => 
+            const requests = childIds.map((id) =>
               api.get(`${path}?childId=${id}`).catch(() => ({ data: [] }))
             );
             const responses = await Promise.all(requests);
@@ -143,7 +142,7 @@ export function TeacherDashboardScreen() {
         meals: mealsCount,
         media: mediaCount,
       });
-      
+
       setParentsData(allParents);
       setTasks([]); // Remove tasks section
       setChildren([]); // Remove children ranking section
@@ -166,9 +165,9 @@ export function TeacherDashboardScreen() {
       <View style={styles.container}>
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
           <Card>
-            <View style={{ padding: theme.Spacing.xl, alignItems: 'center' }}>
-              <Ionicons name="information-circle-outline" size={48} color={theme.Colors.primary.blue} />
-              <Text style={{ marginTop: theme.Spacing.md, fontSize: theme.Typography.sizes.base, color: theme.Colors.text.secondary, textAlign: 'center' }}>
+            <View style={{ padding: tokens.space.xl, alignItems: 'center' }}>
+              <Ionicons name="information-circle-outline" size={48} color={tokens.colors.accent.blue} />
+              <Text style={{ marginTop: tokens.space.md, fontSize: tokens.type.body.fontSize, color: tokens.colors.text.secondary, textAlign: 'center' }}>
                 {isAdmin ? t('dashboard.roleAdminLabel') : t('dashboard.roleReceptionLabel')} {t('dashboard.roleDetected')}{'\n'}
                 {t('dashboard.mobileForTeachersParents')}{'\n'}
                 {t('dashboard.pleaseUseWeb', { role: isAdmin ? t('dashboard.roleAdminLabel') : t('dashboard.roleReceptionLabel') })}
@@ -435,118 +434,118 @@ const styles = StyleSheet.create({
   },
   // Ranking Section
   rankingSection: {
-    marginTop: theme.Spacing.lg,
-    paddingHorizontal: theme.Spacing.md,
+    marginTop: tokens.space.lg,
+    paddingHorizontal: tokens.space.md,
   },
   rankingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.Spacing.md,
+    marginBottom: tokens.space.md,
   },
   viewAllText: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.primary.blue,
-    fontWeight: theme.Typography.weights.semibold,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.accent.blue,
+    fontWeight: tokens.typography.fontWeight.semibold,
   },
   rankingList: {
-    gap: theme.Spacing.sm,
+    gap: tokens.space.sm,
   },
   rankingCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.Colors.background.card,
-    padding: theme.Spacing.md,
-    borderRadius: theme.BorderRadius.md,
-    ...theme.Colors.shadow.sm,
+    backgroundColor: tokens.colors.card.base,
+    padding: tokens.space.md,
+    borderRadius: tokens.radius.md,
+    ...tokens.shadow.sm,
   },
   rankingNumber: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: theme.Colors.primary.blueBg,
+    backgroundColor: tokens.colors.accent[50],
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   rankingNumberText: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.primary.blue,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.accent.blue,
   },
   rankingAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.Colors.cards.parents + '20',
+    backgroundColor: tokens.colors.accent.blue + '20',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   rankingAvatarText: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.cards.parents,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.accent.blue,
   },
   rankingInfo: {
     flex: 1,
   },
   rankingName: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs / 2,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs / 2,
   },
   rankingAge: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
   },
   // Tasks Section
   tasksSection: {
-    paddingHorizontal: theme.Spacing.md,
-    paddingTop: theme.Spacing.lg,
-    marginTop: theme.Spacing.md,
+    paddingHorizontal: tokens.space.md,
+    paddingTop: tokens.space.lg,
+    marginTop: tokens.space.md,
   },
   tasksHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.Spacing.md,
+    marginBottom: tokens.space.md,
   },
   tasksProgress: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    fontWeight: theme.Typography.weights.medium,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   tasksList: {
-    gap: theme.Spacing.sm,
+    gap: tokens.space.sm,
   },
   taskCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.Colors.background.card,
-    borderRadius: theme.BorderRadius.md,
-    padding: theme.Spacing.md,
-    ...theme.Colors.shadow.sm,
+    backgroundColor: tokens.colors.card.base,
+    borderRadius: tokens.radius.md,
+    padding: tokens.space.md,
+    ...tokens.shadow.sm,
   },
   taskIcon: {
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   taskContent: {
     flex: 1,
   },
   taskTitle: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.medium,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs / 2,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.typography.fontWeight.medium,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs / 2,
   },
   taskTitleCompleted: {
     textDecorationLine: 'line-through',
-    color: theme.Colors.text.secondary,
+    color: tokens.colors.text.secondary,
   },
   taskTime: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
   },
 });

@@ -6,7 +6,7 @@ import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
 
 export function ResponsibilitiesScreen() {
   const [loading, setLoading] = useState(true);
@@ -41,13 +41,13 @@ export function ResponsibilitiesScreen() {
     <Card>
       <View style={styles.responsibilityHeader}>
         <View style={styles.responsibilityIconContainer}>
-          <Ionicons name="list" size={24} color={theme.Colors.primary.blue} />
+          <Ionicons name="list" size={24} color={tokens.colors.accent.blue} />
         </View>
         <View style={styles.responsibilityContent}>
           <Text style={styles.title}>{item.title || item.name || 'Responsibility'}</Text>
           {item.deadline && (
             <View style={styles.deadlineContainer}>
-              <Ionicons name="calendar-outline" size={14} color={theme.Colors.text.secondary} />
+              <Ionicons name="calendar-outline" size={14} color={tokens.colors.text.secondary} />
               <Text style={styles.deadline}>
                 Deadline: {new Date(item.deadline).toLocaleDateString()}
               </Text>
@@ -82,48 +82,48 @@ export function ResponsibilitiesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+    backgroundColor: tokens.colors.surface.secondary,
   },
   list: {
-    padding: theme.Spacing.md,
+    padding: tokens.space.md,
   },
   responsibilityHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: theme.Spacing.sm,
+    marginBottom: tokens.space.sm,
   },
   responsibilityIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.Colors.primary.blueBg,
+    backgroundColor: tokens.colors.accent[50],
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   responsibilityContent: {
     flex: 1,
   },
   title: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs,
+    fontSize: tokens.type.bodyLarge.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs,
   },
   deadlineContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.Spacing.xs / 2,
+    marginTop: tokens.space.xs / 2,
   },
   deadline: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    marginLeft: theme.Spacing.xs / 2,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
+    marginLeft: tokens.space.xs / 2,
   },
   description: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.secondary,
-    marginTop: theme.Spacing.sm,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.secondary,
+    marginTop: tokens.space.sm,
     lineHeight: 20,
   },
 });

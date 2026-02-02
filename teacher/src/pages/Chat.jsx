@@ -138,14 +138,11 @@ const Chat = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="p-3 rounded-2xl bg-blue-100 text-blue-600">
-          <MessageCircle className="w-6 h-6" />
-        </div>
+    <div className="max-w-4xl mx-auto space-y-4 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-white drop-shadow-sm">{t('chat.title')}</h1>
-          <p className="text-white/90 text-sm drop-shadow-sm">{t('chat.subtitle')}</p>
+          <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-sm">{t('chat.title')}</h1>
+          <p className="text-white/90 font-medium mt-1 drop-shadow-sm">{t('chat.subtitle')}</p>
         </div>
       </div>
 

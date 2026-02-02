@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  FlatList, 
-  StyleSheet, 
-  Image, 
-  View, 
-  Pressable, 
-  Modal, 
-  TextInput, 
-  Text, 
-  Dimensions, 
+import {
+  FlatList,
+  StyleSheet,
+  Image,
+  View,
+  Pressable,
+  Modal,
+  TextInput,
+  Text,
+  Dimensions,
   TouchableOpacity,
   ScrollView,
   Alert,
@@ -28,7 +28,7 @@ import TeacherBackground from '../../components/layout/TeacherBackground';
 import { API_URL } from '../../config';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
 
 const { width } = Dimensions.get('window');
 const itemSize = (width - 48) / 3;
@@ -137,8 +137,8 @@ export function MediaScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: formData.type === 'video' 
-          ? ImagePicker.MediaTypeOptions.Videos 
+        mediaTypes: formData.type === 'video'
+          ? ImagePicker.MediaTypeOptions.Videos
           : ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 0.8,
@@ -173,8 +173,8 @@ export function MediaScreen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: formData.type === 'video' 
-          ? ImagePicker.MediaTypeOptions.Videos 
+        mediaTypes: formData.type === 'video'
+          ? ImagePicker.MediaTypeOptions.Videos
           : ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 0.8,
@@ -232,15 +232,15 @@ export function MediaScreen() {
         uploadFormData.append('title', formData.title.trim());
         if (formData.description) uploadFormData.append('description', formData.description.trim());
         if (formData.date) uploadFormData.append('date', formData.date);
-        
+
         // Append file
         const fileUri = selectedFile.uri;
         const filename = selectedFile.name || `media.${selectedFile.type === 'video' ? 'mp4' : 'jpg'}`;
         const match = /\.(\w+)$/.exec(filename);
-        const mimeType = selectedFile.type === 'video' 
+        const mimeType = selectedFile.type === 'video'
           ? `video/${match ? match[1] : 'mp4'}`
           : `image/${match ? match[1] : 'jpeg'}`;
-        
+
         uploadFormData.append('file', {
           uri: fileUri,
           name: filename,
@@ -250,7 +250,7 @@ export function MediaScreen() {
         await mediaService.uploadMedia(uploadFormData);
         Alert.alert(t('common.success', { defaultValue: 'Success' }), t('mediaPage.toastCreate', { defaultValue: 'Media yaratildi' }));
       }
-      
+
       setShowModal(false);
       setSelectedFile(null);
       loadMedia();
@@ -326,8 +326,8 @@ export function MediaScreen() {
       <View style={styles.mediaItemContainer}>
         <Pressable onPress={() => item.type === 'photo' ? openImageViewer(item) : null}>
           {item.type === 'photo' ? (
-            <Image 
-              source={{ uri: imageUrl }} 
+            <Image
+              source={{ uri: imageUrl }}
               style={styles.image}
               onError={(e) => {
                 console.warn('[MediaScreen] Image load error:', imageUrl, e.nativeEvent.error);
@@ -335,7 +335,7 @@ export function MediaScreen() {
             />
           ) : (
             <View style={styles.videoContainer}>
-              <Ionicons name="play-circle" size={40} color={theme.Colors.text.inverse} />
+              <Ionicons name="play-circle" size={40} color={tokens.colors.text.white} />
               <Text style={styles.videoLabel}>{t('mediaPage.videoLabel', { defaultValue: 'Video' })}</Text>
             </View>
           )}
@@ -344,17 +344,17 @@ export function MediaScreen() {
           style={styles.editButton}
           onPress={() => handleEdit(item)}
         >
-          <Ionicons name="pencil-outline" size={18} color={theme.Colors.text.inverse} />
+          <Ionicons name="pencil-outline" size={18} color={tokens.colors.text.white} />
         </Pressable>
         <Pressable
           style={styles.deleteButton}
           onPress={() => handleDelete(item.id)}
         >
-          <Ionicons name="trash-outline" size={18} color={theme.Colors.text.inverse} />
+          <Ionicons name="trash-outline" size={18} color={tokens.colors.text.white} />
         </Pressable>
         {item.type === 'video' && (
           <View style={styles.videoBadge}>
-            <Ionicons name="videocam" size={12} color={theme.Colors.text.inverse} />
+            <Ionicons name="videocam" size={12} color={tokens.colors.text.white} />
           </View>
         )}
       </View>
@@ -367,13 +367,13 @@ export function MediaScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.Colors.text.inverse} />
+          <Ionicons name="arrow-back" size={24} color={tokens.colors.text.white} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
           {t('mediaPage.title', { defaultValue: 'Media' })}
         </Text>
         <TouchableOpacity onPress={handleCreate} style={styles.headerAction}>
-          <Ionicons name="add" size={24} color={theme.Colors.text.inverse} />
+          <Ionicons name="add" size={24} color={tokens.colors.text.white} />
         </TouchableOpacity>
       </View>
 
@@ -393,10 +393,10 @@ export function MediaScreen() {
               ]}
               onPress={() => setFilter(filterOption.id)}
             >
-              <Ionicons 
-                name={filterOption.icon} 
-                size={18} 
-                color={filter === filterOption.id ? theme.Colors.text.inverse : theme.Colors.text.secondary} 
+              <Ionicons
+                name={filterOption.icon}
+                size={18}
+                color={filter === filterOption.id ? tokens.colors.text.white : tokens.colors.text.secondary}
               />
               <Text style={[
                 styles.filterText,
@@ -426,7 +426,7 @@ export function MediaScreen() {
 
       {/* Floating Action Button */}
       <TouchableOpacity style={styles.fab} onPress={handleCreate}>
-        <Ionicons name="add" size={28} color={theme.Colors.text.inverse} />
+        <Ionicons name="add" size={28} color={tokens.colors.text.white} />
       </TouchableOpacity>
 
       <ImageViewer
@@ -445,17 +445,17 @@ export function MediaScreen() {
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  {editingMedia 
+                  {editingMedia
                     ? t('mediaPage.modal.editTitle', { defaultValue: 'Edit Media' })
                     : t('mediaPage.modal.addTitle', { defaultValue: 'Create Media' })
                   }
                 </Text>
                 <TouchableOpacity onPress={() => setShowModal(false)}>
-                  <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
+                  <Ionicons name="close" size={24} color={tokens.colors.text.secondary} />
                 </TouchableOpacity>
               </View>
 
-              <ScrollView 
+              <ScrollView
                 style={styles.modalScrollView}
                 showsVerticalScrollIndicator={true}
                 keyboardShouldPersistTaps="handled"
@@ -490,7 +490,7 @@ export function MediaScreen() {
                               {child.firstName} {child.lastName}
                             </Text>
                             {formData.childId === child.id && (
-                              <Ionicons name="checkmark" size={20} color={theme.Colors.primary.blue} />
+                              <Ionicons name="checkmark" size={20} color={tokens.colors.accent.blue} />
                             )}
                           </Pressable>
                         ))}
@@ -507,7 +507,7 @@ export function MediaScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder={t('mediaPage.modal.titlePlaceholder', { defaultValue: 'Media sarlavhasini kiriting' })}
-                    placeholderTextColor={theme.Colors.text.tertiary}
+                    placeholderTextColor={tokens.colors.text.tertiary}
                     value={formData.title}
                     onChangeText={(text) => setFormData({ ...formData, title: text })}
                   />
@@ -521,7 +521,7 @@ export function MediaScreen() {
                   <TextInput
                     style={[styles.input, styles.textArea]}
                     placeholder={t('mediaPage.modal.descriptionPlaceholder', { defaultValue: 'Media tavsifini kiriting' })}
-                    placeholderTextColor={theme.Colors.text.tertiary}
+                    placeholderTextColor={tokens.colors.text.tertiary}
                     value={formData.description}
                     onChangeText={(text) => setFormData({ ...formData, description: text })}
                     multiline
@@ -553,13 +553,13 @@ export function MediaScreen() {
                               styles.pickerOptionText,
                               formData.type === type && styles.pickerOptionTextSelected
                             ]}>
-                              {type === 'photo' 
+                              {type === 'photo'
                                 ? t('mediaPage.photoLabel', { defaultValue: 'Photo' })
                                 : t('mediaPage.videoLabel', { defaultValue: 'Video' })
                               }
                             </Text>
                             {formData.type === type && (
-                              <Ionicons name="checkmark" size={20} color={theme.Colors.primary.blue} />
+                              <Ionicons name="checkmark" size={20} color={tokens.colors.accent.blue} />
                             )}
                           </Pressable>
                         ))}
@@ -573,7 +573,7 @@ export function MediaScreen() {
                     <TextInput
                       style={styles.input}
                       placeholder="YYYY-MM-DD"
-                      placeholderTextColor={theme.Colors.text.tertiary}
+                      placeholderTextColor={tokens.colors.text.tertiary}
                       value={formData.date}
                       onChangeText={(text) => setFormData({ ...formData, date: text })}
                     />
@@ -588,34 +588,34 @@ export function MediaScreen() {
                     </Text>
                     {selectedFile ? (
                       <View style={styles.filePreview}>
-                        <Ionicons 
-                          name={formData.type === 'video' ? 'videocam' : 'image'} 
-                          size={24} 
-                          color={theme.Colors.primary.blue} 
+                        <Ionicons
+                          name={formData.type === 'video' ? 'videocam' : 'image'}
+                          size={24}
+                          color={tokens.colors.accent.blue}
                         />
                         <Text style={styles.fileName} numberOfLines={1}>
                           {selectedFile.name || 'Selected file'}
                         </Text>
                         <TouchableOpacity onPress={() => setSelectedFile(null)}>
-                          <Ionicons name="close-circle" size={24} color={theme.Colors.status.error} />
+                          <Ionicons name="close-circle" size={24} color={tokens.colors.semantic.error} />
                         </TouchableOpacity>
                       </View>
                     ) : (
                       <View style={styles.fileUploadButtons}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={styles.fileUploadButton}
                           onPress={pickImage}
                         >
-                          <Ionicons name="images-outline" size={20} color={theme.Colors.primary.blue} />
+                          <Ionicons name="images-outline" size={20} color={tokens.colors.accent.blue} />
                           <Text style={styles.fileUploadButtonText}>
                             {t('mediaPage.modal.pickFromLibrary', { defaultValue: 'Kutubxonadan tanlash' })}
                           </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={styles.fileUploadButton}
                           onPress={pickFromCamera}
                         >
-                          <Ionicons name="camera-outline" size={20} color={theme.Colors.primary.blue} />
+                          <Ionicons name="camera-outline" size={20} color={tokens.colors.accent.blue} />
                           <Text style={styles.fileUploadButtonText}>
                             {t('mediaPage.modal.takePhoto', { defaultValue: 'Kameradan olish' })}
                           </Text>
@@ -638,8 +638,8 @@ export function MediaScreen() {
                     {t('mediaPage.modal.cancel', { defaultValue: 'Bekor qilish' })}
                   </Text>
                 </Pressable>
-                <Pressable 
-                  style={[styles.saveButton, uploading && styles.saveButtonDisabled]} 
+                <Pressable
+                  style={[styles.saveButton, uploading && styles.saveButtonDisabled]}
                   onPress={handleSave}
                   disabled={uploading}
                 >
@@ -647,7 +647,7 @@ export function MediaScreen() {
                     <ActivityIndicator color="#fff" />
                   ) : (
                     <Text style={styles.saveButtonText}>
-                      {editingMedia 
+                      {editingMedia
                         ? t('mediaPage.modal.update', { defaultValue: 'Yangilash' })
                         : t('mediaPage.modal.create', { defaultValue: 'Yaratish' })
                       }
@@ -666,87 +666,87 @@ export function MediaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+    backgroundColor: tokens.colors.surface.secondary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.Colors.primary.blue,
+    backgroundColor: tokens.colors.accent.blue,
     paddingTop: 50,
-    paddingBottom: theme.Spacing.md,
-    paddingHorizontal: theme.Spacing.md,
+    paddingBottom: tokens.space.md,
+    paddingHorizontal: tokens.space.md,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
   backButton: {
-    padding: theme.Spacing.xs,
+    padding: tokens.space.xs,
   },
   headerTitle: {
-    fontSize: theme.Typography.sizes.xl,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.inverse,
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.white,
   },
   headerAction: {
-    padding: theme.Spacing.xs,
+    padding: tokens.space.xs,
   },
   filtersContainer: {
-    paddingVertical: theme.Spacing.md,
-    backgroundColor: theme.Colors.background.card,
+    paddingVertical: tokens.space.md,
+    backgroundColor: tokens.colors.card.base,
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
+    borderBottomColor: tokens.colors.border.light,
   },
   filters: {
-    paddingHorizontal: theme.Spacing.md,
-    gap: theme.Spacing.sm,
+    paddingHorizontal: tokens.space.md,
+    gap: tokens.space.sm,
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.Spacing.xs,
-    paddingHorizontal: theme.Spacing.md,
-    paddingVertical: theme.Spacing.sm,
-    borderRadius: theme.BorderRadius.md,
-    backgroundColor: theme.Colors.background.secondary,
+    gap: tokens.space.xs,
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.sm,
+    borderRadius: tokens.radius.md,
+    backgroundColor: tokens.colors.surface.secondary,
     borderWidth: 1,
-    borderColor: theme.Colors.border.medium,
+    borderColor: tokens.colors.border.medium,
   },
   filterButtonActive: {
-    backgroundColor: theme.Colors.primary.blue,
-    borderColor: theme.Colors.primary.blue,
+    backgroundColor: tokens.colors.accent.blue,
+    borderColor: tokens.colors.accent.blue,
   },
   filterText: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    fontWeight: theme.Typography.weights.medium,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   filterTextActive: {
-    color: theme.Colors.text.inverse,
+    color: tokens.colors.text.white,
   },
   fab: {
     position: 'absolute',
     bottom: 90,
-    right: theme.Spacing.md,
+    right: tokens.space.md,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: theme.Colors.cards.media,
+    backgroundColor: tokens.colors.joy.lavender,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.Colors.shadow.lg,
+    ...tokens.shadow.elevated,
   },
   list: {
-    padding: theme.Spacing.md,
+    padding: tokens.space.md,
     paddingBottom: 100,
   },
   mediaItemContainer: {
     width: itemSize,
     height: itemSize,
     margin: 4,
-    borderRadius: theme.BorderRadius.sm,
+    borderRadius: tokens.radius.sm,
     overflow: 'hidden',
     position: 'relative',
-    ...theme.Colors.shadow.sm,
+    ...tokens.shadow.sm,
   },
   image: {
     width: '100%',
@@ -755,40 +755,40 @@ const styles = StyleSheet.create({
   videoContainer: {
     width: '100%',
     height: '100%',
-    backgroundColor: theme.Colors.background.tertiary,
+    backgroundColor: tokens.colors.surface.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   videoLabel: {
-    fontSize: theme.Typography.sizes.xs,
-    color: theme.Colors.text.inverse,
-    marginTop: theme.Spacing.xs,
-    fontWeight: theme.Typography.weights.medium,
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.text.white,
+    marginTop: tokens.space.xs,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   editButton: {
     position: 'absolute',
     top: 4,
     left: 4,
-    backgroundColor: theme.Colors.primary.blue,
-    borderRadius: theme.BorderRadius.sm,
+    backgroundColor: tokens.colors.accent.blue,
+    borderRadius: tokens.radius.sm,
     padding: 6,
-    ...theme.Colors.shadow.sm,
+    ...tokens.shadow.sm,
   },
   deleteButton: {
     position: 'absolute',
     top: 4,
     right: 4,
-    backgroundColor: theme.Colors.status.error,
-    borderRadius: theme.BorderRadius.sm,
+    backgroundColor: tokens.colors.semantic.error,
+    borderRadius: tokens.radius.sm,
     padding: 6,
-    ...theme.Colors.shadow.sm,
+    ...tokens.shadow.sm,
   },
   videoBadge: {
     position: 'absolute',
     bottom: 4,
     left: 4,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: theme.BorderRadius.sm,
+    borderRadius: tokens.radius.sm,
     padding: 4,
   },
   modalContainer: {
@@ -800,46 +800,46 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: theme.Colors.background.card,
-    borderTopLeftRadius: theme.BorderRadius.xl,
-    borderTopRightRadius: theme.BorderRadius.xl,
+    backgroundColor: tokens.colors.card.base,
+    borderTopLeftRadius: tokens.radius.xl,
+    borderTopRightRadius: tokens.radius.xl,
     maxHeight: '90%',
-    paddingBottom: Platform.OS === 'ios' ? 40 : theme.Spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? 40 : tokens.space.md,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: theme.Spacing.lg,
+    padding: tokens.space.lg,
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
+    borderBottomColor: tokens.colors.border.light,
   },
   modalTitle: {
-    fontSize: theme.Typography.sizes.xl,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.primary,
   },
   modalScrollView: {
     maxHeight: 500,
-    paddingHorizontal: theme.Spacing.lg,
+    paddingHorizontal: tokens.space.lg,
   },
   inputGroup: {
-    marginBottom: theme.Spacing.md,
+    marginBottom: tokens.space.md,
   },
   label: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs,
   },
   input: {
     borderWidth: 1,
-    borderColor: theme.Colors.border.medium,
-    borderRadius: theme.BorderRadius.sm,
-    padding: theme.Spacing.md,
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    backgroundColor: theme.Colors.background.card,
+    borderColor: tokens.colors.border.medium,
+    borderRadius: tokens.radius.sm,
+    padding: tokens.space.md,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
+    backgroundColor: tokens.colors.card.base,
   },
   textArea: {
     height: 80,
@@ -847,17 +847,17 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    gap: theme.Spacing.md,
+    gap: tokens.space.md,
   },
   halfWidth: {
     flex: 1,
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: theme.Colors.border.medium,
-    borderRadius: theme.BorderRadius.sm,
+    borderColor: tokens.colors.border.medium,
+    borderRadius: tokens.radius.sm,
     maxHeight: 150,
-    backgroundColor: theme.Colors.background.card,
+    backgroundColor: tokens.colors.card.base,
   },
   pickerScrollView: {
     maxHeight: 150,
@@ -866,101 +866,101 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: theme.Spacing.md,
+    padding: tokens.space.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
+    borderBottomColor: tokens.colors.border.light,
   },
   pickerOptionSelected: {
-    backgroundColor: theme.Colors.primary.blueBg,
+    backgroundColor: tokens.colors.accent[50],
   },
   pickerOptionText: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
   },
   pickerOptionTextSelected: {
-    color: theme.Colors.primary.blue,
-    fontWeight: theme.Typography.weights.semibold,
+    color: tokens.colors.accent.blue,
+    fontWeight: tokens.typography.fontWeight.semibold,
   },
   helperContainer: {
-    padding: theme.Spacing.md,
-    backgroundColor: theme.Colors.status.warning + '20',
-    borderRadius: theme.BorderRadius.sm,
+    padding: tokens.space.md,
+    backgroundColor: tokens.colors.semantic.warning + '20',
+    borderRadius: tokens.radius.sm,
     borderWidth: 1,
-    borderColor: theme.Colors.status.warning,
+    borderColor: tokens.colors.semantic.warning,
   },
   helperText: {
-    fontSize: theme.Typography.sizes.xs,
-    color: theme.Colors.text.secondary,
-    marginTop: theme.Spacing.xs / 2,
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.text.secondary,
+    marginTop: tokens.space.xs / 2,
   },
   fileUploadButtons: {
-    gap: theme.Spacing.sm,
+    gap: tokens.space.sm,
   },
   fileUploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.Spacing.sm,
-    padding: theme.Spacing.md,
+    gap: tokens.space.sm,
+    padding: tokens.space.md,
     borderWidth: 2,
-    borderColor: theme.Colors.primary.blue,
-    borderRadius: theme.BorderRadius.sm,
+    borderColor: tokens.colors.accent.blue,
+    borderRadius: tokens.radius.sm,
     borderStyle: 'dashed',
   },
   fileUploadButtonText: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.primary.blue,
-    fontWeight: theme.Typography.weights.medium,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.accent.blue,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   filePreview: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.Spacing.sm,
-    padding: theme.Spacing.md,
-    backgroundColor: theme.Colors.primary.blueBg,
-    borderRadius: theme.BorderRadius.sm,
+    gap: tokens.space.sm,
+    padding: tokens.space.md,
+    backgroundColor: tokens.colors.accent[50],
+    borderRadius: tokens.radius.sm,
     borderWidth: 1,
-    borderColor: theme.Colors.primary.blue,
+    borderColor: tokens.colors.accent.blue,
   },
   fileName: {
     flex: 1,
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.primary,
-    fontWeight: theme.Typography.weights.medium,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.primary,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: theme.Spacing.lg,
+    padding: tokens.space.lg,
     borderTopWidth: 1,
-    borderTopColor: theme.Colors.border.light,
-    gap: theme.Spacing.md,
+    borderTopColor: tokens.colors.border.light,
+    gap: tokens.space.md,
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: theme.Spacing.md,
+    paddingVertical: tokens.space.md,
     alignItems: 'center',
-    borderRadius: theme.BorderRadius.sm,
-    backgroundColor: theme.Colors.background.secondary,
+    borderRadius: tokens.radius.sm,
+    backgroundColor: tokens.colors.surface.secondary,
   },
   cancelButtonText: {
-    color: theme.Colors.text.secondary,
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.medium,
+    color: tokens.colors.text.secondary,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   saveButton: {
     flex: 1,
-    paddingVertical: theme.Spacing.md,
+    paddingVertical: tokens.space.md,
     alignItems: 'center',
-    borderRadius: theme.BorderRadius.sm,
-    backgroundColor: theme.Colors.cards.media,
+    borderRadius: tokens.radius.sm,
+    backgroundColor: tokens.colors.joy.lavender,
   },
   saveButtonDisabled: {
     opacity: 0.7,
   },
   saveButtonText: {
-    color: theme.Colors.text.inverse,
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.semibold,
+    color: tokens.colors.text.white,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
   },
 });

@@ -253,7 +253,7 @@ const Activities = () => {
       <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="text-center md:text-left">
           <h1 className="text-4xl font-black text-white mb-2 tracking-tight drop-shadow-sm">{t('activitiesPage.title')}</h1>
-          <p className="text-gray-500 text-lg">{t('activitiesPage.subtitle')}</p>
+          <p className="text-white/90 font-medium drop-shadow-sm">{t('activitiesPage.subtitle')}</p>
         </div>
 
         {/* Add Button (Teachers only) */}

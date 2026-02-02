@@ -199,10 +199,10 @@ const Meals = () => {
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
 
       {/* --- Header & Date Picker --- */}
-      <Card className="flex flex-col md:flex-row md:items-end justify-between gap-6 p-8 bg-white/95 backdrop-blur-sm">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-black text-white tracking-tight drop-shadow-sm">{t('mealsPage.title')}</h1>
-          <p className="text-white/90 font-medium drop-shadow-sm">{t('mealsPage.subtitle')}</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-sm">{t('mealsPage.title')}</h1>
+          <p className="text-white/90 font-medium mt-1 drop-shadow-sm">{t('mealsPage.subtitle')}</p>
         </div>
 
         <div className="flex items-end gap-3">
@@ -217,13 +217,13 @@ const Meals = () => {
           )}
 
           <div className="relative">
-            <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
+            <label className="flex items-center gap-2 text-xs font-bold text-white/70 uppercase tracking-widest mb-2 ml-1 drop-shadow-sm">
               <CalendarDays className="w-3.5 h-3.5" /> {t('mealsPage.selectDay')}
             </label>
             <select
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="appearance-none bg-gray-50 border-none text-gray-900 font-bold rounded-2xl px-6 py-3 pr-12 focus:ring-2 focus:ring-blue-500 shadow-inner cursor-pointer"
+              className="appearance-none bg-white border border-gray-200 text-gray-900 font-bold rounded-xl px-6 py-3 pr-12 focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer"
             >
               {dates.map((date) => (
                 <option key={date} value={date}>
@@ -236,7 +236,7 @@ const Meals = () => {
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* --- Meals List --- */}
       <div className="grid grid-cols-1 gap-6">

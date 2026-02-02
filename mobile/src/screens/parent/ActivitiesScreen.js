@@ -8,6 +8,9 @@ import {
   Animated,
   Easing,
   RefreshControl,
+  Modal,
+  TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -99,6 +102,8 @@ export function ActivitiesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [activities, setActivities] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [selectedActivity, setSelectedActivity] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -366,7 +371,8 @@ export function ActivitiesScreen() {
                   const progress = item.progress || 0;
 
                   return (
-                    <Card key={item.id || index} style={styles.activityCard} variant="elevated" shadow="soft">
+                    <Pressable key={item.id || index} onPress={() => { setSelectedActivity(item); setShowDetailsModal(true); }}>
+                    <Card style={styles.activityCard} variant="elevated" shadow="soft">
                       <View style={styles.activityHeader}>
                         <LinearGradient
                           colors={[tokens.colors.joy.lavenderSoft, tokens.colors.joy.skySoft]}
@@ -433,7 +439,13 @@ export function ActivitiesScreen() {
                           </View>
                         </View>
                       )}
+
+                      <View style={styles.detailHint}>
+                        <Text style={styles.detailHintText}>Batafsil</Text>
+                        <Ionicons name="chevron-forward" size={14} color={tokens.colors.accent.blue} />
+                      </View>
                     </Card>
+                    </Pressable>
                   );
                 })}
               </View>
@@ -443,6 +455,150 @@ export function ActivitiesScreen() {
           </Animated.View>
         )}
       </ScrollView>
+
+      {/* Details Modal */}
+      <Modal visible={showDetailsModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle} numberOfLines={2}>
+                {selectedActivity?.skill || selectedActivity?.title || 'Faoliyat'}
+              </Text>
+              <TouchableOpacity onPress={() => setShowDetailsModal(false)}>
+                <Ionicons name="close" size={24} color={tokens.colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.detailsScrollView} showsVerticalScrollIndicator={true}>
+              {/* Goal */}
+              {selectedActivity?.goal ? (
+                <View style={styles.detailSection}>
+                  <View style={styles.detailGoalCard}>
+                    <View style={styles.detailSectionHeader}>
+                      <Ionicons name="flag" size={18} color={tokens.colors.accent.blue} />
+                      <Text style={styles.detailSectionTitle}>Maqsad</Text>
+                    </View>
+                    <Text style={styles.detailGoalText}>{selectedActivity.goal}</Text>
+                  </View>
+                </View>
+              ) : null}
+
+              {/* Dates */}
+              {(selectedActivity?.startDate || selectedActivity?.endDate) ? (
+                <View style={styles.detailSection}>
+                  <View style={styles.detailSectionHeader}>
+                    <Ionicons name="calendar" size={18} color={tokens.colors.semantic.success} />
+                    <Text style={styles.detailSectionTitle}>Sanalar</Text>
+                  </View>
+                  <View style={styles.detailDatesRow}>
+                    {selectedActivity?.startDate ? (
+                      <View style={styles.detailDateCard}>
+                        <Ionicons name="calendar-outline" size={16} color={tokens.colors.accent.blue} />
+                        <View>
+                          <Text style={styles.detailDateLabel}>Boshlanish</Text>
+                          <Text style={styles.detailDateValue}>{new Date(selectedActivity.startDate).toLocaleDateString()}</Text>
+                        </View>
+                      </View>
+                    ) : null}
+                    {selectedActivity?.endDate ? (
+                      <View style={styles.detailDateCard}>
+                        <Ionicons name="calendar-outline" size={16} color={tokens.colors.semantic.error} />
+                        <View>
+                          <Text style={styles.detailDateLabel}>Tugash</Text>
+                          <Text style={styles.detailDateValue}>{new Date(selectedActivity.endDate).toLocaleDateString()}</Text>
+                        </View>
+                      </View>
+                    ) : null}
+                  </View>
+                </View>
+              ) : null}
+
+              {/* Teacher */}
+              {selectedActivity?.teacher ? (
+                <View style={styles.detailSection}>
+                  <View style={styles.detailSectionHeader}>
+                    <Ionicons name="person" size={18} color={tokens.colors.semantic.success} />
+                    <Text style={styles.detailSectionTitle}>O'qituvchi</Text>
+                  </View>
+                  <Text style={styles.detailText}>{selectedActivity.teacher}</Text>
+                </View>
+              ) : null}
+
+              {/* Tasks */}
+              {selectedActivity?.tasks && Array.isArray(selectedActivity.tasks) && selectedActivity.tasks.filter(t => t).length > 0 ? (
+                <View style={styles.detailSection}>
+                  <View style={styles.detailSectionHeader}>
+                    <Ionicons name="checkmark-circle" size={18} color={tokens.colors.semantic.success} />
+                    <Text style={styles.detailSectionTitle}>Vazifalar</Text>
+                  </View>
+                  {selectedActivity.tasks.filter(t => t).map((task, idx) => (
+                    <View key={idx} style={styles.detailTaskItem}>
+                      <View style={styles.detailTaskBullet} />
+                      <Text style={styles.detailText}>{task}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              {/* Methods */}
+              {selectedActivity?.methods ? (
+                <View style={styles.detailSection}>
+                  <View style={styles.detailSectionHeader}>
+                    <Ionicons name="bulb" size={18} color={tokens.colors.semantic.success} />
+                    <Text style={styles.detailSectionTitle}>Usullar</Text>
+                  </View>
+                  <Text style={styles.detailText}>{selectedActivity.methods}</Text>
+                </View>
+              ) : null}
+
+              {/* Progress */}
+              {selectedActivity?.progress ? (
+                <View style={styles.detailSection}>
+                  <View style={styles.detailSectionHeader}>
+                    <Ionicons name="trending-up" size={18} color={tokens.colors.semantic.success} />
+                    <Text style={styles.detailSectionTitle}>Jarayon/Taraqqiyot</Text>
+                  </View>
+                  <Text style={styles.detailText}>{selectedActivity.progress}</Text>
+                </View>
+              ) : null}
+
+              {/* Observation */}
+              {selectedActivity?.observation ? (
+                <View style={styles.detailSection}>
+                  <View style={styles.detailSectionHeader}>
+                    <Ionicons name="eye" size={18} color={tokens.colors.semantic.success} />
+                    <Text style={styles.detailSectionTitle}>Kuzatish</Text>
+                  </View>
+                  <Text style={styles.detailText}>{selectedActivity.observation}</Text>
+                </View>
+              ) : null}
+
+              {/* Services */}
+              {selectedActivity?.services && Array.isArray(selectedActivity.services) && selectedActivity.services.length > 0 ? (
+                <View style={styles.detailSection}>
+                  <View style={styles.detailSectionHeader}>
+                    <Ionicons name="medkit" size={18} color={tokens.colors.semantic.success} />
+                    <Text style={styles.detailSectionTitle}>Xizmatlar</Text>
+                  </View>
+                  <View style={styles.detailServicesWrap}>
+                    {selectedActivity.services.map((service, idx) => (
+                      <View key={idx} style={styles.detailServiceBadge}>
+                        <Text style={styles.detailServiceText}>{service}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+            </ScrollView>
+
+            <View style={styles.detailsFooter}>
+              <Pressable style={styles.detailsCloseButton} onPress={() => setShowDetailsModal(false)}>
+                <Text style={styles.detailsCloseButtonText}>Yopish</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }
@@ -688,5 +844,152 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     marginTop: tokens.space.xl,
+  },
+  detailHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: tokens.space.md,
+    paddingTop: tokens.space.sm,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+    gap: tokens.space.xs / 2,
+  },
+  detailHintText: {
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.accent.blue,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: tokens.colors.card.base,
+    borderTopLeftRadius: tokens.radius.xl,
+    borderTopRightRadius: tokens.radius.xl,
+    maxHeight: '90%',
+    paddingBottom: Platform.OS === 'ios' ? 40 : tokens.space.md,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: tokens.space.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.colors.border.light,
+  },
+  modalTitle: {
+    flex: 1,
+    fontSize: tokens.type.h2.fontSize,
+    fontWeight: tokens.type.h2.fontWeight,
+    color: tokens.colors.text.primary,
+    marginRight: tokens.space.md,
+  },
+  detailsScrollView: {
+    maxHeight: 500,
+    paddingHorizontal: tokens.space.lg,
+    paddingTop: tokens.space.md,
+  },
+  detailSection: {
+    marginBottom: tokens.space.lg,
+  },
+  detailSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: tokens.space.sm,
+    gap: tokens.space.xs,
+  },
+  detailSectionTitle: {
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: '700',
+    color: tokens.colors.text.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  detailGoalCard: {
+    backgroundColor: tokens.colors.semantic.successSoft,
+    borderRadius: tokens.radius.md,
+    padding: tokens.space.md,
+    borderLeftWidth: 3,
+    borderLeftColor: tokens.colors.semantic.success,
+  },
+  detailGoalText: {
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
+    lineHeight: 22,
+  },
+  detailDatesRow: {
+    flexDirection: 'row',
+    gap: tokens.space.md,
+  },
+  detailDateCard: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: tokens.colors.background.secondary,
+    borderRadius: tokens.radius.md,
+    padding: tokens.space.md,
+    gap: tokens.space.sm,
+  },
+  detailDateLabel: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.text.secondary,
+  },
+  detailDateValue: {
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.primary,
+  },
+  detailText: {
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.secondary,
+    lineHeight: 22,
+  },
+  detailTaskItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: tokens.space.xs,
+    gap: tokens.space.sm,
+  },
+  detailTaskBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: tokens.colors.semantic.success,
+    marginTop: 8,
+  },
+  detailServicesWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: tokens.space.xs,
+  },
+  detailServiceBadge: {
+    backgroundColor: tokens.colors.semantic.successSoft,
+    paddingHorizontal: tokens.space.sm,
+    paddingVertical: tokens.space.xs / 2,
+    borderRadius: tokens.radius.sm,
+  },
+  detailServiceText: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.semantic.success,
+    fontWeight: '600',
+  },
+  detailsFooter: {
+    padding: tokens.space.lg,
+    borderTopWidth: 1,
+    borderTopColor: tokens.colors.border.light,
+  },
+  detailsCloseButton: {
+    paddingVertical: tokens.space.md,
+    alignItems: 'center',
+    borderRadius: tokens.radius.md,
+    backgroundColor: tokens.colors.semantic.success,
+  },
+  detailsCloseButtonText: {
+    color: '#fff',
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: '700',
   },
 });

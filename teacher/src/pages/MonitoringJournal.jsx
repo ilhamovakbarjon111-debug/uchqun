@@ -257,7 +257,7 @@ const MonitoringJournal = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleOpenModal(child, todayRecord)}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-bold flex items-center justify-center gap-2"
                   >
                     {todayRecord ? (
                       <>
@@ -317,7 +317,7 @@ const MonitoringJournal = () => {
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
@@ -336,7 +336,7 @@ const MonitoringJournal = () => {
                         type="checkbox"
                         checked={formData.emotionalState[key] || false}
                         onChange={() => toggleEmotionalState(key)}
-                        className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        className="mt-1 w-5 h-5 text-blue-600 border-gray-200 rounded focus:ring-blue-500"
                       />
                       <span className="text-sm text-gray-700 flex-1">{t(`monitoring.emotionalStates.${key}`)}</span>
                     </label>
@@ -352,7 +352,7 @@ const MonitoringJournal = () => {
                   value={formData.notes}
                   onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder={t('monitoring.notesPlaceholder')}
                 />
               </div>
@@ -365,7 +365,7 @@ const MonitoringJournal = () => {
                   type="text"
                   value={formData.teacherSignature}
                   onChange={(e) => setFormData(prev => ({ ...prev, teacherSignature: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder={t('monitoring.teacherSignaturePlaceholder')}
                 />
               </div>

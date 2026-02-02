@@ -36,14 +36,6 @@ export function RatingScreen() {
 
   const ratingOptions = [
     {
-      id: 'teacher',
-      title: t('ratingPage.title', { defaultValue: 'O\'qituvchini baholash' }),
-      subtitle: t('ratingPage.desc', { defaultValue: 'O\'qituvchi ishi haqida fikringizni bildiring' }),
-      icon: 'school',
-      gradient: ['#F59E0B', '#F97316'],
-      screen: 'TeacherRating',
-    },
-    {
       id: 'school',
       title: t('schoolRatingPage.title', { defaultValue: 'Maktabni baholash' }),
       subtitle: t('schoolRatingPage.desc', { defaultValue: 'Maktab xizmatlari va sharoitlarini baholang' }),

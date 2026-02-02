@@ -8,7 +8,7 @@ import EmptyState from '../../components/common/EmptyState';
 import Card from '../../components/common/Card';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import TeacherBackground from '../../components/layout/TeacherBackground';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
 
 const EMOTIONAL_STATES = ['happy', 'sad', 'angry', 'anxious', 'calm', 'excited', 'tired', 'focused'];
 
@@ -122,7 +122,7 @@ export function EmotionalMonitoringScreen() {
       )}
 
       <TouchableOpacity style={styles.fab} onPress={handleCreate}>
-        <Ionicons name="add" size={28} color={theme.Colors.text.inverse} />
+        <Ionicons name="add" size={28} color={tokens.colors.text.white} />
       </TouchableOpacity>
 
       <Modal visible={showModal} animationType="slide" transparent>
@@ -131,7 +131,7 @@ export function EmotionalMonitoringScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>New Record</Text>
               <TouchableOpacity onPress={() => setShowModal(false)}>
-                <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
+                <Ionicons name="close" size={24} color={tokens.colors.text.secondary} />
               </TouchableOpacity>
             </View>
 
@@ -142,7 +142,7 @@ export function EmotionalMonitoringScreen() {
                 value={date}
                 onChangeText={setDate}
                 placeholder="YYYY-MM-DD"
-                placeholderTextColor={theme.Colors.text.tertiary}
+                placeholderTextColor={tokens.colors.text.tertiary}
               />
 
               <Text style={styles.inputLabel}>Emotional States</Text>
@@ -152,7 +152,7 @@ export function EmotionalMonitoringScreen() {
                     <Ionicons
                       name={selectedStates.includes(state) ? 'checkbox' : 'square-outline'}
                       size={22}
-                      color={selectedStates.includes(state) ? theme.Colors.primary.blue : theme.Colors.text.tertiary}
+                      color={selectedStates.includes(state) ? tokens.colors.accent.blue : tokens.colors.text.tertiary}
                     />
                     <Text style={styles.checkboxLabel}>{state.charAt(0).toUpperCase() + state.slice(1)}</Text>
                   </Pressable>
@@ -165,7 +165,7 @@ export function EmotionalMonitoringScreen() {
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="Optional notes..."
-                placeholderTextColor={theme.Colors.text.tertiary}
+                placeholderTextColor={tokens.colors.text.tertiary}
                 multiline
               />
             </ScrollView>
@@ -186,50 +186,50 @@ export function EmotionalMonitoringScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.Colors.background.secondary },
-  list: { padding: theme.Spacing.md, paddingBottom: 100 },
+  container: { flex: 1, backgroundColor: tokens.colors.surface.secondary },
+  list: { padding: tokens.space.md, paddingBottom: 100 },
   fab: {
-    position: 'absolute', bottom: 90, right: theme.Spacing.md,
+    position: 'absolute', bottom: 90, right: tokens.space.md,
     width: 56, height: 56, borderRadius: 28,
-    backgroundColor: theme.Colors.primary.blue,
+    backgroundColor: tokens.colors.accent.blue,
     alignItems: 'center', justifyContent: 'center',
-    ...theme.Colors.shadow.lg,
+    ...tokens.shadow.elevated,
   },
   recordDate: {
-    fontSize: theme.Typography.sizes.sm, fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.secondary, marginBottom: theme.Spacing.xs,
+    fontSize: tokens.type.sub.fontSize, fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.text.secondary, marginBottom: tokens.space.xs,
   },
-  statesRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: theme.Spacing.xs },
+  statesRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: tokens.space.xs },
   stateBadge: {
-    backgroundColor: theme.Colors.primary.blueBg, borderRadius: theme.BorderRadius.sm,
-    paddingHorizontal: theme.Spacing.sm, paddingVertical: 2, marginRight: 6, marginBottom: 4,
+    backgroundColor: tokens.colors.accent[50], borderRadius: tokens.radius.sm,
+    paddingHorizontal: tokens.space.sm, paddingVertical: 2, marginRight: 6, marginBottom: 4,
   },
-  stateBadgeText: { fontSize: theme.Typography.sizes.xs, color: theme.Colors.primary.blue, fontWeight: theme.Typography.weights.medium },
-  recordNotes: { fontSize: theme.Typography.sizes.sm, color: theme.Colors.text.secondary, marginTop: theme.Spacing.xs },
+  stateBadgeText: { fontSize: tokens.type.caption.fontSize, color: tokens.colors.accent.blue, fontWeight: tokens.typography.fontWeight.medium },
+  recordNotes: { fontSize: tokens.type.sub.fontSize, color: tokens.colors.text.secondary, marginTop: tokens.space.xs },
   modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   modalContent: {
-    backgroundColor: theme.Colors.background.card, borderRadius: theme.BorderRadius.lg,
-    padding: theme.Spacing.lg, width: '90%', maxHeight: '80%',
-    ...theme.Colors.shadow.lg,
+    backgroundColor: tokens.colors.card.base, borderRadius: tokens.radius.lg,
+    padding: tokens.space.lg, width: '90%', maxHeight: '80%',
+    ...tokens.shadow.elevated,
   },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.md },
-  modalTitle: { fontSize: theme.Typography.sizes.xl, fontWeight: theme.Typography.weights.bold, color: theme.Colors.text.primary },
-  inputLabel: { fontSize: theme.Typography.sizes.sm, fontWeight: theme.Typography.weights.medium, color: theme.Colors.text.secondary, marginBottom: theme.Spacing.xs, marginTop: theme.Spacing.sm },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: tokens.space.md },
+  modalTitle: { fontSize: tokens.type.h3.fontSize, fontWeight: tokens.typography.fontWeight.bold, color: tokens.colors.text.primary },
+  inputLabel: { fontSize: tokens.type.sub.fontSize, fontWeight: tokens.typography.fontWeight.medium, color: tokens.colors.text.secondary, marginBottom: tokens.space.xs, marginTop: tokens.space.sm },
   input: {
-    borderWidth: 1, borderColor: theme.Colors.border.medium, borderRadius: theme.BorderRadius.sm,
-    padding: theme.Spacing.md, fontSize: theme.Typography.sizes.base, color: theme.Colors.text.primary,
-    backgroundColor: theme.Colors.background.card,
+    borderWidth: 1, borderColor: tokens.colors.border.medium, borderRadius: tokens.radius.sm,
+    padding: tokens.space.md, fontSize: tokens.type.body.fontSize, color: tokens.colors.text.primary,
+    backgroundColor: tokens.colors.card.base,
   },
   textArea: { height: 80, textAlignVertical: 'top' },
-  checkboxGrid: { marginBottom: theme.Spacing.sm },
+  checkboxGrid: { marginBottom: tokens.space.sm },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6 },
-  checkboxLabel: { fontSize: theme.Typography.sizes.base, color: theme.Colors.text.primary, marginLeft: theme.Spacing.sm },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: theme.Spacing.md },
-  cancelButton: { paddingHorizontal: theme.Spacing.lg, paddingVertical: theme.Spacing.sm, marginRight: theme.Spacing.md },
-  cancelButtonText: { color: theme.Colors.text.secondary, fontSize: theme.Typography.sizes.base, fontWeight: theme.Typography.weights.medium },
+  checkboxLabel: { fontSize: tokens.type.body.fontSize, color: tokens.colors.text.primary, marginLeft: tokens.space.sm },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: tokens.space.md },
+  cancelButton: { paddingHorizontal: tokens.space.lg, paddingVertical: tokens.space.sm, marginRight: tokens.space.md },
+  cancelButtonText: { color: tokens.colors.text.secondary, fontSize: tokens.type.body.fontSize, fontWeight: tokens.typography.fontWeight.medium },
   saveButton: {
-    backgroundColor: theme.Colors.primary.blue, paddingHorizontal: theme.Spacing.lg,
-    paddingVertical: theme.Spacing.sm, borderRadius: theme.BorderRadius.sm,
+    backgroundColor: tokens.colors.accent.blue, paddingHorizontal: tokens.space.lg,
+    paddingVertical: tokens.space.sm, borderRadius: tokens.radius.sm,
   },
-  saveButtonText: { color: theme.Colors.text.inverse, fontSize: theme.Typography.sizes.base, fontWeight: theme.Typography.weights.semibold },
+  saveButtonText: { color: tokens.colors.text.white, fontSize: tokens.type.body.fontSize, fontWeight: tokens.typography.fontWeight.semibold },
 });

@@ -18,7 +18,7 @@ import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
 
 export function ParentsListScreen() {
   const navigation = useNavigation();
@@ -101,7 +101,7 @@ export function ParentsListScreen() {
               <View style={styles.contactRow}>
                 {item.email && (
                   <View style={styles.contactItem}>
-                    <Ionicons name="mail-outline" size={14} color={theme.Colors.text.secondary} />
+                    <Ionicons name="mail-outline" size={14} color={tokens.colors.text.secondary} />
                     <Text style={styles.contactText} numberOfLines={1}>
                       {item.email}
                     </Text>
@@ -121,7 +121,7 @@ export function ParentsListScreen() {
                     onPress={() => handleCall(item.phone)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <Ionicons name="call" size={16} color={theme.Colors.text.inverse} />
+                    <Ionicons name="call" size={16} color={tokens.colors.text.white} />
                   </TouchableOpacity>
                 </View>
               )}
@@ -134,14 +134,14 @@ export function ParentsListScreen() {
                 </View>
               )}
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.Colors.text.secondary} />
+            <Ionicons name="chevron-forward" size={20} color={tokens.colors.text.secondary} />
           </View>
 
           {/* Children Section */}
           {item.children && item.children.length > 0 && (
             <View style={styles.childrenSection}>
               <View style={styles.childrenHeader}>
-                <Ionicons name="people-outline" size={14} color={theme.Colors.text.secondary} />
+                <Ionicons name="people-outline" size={14} color={tokens.colors.text.secondary} />
                 <Text style={styles.childrenCount}>
                   {t('parentsPage.children', { count: item.children.length })}
                 </Text>
@@ -184,11 +184,11 @@ export function ParentsListScreen() {
           end={{ x: 1, y: 1 }}
         >
           <View style={styles.searchInputWrapper}>
-            <Ionicons name="search" size={20} color={theme.Colors.text.secondary} />
+            <Ionicons name="search" size={20} color={tokens.colors.text.secondary} />
             <TextInput
               style={styles.searchInput}
               placeholder={t('parentsPage.searchPlaceholder')}
-              placeholderTextColor={theme.Colors.text.tertiary}
+              placeholderTextColor={tokens.colors.text.tertiary}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCapitalize="none"
@@ -196,7 +196,7 @@ export function ParentsListScreen() {
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color={theme.Colors.text.secondary} />
+                <Ionicons name="close-circle" size={20} color={tokens.colors.text.secondary} />
               </TouchableOpacity>
             )}
           </View>
@@ -242,9 +242,9 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   searchContainer: {
-    marginHorizontal: theme.Spacing.md,
-    marginTop: theme.Spacing.sm,
-    borderRadius: theme.BorderRadius.md,
+    marginHorizontal: tokens.space.md,
+    marginTop: tokens.space.sm,
+    borderRadius: tokens.radius.md,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -253,13 +253,13 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   searchGradient: {
-    paddingHorizontal: theme.Spacing.md,
-    paddingVertical: theme.Spacing.sm,
-    borderRadius: theme.BorderRadius.md,
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.sm,
+    borderRadius: tokens.radius.md,
   },
   cardWrapper: {
-    marginBottom: theme.Spacing.md,
-    borderRadius: theme.BorderRadius.md,
+    marginBottom: tokens.space.md,
+    borderRadius: tokens.radius.md,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -268,31 +268,31 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   cardGradient: {
-    padding: theme.Spacing.md,
-    borderRadius: theme.BorderRadius.md,
+    padding: tokens.space.md,
+    borderRadius: tokens.radius.md,
   },
   searchInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.Colors.background.secondary,
-    borderRadius: theme.BorderRadius.sm,
-    paddingHorizontal: theme.Spacing.sm,
-    gap: theme.Spacing.sm,
+    backgroundColor: tokens.colors.surface.secondary,
+    borderRadius: tokens.radius.sm,
+    paddingHorizontal: tokens.space.sm,
+    gap: tokens.space.sm,
   },
   searchInput: {
     flex: 1,
     height: 44,
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
   },
   resultCount: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    marginTop: theme.Spacing.xs,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
+    marginTop: tokens.space.xs,
     textAlign: 'right',
   },
   list: {
-    padding: theme.Spacing.md,
+    padding: tokens.space.md,
     paddingBottom: 100,
   },
   parentHeader: {
@@ -303,27 +303,27 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: theme.Colors.cards.parents + '20',
+    backgroundColor: tokens.colors.accent.blue + '20',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   parentAvatarText: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.cards.parents,
+    fontSize: tokens.type.bodyLarge.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.accent.blue,
   },
   parentContent: {
     flex: 1,
   },
   name: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs,
+    fontSize: tokens.type.bodyLarge.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs,
   },
   contactRow: {
-    marginBottom: theme.Spacing.xs / 2,
+    marginBottom: tokens.space.xs / 2,
   },
   contactItem: {
     flexDirection: 'row',
@@ -331,15 +331,15 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   contactText: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
     flex: 1,
   },
   phoneRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: theme.Spacing.xs,
+    marginTop: tokens.space.xs,
   },
   phoneItem: {
     flexDirection: 'row',
@@ -347,15 +347,15 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   phoneText: {
-    fontSize: theme.Typography.sizes.sm,
+    fontSize: tokens.type.sub.fontSize,
     color: '#9333EA',
-    fontWeight: theme.Typography.weights.medium,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   callButton: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: theme.Colors.status.success,
+    backgroundColor: tokens.colors.semantic.success,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -363,56 +363,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(147, 51, 234, 0.1)',
-    paddingHorizontal: theme.Spacing.sm,
+    paddingHorizontal: tokens.space.sm,
     paddingVertical: 4,
     borderRadius: 12,
     alignSelf: 'flex-start',
-    marginTop: theme.Spacing.xs,
+    marginTop: tokens.space.xs,
     gap: 4,
   },
   groupText: {
-    fontSize: theme.Typography.sizes.xs,
+    fontSize: tokens.type.caption.fontSize,
     color: '#9333EA',
-    fontWeight: theme.Typography.weights.semibold,
+    fontWeight: tokens.typography.fontWeight.semibold,
   },
   childrenSection: {
-    marginTop: theme.Spacing.md,
-    paddingTop: theme.Spacing.md,
+    marginTop: tokens.space.md,
+    paddingTop: tokens.space.md,
     borderTopWidth: 1,
-    borderTopColor: theme.Colors.border.light,
+    borderTopColor: tokens.colors.border.light,
   },
   childrenHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginBottom: theme.Spacing.sm,
+    marginBottom: tokens.space.sm,
   },
   childrenCount: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    fontWeight: theme.Typography.weights.medium,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   childrenList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.Spacing.xs,
+    gap: tokens.space.xs,
   },
   childChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.Colors.background.secondary,
-    paddingHorizontal: theme.Spacing.sm,
+    backgroundColor: tokens.colors.surface.secondary,
+    paddingHorizontal: tokens.space.sm,
     paddingVertical: 6,
     borderRadius: 16,
     gap: 4,
   },
   childChipText: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.primary,
-    fontWeight: theme.Typography.weights.medium,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.primary,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   childClass: {
-    fontSize: theme.Typography.sizes.xs,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.text.secondary,
   },
 });

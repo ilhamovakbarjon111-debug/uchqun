@@ -7,7 +7,7 @@ import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import TeacherBackground from '../../components/layout/TeacherBackground';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
 
 export function NotificationsScreen() {
   const navigation = useNavigation();
@@ -66,7 +66,7 @@ export function NotificationsScreen() {
           <Ionicons
             name={item.isRead ? 'notifications-outline' : 'notifications'}
             size={20}
-            color={!item.isRead ? theme.Colors.primary : theme.Colors.text.secondary}
+            color={!item.isRead ? tokens.colors.accent.blue : tokens.colors.text.secondary}
           />
         </View>
         <View style={styles.contentContainer}>
@@ -119,22 +119,22 @@ export function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+    backgroundColor: tokens.colors.surface.secondary,
   },
   list: {
-    padding: theme.Spacing.md,
+    padding: tokens.space.md,
     paddingBottom: 100,
   },
   card: {
-    backgroundColor: theme.Colors.background.card,
-    borderRadius: theme.BorderRadius.md,
-    padding: theme.Spacing.md,
-    marginBottom: theme.Spacing.sm,
-    ...theme.Colors.shadow.sm,
+    backgroundColor: tokens.colors.card.base,
+    borderRadius: tokens.radius.md,
+    padding: tokens.space.md,
+    marginBottom: tokens.space.sm,
+    ...tokens.shadow.sm,
   },
   unreadCard: {
     borderLeftWidth: 4,
-    borderLeftColor: theme.Colors.primary,
+    borderLeftColor: tokens.colors.accent.blue,
   },
   cardRow: {
     flexDirection: 'row',
@@ -144,13 +144,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.Colors.background.secondary,
+    backgroundColor: tokens.colors.surface.secondary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   unreadIconContainer: {
-    backgroundColor: theme.Colors.primary + '15',
+    backgroundColor: tokens.colors.accent.blue + '15',
   },
   contentContainer: {
     flex: 1,
@@ -161,29 +161,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.medium,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.typography.fontWeight.medium,
+    color: tokens.colors.text.primary,
     flex: 1,
   },
   unreadTitle: {
-    fontWeight: theme.Typography.weights.bold,
+    fontWeight: tokens.typography.fontWeight.bold,
   },
   message: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
     marginTop: 4,
   },
   time: {
-    fontSize: theme.Typography.sizes.xs,
-    color: theme.Colors.text.tertiary,
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.text.tertiary,
     marginTop: 6,
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.Colors.primary,
-    marginLeft: theme.Spacing.sm,
+    backgroundColor: tokens.colors.accent.blue,
+    marginLeft: tokens.space.sm,
   },
 });

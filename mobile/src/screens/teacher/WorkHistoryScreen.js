@@ -6,7 +6,7 @@ import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
 
 export function WorkHistoryScreen() {
   const [loading, setLoading] = useState(true);
@@ -52,10 +52,10 @@ export function WorkHistoryScreen() {
       <Card>
         <View style={styles.workHeader}>
           <View style={[styles.workIconContainer, isCompleted && styles.workIconCompleted]}>
-            <Ionicons 
-              name={isCompleted ? 'checkmark-circle' : 'time-outline'} 
-              size={24} 
-              color={isCompleted ? theme.Colors.status.success : theme.Colors.status.warning} 
+            <Ionicons
+              name={isCompleted ? 'checkmark-circle' : 'time-outline'}
+              size={24}
+              color={isCompleted ? tokens.colors.semantic.success : tokens.colors.semantic.warning}
             />
           </View>
           <View style={styles.workContent}>
@@ -64,7 +64,7 @@ export function WorkHistoryScreen() {
             </Text>
             {item.date && (
               <View style={styles.dateContainer}>
-                <Ionicons name="calendar-outline" size={14} color={theme.Colors.text.secondary} />
+                <Ionicons name="calendar-outline" size={14} color={tokens.colors.text.secondary} />
                 <Text style={styles.date}>{new Date(item.date).toLocaleDateString()}</Text>
               </View>
             )}
@@ -82,7 +82,7 @@ export function WorkHistoryScreen() {
             style={styles.completeButton}
             onPress={() => updateStatus(item.id, 'completed')}
           >
-            <Ionicons name="checkmark-circle" size={18} color={theme.Colors.text.inverse} />
+            <Ionicons name="checkmark-circle" size={18} color={tokens.colors.text.white} />
             <Text style={styles.completeButtonText}>Mark as Completed</Text>
           </Pressable>
         )}
@@ -113,91 +113,91 @@ export function WorkHistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+    backgroundColor: tokens.colors.surface.secondary,
   },
   list: {
-    padding: theme.Spacing.md,
+    padding: tokens.space.md,
   },
   workHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: theme.Spacing.sm,
+    marginBottom: tokens.space.sm,
   },
   workIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.Colors.status.warning + '20',
+    backgroundColor: tokens.colors.semantic.warning + '20',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   workIconCompleted: {
-    backgroundColor: theme.Colors.status.success + '20',
+    backgroundColor: tokens.colors.semantic.success + '20',
   },
   workContent: {
     flex: 1,
   },
   title: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs,
+    fontSize: tokens.type.bodyLarge.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs,
   },
   titleCompleted: {
     textDecorationLine: 'line-through',
-    color: theme.Colors.text.secondary,
+    color: tokens.colors.text.secondary,
   },
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.Spacing.xs / 2,
+    marginTop: tokens.space.xs / 2,
   },
   date: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
-    marginLeft: theme.Spacing.xs / 2,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
+    marginLeft: tokens.space.xs / 2,
   },
   statusContainer: {
-    marginTop: theme.Spacing.md,
-    paddingTop: theme.Spacing.md,
+    marginTop: tokens.space.md,
+    paddingTop: tokens.space.md,
     borderTopWidth: 1,
-    borderTopColor: theme.Colors.border.light,
+    borderTopColor: tokens.colors.border.light,
   },
   statusBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.Colors.status.warning + '20',
-    paddingHorizontal: theme.Spacing.md,
-    paddingVertical: theme.Spacing.xs,
-    borderRadius: theme.BorderRadius.sm,
+    backgroundColor: tokens.colors.semantic.warning + '20',
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.xs,
+    borderRadius: tokens.radius.sm,
   },
   statusBadgeCompleted: {
-    backgroundColor: theme.Colors.status.success + '20',
+    backgroundColor: tokens.colors.semantic.success + '20',
   },
   status: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.status.warning,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.semantic.warning,
     textTransform: 'capitalize',
   },
   statusCompleted: {
-    color: theme.Colors.status.success,
+    color: tokens.colors.semantic.success,
   },
   completeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.Colors.primary.blue,
-    paddingVertical: theme.Spacing.sm,
-    paddingHorizontal: theme.Spacing.md,
-    borderRadius: theme.BorderRadius.sm,
+    backgroundColor: tokens.colors.accent.blue,
+    paddingVertical: tokens.space.sm,
+    paddingHorizontal: tokens.space.md,
+    borderRadius: tokens.radius.sm,
     alignSelf: 'flex-start',
-    marginTop: theme.Spacing.md,
-    ...theme.Colors.shadow.sm,
+    marginTop: tokens.space.md,
+    ...tokens.shadow.sm,
   },
   completeButtonText: {
-    color: theme.Colors.text.inverse,
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.semibold,
-    marginLeft: theme.Spacing.xs,
+    color: tokens.colors.text.white,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    marginLeft: tokens.space.xs,
   },
 });

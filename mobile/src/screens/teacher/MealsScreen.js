@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  FlatList, 
-  StyleSheet, 
-  Text, 
-  View, 
-  Pressable, 
-  Modal, 
-  TextInput, 
-  TouchableOpacity, 
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  Modal,
+  TextInput,
+  TouchableOpacity,
   ScrollView,
   Alert,
   KeyboardAvoidingView,
@@ -24,7 +24,7 @@ import EmptyState from '../../components/common/EmptyState';
 import TeacherBackground from '../../components/layout/TeacherBackground';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import theme from '../../styles/theme';
+import tokens from '../../styles/tokens';
 
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Snack', 'Dinner'];
 const QUANTITY_OPTIONS = ['Full portion', 'Half portion', 'Small portion'];
@@ -133,7 +133,7 @@ export function MealsScreen() {
       }
       if (!formData.mealName || !formData.description || !formData.date) {
         Alert.alert(
-          t('common.error', { defaultValue: 'Error' }), 
+          t('common.error', { defaultValue: 'Error' }),
           t('mealsPage.form.requiredFields', { defaultValue: 'Barcha majburiy maydonlarni to\'ldiring' })
         );
         return;
@@ -151,7 +151,7 @@ export function MealsScreen() {
     } catch (error) {
       console.error('Error saving meal:', error);
       Alert.alert(
-        t('common.error', { defaultValue: 'Error' }), 
+        t('common.error', { defaultValue: 'Error' }),
         error.response?.data?.error || t('mealsPage.form.toastError', { defaultValue: 'Xatolik yuz berdi' })
       );
     }
@@ -219,7 +219,7 @@ export function MealsScreen() {
               </View>
             </View>
             <View style={styles.timeContainer}>
-              <Ionicons name="time-outline" size={14} color={theme.Colors.text.secondary} />
+              <Ionicons name="time-outline" size={14} color={tokens.colors.text.secondary} />
               <Text style={styles.time}>{item.time}</Text>
             </View>
           </View>
@@ -235,13 +235,13 @@ export function MealsScreen() {
             <Text style={styles.detailValue}>{item.quantity}</Text>
           </View>
           <View style={styles.detailRow}>
-            <Ionicons 
-              name={item.eaten ? 'checkmark-circle' : 'close-circle'} 
-              size={18} 
-              color={item.eaten ? theme.Colors.status.success : theme.Colors.status.error} 
+            <Ionicons
+              name={item.eaten ? 'checkmark-circle' : 'close-circle'}
+              size={18}
+              color={item.eaten ? tokens.colors.semantic.success : tokens.colors.semantic.error}
             />
-            <Text style={[styles.eatenStatus, { color: item.eaten ? theme.Colors.status.success : theme.Colors.status.error }]}>
-              {item.eaten 
+            <Text style={[styles.eatenStatus, { color: item.eaten ? tokens.colors.semantic.success : tokens.colors.semantic.error }]}>
+              {item.eaten
                 ? t('mealsPage.eaten', { defaultValue: 'Yeyilgan' })
                 : t('mealsPage.notEaten', { defaultValue: 'Yeyilmagan' })
               }
@@ -251,10 +251,10 @@ export function MealsScreen() {
 
         {item.specialNotes && (
           <View style={styles.notesContainer}>
-            <Ionicons name="information-circle-outline" size={16} color={theme.Colors.primary.blue} />
+            <Ionicons name="information-circle-outline" size={16} color={tokens.colors.accent.blue} />
             <Text style={styles.notesText}>
               <Text style={styles.notesLabel}>
-                {t('mealsPage.form.specialNotes', { defaultValue: 'Eslatma' })}: 
+                {t('mealsPage.form.specialNotes', { defaultValue: 'Eslatma' })}:
               </Text>
               {' '}{item.specialNotes}
             </Text>
@@ -263,11 +263,11 @@ export function MealsScreen() {
 
         <View style={styles.actions}>
           <Pressable style={styles.editButton} onPress={() => handleEdit(item)}>
-            <Ionicons name="pencil" size={18} color={theme.Colors.primary.blue} />
+            <Ionicons name="pencil" size={18} color={tokens.colors.accent.blue} />
             <Text style={styles.editButtonText}>{t('common.edit', { defaultValue: 'Edit' })}</Text>
           </Pressable>
           <Pressable style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
-            <Ionicons name="trash-outline" size={18} color={theme.Colors.status.error} />
+            <Ionicons name="trash-outline" size={18} color={tokens.colors.semantic.error} />
             <Text style={styles.deleteButtonText}>{t('common.delete', { defaultValue: 'Delete' })}</Text>
           </Pressable>
         </View>
@@ -281,13 +281,13 @@ export function MealsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.Colors.text.inverse} />
+          <Ionicons name="arrow-back" size={24} color={tokens.colors.text.white} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
           {t('mealsPage.title', { defaultValue: 'Taomlar' })}
         </Text>
         <TouchableOpacity onPress={handleCreate} style={styles.headerAction}>
-          <Ionicons name="add" size={24} color={theme.Colors.text.inverse} />
+          <Ionicons name="add" size={24} color={tokens.colors.text.white} />
         </TouchableOpacity>
       </View>
 
@@ -297,13 +297,13 @@ export function MealsScreen() {
           {t('mealsPage.selectDay', { defaultValue: 'Kunni tanlang' })}
         </Text>
         <View style={styles.datePickerRow}>
-          <Ionicons name="calendar-outline" size={20} color={theme.Colors.primary.blue} />
+          <Ionicons name="calendar-outline" size={20} color={tokens.colors.accent.blue} />
           <TextInput
             style={styles.dateInput}
             value={selectedDate}
             onChangeText={(text) => setSelectedDate(text)}
             placeholder="YYYY-MM-DD"
-            placeholderTextColor={theme.Colors.text.tertiary}
+            placeholderTextColor={tokens.colors.text.tertiary}
           />
         </View>
       </View>
@@ -324,7 +324,7 @@ export function MealsScreen() {
 
       {/* Floating Action Button */}
       <TouchableOpacity style={styles.fab} onPress={handleCreate}>
-        <Ionicons name="add" size={28} color={theme.Colors.text.inverse} />
+        <Ionicons name="add" size={28} color={tokens.colors.text.white} />
       </TouchableOpacity>
 
       {/* Create/Edit Modal */}
@@ -337,17 +337,17 @@ export function MealsScreen() {
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  {editingMeal 
+                  {editingMeal
                     ? t('mealsPage.form.editTitle', { defaultValue: 'Edit Meal' })
                     : t('mealsPage.form.addTitle', { defaultValue: 'Create Meal' })
                   }
                 </Text>
                 <TouchableOpacity onPress={() => setShowModal(false)}>
-                  <Ionicons name="close" size={24} color={theme.Colors.text.secondary} />
+                  <Ionicons name="close" size={24} color={tokens.colors.text.secondary} />
                 </TouchableOpacity>
               </View>
 
-              <ScrollView 
+              <ScrollView
                 style={styles.modalScrollView}
                 showsVerticalScrollIndicator={true}
                 keyboardShouldPersistTaps="handled"
@@ -375,7 +375,7 @@ export function MealsScreen() {
                             {child.firstName} {child.lastName}
                           </Text>
                           {formData.childId === child.id && (
-                            <Ionicons name="checkmark" size={20} color={theme.Colors.primary.blue} />
+                            <Ionicons name="checkmark" size={20} color={tokens.colors.accent.blue} />
                           )}
                         </Pressable>
                       ))}
@@ -407,7 +407,7 @@ export function MealsScreen() {
                               {type}
                             </Text>
                             {formData.mealType === type && (
-                              <Ionicons name="checkmark" size={20} color={theme.Colors.primary.blue} />
+                              <Ionicons name="checkmark" size={20} color={tokens.colors.accent.blue} />
                             )}
                           </Pressable>
                         ))}
@@ -421,7 +421,7 @@ export function MealsScreen() {
                     <TextInput
                       style={styles.input}
                       placeholder="YYYY-MM-DD"
-                      placeholderTextColor={theme.Colors.text.tertiary}
+                      placeholderTextColor={tokens.colors.text.tertiary}
                       value={formData.date}
                       onChangeText={(text) => setFormData({ ...formData, date: text })}
                     />
@@ -436,7 +436,7 @@ export function MealsScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder={t('mealsPage.form.mealNamePlaceholder', { defaultValue: 'Taom nomini kiriting' })}
-                    placeholderTextColor={theme.Colors.text.tertiary}
+                    placeholderTextColor={tokens.colors.text.tertiary}
                     value={formData.mealName}
                     onChangeText={(text) => setFormData({ ...formData, mealName: text })}
                   />
@@ -450,7 +450,7 @@ export function MealsScreen() {
                   <TextInput
                     style={[styles.input, styles.textArea]}
                     placeholder={t('mealsPage.form.descriptionPlaceholder', { defaultValue: 'Taom tavsifini kiriting' })}
-                    placeholderTextColor={theme.Colors.text.tertiary}
+                    placeholderTextColor={tokens.colors.text.tertiary}
                     value={formData.description}
                     onChangeText={(text) => setFormData({ ...formData, description: text })}
                     multiline
@@ -467,7 +467,7 @@ export function MealsScreen() {
                     <TextInput
                       style={styles.input}
                       placeholder="HH:MM"
-                      placeholderTextColor={theme.Colors.text.tertiary}
+                      placeholderTextColor={tokens.colors.text.tertiary}
                       value={formData.time}
                       onChangeText={(text) => setFormData({ ...formData, time: text })}
                     />
@@ -494,7 +494,7 @@ export function MealsScreen() {
                               {qty}
                             </Text>
                             {formData.quantity === qty && (
-                              <Ionicons name="checkmark" size={20} color={theme.Colors.primary.blue} />
+                              <Ionicons name="checkmark" size={20} color={tokens.colors.accent.blue} />
                             )}
                           </Pressable>
                         ))}
@@ -511,7 +511,7 @@ export function MealsScreen() {
                   <TextInput
                     style={[styles.input, styles.textArea]}
                     placeholder={t('mealsPage.form.specialNotesPlaceholder', { defaultValue: 'Maxsus eslatmalarni kiriting' })}
-                    placeholderTextColor={theme.Colors.text.tertiary}
+                    placeholderTextColor={tokens.colors.text.tertiary}
                     value={formData.specialNotes}
                     onChangeText={(text) => setFormData({ ...formData, specialNotes: text })}
                     multiline
@@ -528,7 +528,7 @@ export function MealsScreen() {
                     <Switch
                       value={formData.eaten}
                       onValueChange={(value) => setFormData({ ...formData, eaten: value })}
-                      trackColor={{ false: theme.Colors.border.medium, true: theme.Colors.primary.blue }}
+                      trackColor={{ false: tokens.colors.border.medium, true: tokens.colors.accent.blue }}
                       thumbColor={formData.eaten ? '#fff' : '#f4f3f4'}
                     />
                   </View>
@@ -543,7 +543,7 @@ export function MealsScreen() {
                 </Pressable>
                 <Pressable style={styles.saveButton} onPress={handleSave}>
                   <Text style={styles.saveButtonText}>
-                    {editingMeal 
+                    {editingMeal
                       ? t('mealsPage.form.update', { defaultValue: 'Yangilash' })
                       : t('mealsPage.form.create', { defaultValue: 'Yaratish' })
                     }
@@ -561,80 +561,80 @@ export function MealsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.Colors.background.secondary,
+    backgroundColor: tokens.colors.surface.secondary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.Colors.primary.blue,
+    backgroundColor: tokens.colors.accent.blue,
     paddingTop: 50,
-    paddingBottom: theme.Spacing.md,
-    paddingHorizontal: theme.Spacing.md,
+    paddingBottom: tokens.space.md,
+    paddingHorizontal: tokens.space.md,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
   backButton: {
-    padding: theme.Spacing.xs,
+    padding: tokens.space.xs,
   },
   headerTitle: {
-    fontSize: theme.Typography.sizes.xl,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.inverse,
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.white,
   },
   headerAction: {
-    padding: theme.Spacing.xs,
+    padding: tokens.space.xs,
   },
   datePickerContainer: {
-    padding: theme.Spacing.md,
-    backgroundColor: theme.Colors.background.card,
+    padding: tokens.space.md,
+    backgroundColor: tokens.colors.card.base,
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
+    borderBottomColor: tokens.colors.border.light,
   },
   datePickerLabel: {
-    fontSize: theme.Typography.sizes.xs,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.secondary,
-    marginBottom: theme.Spacing.xs,
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.secondary,
+    marginBottom: tokens.space.xs,
     textTransform: 'uppercase',
   },
   datePickerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.Spacing.sm,
-    backgroundColor: theme.Colors.background.secondary,
-    borderRadius: theme.BorderRadius.md,
-    padding: theme.Spacing.md,
+    gap: tokens.space.sm,
+    backgroundColor: tokens.colors.surface.secondary,
+    borderRadius: tokens.radius.md,
+    padding: tokens.space.md,
   },
   dateInput: {
     flex: 1,
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    fontWeight: theme.Typography.weights.semibold,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
+    fontWeight: tokens.typography.fontWeight.semibold,
   },
   fab: {
     position: 'absolute',
     bottom: 90,
-    right: theme.Spacing.md,
+    right: tokens.space.md,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: theme.Colors.cards.meals,
+    backgroundColor: tokens.colors.semantic.warning,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.Colors.shadow.lg,
+    ...tokens.shadow.elevated,
   },
   list: {
-    padding: theme.Spacing.md,
+    padding: tokens.space.md,
     paddingBottom: 100,
   },
   card: {
-    marginBottom: theme.Spacing.md,
+    marginBottom: tokens.space.md,
   },
   mealHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: theme.Spacing.sm,
+    marginBottom: tokens.space.sm,
   },
   mealIconContainer: {
     width: 50,
@@ -642,7 +642,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.Spacing.md,
+    marginRight: tokens.space.md,
   },
   mealContent: {
     flex: 1,
@@ -651,119 +651,119 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: theme.Spacing.xs,
-    marginBottom: theme.Spacing.xs,
+    gap: tokens.space.xs,
+    marginBottom: tokens.space.xs,
   },
   mealName: {
-    fontSize: theme.Typography.sizes.lg,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.bodyLarge.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.primary,
   },
   mealTypeBadge: {
-    paddingHorizontal: theme.Spacing.sm,
-    paddingVertical: theme.Spacing.xs / 2,
-    borderRadius: theme.BorderRadius.sm,
+    paddingHorizontal: tokens.space.sm,
+    paddingVertical: tokens.space.xs / 2,
+    borderRadius: tokens.radius.sm,
   },
   mealTypeText: {
-    fontSize: theme.Typography.sizes.xs,
-    fontWeight: theme.Typography.weights.bold,
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
     textTransform: 'uppercase',
   },
   timeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.Spacing.xs / 2,
-    gap: theme.Spacing.xs / 2,
+    marginTop: tokens.space.xs / 2,
+    gap: tokens.space.xs / 2,
   },
   time: {
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
   },
   description: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.secondary,
-    marginTop: theme.Spacing.sm,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.secondary,
+    marginTop: tokens.space.sm,
     lineHeight: 20,
   },
   mealDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: theme.Spacing.md,
-    paddingTop: theme.Spacing.md,
+    marginTop: tokens.space.md,
+    paddingTop: tokens.space.md,
     borderTopWidth: 1,
-    borderTopColor: theme.Colors.border.light,
+    borderTopColor: tokens.colors.border.light,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.Spacing.xs,
+    gap: tokens.space.xs,
   },
   detailLabel: {
-    fontSize: theme.Typography.sizes.xs,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.secondary,
     textTransform: 'uppercase',
   },
   detailValue: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.text.primary,
   },
   eatenStatus: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.semibold,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
   },
   notesContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: theme.Spacing.xs,
-    marginTop: theme.Spacing.sm,
-    padding: theme.Spacing.sm,
-    backgroundColor: theme.Colors.background.secondary,
-    borderRadius: theme.BorderRadius.md,
+    gap: tokens.space.xs,
+    marginTop: tokens.space.sm,
+    padding: tokens.space.sm,
+    backgroundColor: tokens.colors.surface.secondary,
+    borderRadius: tokens.radius.md,
   },
   notesText: {
     flex: 1,
-    fontSize: theme.Typography.sizes.sm,
-    color: theme.Colors.text.secondary,
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
     lineHeight: 18,
   },
   notesLabel: {
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.primary,
   },
   actions: {
     flexDirection: 'row',
-    marginTop: theme.Spacing.md,
-    paddingTop: theme.Spacing.md,
+    marginTop: tokens.space.md,
+    paddingTop: tokens.space.md,
     borderTopWidth: 1,
-    borderTopColor: theme.Colors.border.light,
+    borderTopColor: tokens.colors.border.light,
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: theme.Spacing.md,
-    paddingVertical: theme.Spacing.xs,
-    paddingHorizontal: theme.Spacing.sm,
+    marginRight: tokens.space.md,
+    paddingVertical: tokens.space.xs,
+    paddingHorizontal: tokens.space.sm,
   },
   editButtonText: {
-    color: theme.Colors.primary.blue,
-    marginLeft: theme.Spacing.xs,
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.medium,
+    color: tokens.colors.accent.blue,
+    marginLeft: tokens.space.xs,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.Spacing.xs,
-    paddingHorizontal: theme.Spacing.sm,
+    paddingVertical: tokens.space.xs,
+    paddingHorizontal: tokens.space.sm,
   },
   deleteButtonText: {
-    color: theme.Colors.status.error,
-    marginLeft: theme.Spacing.xs,
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.medium,
+    color: tokens.colors.semantic.error,
+    marginLeft: tokens.space.xs,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   modalContainer: {
     flex: 1,
@@ -774,46 +774,46 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: theme.Colors.background.card,
-    borderTopLeftRadius: theme.BorderRadius.xl,
-    borderTopRightRadius: theme.BorderRadius.xl,
+    backgroundColor: tokens.colors.card.base,
+    borderTopLeftRadius: tokens.radius.xl,
+    borderTopRightRadius: tokens.radius.xl,
     maxHeight: '90%',
-    paddingBottom: Platform.OS === 'ios' ? 40 : theme.Spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? 40 : tokens.space.md,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: theme.Spacing.lg,
+    padding: tokens.space.lg,
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
+    borderBottomColor: tokens.colors.border.light,
   },
   modalTitle: {
-    fontSize: theme.Typography.sizes.xl,
-    fontWeight: theme.Typography.weights.bold,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.text.primary,
   },
   modalScrollView: {
     maxHeight: 500,
-    paddingHorizontal: theme.Spacing.lg,
+    paddingHorizontal: tokens.space.lg,
   },
   inputGroup: {
-    marginBottom: theme.Spacing.md,
+    marginBottom: tokens.space.md,
   },
   label: {
-    fontSize: theme.Typography.sizes.sm,
-    fontWeight: theme.Typography.weights.semibold,
-    color: theme.Colors.text.primary,
-    marginBottom: theme.Spacing.xs,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs,
   },
   input: {
     borderWidth: 1,
-    borderColor: theme.Colors.border.medium,
-    borderRadius: theme.BorderRadius.sm,
-    padding: theme.Spacing.md,
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
-    backgroundColor: theme.Colors.background.card,
+    borderColor: tokens.colors.border.medium,
+    borderRadius: tokens.radius.sm,
+    padding: tokens.space.md,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
+    backgroundColor: tokens.colors.card.base,
   },
   textArea: {
     height: 80,
@@ -821,17 +821,17 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    gap: theme.Spacing.md,
+    gap: tokens.space.md,
   },
   halfWidth: {
     flex: 1,
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: theme.Colors.border.medium,
-    borderRadius: theme.BorderRadius.sm,
+    borderColor: tokens.colors.border.medium,
+    borderRadius: tokens.radius.sm,
     maxHeight: 150,
-    backgroundColor: theme.Colors.background.card,
+    backgroundColor: tokens.colors.card.base,
   },
   pickerScrollView: {
     maxHeight: 150,
@@ -840,20 +840,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: theme.Spacing.md,
+    padding: tokens.space.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.border.light,
+    borderBottomColor: tokens.colors.border.light,
   },
   pickerOptionSelected: {
-    backgroundColor: theme.Colors.primary.blueBg,
+    backgroundColor: tokens.colors.accent[50],
   },
   pickerOptionText: {
-    fontSize: theme.Typography.sizes.base,
-    color: theme.Colors.text.primary,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
   },
   pickerOptionTextSelected: {
-    color: theme.Colors.primary.blue,
-    fontWeight: theme.Typography.weights.semibold,
+    color: tokens.colors.accent.blue,
+    fontWeight: tokens.typography.fontWeight.semibold,
   },
   switchRow: {
     flexDirection: 'row',
@@ -863,33 +863,33 @@ const styles = StyleSheet.create({
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: theme.Spacing.lg,
+    padding: tokens.space.lg,
     borderTopWidth: 1,
-    borderTopColor: theme.Colors.border.light,
-    gap: theme.Spacing.md,
+    borderTopColor: tokens.colors.border.light,
+    gap: tokens.space.md,
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: theme.Spacing.md,
+    paddingVertical: tokens.space.md,
     alignItems: 'center',
-    borderRadius: theme.BorderRadius.sm,
-    backgroundColor: theme.Colors.background.secondary,
+    borderRadius: tokens.radius.sm,
+    backgroundColor: tokens.colors.surface.secondary,
   },
   cancelButtonText: {
-    color: theme.Colors.text.secondary,
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.medium,
+    color: tokens.colors.text.secondary,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   saveButton: {
     flex: 1,
-    paddingVertical: theme.Spacing.md,
+    paddingVertical: tokens.space.md,
     alignItems: 'center',
-    borderRadius: theme.BorderRadius.sm,
-    backgroundColor: theme.Colors.cards.meals,
+    borderRadius: tokens.radius.sm,
+    backgroundColor: tokens.colors.semantic.warning,
   },
   saveButtonText: {
-    color: theme.Colors.text.inverse,
-    fontSize: theme.Typography.sizes.base,
-    fontWeight: theme.Typography.weights.semibold,
+    color: tokens.colors.text.white,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: tokens.typography.fontWeight.semibold,
   },
 });
