@@ -9,9 +9,6 @@ import {
   Users,
   GraduationCap,
   Star,
-  DollarSign,
-  AlertTriangle,
-  TrendingUp,
   BarChart3,
   Shield,
 } from 'lucide-react';
@@ -85,24 +82,6 @@ const Dashboard = () => {
       value: stats?.parents || 0,
       icon: Users,
       color: 'bg-orange-500',
-    },
-    {
-      title: t('dashboard.averageRating', { defaultValue: 'O\'rtacha Reyting' }),
-      value: (stats?.averageRating || 0).toFixed(1),
-      icon: Star,
-      color: 'bg-yellow-500',
-    },
-    {
-      title: t('dashboard.totalRevenue', { defaultValue: 'Jami Daromad' }),
-      value: `${(stats?.totalRevenue || 0).toLocaleString()} UZS`,
-      icon: DollarSign,
-      color: 'bg-emerald-500',
-    },
-    {
-      title: t('dashboard.activeWarnings', { defaultValue: 'Faol Ogohlantirishlar' }),
-      value: stats?.activeWarnings || 0,
-      icon: AlertTriangle,
-      color: 'bg-red-500',
     },
   ];
 
