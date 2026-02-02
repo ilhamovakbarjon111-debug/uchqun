@@ -8,7 +8,6 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Schools from './pages/Schools';
-import Ratings from './pages/Ratings';
 import AdminDetails from './pages/AdminDetails';
 import Profile from './pages/Profile';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -38,7 +37,6 @@ const AppRoutes = () => {
       >
         <Route index element={<Dashboard />} />
         <Route path="schools" element={<Schools />} />
-        <Route path="ratings" element={<Ratings />} />
         <Route path="profile" element={<Profile />} />
         <Route path="admin/:id" element={<AdminDetails />} />
       </Route>
