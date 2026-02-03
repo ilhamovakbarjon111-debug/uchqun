@@ -97,12 +97,18 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { user: userData } = response.data;
+      const { accessToken, user: userData } = response.data;
 
-      if (userData) {
+      if (userData && accessToken) {
+        // Save user and token to localStorage (Safari compatibility)
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
-        return { success: true };
+        localStorage.setItem('accessToken', accessToken);
+        
+        // Small delay to ensure state is updated before navigation (Safari fix)
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        return { success: true, user: userData };
       }
       return { success: false, error: 'Invalid response from server' };
     } catch (error) {

@@ -144,17 +144,19 @@ export const login = async (req, res) => {
     logger.info('Successful login', { userId: user.id, role: user.role });
 
     const isProduction = process.env.NODE_ENV === 'production';
+    // Safari compatibility: 
+    // - Use 'lax' for same-origin requests (custom domain with same domain backend)
+    // - Use 'none' only for cross-site requests (requires secure: true)
+    // Safari handles 'lax' better than 'none' for same-site cookies
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      sameSite: isProduction ? 'lax' : 'lax', // Changed to 'lax' for Safari compatibility with custom domains
       path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
 
-    res.cookie('accessToken', accessToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    res.cookie('accessToken', accessToken, cookieOptions);
 
     // Note: Refresh tokens are no longer stored in database for simplicity
     // JWT verification is sufficient for security
