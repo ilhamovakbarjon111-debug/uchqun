@@ -993,7 +993,7 @@ export const rateSchool = async (req, res) => {
         } else if (hasValidStars) {
           // Has stars, no evaluation
           existingRating.stars = starsNum;
-          existingRating.evaluation = null; // Use null instead of empty object
+          existingRating.evaluation = {}; // Use empty object to match model's defaultValue
         } else {
           // This shouldn't happen due to validation above, but handle it gracefully
           logger.warn('Unexpected: no valid evaluation or stars in update', {
@@ -1033,10 +1033,10 @@ export const rateSchool = async (req, res) => {
         }
         
         // Ensure evaluation is properly formatted for JSONB
-        // If has valid evaluation, use it; otherwise use null (not empty object)
+        // Model has defaultValue: {} for evaluation, so use empty object instead of null
         const evaluationForDB = hasValidEvaluation && finalEvaluationData && Object.keys(finalEvaluationData).length > 0
           ? finalEvaluationData
-          : null;
+          : {}; // Use empty object to match model's defaultValue
         
         rating = await SchoolRating.create({
           schoolId: finalSchoolId,
@@ -1089,7 +1089,7 @@ export const rateSchool = async (req, res) => {
               existingRating.stars = null;
             } else if (errorHasValidStars) {
               existingRating.stars = starsNum;
-              existingRating.evaluation = null; // Use null instead of empty object
+              existingRating.evaluation = {}; // Use empty object to match model's defaultValue
             }
             existingRating.comment = comment || null;
             await existingRating.save();
@@ -1194,7 +1194,7 @@ export const rateSchool = async (req, res) => {
                 existingRating.stars = null;
               } else if (errorHasValidStars) {
                 existingRating.stars = starsNum;
-                existingRating.evaluation = null; // Use null instead of empty object
+                existingRating.evaluation = {}; // Use empty object to match model's defaultValue
               }
               existingRating.comment = comment || null;
               await existingRating.save();
