@@ -105,6 +105,7 @@ const defaultOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
+  'http://localhost:5176', // Super-admin panel
   'https://uchqun-platform.vercel.app',
   'https://uchqunedu.uz',
   'https://www.uchqunedu.uz',

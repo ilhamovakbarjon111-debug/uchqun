@@ -153,7 +153,27 @@ const TeacherRating = () => {
       setSummary(ratingData.summary || { average: 0, count: 0 });
     } catch (err) {
       console.error('Error saving rating:', err);
-      setError(err.response?.data?.error || t('ratingPage.errorSave'));
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+      
+      // Get error message from response
+      let errorMessage = t('ratingPage.errorSave');
+      if (err.response?.data) {
+        // Prefer message field, then error field
+        errorMessage = err.response.data.message || err.response.data.error || errorMessage;
+        // Add details if available
+        if (err.response.data.details) {
+          if (typeof err.response.data.details === 'string') {
+            errorMessage += ': ' + err.response.data.details;
+          } else if (typeof err.response.data.details === 'object') {
+            errorMessage += ': ' + JSON.stringify(err.response.data.details);
+          }
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -184,15 +204,18 @@ const TeacherRating = () => {
     setSavingSchool(true);
     try {
       // Send schoolId if available, otherwise send schoolName
+      // Include stars if provided (for backward compatibility), but evaluation takes priority
       const payload = school.id 
         ? { 
             schoolId: school.id, 
             evaluation: schoolEvaluation,
+            stars: schoolStars > 0 ? schoolStars : undefined,
             comment: schoolComment || null
           }
         : { 
             schoolName: school.name.trim(), 
             evaluation: schoolEvaluation,
+            stars: schoolStars > 0 ? schoolStars : undefined,
             comment: schoolComment || null
           };
       
@@ -200,6 +223,7 @@ const TeacherRating = () => {
       await api.post('/parent/school-rating', payload);
       setSchoolRating({
         evaluation: schoolEvaluation,
+        stars: schoolStars > 0 ? schoolStars : null,
         comment: schoolComment,
         updatedAt: new Date().toISOString(),
       });
@@ -223,11 +247,12 @@ const TeacherRating = () => {
       console.error('Error saving school rating:', err);
       console.error('Error response:', err.response?.data);
       console.error('Error status:', err.response?.status);
-      
+
       // Get error message from response
       let errorMessage = t('schoolRatingPage.errorSave');
       if (err.response?.data) {
-        errorMessage = err.response.data.error || err.response.data.message || errorMessage;
+        // Prefer message field, then error field
+        errorMessage = err.response.data.message || err.response.data.error || errorMessage;
         // Add details if available
         if (err.response.data.details) {
           if (typeof err.response.data.details === 'string') {
@@ -239,7 +264,7 @@ const TeacherRating = () => {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setSchoolError(errorMessage);
     } finally {
       setSavingSchool(false);

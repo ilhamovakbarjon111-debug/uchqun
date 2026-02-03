@@ -15,6 +15,7 @@ import Media from '../models/Media.js';
 import logger from '../utils/logger.js';
 import { Op, fn, col } from 'sequelize';
 import sequelize from '../config/database.js';
+import { computeAverageRating } from '../utils/governmentLevel.js';
 
 /**
  * Parent Controller
@@ -519,13 +520,58 @@ export const rateMyTeacher = async (req, res) => {
       await rating.save();
     }
 
+    // Update teacher's rating and totalRatings
+    try {
+      const allRatings = await TeacherRating.findAll({
+        where: { teacherId: parent.teacherId },
+        attributes: ['stars'],
+      });
+
+      const totalRatings = allRatings.length;
+      const averageRating = totalRatings > 0
+        ? allRatings.reduce((sum, r) => sum + (r.stars || 0), 0) / totalRatings
+        : 0;
+
+      await User.update(
+        {
+          rating: parseFloat(averageRating.toFixed(2)),
+          totalRatings: totalRatings,
+        },
+        {
+          where: { id: parent.teacherId },
+        }
+      );
+
+      logger.info('Updated teacher rating', {
+        teacherId: parent.teacherId,
+        averageRating: parseFloat(averageRating.toFixed(2)),
+        totalRatings,
+      });
+    } catch (updateError) {
+      logger.error('Error updating teacher rating', {
+        error: updateError.message,
+        teacherId: parent.teacherId,
+      });
+      // Don't fail the request if rating update fails
+    }
+
     res.json({
       success: true,
+      message: 'Teacher rating saved successfully',
       data: rating.toJSON(),
     });
   } catch (error) {
-    logger.error('Rate teacher error', { error: error.message, stack: error.stack });
-    res.status(500).json({ error: 'Failed to rate teacher' });
+    logger.error('Rate teacher error', { 
+      error: error.message, 
+      stack: error.stack,
+      parentId: req.user?.id,
+      teacherId: req.user?.teacherId,
+    });
+    res.status(500).json({ 
+      error: 'Failed to rate teacher',
+      message: 'An error occurred while saving the rating. Please try again.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 };
 
@@ -675,7 +721,12 @@ export const rateSchool = async (req, res) => {
 
     // Support both old stars format (for backward compatibility) and new evaluation format
     let evaluationData = evaluation;
-    let starsNum = stars ? Number(stars) : null;
+    let starsNum = stars !== undefined && stars !== null ? Number(stars) : null;
+
+    // Validate stars if provided
+    if (starsNum !== null && (isNaN(starsNum) || starsNum < 1 || starsNum > 5)) {
+      return res.status(400).json({ error: 'Stars must be a number between 1 and 5' });
+    }
 
     // If evaluation is provided, use it; otherwise fall back to stars for backward compatibility
     if (evaluationData && typeof evaluationData === 'object' && !Array.isArray(evaluationData)) {
@@ -711,20 +762,31 @@ export const rateSchool = async (req, res) => {
         
         // If no criteria is selected, return error
         if (!hasAtLeastOneTrue) {
-          return res.status(400).json({ error: 'At least one evaluation criterion must be selected' });
+          return res.status(400).json({ 
+            error: 'At least one evaluation criterion must be selected',
+            message: 'Please select at least one evaluation criterion to rate the school'
+          });
         }
         
         evaluationData = validatedEvaluation;
       } else {
-        // Empty object - treat as no evaluation
+        // Empty object - treat as no evaluation, check if stars provided
+        if (starsNum === null || starsNum === undefined) {
+          return res.status(400).json({ 
+            error: 'Evaluation criteria or stars are required',
+            message: 'Please select at least one evaluation criterion or provide a star rating'
+          });
+        }
         evaluationData = null;
       }
-    } else if (starsNum && !isNaN(starsNum) && starsNum >= 1 && starsNum <= 5) {
-      // Backward compatibility: convert stars to evaluation if needed
-      // This is a fallback for old ratings
+    } else if (starsNum !== null && starsNum !== undefined && !isNaN(starsNum) && starsNum >= 1 && starsNum <= 5) {
+      // Backward compatibility: use stars if provided and valid
       evaluationData = null;
     } else {
-      return res.status(400).json({ error: 'Evaluation criteria or stars are required' });
+      return res.status(400).json({ 
+        error: 'Evaluation criteria or stars are required',
+        message: 'Please select at least one evaluation criterion or provide a star rating (1-5)'
+      });
     }
 
     let school = null;
@@ -1116,6 +1178,10 @@ export const rateSchool = async (req, res) => {
       });
     }
 
+    // School rating summary is calculated on-the-fly from SchoolRating table
+    // No need to update School model as it doesn't have averageRating field
+    // The summary is calculated when needed in getMySchoolRating endpoint
+
     logger.info('School rating saved', {
       schoolId: finalSchoolId,
       parentId,
@@ -1333,58 +1399,15 @@ export const getMySchoolRating = async (req, res) => {
       allRatings = []; // Default to empty array if fetch fails
     }
 
-    // Calculate average rating based on evaluation criteria or stars (for backward compatibility)
+    // Calculate average rating using the utility function
     let average = 0;
-    const count = allRatings.length;
+    let count = 0;
     
-    if (count > 0) {
+    if (allRatings.length > 0) {
       try {
-        const ratingsWithEvaluation = allRatings.filter(r => r.evaluation && typeof r.evaluation === 'object' && Object.keys(r.evaluation).length > 0);
-        const ratingsWithStars = allRatings.filter(r => r.stars !== null && r.stars !== undefined && !r.evaluation);
-        
-        if (ratingsWithEvaluation.length > 0) {
-          // Calculate average based on evaluation criteria
-          // Count how many criteria are met across all ratings
-          const criteriaKeys = [
-            'officiallyRegistered',
-            'qualifiedSpecialists',
-            'individualPlan',
-            'safeEnvironment',
-            'medicalRequirements',
-            'developmentalActivities',
-            'foodQuality',
-            'regularInformation',
-            'clearPayments',
-            'kindAttitude'
-          ];
-          
-          let totalCriteriaMet = 0;
-          let totalCriteriaCount = 0;
-          
-          ratingsWithEvaluation.forEach(rating => {
-            if (rating.evaluation && typeof rating.evaluation === 'object') {
-              criteriaKeys.forEach(key => {
-                totalCriteriaCount++;
-                if (rating.evaluation[key] === true) {
-                  totalCriteriaMet++;
-                }
-              });
-            }
-          });
-          
-          // Calculate percentage and convert to 0-5 scale
-          if (totalCriteriaCount > 0) {
-            const percentage = (totalCriteriaMet / totalCriteriaCount) * 100;
-            average = parseFloat((percentage / 100 * 5).toFixed(1));
-          }
-        } else if (ratingsWithStars.length > 0) {
-          // Fallback to stars for backward compatibility
-          const stars = ratingsWithStars.map(r => Number(r.stars)).filter(s => !isNaN(s) && s > 0);
-          if (stars.length > 0) {
-            const sum = stars.reduce((acc, s) => acc + s, 0);
-            average = parseFloat((sum / stars.length).toFixed(1));
-          }
-        }
+        const ratingResult = computeAverageRating(allRatings);
+        average = ratingResult.average;
+        count = ratingResult.count;
       } catch (calcError) {
         logger.error('Error calculating school rating average', {
           error: calcError.message,
