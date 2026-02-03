@@ -977,6 +977,7 @@ export const rateSchool = async (req, res) => {
 
     try {
       // First, try to find existing rating (outside transaction for better error handling)
+      // Use findOrCreate to handle unique constraint automatically
       let existingRating = await SchoolRating.findOne({
         where: {
           schoolId: finalSchoolId,
@@ -1045,19 +1046,39 @@ export const rateSchool = async (req, res) => {
           schoolId: finalSchoolId,
           parentId,
           starsValue,
-          evaluationForDB,
+          evaluationForDB: JSON.stringify(evaluationForDB),
           hasValidEvaluation,
           hasValidStars,
         });
         
-        rating = await SchoolRating.create({
-          schoolId: finalSchoolId,
-          parentId,
-          stars: starsValue,
-          evaluation: evaluationForDB,
-          comment: comment || null,
+        // Use findOrCreate to handle unique constraint automatically
+        const [ratingInstance, wasCreated] = await SchoolRating.findOrCreate({
+          where: {
+            schoolId: finalSchoolId,
+            parentId,
+          },
+          defaults: {
+            stars: starsValue,
+            evaluation: evaluationForDB,
+            comment: comment || null,
+          },
         });
-        created = true;
+        
+        if (!wasCreated) {
+          // Update existing rating
+          if (hasValidEvaluation) {
+            ratingInstance.evaluation = evaluationForDB;
+            ratingInstance.stars = null;
+          } else if (hasValidStars) {
+            ratingInstance.stars = starsValue;
+            ratingInstance.evaluation = {};
+          }
+          ratingInstance.comment = comment || null;
+          await ratingInstance.save();
+        }
+        
+        rating = ratingInstance;
+        created = wasCreated;
       }
     } catch (ratingError) {
       // Log comprehensive error information
