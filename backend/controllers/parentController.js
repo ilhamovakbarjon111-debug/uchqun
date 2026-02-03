@@ -1034,9 +1034,21 @@ export const rateSchool = async (req, res) => {
         
         // Ensure evaluation is properly formatted for JSONB
         // Model has defaultValue: {} for evaluation, so use empty object instead of null
-        const evaluationForDB = hasValidEvaluation && finalEvaluationData && Object.keys(finalEvaluationData).length > 0
-          ? finalEvaluationData
-          : {}; // Use empty object to match model's defaultValue
+        let evaluationForDB = {};
+        if (hasValidEvaluation && finalEvaluationData && typeof finalEvaluationData === 'object' && Object.keys(finalEvaluationData).length > 0) {
+          // Deep clone to ensure it's a plain object
+          evaluationForDB = JSON.parse(JSON.stringify(finalEvaluationData));
+        }
+        
+        // Log before creating for debugging
+        logger.info('Creating school rating', {
+          schoolId: finalSchoolId,
+          parentId,
+          starsValue,
+          evaluationForDB,
+          hasValidEvaluation,
+          hasValidStars,
+        });
         
         rating = await SchoolRating.create({
           schoolId: finalSchoolId,
@@ -1216,10 +1228,14 @@ export const rateSchool = async (req, res) => {
         return res.status(500).json({ 
           error: 'Database error',
           message: 'A database error occurred. Please try again.',
-          details: process.env.NODE_ENV === 'development' ? {
+          details: process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production' ? {
             message: ratingError.message,
             originalMessage: ratingError.original?.message,
             code: ratingError.original?.code,
+            detail: ratingError.original?.detail,
+            hint: ratingError.original?.hint,
+            errorName: ratingError.name,
+            stack: ratingError.stack,
           } : undefined,
         });
       }
@@ -1233,10 +1249,18 @@ export const rateSchool = async (req, res) => {
       return res.status(500).json({ 
         error: errorMessage,
         message: 'An error occurred while saving your rating. Please try again.',
-        details: process.env.NODE_ENV === 'development' ? {
+        details: process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production' ? {
           originalError: ratingError.message,
           errorName: ratingError.name,
           errorCode: ratingError.code,
+          originalMessage: ratingError.original?.message,
+          detail: ratingError.original?.detail,
+          hint: ratingError.original?.hint,
+          stack: ratingError.stack,
+          schoolId: finalSchoolId,
+          parentId,
+          finalEvaluationData,
+          starsNum,
         } : undefined,
       });
     }
