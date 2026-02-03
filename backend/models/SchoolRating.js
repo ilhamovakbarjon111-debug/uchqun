@@ -43,6 +43,26 @@ const SchoolRating = sequelize.define('SchoolRating', {
       },
     },
   },
+  numericRating: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    validate: {
+      // Custom validator that allows null/undefined or valid integer between 1-10
+      isValidNumericRating(value) {
+        if (value === null || value === undefined) {
+          return true; // Allow null/undefined
+        }
+        const num = Number(value);
+        if (isNaN(num) || !Number.isInteger(num)) {
+          throw new Error('Numeric rating must be an integer');
+        }
+        if (num < 1 || num > 10) {
+          throw new Error('Numeric rating must be between 1 and 10');
+        }
+        return true;
+      },
+    },
+  },
   evaluation: {
     type: DataTypes.JSONB,
     allowNull: true,

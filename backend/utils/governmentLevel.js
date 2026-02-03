@@ -17,17 +17,19 @@ const EVALUATION_CRITERIA = [
 /**
  * Compute the effective 0–5 score for a single SchoolRating record.
  *
- * The rating system has two formats:
- *   1. New `evaluation` (JSONB with 10 boolean criteria, stars = NULL)
+ * The rating system has three formats (priority order):
+ *   1. New `evaluation` (JSONB with 10 boolean criteria)
  *      → score = (criteria met / 10) × 5
- *   2. Legacy `stars` (INTEGER 1–5)
+ *   2. `numericRating` (INTEGER 1–10)
+ *      → score = (numericRating / 10) × 5 (convert to 0-5 scale)
+ *   3. Legacy `stars` (INTEGER 1–5)
  *      → score = stars value
  *
- * @param {{ stars?: number|null, evaluation?: object|null }} rating
+ * @param {{ stars?: number|null, numericRating?: number|null, evaluation?: object|null }} rating
  * @returns {number|null} Score 0–5, or null if rating has no usable data
  */
 export function computeRatingScore(rating) {
-  // Check evaluation first (newer format takes priority)
+  // Check evaluation first (highest priority)
   const eval_ = rating.evaluation;
   if (eval_ && typeof eval_ === 'object' && !Array.isArray(eval_)) {
     const keys = Object.keys(eval_);
@@ -37,7 +39,16 @@ export function computeRatingScore(rating) {
     }
   }
 
-  // Fall back to stars
+  // Check numericRating (1-10) - second priority
+  if (rating.numericRating !== null && rating.numericRating !== undefined) {
+    const n = Number(rating.numericRating);
+    if (!isNaN(n) && n >= 1 && n <= 10) {
+      // Convert 1-10 scale to 0-5 scale
+      return (n / 10) * 5;
+    }
+  }
+
+  // Fall back to stars (1-5) - backward compatibility
   if (rating.stars !== null && rating.stars !== undefined) {
     const n = Number(rating.stars);
     if (!isNaN(n) && n >= 1 && n <= 5) return n;

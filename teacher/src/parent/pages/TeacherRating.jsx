@@ -20,6 +20,7 @@ const TeacherRating = () => {
   const [schoolRating, setSchoolRating] = useState(null);
   const [schoolSummary, setSchoolSummary] = useState({ average: 0, count: 0 });
   const [schoolStars, setSchoolStars] = useState(0);
+  const [schoolNumericRating, setSchoolNumericRating] = useState(0);
   const [schoolEvaluation, setSchoolEvaluation] = useState({
     officiallyRegistered: false,
     qualifiedSpecialists: false,
@@ -92,6 +93,7 @@ const TeacherRating = () => {
       setSchool(schoolRatingData.school);
       setSchoolRating(schoolRatingData.rating);
       setSchoolStars(schoolRatingData.rating?.stars || 0);
+      setSchoolNumericRating(schoolRatingData.rating?.numericRating || 0);
       setSchoolEvaluation(schoolRatingData.rating?.evaluation || {
         officiallyRegistered: false,
         qualifiedSpecialists: false,
@@ -188,9 +190,12 @@ const TeacherRating = () => {
       return;
     }
 
-    // Check if at least one evaluation criterion is selected
+    // Check if at least one rating method is provided
     const hasEvaluation = Object.values(schoolEvaluation).some(value => value === true);
-    if (!hasEvaluation && !schoolStars) {
+    const hasNumericRating = schoolNumericRating && schoolNumericRating > 0 && schoolNumericRating <= 10;
+    const hasStars = schoolStars && schoolStars > 0 && schoolStars <= 5;
+    
+    if (!hasEvaluation && !hasNumericRating && !hasStars) {
       setSchoolError(t('schoolRatingPage.errorRequired'));
       return;
     }
@@ -204,21 +209,24 @@ const TeacherRating = () => {
     setSavingSchool(true);
     try {
       // Send schoolId if available, otherwise send schoolName
-      // If evaluation is provided, use it and DO NOT send stars
-      // Only send stars if evaluation is NOT provided and stars is valid
+      // Priority: evaluation > numericRating (1-10) > stars (1-5)
+      // If evaluation is provided, ignore numericRating and stars
+      // If numericRating is provided, ignore stars
       let payload;
       if (school.id) {
         payload = {
           schoolId: school.id,
           ...(hasEvaluation ? { evaluation: schoolEvaluation } : {}),
-          ...(!hasEvaluation && schoolStars && schoolStars > 0 && schoolStars <= 5 ? { stars: schoolStars } : {}),
+          ...(!hasEvaluation && hasNumericRating ? { numericRating: schoolNumericRating } : {}),
+          ...(!hasEvaluation && !hasNumericRating && hasStars ? { stars: schoolStars } : {}),
           comment: schoolComment || null
         };
       } else {
         payload = {
           schoolName: school.name.trim(),
           ...(hasEvaluation ? { evaluation: schoolEvaluation } : {}),
-          ...(!hasEvaluation && schoolStars && schoolStars > 0 && schoolStars <= 5 ? { stars: schoolStars } : {}),
+          ...(!hasEvaluation && hasNumericRating ? { numericRating: schoolNumericRating } : {}),
+          ...(!hasEvaluation && !hasNumericRating && hasStars ? { stars: schoolStars } : {}),
           comment: schoolComment || null
         };
       }
@@ -228,6 +236,7 @@ const TeacherRating = () => {
       setSchoolRating({
         evaluation: schoolEvaluation,
         stars: schoolStars > 0 ? schoolStars : null,
+        numericRating: schoolNumericRating > 0 ? schoolNumericRating : null,
         comment: schoolComment,
         updatedAt: new Date().toISOString(),
       });
@@ -542,6 +551,53 @@ const TeacherRating = () => {
                       </label>
                     ))}
                   </div>
+                </div>
+
+                {/* Numeric Rating (1-10) */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-semibold text-gray-700">{t('schoolRatingPage.numericRatingLabel', { defaultValue: 'Baholash (1-10)' })}</p>
+                    <span className="text-xs text-gray-400">{t('schoolRatingPage.optional')}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={schoolNumericRating || ''}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 0;
+                        if (value >= 1 && value <= 10) {
+                          setSchoolNumericRating(value);
+                        } else if (e.target.value === '') {
+                          setSchoolNumericRating(0);
+                        }
+                      }}
+                      placeholder={t('schoolRatingPage.numericRatingPlaceholder', { defaultValue: '1 dan 10 gacha' })}
+                      className="w-24 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => setSchoolNumericRating(num)}
+                            className={`w-8 h-8 rounded-lg text-sm font-semibold transition-colors ${
+                              schoolNumericRating === num
+                                ? 'bg-green-600 text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            {num}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {t('schoolRatingPage.numericRatingHint', { defaultValue: 'Yoki yuqoridagi raqamlardan birini tanlang' })}
+                  </p>
                 </div>
 
                 <div>
