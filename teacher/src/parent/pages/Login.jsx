@@ -22,27 +22,25 @@ const Login = () => {
 
     const result = await login(email, password);
 
-    if (result.success && result.user) {
+    if (result.success) {
       // Only allow teacher and parent roles - reject all other roles
-      const user = result.user;
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (user.role === 'teacher') {
-        // Use window.location.href for Safari compatibility (forces full page reload)
-        window.location.href = '/teacher';
+        navigate('/teacher');
       } else if (user.role === 'parent') {
-        // Use window.location.href for Safari compatibility
-        window.location.href = '/';
+        navigate('/');
       } else {
         // Clear tokens if wrong role (admin, reception, government, super-admin, etc.)
         localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         setError(t('login.invalidRole', { defaultValue: 'Faqat o\'qituvchi va ota-ona kirishi mumkin. Boshqa rollar kirishi mumkin emas.' }));
-        setLoading(false);
       }
     } else {
       setError(result.error || t('login.invalid', { defaultValue: 'Invalid email or password' }));
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   return (

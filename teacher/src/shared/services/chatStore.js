@@ -60,7 +60,7 @@ export async function getUnreadTotalForPrefix(prefix = 'parent:', role = 'teache
     // For parent role, get their own conversation
     if (role === 'parent' && prefix === 'parent:') {
       // This will be handled by the parent component using getUnreadCount
-  return 0;
+      return 0;
     }
     
     return 0;
