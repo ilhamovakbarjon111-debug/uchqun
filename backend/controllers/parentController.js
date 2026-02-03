@@ -720,7 +720,7 @@ export const rateSchool = async (req, res) => {
     }
 
     // Support both old stars format (for backward compatibility) and new evaluation format
-    let evaluationData = evaluation;
+    let evaluationData = evaluation !== undefined ? evaluation : null;
     let starsNum = stars !== undefined && stars !== null ? Number(stars) : null;
 
     // Validate stars if provided
@@ -729,7 +729,7 @@ export const rateSchool = async (req, res) => {
     }
 
     // If evaluation is provided, use it; otherwise fall back to stars for backward compatibility
-    if (evaluationData && typeof evaluationData === 'object' && !Array.isArray(evaluationData)) {
+    if (evaluationData !== null && evaluationData !== undefined && typeof evaluationData === 'object' && !Array.isArray(evaluationData)) {
       // Check if evaluation object has any keys
       const evaluationKeys = Object.keys(evaluationData);
       
@@ -936,12 +936,30 @@ export const rateSchool = async (req, res) => {
       finalEvaluationData = {};
     }
     
+    // Final validation: ensure at least one of evaluation or stars is provided
+    const hasValidEvaluation = finalEvaluationData && typeof finalEvaluationData === 'object' && Object.keys(finalEvaluationData).length > 0;
+    const hasValidStars = starsNum !== null && starsNum !== undefined && !isNaN(starsNum) && starsNum >= 1 && starsNum <= 5;
+    
+    if (!hasValidEvaluation && !hasValidStars) {
+      logger.error('No valid rating data provided', {
+        schoolId: finalSchoolId,
+        parentId,
+        evaluationData,
+        starsNum,
+        finalEvaluationData,
+      });
+      return res.status(400).json({ 
+        error: 'Rating data required',
+        message: 'Please provide either evaluation criteria or a star rating (1-5)'
+      });
+    }
+    
     // Log for debugging
     logger.info('Preparing to save rating', {
       schoolId: finalSchoolId,
       parentId,
-      hasEvaluation: Object.keys(finalEvaluationData).length > 0,
-      evaluationKeys: Object.keys(finalEvaluationData),
+      hasEvaluation: hasValidEvaluation,
+      evaluationKeys: hasValidEvaluation ? Object.keys(finalEvaluationData) : [],
       starsNum,
       finalEvaluationData,
     });
