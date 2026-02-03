@@ -957,18 +957,26 @@ export const rateSchool = async (req, res) => {
 
       if (existingRating) {
         // Update existing rating
-        if (Object.keys(finalEvaluationData).length > 0) {
+        if (hasValidEvaluation) {
           // Has evaluation criteria
           existingRating.evaluation = finalEvaluationData;
           existingRating.stars = null; // Clear stars when using evaluation
-        } else if (starsNum !== null && starsNum !== undefined) {
+        } else if (hasValidStars) {
           // Has stars, no evaluation
           existingRating.stars = starsNum;
-          existingRating.evaluation = {}; // Use empty object instead of null
+          existingRating.evaluation = null; // Use null instead of empty object
         } else {
-          // Neither evaluation nor stars - this shouldn't happen due to validation above
-          existingRating.evaluation = {};
-          existingRating.stars = null;
+          // This shouldn't happen due to validation above, but handle it gracefully
+          logger.warn('Unexpected: no valid evaluation or stars in update', {
+            schoolId: finalSchoolId,
+            parentId,
+            finalEvaluationData,
+            starsNum,
+          });
+          return res.status(400).json({ 
+            error: 'Invalid rating data',
+            message: 'Please provide either evaluation criteria or a star rating'
+          });
         }
         existingRating.comment = comment || null;
         await existingRating.save();
@@ -977,17 +985,35 @@ export const rateSchool = async (req, res) => {
       } else {
         // Create new rating
         // Prepare stars value - only set if no evaluation and starsNum is valid
-        const starsValue = Object.keys(finalEvaluationData).length > 0 
+        const starsValue = hasValidEvaluation 
           ? null 
-          : (starsNum !== null && starsNum !== undefined && starsNum >= 1 && starsNum <= 5) 
-            ? starsNum 
-            : null;
+          : (hasValidStars ? starsNum : null);
+        
+        // Final check before creating
+        if (!hasValidEvaluation && !hasValidStars) {
+          logger.error('Cannot create rating: no valid data', {
+            schoolId: finalSchoolId,
+            parentId,
+            finalEvaluationData,
+            starsNum,
+          });
+          return res.status(400).json({ 
+            error: 'Invalid rating data',
+            message: 'Please provide either evaluation criteria or a star rating'
+          });
+        }
+        
+        // Ensure evaluation is properly formatted for JSONB
+        // If has valid evaluation, use it; otherwise use null (not empty object)
+        const evaluationForDB = hasValidEvaluation && finalEvaluationData && Object.keys(finalEvaluationData).length > 0
+          ? finalEvaluationData
+          : null;
         
         rating = await SchoolRating.create({
           schoolId: finalSchoolId,
           parentId,
           stars: starsValue,
-          evaluation: finalEvaluationData,
+          evaluation: evaluationForDB,
           comment: comment || null,
         });
         created = true;
@@ -1025,12 +1051,16 @@ export const rateSchool = async (req, res) => {
           });
           
           if (existingRating) {
-            if (Object.keys(finalEvaluationData).length > 0) {
+            // Recalculate validation flags in error handling context
+            const errorHasValidEvaluation = finalEvaluationData && typeof finalEvaluationData === 'object' && Object.keys(finalEvaluationData).length > 0;
+            const errorHasValidStars = starsNum !== null && starsNum !== undefined && !isNaN(starsNum) && starsNum >= 1 && starsNum <= 5;
+            
+            if (errorHasValidEvaluation) {
               existingRating.evaluation = finalEvaluationData;
               existingRating.stars = null;
-            } else if (starsNum !== null && starsNum !== undefined) {
+            } else if (errorHasValidStars) {
               existingRating.stars = starsNum;
-              existingRating.evaluation = {};
+              existingRating.evaluation = null; // Use null instead of empty object
             }
             existingRating.comment = comment || null;
             await existingRating.save();
@@ -1126,12 +1156,16 @@ export const rateSchool = async (req, res) => {
             });
             
             if (existingRating) {
-              if (Object.keys(finalEvaluationData).length > 0) {
+              // Recalculate validation flags in error handling context
+              const errorHasValidEvaluation = finalEvaluationData && typeof finalEvaluationData === 'object' && Object.keys(finalEvaluationData).length > 0;
+              const errorHasValidStars = starsNum !== null && starsNum !== undefined && !isNaN(starsNum) && starsNum >= 1 && starsNum <= 5;
+              
+              if (errorHasValidEvaluation) {
                 existingRating.evaluation = finalEvaluationData;
                 existingRating.stars = null;
-              } else if (starsNum !== null && starsNum !== undefined) {
+              } else if (errorHasValidStars) {
                 existingRating.stars = starsNum;
-                existingRating.evaluation = {};
+                existingRating.evaluation = null; // Use null instead of empty object
               }
               existingRating.comment = comment || null;
               await existingRating.save();
