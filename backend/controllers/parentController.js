@@ -721,14 +721,23 @@ export const rateSchool = async (req, res) => {
 
     // Support both old stars format (for backward compatibility) and new evaluation format
     let evaluationData = evaluation !== undefined ? evaluation : null;
-    let starsNum = stars !== undefined && stars !== null ? Number(stars) : null;
+    // Only process stars if it's explicitly provided and not undefined/null
+    // If evaluation is provided, ignore stars completely
+    let starsNum = null;
+    if (stars !== undefined && stars !== null && evaluation === undefined) {
+      const starsValue = Number(stars);
+      if (!isNaN(starsValue) && starsValue >= 1 && starsValue <= 5) {
+        starsNum = starsValue;
+      }
+    }
 
-    // Validate stars if provided
+    // Validate stars if provided (only if no evaluation)
     if (starsNum !== null && (isNaN(starsNum) || starsNum < 1 || starsNum > 5)) {
       return res.status(400).json({ error: 'Stars must be a number between 1 and 5' });
     }
 
-    // If evaluation is provided, use it; otherwise fall back to stars for backward compatibility
+    // If evaluation is provided, use it and ignore stars completely
+    // Otherwise fall back to stars for backward compatibility
     if (evaluationData !== null && evaluationData !== undefined && typeof evaluationData === 'object' && !Array.isArray(evaluationData)) {
       // Check if evaluation object has any keys
       const evaluationKeys = Object.keys(evaluationData);
@@ -769,6 +778,8 @@ export const rateSchool = async (req, res) => {
         }
         
         evaluationData = validatedEvaluation;
+        // If evaluation is valid, ignore stars completely
+        starsNum = null;
       } else {
         // Empty object - treat as no evaluation, check if stars provided
         if (starsNum === null || starsNum === undefined) {

@@ -204,23 +204,24 @@ const TeacherRating = () => {
     setSavingSchool(true);
     try {
       // Send schoolId if available, otherwise send schoolName
-      // Include stars if provided (for backward compatibility), but evaluation takes priority
-      // Only send stars if it's a valid number between 1-5
-      const starsToSend = (schoolStars && schoolStars > 0 && schoolStars <= 5) ? schoolStars : undefined;
-      
-      const payload = school.id 
-        ? { 
-            schoolId: school.id, 
-            evaluation: hasEvaluation ? schoolEvaluation : undefined,
-            ...(starsToSend && !hasEvaluation ? { stars: starsToSend } : {}),
-            comment: schoolComment || null
-          }
-        : { 
-            schoolName: school.name.trim(), 
-            evaluation: hasEvaluation ? schoolEvaluation : undefined,
-            ...(starsToSend && !hasEvaluation ? { stars: starsToSend } : {}),
-            comment: schoolComment || null
-          };
+      // If evaluation is provided, use it and DO NOT send stars
+      // Only send stars if evaluation is NOT provided and stars is valid
+      let payload;
+      if (school.id) {
+        payload = {
+          schoolId: school.id,
+          ...(hasEvaluation ? { evaluation: schoolEvaluation } : {}),
+          ...(!hasEvaluation && schoolStars && schoolStars > 0 && schoolStars <= 5 ? { stars: schoolStars } : {}),
+          comment: schoolComment || null
+        };
+      } else {
+        payload = {
+          schoolName: school.name.trim(),
+          ...(hasEvaluation ? { evaluation: schoolEvaluation } : {}),
+          ...(!hasEvaluation && schoolStars && schoolStars > 0 && schoolStars <= 5 ? { stars: schoolStars } : {}),
+          comment: schoolComment || null
+        };
+      }
       
       console.log('Sending school rating payload:', payload);
       await api.post('/parent/school-rating', payload);
