@@ -205,17 +205,20 @@ const TeacherRating = () => {
     try {
       // Send schoolId if available, otherwise send schoolName
       // Include stars if provided (for backward compatibility), but evaluation takes priority
+      // Only send stars if it's a valid number between 1-5
+      const starsToSend = (schoolStars && schoolStars > 0 && schoolStars <= 5) ? schoolStars : undefined;
+      
       const payload = school.id 
         ? { 
             schoolId: school.id, 
-            evaluation: schoolEvaluation,
-            stars: schoolStars > 0 ? schoolStars : undefined,
+            evaluation: hasEvaluation ? schoolEvaluation : undefined,
+            ...(starsToSend && !hasEvaluation ? { stars: starsToSend } : {}),
             comment: schoolComment || null
           }
         : { 
             schoolName: school.name.trim(), 
-            evaluation: schoolEvaluation,
-            stars: schoolStars > 0 ? schoolStars : undefined,
+            evaluation: hasEvaluation ? schoolEvaluation : undefined,
+            ...(starsToSend && !hasEvaluation ? { stars: starsToSend } : {}),
             comment: schoolComment || null
           };
       
