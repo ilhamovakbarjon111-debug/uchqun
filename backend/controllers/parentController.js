@@ -1037,8 +1037,24 @@ export const rateSchool = async (req, res) => {
         // Model has defaultValue: {} for evaluation, so use empty object instead of null
         let evaluationForDB = {};
         if (hasValidEvaluation && finalEvaluationData && typeof finalEvaluationData === 'object' && Object.keys(finalEvaluationData).length > 0) {
-          // Deep clone to ensure it's a plain object
-          evaluationForDB = JSON.parse(JSON.stringify(finalEvaluationData));
+          try {
+            // Deep clone to ensure it's a plain object
+            evaluationForDB = JSON.parse(JSON.stringify(finalEvaluationData));
+            // Validate that it's still an object after stringify/parse
+            if (typeof evaluationForDB !== 'object' || Array.isArray(evaluationForDB)) {
+              logger.warn('Evaluation data is not a valid object after stringify/parse', {
+                original: finalEvaluationData,
+                parsed: evaluationForDB,
+              });
+              evaluationForDB = {};
+            }
+          } catch (parseError) {
+            logger.error('Error parsing evaluation data', {
+              error: parseError.message,
+              evaluationData: finalEvaluationData,
+            });
+            evaluationForDB = {};
+          }
         }
         
         // Log before creating for debugging
@@ -1052,19 +1068,53 @@ export const rateSchool = async (req, res) => {
         });
         
         // Use findOrCreate to handle unique constraint automatically
-        const [ratingInstance, wasCreated] = await SchoolRating.findOrCreate({
-          where: {
+        // Wrap in try-catch to handle any errors during findOrCreate
+        let ratingInstance;
+        let wasCreated;
+        
+        try {
+          [ratingInstance, wasCreated] = await SchoolRating.findOrCreate({
+            where: {
+              schoolId: finalSchoolId,
+              parentId,
+            },
+            defaults: {
+              stars: starsValue,
+              evaluation: evaluationForDB,
+              comment: comment || null,
+            },
+          });
+        } catch (findOrCreateError) {
+          // If findOrCreate fails, try to find and update manually
+          logger.warn('findOrCreate failed, trying manual find and update', {
+            error: findOrCreateError.message,
             schoolId: finalSchoolId,
             parentId,
-          },
-          defaults: {
-            stars: starsValue,
-            evaluation: evaluationForDB,
-            comment: comment || null,
-          },
-        });
+          });
+          
+          ratingInstance = await SchoolRating.findOne({
+            where: {
+              schoolId: finalSchoolId,
+              parentId,
+            },
+          });
+          
+          if (ratingInstance) {
+            wasCreated = false;
+          } else {
+            // If not found, create manually
+            ratingInstance = await SchoolRating.create({
+              schoolId: finalSchoolId,
+              parentId,
+              stars: starsValue,
+              evaluation: evaluationForDB,
+              comment: comment || null,
+            });
+            wasCreated = true;
+          }
+        }
         
-        if (!wasCreated) {
+        if (!wasCreated && ratingInstance) {
           // Update existing rating
           if (hasValidEvaluation) {
             ratingInstance.evaluation = evaluationForDB;
