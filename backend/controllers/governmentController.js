@@ -36,18 +36,10 @@ export const getOverview = async (req, res) => {
       logger.warn('Failed to count schools', { error: error.message });
     }
 
-    // Get total students (only those linked to active schools)
+    // Get total students
     let studentsCount = 0;
     try {
-      studentsCount = await Child.count({
-        include: [{
-          model: School,
-          as: 'childSchool',
-          attributes: [],
-          where: { isActive: true },
-          required: true,
-        }],
-      });
+      studentsCount = await Child.count();
     } catch (error) {
       logger.warn('Failed to count students', { error: error.message });
     }
