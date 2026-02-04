@@ -8,7 +8,7 @@ function sanitizeString(str) {
   // Remove script tags and event handlers
   return str
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
     .replace(/javascript:/gi, '')
     .replace(/data:text\/html/gi, '')
     .trim();

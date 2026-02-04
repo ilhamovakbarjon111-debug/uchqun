@@ -1,8 +1,9 @@
+import { jest } from '@jest/globals';
 import jwt from 'jsonwebtoken';
 
 // Mock User model
 const mockFindByPk = jest.fn();
-jest.unstable_mockModule('../../../models/User.js', () => ({
+jest.unstable_mockModule('../../models/User.js', () => ({
   default: { findByPk: mockFindByPk },
 }));
 

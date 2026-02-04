@@ -1,3 +1,5 @@
+import { jest } from '@jest/globals';
+
 describe('Environment validation', () => {
   const originalEnv = process.env;
 
