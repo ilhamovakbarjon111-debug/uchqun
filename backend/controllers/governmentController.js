@@ -710,6 +710,61 @@ export const getSavedStats = async (req, res) => {
   }
 };
 
+/**
+ * Get individual ratings for a specific school
+ * GET /api/government/ratings/:schoolId
+ */
+export const getSchoolRatings = async (req, res) => {
+  try {
+    const { schoolId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    const { count, rows } = await SchoolRating.findAndCountAll({
+      where: { schoolId },
+      include: [
+        {
+          model: User,
+          as: 'ratingParent',
+          attributes: ['id', 'firstName', 'lastName'],
+          required: false,
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset,
+    });
+
+    const ratings = rows.map((r) => {
+      const score = computeRatingScore(r);
+      return {
+        id: r.id,
+        score,
+        comment: r.comment,
+        parentName: r.ratingParent
+          ? `${r.ratingParent.firstName || ''} ${(r.ratingParent.lastName || '').charAt(0)}.`.trim()
+          : null,
+        createdAt: r.createdAt,
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        ratings,
+        total: count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(count / parseInt(limit)),
+      },
+    });
+  } catch (error) {
+    logger.error('Get school ratings error', { error: error.message, stack: error.stack, schoolId: req.params.schoolId });
+    res.status(500).json({ error: 'Failed to fetch school ratings' });
+  }
+};
+
 // Helper functions
 async function getOverviewData(region, district, startDate, endDate) {
   const schoolsCount = await School.count({ where: { isActive: true } });

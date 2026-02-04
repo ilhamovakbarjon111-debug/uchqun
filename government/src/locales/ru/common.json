@@ -64,7 +64,15 @@
     "school": "Школа",
     "student": "Ученик",
     "parent": "Родитель",
-    "unknown": "Неизвестно"
+    "unknown": "Неизвестно",
+    "searchPlaceholder": "Поиск школ...",
+    "distribution": "Распределение",
+    "showReviews": "Показать отзывы",
+    "hideReviews": "Скрыть отзывы",
+    "comment": "Комментарий",
+    "noComment": "Нет комментария",
+    "date": "Дата",
+    "schoolsCount": "Школы"
   },
   "payments": {
     "title": "Платежи",

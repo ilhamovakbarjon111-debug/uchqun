@@ -4,6 +4,7 @@ import {
   getSchoolsStats,
   getStudentsStats,
   getRatingsStats,
+  getSchoolRatings,
   generateStats,
   getSavedStats,
   getAdmins,
@@ -27,6 +28,9 @@ router.get('/students', getStudentsStats);
 
 // Ratings statistics
 router.get('/ratings', getRatingsStats);
+
+// Individual school ratings
+router.get('/ratings/:schoolId', getSchoolRatings);
 
 // Generate and save statistics
 router.post('/stats/generate', generateStats);

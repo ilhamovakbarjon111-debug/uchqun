@@ -185,7 +185,7 @@ export function LoginScreen() {
                 style={styles.iconGradient}
               >
                 <Image
-                  source={require('../../../assets/icon.png')}
+                  source={require('../../../assets/Uchqun logo.png')}
                   style={styles.appIcon}
                   resizeMode="contain"
                 />

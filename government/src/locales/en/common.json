@@ -64,7 +64,15 @@
     "school": "School",
     "student": "Student",
     "parent": "Parent",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "searchPlaceholder": "Search schools...",
+    "distribution": "Distribution",
+    "showReviews": "Show Reviews",
+    "hideReviews": "Hide Reviews",
+    "comment": "Comment",
+    "noComment": "No comment",
+    "date": "Date",
+    "schoolsCount": "Schools"
   },
   "payments": {
     "title": "Payments",

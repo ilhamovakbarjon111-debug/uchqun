@@ -153,7 +153,7 @@ export default function FloatingAI({ contextHint = '' }) {
             style={styles.fab}
           >
             <Image
-              source={require('../../../assets/icon.png')}
+              source={require('../../../assets/Uchqun logo.png')}
               style={styles.fabIcon}
               resizeMode="contain"
             />
@@ -189,7 +189,11 @@ export default function FloatingAI({ contextHint = '' }) {
             >
               <View style={styles.headerContent}>
                 <View style={styles.avatarContainer}>
-                  <Text style={styles.avatarEmoji}>🤖</Text>
+                  <Image
+                    source={require('../../../assets/Uchqun logo.png')}
+                    style={styles.avatarImage}
+                    resizeMode="contain"
+                  />
                 </View>
                 <View style={styles.headerText}>
                   <Text style={styles.headerTitle}>Uchi AI Assistant</Text>
@@ -238,7 +242,11 @@ export default function FloatingAI({ contextHint = '' }) {
                   ]}
                 >
                   {msg.role === 'assistant' && (
-                    <Text style={styles.messageAvatar}>🤖</Text>
+                    <Image
+                      source={require('../../../assets/Uchqun logo.png')}
+                      style={styles.messageAvatarImage}
+                      resizeMode="contain"
+                    />
                   )}
                   <View style={[
                     styles.messageContent,
@@ -255,7 +263,11 @@ export default function FloatingAI({ contextHint = '' }) {
               ))}
               {loading && (
                 <View style={[styles.messageBubble, styles.aiBubble]}>
-                  <Text style={styles.messageAvatar}>🤖</Text>
+                  <Image
+                    source={require('../../../assets/Uchqun logo.png')}
+                    style={styles.messageAvatarImage}
+                    resizeMode="contain"
+                  />
                   <View style={[styles.messageContent, styles.aiContent, styles.typingIndicator]}>
                     <ActivityIndicator size="small" color={tokens.colors.accent.blue} />
                     <Text style={styles.typingText}>Thinking...</Text>
@@ -376,8 +388,10 @@ const getStyles = (tokens, isDark) => StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  avatarEmoji: {
-    fontSize: 24,
+  avatarImage: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
   },
   headerText: {
     flex: 1,
@@ -451,8 +465,10 @@ const getStyles = (tokens, isDark) => StyleSheet.create({
   aiBubble: {
     justifyContent: 'flex-start',
   },
-  messageAvatar: {
-    fontSize: 24,
+  messageAvatarImage: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     marginRight: 8,
     marginBottom: 4,
   },
