@@ -27,8 +27,9 @@ api.interceptors.request.use(async (config) => {
   }
   
   // If the request data is FormData, remove Content-Type to let React Native set it with boundary
+  // Use .set(undefined) for Axios 1.x AxiosHeaders compatibility (delete operator does not work)
   if (config.data instanceof FormData) {
-    delete config.headers['Content-Type'];
+    config.headers.set('Content-Type', undefined);
   }
   
   // For base64 photo uploads, ensure proper Content-Type and increase timeout

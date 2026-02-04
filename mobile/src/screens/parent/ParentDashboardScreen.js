@@ -502,14 +502,11 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.caption.fontSize,
   },
   statsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     gap: tokens.space.md,
   },
   statCard: {
-    width: '48%', // Fixed width to ensure all 4 cards are same size (2x2 grid)
-    aspectRatio: 1.1, // Maintain consistent card proportions
+    width: '100%',
   },
   statCardPressed: {
     opacity: 0.9,
@@ -517,7 +514,7 @@ const styles = StyleSheet.create({
   },
   statCardInner: {
     width: '100%',
-    minHeight: 120,
+    minHeight: 88,
   },
   statCardContent: {
     flexDirection: 'row',

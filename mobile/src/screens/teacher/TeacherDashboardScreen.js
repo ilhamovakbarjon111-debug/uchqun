@@ -377,13 +377,11 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   statsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     gap: tokens.space.md,
   },
   statCard: {
-    width: '48%',
+    width: '100%',
   },
   statCardPressed: {
     opacity: 0.9,
@@ -391,7 +389,7 @@ const styles = StyleSheet.create({
   },
   statCardInner: {
     width: '100%',
-    minHeight: 100,
+    minHeight: 80,
     borderRadius: tokens.radius.lg,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -403,7 +401,7 @@ const styles = StyleSheet.create({
   statCardGradient: {
     padding: tokens.space.md,
     borderRadius: tokens.radius.lg,
-    minHeight: 100,
+    minHeight: 80,
   },
   statCardContent: {
     flexDirection: 'row',

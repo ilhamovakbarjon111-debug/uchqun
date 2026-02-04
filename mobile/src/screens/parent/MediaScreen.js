@@ -13,17 +13,7 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-// Conditionally import expo-av to avoid errors if native module is not available
-let Video, ResizeMode;
-try {
-  const expoAv = require('expo-av');
-  Video = expoAv.Video;
-  ResizeMode = expoAv.ResizeMode;
-} catch (error) {
-  console.warn('expo-av not available:', error);
-  Video = null;
-  ResizeMode = { CONTAIN: 'contain' };
-}
+// expo-av removed (deprecated in SDK 55) — video playback uses WebView fallback
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -303,7 +293,7 @@ export function MediaScreen() {
                         ]}
                         onPress={() => {
                           if (isVideo) {
-                            // Open video in modal (works with both expo-av and WebView)
+                            // Open video in modal
                             setVideoUri(imageUrl);
                             setVideoVisible(true);
                           } else {
@@ -311,51 +301,27 @@ export function MediaScreen() {
                           }
                         }}
                       >
-                        {isVideo && Video ? (
-                          // Video preview - show video directly in grid like web version
-                          <View style={styles.videoContainer}>
-                            <Video
-                              source={{ uri: imageUrl }}
-                              style={styles.videoPreview}
-                              resizeMode={ResizeMode.COVER}
-                              isMuted={true}
-                              isLooping={true}
-                              shouldPlay={false}
-                              useNativeControls={false}
-                              onError={(e) => {
-                                console.warn('[MediaScreen] Video load error:', imageUrl, e);
-                              }}
-                            />
+                        <>
+                          <Image
+                            source={{ uri: imageUrl }}
+                            style={styles.image}
+                            resizeMode="cover"
+                            onError={(e) => {
+                              console.warn('[MediaScreen] Image load error:', imageUrl, e.nativeEvent.error);
+                            }}
+                          />
+                          {isVideo && (
                             <View style={styles.videoOverlay}>
                               <View style={styles.playButton}>
                                 <Ionicons name="play" size={20} color="#fff" />
                               </View>
                             </View>
-                          </View>
-                        ) : (
-                          // Image or video fallback (if Video is not available)
-                          <>
-                            <Image
-                              source={{ uri: imageUrl }}
-                              style={styles.image}
-                              resizeMode="cover"
-                              onError={(e) => {
-                                console.warn('[MediaScreen] Image load error:', imageUrl, e.nativeEvent.error);
-                              }}
-                            />
-                            {isVideo && (
-                              <View style={styles.videoOverlay}>
-                                <View style={styles.playButton}>
-                                  <Ionicons name="play" size={20} color="#fff" />
-                                </View>
-                              </View>
-                            )}
-                            <LinearGradient
-                              colors={['transparent', 'rgba(0,0,0,0.3)']}
-                              style={styles.imageGradient}
-                            />
-                          </>
-                        )}
+                          )}
+                          <LinearGradient
+                            colors={['transparent', 'rgba(0,0,0,0.3)']}
+                            style={styles.imageGradient}
+                          />
+                        </>
                       </Pressable>
                     );
                   })}
@@ -374,17 +340,7 @@ export function MediaScreen() {
             <Ionicons name="close-circle" size={36} color="#fff" />
           </Pressable>
           {videoUri && (
-            Video ? (
-              // Use expo-av Video if available
-              <Video
-                source={{ uri: videoUri }}
-                style={{ width: width, height: width * 9 / 16 }}
-                useNativeControls
-                resizeMode={ResizeMode.CONTAIN}
-                shouldPlay
-              />
-            ) : WebView ? (
-              // Use WebView with HTML5 video if expo-av is not available but WebView is available
+            WebView ? (
               <View style={{ width: width, height: width * 9 / 16 }}>
                 <WebView
                   source={{

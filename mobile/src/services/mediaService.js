@@ -1,4 +1,6 @@
 import { api } from './api';
+import { API_URL } from '../config';
+import { getStoredAuth } from '../storage/authStorage';
 import { extractResponseData, extractResponseDataWithFallback } from '../utils/responseHandler';
 
 export const mediaService = {
@@ -27,14 +29,46 @@ export const mediaService = {
   },
 
   // Backend returns: Direct object
+  // Uses native fetch for file uploads — React Native's fetch has special handling
+  // for FormData with { uri, name, type } file objects that axios lacks on Android
   uploadMedia: async (formData) => {
-    const response = await api.post('/media/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    // Direct object format (upload response)
-    return extractResponseDataWithFallback(response);
+    const { accessToken } = await getStoredAuth();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 min timeout
+
+    try {
+      if (__DEV__) {
+        console.log('[MediaUpload] Uploading to:', `${API_URL}/media/upload`);
+        console.log('[MediaUpload] Has token:', !!accessToken);
+      }
+      const response = await fetch(`${API_URL}/media/upload`, {
+        method: 'POST',
+        headers: {
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          // Do NOT set Content-Type — fetch sets multipart boundary automatically
+        },
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        let data = {};
+        try { data = await response.json(); } catch {}
+        const error = new Error(data.error || data.message || `Upload failed (${response.status})`);
+        error.response = { status: response.status, data };
+        throw error;
+      }
+
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Upload timed out. Try a smaller file or check your connection.');
+      }
+      throw error;
+    }
   },
 
   // Backend returns: Direct object
