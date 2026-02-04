@@ -64,7 +64,15 @@
     "school": "Maktab",
     "student": "O'quvchi",
     "parent": "Ota-ona",
-    "unknown": "Noma'lum"
+    "unknown": "Noma'lum",
+    "searchPlaceholder": "Maktab qidirish...",
+    "distribution": "Taqsimot",
+    "showReviews": "Baholarni ko'rsatish",
+    "hideReviews": "Baholarni yashirish",
+    "comment": "Izoh",
+    "noComment": "Izoh yo'q",
+    "date": "Sana",
+    "schoolsCount": "Maktablar"
   },
   "payments": {
     "title": "To'lovlar",

@@ -163,7 +163,7 @@ const AdminDetails = () => {
 
       {/* Statistics Cards */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-6">
           {t('adminDetails.statistics', { defaultValue: 'Statistika' })}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -174,7 +174,7 @@ const AdminDetails = () => {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <p className="text-sm text-gray-600 mb-1">{card.title}</p>
-                    <p className="text-3xl font-bold text-gray-900 mb-1">{card.value}</p>
+                    <p className="text-2xl font-bold text-gray-900 mb-1">{card.value}</p>
                     {card.description && (
                       <p className="text-xs text-gray-500">{card.description}</p>
                     )}

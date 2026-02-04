@@ -114,7 +114,7 @@ const Dashboard = () => {
         {overviewCards.map((card, index) => {
           const Icon = card.icon;
           return (
-            <Card key={index} className="p-6">
+            <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">{card.title}</p>
@@ -210,7 +210,7 @@ const Dashboard = () => {
             {schools
               .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
               .map((school) => {
-                const level = school.governmentLevel || 1;
+                const level = school.governmentLevel ?? 0;
                 return (
                   <div
                     key={school.id}
@@ -221,7 +221,7 @@ const Dashboard = () => {
                         <div className="flex items-center gap-3 mb-2">
                           <Building2 className="w-5 h-5 text-blue-600" />
                           <h3 className="font-bold text-gray-900">{school.name}</h3>
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${LEVEL_COLORS[level] || LEVEL_COLORS[0]}`}>
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${LEVEL_COLORS[level] || LEVEL_COLORS[0]}`}>
                             <Award className="w-3 h-3" />
                             {level
                               ? `${t('schools.level', { defaultValue: 'Daraja' })} ${level}`

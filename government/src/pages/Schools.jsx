@@ -63,7 +63,7 @@ const Schools = () => {
       </div>
 
       {/* Global stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-6">
           <p className="text-sm text-gray-600 mb-1">
             {t('schools.totalSchools', { defaultValue: 'Jami maktablar' })}
@@ -99,7 +99,7 @@ const Schools = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {schools.map((school) => {
-            const level = school.governmentLevel || 1;
+            const level = school.governmentLevel ?? 0;
             return (
               <Card key={school.id} className="p-6">
                 <div className="flex items-start justify-between mb-4">

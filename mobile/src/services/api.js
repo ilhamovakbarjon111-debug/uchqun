@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_URL } from '../config';
-import { getStoredAuth, storeAuth, clearAuth } from '../storage/authStorage';
+import { getStoredAuth, clearAuth } from '../storage/authStorage';
 
 // Log API URL for debugging
 if (__DEV__) {
@@ -15,8 +15,8 @@ export const api = axios.create({
 
 // Request interceptor to add token and handle FormData
 api.interceptors.request.use(async (config) => {
-  // Skip adding token for auth endpoints (login, refresh)
-  const isAuthEndpoint = config.url?.includes('/auth/login') || config.url?.includes('/auth/refresh');
+  // Skip adding token for login endpoint
+  const isAuthEndpoint = config.url?.includes('/auth/login');
   
   if (!isAuthEndpoint) {
     const { accessToken } = await getStoredAuth();
@@ -46,7 +46,7 @@ api.interceptors.request.use(async (config) => {
   return Promise.reject(error);
 });
 
-// Response interceptor to handle token refresh
+// Response interceptor to handle 401 errors
 api.interceptors.response.use(
   (res) => {
     if (__DEV__) {
@@ -56,44 +56,15 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    
-    // Don't try to refresh for auth endpoints - just reject
-    const isAuthEndpoint = originalRequest?.url?.includes('/auth/login') || originalRequest?.url?.includes('/auth/refresh');
-    
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/login');
+
     if (__DEV__) {
       console.log('[API] Error:', originalRequest?.url, error.response?.status, error.message);
     }
-    
-    // Only try refresh for 401 errors on non-auth endpoints
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
-      originalRequest._retry = true;
 
-      try {
-        const { refreshToken } = await getStoredAuth();
-        if (!refreshToken) {
-          // No refresh token - user needs to login again
-          await clearAuth();
-          return Promise.reject(error);
-        }
-
-        const resp = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
-        // Backend returns { success: true, accessToken }
-        const { accessToken, success } = resp.data || {};
-        if (!success || !accessToken) {
-          await clearAuth();
-          return Promise.reject(new Error('Session expired. Please login again.'));
-        }
-
-        const current = await getStoredAuth();
-        await storeAuth({ ...current, accessToken });
-
-        originalRequest.headers = originalRequest.headers || {};
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return api(originalRequest);
-      } catch (e) {
-        await clearAuth();
-        return Promise.reject(error); // Return original error, not refresh error
-      }
+    // On 401 for non-auth endpoints, clear auth so user is redirected to login
+    if (error.response?.status === 401 && !isAuthEndpoint) {
+      await clearAuth();
     }
     return Promise.reject(error);
   }
