@@ -760,18 +760,10 @@ const SuperAdmin = () => {
                 ) : (
                   <>
                     {/* Statistics Summary */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                       <div className="bg-blue-50 rounded-xl p-4">
                         <p className="text-sm text-blue-600 font-medium mb-1">Jami Maktablar</p>
                         <p className="text-2xl font-bold text-blue-900">{schools.length}</p>
-                      </div>
-                      <div className="bg-green-50 rounded-xl p-4">
-                        <p className="text-sm text-green-600 font-medium mb-1">O'rtacha Reyting</p>
-                        <p className="text-2xl font-bold text-green-900">
-                          {schools.length > 0 
-                            ? (schools.reduce((sum, s) => sum + (s.summary?.average || 0), 0) / schools.length).toFixed(1)
-                            : '0.0'}
-                        </p>
                       </div>
                       <div className="bg-purple-50 rounded-xl p-4">
                         <p className="text-sm text-purple-600 font-medium mb-1">Jami Baholar</p>
