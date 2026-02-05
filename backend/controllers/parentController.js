@@ -863,56 +863,93 @@ export const rateSchool = async (req, res) => {
       // Continue with rating even if child check fails
     }
 
-    // Create or update rating - use same pattern as teacher rating
+    // Create or update rating - use transaction to handle race conditions
     let rating;
     let created;
     
+    // Use a transaction to ensure atomicity and handle race conditions
+    const transaction = await sequelize.transaction();
+    
     try {
-      [rating, created] = await SchoolRating.findOrCreate({
-        where: {
-          schoolId: finalSchoolId,
-          parentId,
-        },
-        defaults: {
-          stars: starsNum,
-          comment: comment || null,
-        },
-      });
-
-      if (!created) {
-        rating.stars = starsNum;
-        rating.comment = comment || null;
-        await rating.save();
-      }
-    } catch (findOrCreateError) {
-      // If findOrCreate fails, try manual approach
-      logger.warn('findOrCreate failed, trying manual find/update', {
-        error: findOrCreateError.message,
-        schoolId: finalSchoolId,
-        parentId,
-      });
-      
+      // Try to find existing rating first
       rating = await SchoolRating.findOne({
         where: {
           schoolId: finalSchoolId,
           parentId,
         },
+        transaction,
       });
       
       if (rating) {
+        // Update existing rating
         rating.stars = starsNum;
         rating.comment = comment || null;
-        await rating.save();
+        await rating.save({ transaction });
         created = false;
       } else {
-        rating = await SchoolRating.create({
-          schoolId: finalSchoolId,
-          parentId,
-          stars: starsNum,
-          comment: comment || null,
-        });
-        created = true;
+        // Create new rating
+        try {
+          rating = await SchoolRating.create({
+            schoolId: finalSchoolId,
+            parentId,
+            stars: starsNum,
+            comment: comment || null,
+          }, { transaction });
+          created = true;
+        } catch (createError) {
+          // Handle unique constraint violation (race condition)
+          if (createError.name === 'SequelizeUniqueConstraintError' || 
+              createError.original?.code === '23505') {
+            logger.warn('Unique constraint violation, retrying find', {
+              schoolId: finalSchoolId,
+              parentId,
+              error: createError.message,
+            });
+            
+            // Another request created it, find it again
+            rating = await SchoolRating.findOne({
+              where: {
+                schoolId: finalSchoolId,
+                parentId,
+              },
+              transaction,
+            });
+            
+            if (rating) {
+              rating.stars = starsNum;
+              rating.comment = comment || null;
+              await rating.save({ transaction });
+              created = false;
+            } else {
+              throw createError; // Re-throw if still not found
+            }
+          } else {
+            throw createError; // Re-throw other errors
+          }
+        }
       }
+      
+      // Commit transaction
+      await transaction.commit();
+    } catch (ratingError) {
+      // Rollback transaction on error
+      await transaction.rollback();
+      
+      logger.error('Error creating/updating school rating', {
+        error: ratingError.message,
+        stack: ratingError.stack,
+        schoolId: finalSchoolId,
+        parentId,
+        errorName: ratingError.name,
+        errorCode: ratingError.code,
+        originalMessage: ratingError.original?.message,
+        originalCode: ratingError.original?.code,
+        originalDetail: ratingError.original?.detail,
+        constraint: ratingError.original?.constraint,
+      });
+      
+      // Re-throw to be caught by outer catch
+      throw ratingError;
     }
 
     logger.info('School rating saved', {
