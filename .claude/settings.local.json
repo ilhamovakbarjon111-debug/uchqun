@@ -9,7 +9,10 @@
       "Bash(ls:*)",
       "Bash(eas credentials:*)",
       "Bash(npx expo prebuild:*)",
-      "Bash(./gradlew assembleRelease)"
+      "Bash(./gradlew assembleRelease)",
+      "Bash(npx expo run:android)",
+      "Bash(npm run dev:*)",
+      "Bash(node:*)"
     ]
   }
 }

@@ -1,3 +1,5 @@
+import { jest } from '@jest/globals';
+
 const { sanitizeBody } = await import('../../middleware/sanitize.js');
 
 describe('sanitizeBody middleware', () => {

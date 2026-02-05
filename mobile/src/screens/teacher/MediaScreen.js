@@ -139,9 +139,7 @@ export function MediaScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: formData.type === 'video'
-          ? ImagePicker.MediaTypeOptions.Videos
-          : ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: formData.type === 'video' ? ['videos'] : ['images'],
         allowsEditing: false,
         quality: 0.8,
       });
@@ -175,9 +173,7 @@ export function MediaScreen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: formData.type === 'video'
-          ? ImagePicker.MediaTypeOptions.Videos
-          : ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: formData.type === 'video' ? ['videos'] : ['images'],
         allowsEditing: false,
         quality: 0.8,
       });

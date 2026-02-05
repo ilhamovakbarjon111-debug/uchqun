@@ -1,5 +1,6 @@
 import React from 'react';
-import { SafeAreaView, ScrollView, View, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
+import { ScrollView, View, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import BackgroundScene from './BackgroundScene';
 import TeacherBackground from './TeacherBackground';
 import FloatingAI from '../common/FloatingAI';

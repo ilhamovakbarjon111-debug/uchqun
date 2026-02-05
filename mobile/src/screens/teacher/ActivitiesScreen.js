@@ -246,17 +246,39 @@ export function ActivitiesScreen() {
         return;
       }
 
+      // Clean payload: filter empty tasks, add backward-compatible fields
+      const payload = {
+        childId: formData.childId,
+        teacher: formData.teacher,
+        skill: formData.skill,
+        goal: formData.goal,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        tasks: formData.tasks.filter(t => t && t.trim()),
+        methods: formData.methods || undefined,
+        progress: formData.progress || undefined,
+        observation: formData.observation || undefined,
+        services: formData.services,
+        // Backward compatibility with older backend versions
+        title: formData.skill,
+        description: formData.goal,
+        type: 'Learning',
+        date: formData.startDate,
+        duration: 30,
+      };
+
       if (editingActivity) {
-        await activityService.updateActivity(editingActivity.id, formData);
+        await activityService.updateActivity(editingActivity.id, payload);
         Alert.alert(t('common.success', { defaultValue: 'Success' }), t('activitiesPage.toastUpdate', { defaultValue: 'Individual reja yangilandi' }));
       } else {
-        await activityService.createActivity(formData);
+        await activityService.createActivity(payload);
         Alert.alert(t('common.success', { defaultValue: 'Success' }), t('activitiesPage.toastCreate', { defaultValue: 'Individual reja yaratildi' }));
       }
       setShowModal(false);
       loadActivities();
     } catch (error) {
       console.error('Error saving activity:', error);
+      console.error('Error response:', error.response?.data);
       Alert.alert(
         t('common.error', { defaultValue: 'Error' }),
         error.response?.data?.error || t('activitiesPage.toastError', { defaultValue: 'Xatolik yuz berdi' })

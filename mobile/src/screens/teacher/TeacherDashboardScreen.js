@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, RefreshControl, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +26,7 @@ export function TeacherDashboardScreen() {
     activities: 0,
     meals: 0,
     media: 0,
-    monitoring: '—',
+    monitoring: 'вЂ”',
   });
 
   // Bottom nav height + safe area + padding
@@ -86,7 +86,7 @@ export function TeacherDashboardScreen() {
         activities: activitiesCount,
         meals: mealsCount,
         media: mediaCount,
-        monitoring: '—',
+        monitoring: 'вЂ”',
       });
     } catch (error) {
       console.error('Error loading dashboard:', error);
@@ -316,3 +316,5 @@ const styles = StyleSheet.create({
     color: tokens.colors.text.muted,
   },
 });
+
+

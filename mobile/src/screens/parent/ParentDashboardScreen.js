@@ -316,12 +316,12 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.bodyLarge.fontSize,
     fontWeight: '600',
     color: tokens.colors.text.primary,
-    marginBottom: tokens.space.xs / 2,
+    marginBottom: tokens.space.xs * 0.5,
   },
   childAgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: tokens.space.xs / 2,
+    gap: tokens.space.xs * 0.5,
   },
   childAge: {
     fontSize: tokens.type.sub.fontSize,
