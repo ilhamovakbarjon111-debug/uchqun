@@ -902,10 +902,35 @@ export const rateSchool = async (req, res) => {
       stack: error.stack,
       body: req.body,
       parentId: req.user?.id,
+      errorName: error.name,
+      errorCode: error.code,
+      originalMessage: error.original?.message,
+      originalCode: error.original?.code,
+      originalDetail: error.original?.detail,
+      originalHint: error.original?.hint,
+      constraint: error.original?.constraint,
+      table: error.original?.table,
+      column: error.original?.column,
     });
+    
+    // Return detailed error in development mode
+    const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production';
+    
     res.status(500).json({ 
       error: 'Failed to rate school',
       message: 'An error occurred while saving your rating. Please try again.',
+      details: isDevelopment ? {
+        message: error.message,
+        originalMessage: error.original?.message,
+        code: error.original?.code,
+        detail: error.original?.detail,
+        hint: error.original?.hint,
+        constraint: error.original?.constraint,
+        table: error.original?.table,
+        column: error.original?.column,
+        errorName: error.name,
+        stack: error.stack,
+      } : undefined,
     });
   }
 };
