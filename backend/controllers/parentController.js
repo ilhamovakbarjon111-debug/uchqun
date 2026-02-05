@@ -828,6 +828,44 @@ export const rateSchool = async (req, res) => {
       return res.status(400).json({ error: 'Unable to identify school for rating' });
     }
 
+    // Validate that schoolId is a valid UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(finalSchoolId)) {
+      logger.error('Invalid schoolId format', {
+        schoolId: finalSchoolId,
+        parentId,
+      });
+      return res.status(400).json({ error: 'Invalid school ID format' });
+    }
+
+    // Validate that parentId is a valid UUID format
+    if (!uuidRegex.test(parentId)) {
+      logger.error('Invalid parentId format', {
+        parentId,
+        schoolId: finalSchoolId,
+      });
+      return res.status(400).json({ error: 'Invalid parent ID format' });
+    }
+
+    // Verify school exists in database (double check)
+    try {
+      const schoolExists = await School.findByPk(finalSchoolId);
+      if (!schoolExists) {
+        logger.error('School not found in database', {
+          schoolId: finalSchoolId,
+          parentId,
+        });
+        return res.status(404).json({ error: 'School not found' });
+      }
+    } catch (schoolCheckError) {
+      logger.error('Error verifying school exists', {
+        error: schoolCheckError.message,
+        schoolId: finalSchoolId,
+        parentId,
+      });
+      return res.status(500).json({ error: 'Failed to verify school' });
+    }
+
     // Check if parent has any children (optional validation)
     // If parent has children, try to update their schoolId if it matches
     try {
@@ -863,12 +901,9 @@ export const rateSchool = async (req, res) => {
       // Continue with rating even if child check fails
     }
 
-    // Create or update rating - use transaction to handle race conditions
+    // Create or update rating - handle race conditions with retry logic
     let rating;
     let created;
-    
-    // Use a transaction to ensure atomicity and handle race conditions
-    const transaction = await sequelize.transaction();
     
     try {
       // Try to find existing rating first
@@ -877,14 +912,13 @@ export const rateSchool = async (req, res) => {
           schoolId: finalSchoolId,
           parentId,
         },
-        transaction,
       });
       
       if (rating) {
         // Update existing rating
         rating.stars = starsNum;
         rating.comment = comment || null;
-        await rating.save({ transaction });
+        await rating.save();
         created = false;
       } else {
         // Create new rating
@@ -894,7 +928,7 @@ export const rateSchool = async (req, res) => {
             parentId,
             stars: starsNum,
             comment: comment || null,
-          }, { transaction });
+          });
           created = true;
         } catch (createError) {
           // Handle unique constraint violation (race condition)
@@ -906,46 +940,60 @@ export const rateSchool = async (req, res) => {
               error: createError.message,
             });
             
-            // Another request created it, find it again
+            // Another request created it, find it again and update
             rating = await SchoolRating.findOne({
               where: {
                 schoolId: finalSchoolId,
                 parentId,
               },
-              transaction,
             });
             
             if (rating) {
               rating.stars = starsNum;
               rating.comment = comment || null;
-              await rating.save({ transaction });
+              await rating.save();
               created = false;
             } else {
-              throw createError; // Re-throw if still not found
+              // If still not found after retry, log and re-throw
+              logger.error('Rating not found after unique constraint violation', {
+                schoolId: finalSchoolId,
+                parentId,
+                error: createError.message,
+              });
+              throw createError;
             }
           } else {
-            throw createError; // Re-throw other errors
+            // Re-throw other errors (validation errors, etc.)
+            logger.error('Error creating school rating', {
+              error: createError.message,
+              stack: createError.stack,
+              errorName: createError.name,
+              errorCode: createError.code,
+              originalMessage: createError.original?.message,
+              schoolId: finalSchoolId,
+              parentId,
+            });
+            throw createError;
           }
         }
       }
-      
-      // Commit transaction
-      await transaction.commit();
     } catch (ratingError) {
-      // Rollback transaction on error
-      await transaction.rollback();
-      
+      // Log the error with full details
       logger.error('Error creating/updating school rating', {
         error: ratingError.message,
         stack: ratingError.stack,
         schoolId: finalSchoolId,
         parentId,
+        stars: starsNum,
         errorName: ratingError.name,
         errorCode: ratingError.code,
         originalMessage: ratingError.original?.message,
         originalCode: ratingError.original?.code,
         originalDetail: ratingError.original?.detail,
+        originalHint: ratingError.original?.hint,
         constraint: ratingError.original?.constraint,
+        table: ratingError.original?.table,
+        column: ratingError.original?.column,
       });
       
       // Re-throw to be caught by outer catch
