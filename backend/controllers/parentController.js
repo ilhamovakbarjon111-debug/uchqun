@@ -1262,7 +1262,38 @@ export const rateSchool = async (req, res) => {
       originalCode: error.original?.code,
       originalDetail: error.original?.detail,
       originalHint: error.original?.hint,
+      constraint: error.original?.constraint,
+      table: error.original?.table,
+      column: error.original?.column,
     });
+    
+    // Check for specific database errors
+    const originalMessage = error.original?.message || error.message || '';
+    
+    // Handle column not found errors
+    if (originalMessage.includes('column') && originalMessage.includes('does not exist')) {
+      return res.status(500).json({ 
+        error: 'Database schema error',
+        message: 'The database schema is out of date. Please contact support.',
+        details: process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production' ? {
+          message: error.message,
+          originalMessage: error.original?.message,
+        } : undefined,
+      });
+    }
+    
+    // Handle NOT NULL constraint violations
+    if (originalMessage.includes('null value') || originalMessage.includes('NOT NULL')) {
+      return res.status(400).json({ 
+        error: 'Validation error',
+        message: 'Required fields are missing. Please provide a star rating (1-5).',
+        details: process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production' ? {
+          message: error.message,
+          originalMessage: error.original?.message,
+        } : undefined,
+      });
+    }
+    
     res.status(500).json({ 
       error: 'Failed to rate school',
       message: 'An error occurred while saving your rating. Please try again.',
@@ -1272,6 +1303,9 @@ export const rateSchool = async (req, res) => {
         code: error.original?.code,
         detail: error.original?.detail,
         hint: error.original?.hint,
+        constraint: error.original?.constraint,
+        table: error.original?.table,
+        column: error.original?.column,
         errorName: error.name,
         stack: error.stack,
       } : undefined,
