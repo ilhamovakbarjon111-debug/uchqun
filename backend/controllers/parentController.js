@@ -906,74 +906,58 @@ export const rateSchool = async (req, res) => {
         created = false;
       } else {
         // Create new rating
-        // Stars is required, evaluation is removed - use empty object
-        const evaluationForDB = {};
-        
-        // Log before creating for debugging
-        logger.info('Creating school rating', {
-          schoolId: finalSchoolId,
-          parentId,
-          starsNum,
-        });
-        
-        // Use findOrCreate to handle unique constraint automatically
-        // Wrap in try-catch to handle any errors during findOrCreate
-        let ratingInstance;
-        let wasCreated;
-        
-        try {
-          [ratingInstance, wasCreated] = await SchoolRating.findOrCreate({
-            where: {
-              schoolId: finalSchoolId,
-              parentId,
-            },
-            defaults: {
-              stars: starsNum, // Required
-              evaluation: evaluationForDB, // Optional
-              comment: comment || null,
-            },
-          });
-        } catch (findOrCreateError) {
-          // If findOrCreate fails, try to find and update manually
-          logger.warn('findOrCreate failed, trying manual find and update', {
-            error: findOrCreateError.message,
+        // First check if rating already exists
+        let ratingInstance = await SchoolRating.findOne({
+          where: {
             schoolId: finalSchoolId,
             parentId,
-          });
-          
-          ratingInstance = await SchoolRating.findOne({
-            where: {
-              schoolId: finalSchoolId,
-              parentId,
-            },
-          });
-          
-          if (ratingInstance) {
-            wasCreated = false;
-          } else {
-            // If not found, create manually
+          },
+        });
+        
+        if (ratingInstance) {
+          // Update existing rating
+          ratingInstance.stars = starsNum;
+          ratingInstance.evaluation = {};
+          ratingInstance.comment = comment || null;
+          await ratingInstance.save();
+          rating = ratingInstance;
+          created = false;
+        } else {
+          // Create new rating
+          try {
             ratingInstance = await SchoolRating.create({
               schoolId: finalSchoolId,
               parentId,
-              stars: starsNum, // Required
-              evaluation: evaluationForDB, // Optional
+              stars: starsNum,
+              evaluation: {},
               comment: comment || null,
             });
-            wasCreated = true;
+            rating = ratingInstance;
+            created = true;
+          } catch (createError) {
+            // If create fails due to unique constraint, try to find and update
+            if (createError.name === 'SequelizeUniqueConstraintError') {
+              ratingInstance = await SchoolRating.findOne({
+                where: {
+                  schoolId: finalSchoolId,
+                  parentId,
+                },
+              });
+              if (ratingInstance) {
+                ratingInstance.stars = starsNum;
+                ratingInstance.evaluation = {};
+                ratingInstance.comment = comment || null;
+                await ratingInstance.save();
+                rating = ratingInstance;
+                created = false;
+              } else {
+                throw createError;
+              }
+            } else {
+              throw createError;
+            }
           }
         }
-        
-        if (!wasCreated && ratingInstance) {
-          // Update existing rating
-          ratingInstance.stars = starsNum; // Always update stars
-          ratingInstance.evaluation = {}; // Evaluation removed - use empty object
-          // Don't set numericRating - let it remain as is in database
-          ratingInstance.comment = comment || null;
-          await ratingInstance.save();
-        }
-        
-        rating = ratingInstance;
-        created = wasCreated;
       }
     } catch (ratingError) {
       // Log comprehensive error information
@@ -1133,6 +1117,9 @@ export const rateSchool = async (req, res) => {
             code: ratingError.original?.code,
             detail: ratingError.original?.detail,
             hint: ratingError.original?.hint,
+            constraint: ratingError.original?.constraint,
+            table: ratingError.original?.table,
+            column: ratingError.original?.column,
             errorName: ratingError.name,
             stack: ratingError.stack,
           } : undefined,
