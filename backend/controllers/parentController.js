@@ -712,7 +712,7 @@ export const getMyRating = async (req, res) => {
  */
 export const rateSchool = async (req, res) => {
   try {
-    const { schoolId, schoolName, stars, evaluation, comment } = req.body;
+    const { schoolId, schoolName, stars, comment } = req.body;
     const parentId = req.user?.id;
 
     if (!parentId) {
@@ -735,39 +735,7 @@ export const rateSchool = async (req, res) => {
       });
     }
 
-    // Evaluation is OPTIONAL
-    let evaluationData = null;
-    if (evaluation !== undefined && evaluation !== null && typeof evaluation === 'object' && !Array.isArray(evaluation)) {
-      const evaluationKeys = Object.keys(evaluation);
-      if (evaluationKeys.length > 0) {
-        // Validate evaluation criteria
-        const validKeys = [
-          'officiallyRegistered',
-          'qualifiedSpecialists',
-          'individualPlan',
-          'safeEnvironment',
-          'medicalRequirements',
-          'developmentalActivities',
-          'foodQuality',
-          'regularInformation',
-          'clearPayments',
-          'kindAttitude'
-        ];
-        
-        // Ensure all keys are boolean
-        const validatedEvaluation = {};
-        for (const key of validKeys) {
-          if (evaluation[key] === true) {
-            validatedEvaluation[key] = true;
-          }
-        }
-        
-        // Only set evaluationData if at least one criterion is selected
-        if (Object.keys(validatedEvaluation).length > 0) {
-          evaluationData = validatedEvaluation;
-        }
-      }
-    }
+    // Evaluation is completely removed - only stars and comment are used
 
     let school = null;
     let finalSchoolId = schoolId;
@@ -899,30 +867,20 @@ export const rateSchool = async (req, res) => {
     logger.info('Creating/updating school rating', {
       schoolId: finalSchoolId,
       parentId,
-      hasEvaluation: !!evaluationData,
       stars: starsNum,
     });
 
     let rating;
     let created = false;
     
-    // Prepare evaluation data - ensure it's a valid object or empty object
-    // Model has defaultValue: {} for evaluation, so use empty object instead of null
-    let evaluationForSave = {};
-    if (evaluationData && typeof evaluationData === 'object' && !Array.isArray(evaluationData) && Object.keys(evaluationData).length > 0) {
-      evaluationForSave = evaluationData;
-    }
-    
-    const hasValidEvaluation = evaluationForSave && typeof evaluationForSave === 'object' && Object.keys(evaluationForSave).length > 0;
+    // Evaluation is removed - use empty object for database
+    const evaluationForSave = {};
     
     // Log for debugging
     logger.info('Preparing to save rating', {
       schoolId: finalSchoolId,
       parentId,
-      hasEvaluation: hasValidEvaluation,
       starsNum,
-      evaluationKeys: hasValidEvaluation ? Object.keys(evaluationForSave) : [],
-      evaluationForSave,
     });
 
     try {
@@ -939,8 +897,8 @@ export const rateSchool = async (req, res) => {
         // Update existing rating
         // Stars is always required and updated
         existingRating.stars = starsNum;
-        // Evaluation is optional
-        existingRating.evaluation = evaluationForSave;
+        // Evaluation is removed - use empty object
+        existingRating.evaluation = {};
         // Don't set numericRating - let it remain as is in database
         existingRating.comment = comment || null;
         await existingRating.save();
@@ -948,37 +906,14 @@ export const rateSchool = async (req, res) => {
         created = false;
       } else {
         // Create new rating
-        // Stars is required, evaluation is optional
-        // Ensure evaluation is properly formatted for JSONB
-        let evaluationForDB = {};
-        if (hasValidEvaluation && evaluationForSave && typeof evaluationForSave === 'object' && Object.keys(evaluationForSave).length > 0) {
-          try {
-            // Deep clone to ensure it's a plain object
-            evaluationForDB = JSON.parse(JSON.stringify(evaluationForSave));
-            // Validate that it's still an object after stringify/parse
-            if (typeof evaluationForDB !== 'object' || Array.isArray(evaluationForDB)) {
-              logger.warn('Evaluation data is not a valid object after stringify/parse', {
-                original: evaluationForSave,
-                parsed: evaluationForDB,
-              });
-              evaluationForDB = {};
-            }
-          } catch (parseError) {
-            logger.error('Error parsing evaluation data', {
-              error: parseError.message,
-              evaluationData: evaluationForSave,
-            });
-            evaluationForDB = {};
-          }
-        }
+        // Stars is required, evaluation is removed - use empty object
+        const evaluationForDB = {};
         
         // Log before creating for debugging
         logger.info('Creating school rating', {
           schoolId: finalSchoolId,
           parentId,
           starsNum,
-          evaluationForDB: JSON.stringify(evaluationForDB),
-          hasValidEvaluation,
         });
         
         // Use findOrCreate to handle unique constraint automatically
@@ -1031,7 +966,7 @@ export const rateSchool = async (req, res) => {
         if (!wasCreated && ratingInstance) {
           // Update existing rating
           ratingInstance.stars = starsNum; // Always update stars
-          ratingInstance.evaluation = evaluationForDB; // Update evaluation (can be empty)
+          ratingInstance.evaluation = {}; // Evaluation removed - use empty object
           // Don't set numericRating - let it remain as is in database
           ratingInstance.comment = comment || null;
           await ratingInstance.save();
@@ -1050,10 +985,7 @@ export const rateSchool = async (req, res) => {
         errorName: ratingError.name,
         errorCode: ratingError.code,
         errorDetails: ratingError.errors || ratingError.original?.detail || ratingError.original?.message,
-        hasEvaluation: !!evaluationData,
-        evaluationType: typeof evaluationData,
         starsNum,
-        evaluationData,
         sequelizeError: ratingError.original?.code || ratingError.original?.constraint,
         table: ratingError.table,
         constraint: ratingError.constraint,
@@ -1073,9 +1005,9 @@ export const rateSchool = async (req, res) => {
           });
           
           if (existingRating) {
-            // Update existing rating - stars is required, evaluation is optional
+            // Update existing rating - stars is required
             existingRating.stars = starsNum;
-            existingRating.evaluation = evaluationData || {};
+            existingRating.evaluation = {}; // Evaluation removed - use empty object
             // Don't set numericRating - let it remain as is in database
             existingRating.comment = comment || null;
             await existingRating.save();
@@ -1171,9 +1103,9 @@ export const rateSchool = async (req, res) => {
             });
             
             if (existingRating) {
-              // Update existing rating - stars is required, evaluation is optional
+              // Update existing rating - stars is required
               existingRating.stars = starsNum;
-              existingRating.evaluation = evaluationData || {};
+              existingRating.evaluation = {}; // Evaluation removed - use empty object
               // Don't set numericRating - let it remain as is in database
               existingRating.comment = comment || null;
               await existingRating.save();
@@ -1239,7 +1171,6 @@ export const rateSchool = async (req, res) => {
     logger.info('School rating saved', {
       schoolId: finalSchoolId,
       parentId,
-      hasEvaluation: !!evaluationData,
       stars: starsNum,
       created,
       ratingId: rating.id,
