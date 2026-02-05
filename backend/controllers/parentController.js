@@ -941,7 +941,7 @@ export const rateSchool = async (req, res) => {
         existingRating.stars = starsNum;
         // Evaluation is optional
         existingRating.evaluation = evaluationForSave;
-        existingRating.numericRating = null; // Remove numericRating
+        // Don't set numericRating - let it remain as is in database
         existingRating.comment = comment || null;
         await existingRating.save();
         rating = existingRating;
@@ -994,7 +994,6 @@ export const rateSchool = async (req, res) => {
             },
             defaults: {
               stars: starsNum, // Required
-              numericRating: null, // Remove numericRating
               evaluation: evaluationForDB, // Optional
               comment: comment || null,
             },
@@ -1022,7 +1021,6 @@ export const rateSchool = async (req, res) => {
               schoolId: finalSchoolId,
               parentId,
               stars: starsNum, // Required
-              numericRating: null, // Remove numericRating
               evaluation: evaluationForDB, // Optional
               comment: comment || null,
             });
@@ -1034,7 +1032,7 @@ export const rateSchool = async (req, res) => {
           // Update existing rating
           ratingInstance.stars = starsNum; // Always update stars
           ratingInstance.evaluation = evaluationForDB; // Update evaluation (can be empty)
-          ratingInstance.numericRating = null; // Remove numericRating
+          // Don't set numericRating - let it remain as is in database
           ratingInstance.comment = comment || null;
           await ratingInstance.save();
         }
@@ -1078,7 +1076,7 @@ export const rateSchool = async (req, res) => {
             // Update existing rating - stars is required, evaluation is optional
             existingRating.stars = starsNum;
             existingRating.evaluation = evaluationData || {};
-            existingRating.numericRating = null; // Remove numericRating
+            // Don't set numericRating - let it remain as is in database
             existingRating.comment = comment || null;
             await existingRating.save();
             
@@ -1176,7 +1174,7 @@ export const rateSchool = async (req, res) => {
               // Update existing rating - stars is required, evaluation is optional
               existingRating.stars = starsNum;
               existingRating.evaluation = evaluationData || {};
-              existingRating.numericRating = null; // Remove numericRating
+              // Don't set numericRating - let it remain as is in database
               existingRating.comment = comment || null;
               await existingRating.save();
               
@@ -1264,7 +1262,38 @@ export const rateSchool = async (req, res) => {
       originalCode: error.original?.code,
       originalDetail: error.original?.detail,
       originalHint: error.original?.hint,
+      constraint: error.original?.constraint,
+      table: error.original?.table,
+      column: error.original?.column,
     });
+    
+    // Check for specific database errors
+    const originalMessage = error.original?.message || error.message || '';
+    
+    // Handle column not found errors
+    if (originalMessage.includes('column') && originalMessage.includes('does not exist')) {
+      return res.status(500).json({ 
+        error: 'Database schema error',
+        message: 'The database schema is out of date. Please contact support.',
+        details: process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production' ? {
+          message: error.message,
+          originalMessage: error.original?.message,
+        } : undefined,
+      });
+    }
+    
+    // Handle NOT NULL constraint violations
+    if (originalMessage.includes('null value') || originalMessage.includes('NOT NULL')) {
+      return res.status(400).json({ 
+        error: 'Validation error',
+        message: 'Required fields are missing. Please provide a star rating (1-5).',
+        details: process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production' ? {
+          message: error.message,
+          originalMessage: error.original?.message,
+        } : undefined,
+      });
+    }
+    
     res.status(500).json({ 
       error: 'Failed to rate school',
       message: 'An error occurred while saving your rating. Please try again.',
@@ -1274,6 +1303,9 @@ export const rateSchool = async (req, res) => {
         code: error.original?.code,
         detail: error.original?.detail,
         hint: error.original?.hint,
+        constraint: error.original?.constraint,
+        table: error.original?.table,
+        column: error.original?.column,
         errorName: error.name,
         stack: error.stack,
       } : undefined,
