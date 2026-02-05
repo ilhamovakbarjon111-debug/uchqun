@@ -901,255 +901,42 @@ export const rateSchool = async (req, res) => {
       // Continue with rating even if child check fails
     }
 
-    // Create or update rating - handle race conditions with retry logic
-    let rating;
-    let created;
-    
-    try {
-      // Try to find existing rating first
-      rating = await SchoolRating.findOne({
-        where: {
-          schoolId: finalSchoolId,
-          parentId,
-        },
-      });
-      
-      if (rating) {
-        // Update existing rating
-        try {
-          rating.stars = starsNum;
-          rating.comment = comment || null;
-          await rating.save({ validate: true });
-          created = false;
-        } catch (saveError) {
-          logger.error('Error saving existing rating', {
-            error: saveError.message,
-            stack: saveError.stack,
-            errorName: saveError.name,
-            errorCode: saveError.code,
-            originalMessage: saveError.original?.message,
-            schoolId: finalSchoolId,
-            parentId,
-            stars: starsNum,
-          });
-          throw saveError;
-        }
-      } else {
-        // Create new rating
-        try {
-          rating = await SchoolRating.create({
-            schoolId: finalSchoolId,
-            parentId,
-            stars: starsNum,
-            comment: comment || null,
-          }, { validate: true });
-          created = true;
-        } catch (createError) {
-          // Handle unique constraint violation (race condition)
-          if (createError.name === 'SequelizeUniqueConstraintError' || 
-              createError.original?.code === '23505') {
-            logger.warn('Unique constraint violation, retrying find', {
-              schoolId: finalSchoolId,
-              parentId,
-              error: createError.message,
-            });
-            
-            // Another request created it, find it again and update
-            try {
-              rating = await SchoolRating.findOne({
-                where: {
-                  schoolId: finalSchoolId,
-                  parentId,
-                },
-              });
-              
-              if (rating) {
-                rating.stars = starsNum;
-                rating.comment = comment || null;
-                await rating.save({ validate: true });
-                created = false;
-              } else {
-                // If still not found after retry, log and re-throw
-                logger.error('Rating not found after unique constraint violation', {
-                  schoolId: finalSchoolId,
-                  parentId,
-                  error: createError.message,
-                });
-                throw createError;
-              }
-            } catch (retryError) {
-              logger.error('Error during retry after unique constraint violation', {
-                error: retryError.message,
-                schoolId: finalSchoolId,
-                parentId,
-              });
-              throw retryError;
-            }
-          } else if (createError.name === 'SequelizeValidationError') {
-            // Handle validation errors
-            const validationMessages = createError.errors?.map(e => e.message).join(', ') || createError.message;
-            logger.error('Validation error creating school rating', {
-              error: validationMessages,
-              errors: createError.errors,
-              schoolId: finalSchoolId,
-              parentId,
-              stars: starsNum,
-            });
-            throw new Error(`Validation error: ${validationMessages}`);
-          } else if (createError.name === 'SequelizeForeignKeyConstraintError' || 
-                     createError.original?.code === '23503') {
-            // Handle foreign key constraint errors
-            logger.error('Foreign key constraint error', {
-              error: createError.message,
-              originalMessage: createError.original?.message,
-              schoolId: finalSchoolId,
-              parentId,
-            });
-            throw new Error('School or parent not found in database');
-          } else {
-            // Re-throw other errors
-            logger.error('Error creating school rating', {
-              error: createError.message,
-              stack: createError.stack,
-              errorName: createError.name,
-              errorCode: createError.code,
-              originalMessage: createError.original?.message,
-              originalCode: createError.original?.code,
-              schoolId: finalSchoolId,
-              parentId,
-            });
-            throw createError;
-          }
-        }
-      }
-    } catch (ratingError) {
-      // Log the error with full details
-      logger.error('Error creating/updating school rating', {
-        error: ratingError.message,
-        stack: ratingError.stack,
+    // Upsert rating - same pattern as teacher rating
+    const [rating, created] = await SchoolRating.findOrCreate({
+      where: {
         schoolId: finalSchoolId,
         parentId,
+      },
+      defaults: {
         stars: starsNum,
-        errorName: ratingError.name,
-        errorCode: ratingError.code,
-        originalMessage: ratingError.original?.message,
-        originalCode: ratingError.original?.code,
-        originalDetail: ratingError.original?.detail,
-        originalHint: ratingError.original?.hint,
-        constraint: ratingError.original?.constraint,
-        table: ratingError.original?.table,
-        column: ratingError.original?.column,
-      });
-      
-      // Re-throw to be caught by outer catch
-      throw ratingError;
-    }
-
-    // Verify rating was created/updated successfully
-    if (!rating) {
-      logger.error('Rating is null after create/update operation', {
-        schoolId: finalSchoolId,
-        parentId,
-        stars: starsNum,
-      });
-      return res.status(500).json({
-        error: 'Failed to rate school',
-        message: 'Rating was not created or updated. Please try again.',
-      });
-    }
-
-    logger.info('School rating saved', {
-      schoolId: finalSchoolId,
-      parentId,
-      stars: starsNum,
-      created,
-      ratingId: rating.id,
+        comment: comment || null,
+      },
     });
 
-    try {
-      // Safely serialize rating to JSON
-      let ratingData;
-      try {
-        ratingData = rating.toJSON();
-      } catch (toJsonError) {
-        logger.warn('Error calling toJSON(), using get() instead', {
-          error: toJsonError.message,
-          ratingId: rating.id,
-        });
-        // Fallback to get() method
-        ratingData = rating.get({ plain: true });
-      }
-
-      res.json({
-        success: true,
-        message: created ? 'School rating created successfully' : 'School rating updated successfully',
-        data: ratingData,
-      });
-    } catch (jsonError) {
-      logger.error('Error serializing rating to JSON', {
-        error: jsonError.message,
-        stack: jsonError.stack,
-        ratingId: rating?.id,
-      });
-      res.status(500).json({
-        error: 'Failed to rate school',
-        message: 'An error occurred while processing your rating. Please try again.',
-      });
+    if (!created) {
+      rating.stars = starsNum;
+      rating.comment = comment || null;
+      await rating.save();
     }
+
+    res.json({
+      success: true,
+      message: 'School rating saved successfully',
+      data: rating.toJSON(),
+    });
   } catch (error) {
     logger.error('Rate school error', { 
       error: error.message, 
       stack: error.stack,
-      body: req.body,
       parentId: req.user?.id,
-      errorName: error.name,
-      errorCode: error.code,
-      originalMessage: error.original?.message,
-      originalCode: error.original?.code,
-      originalDetail: error.original?.detail,
-      originalHint: error.original?.hint,
-      constraint: error.original?.constraint,
-      table: error.original?.table,
-      column: error.original?.column,
+      schoolId: req.body?.schoolId,
+      schoolName: req.body?.schoolName,
     });
-    
-    // Always return detailed error for debugging (can be disabled in production if needed)
-    const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production';
-    
-    // Build error response
-    const errorResponse = {
+    res.status(500).json({ 
       error: 'Failed to rate school',
-      message: 'An error occurred while saving your rating. Please try again.',
-    };
-    
-    // Add detailed error information
-    if (isDevelopment || process.env.DEBUG === 'true') {
-      errorResponse.details = {
-        message: error.message,
-        errorName: error.name,
-        errorCode: error.code,
-        originalMessage: error.original?.message,
-        originalCode: error.original?.code,
-        originalDetail: error.original?.detail,
-        originalHint: error.original?.hint,
-        constraint: error.original?.constraint,
-        table: error.original?.table,
-        column: error.original?.column,
-        stack: error.stack,
-      };
-      
-      // Add validation errors if present
-      if (error.errors && Array.isArray(error.errors)) {
-        errorResponse.details.validationErrors = error.errors.map(e => ({
-          message: e.message,
-          path: e.path,
-          value: e.value,
-          type: e.type,
-        }));
-      }
-    }
-    
-    res.status(500).json(errorResponse);
+      message: 'An error occurred while saving the rating. Please try again.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 };
 
