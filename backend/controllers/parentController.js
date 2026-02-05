@@ -941,7 +941,7 @@ export const rateSchool = async (req, res) => {
         existingRating.stars = starsNum;
         // Evaluation is optional
         existingRating.evaluation = evaluationForSave;
-        existingRating.numericRating = null; // Remove numericRating
+        // Don't set numericRating - let it remain as is in database
         existingRating.comment = comment || null;
         await existingRating.save();
         rating = existingRating;
@@ -994,7 +994,6 @@ export const rateSchool = async (req, res) => {
             },
             defaults: {
               stars: starsNum, // Required
-              numericRating: null, // Remove numericRating
               evaluation: evaluationForDB, // Optional
               comment: comment || null,
             },
@@ -1022,7 +1021,6 @@ export const rateSchool = async (req, res) => {
               schoolId: finalSchoolId,
               parentId,
               stars: starsNum, // Required
-              numericRating: null, // Remove numericRating
               evaluation: evaluationForDB, // Optional
               comment: comment || null,
             });
@@ -1034,7 +1032,7 @@ export const rateSchool = async (req, res) => {
           // Update existing rating
           ratingInstance.stars = starsNum; // Always update stars
           ratingInstance.evaluation = evaluationForDB; // Update evaluation (can be empty)
-          ratingInstance.numericRating = null; // Remove numericRating
+          // Don't set numericRating - let it remain as is in database
           ratingInstance.comment = comment || null;
           await ratingInstance.save();
         }
@@ -1078,7 +1076,7 @@ export const rateSchool = async (req, res) => {
             // Update existing rating - stars is required, evaluation is optional
             existingRating.stars = starsNum;
             existingRating.evaluation = evaluationData || {};
-            existingRating.numericRating = null; // Remove numericRating
+            // Don't set numericRating - let it remain as is in database
             existingRating.comment = comment || null;
             await existingRating.save();
             
@@ -1176,7 +1174,7 @@ export const rateSchool = async (req, res) => {
               // Update existing rating - stars is required, evaluation is optional
               existingRating.stars = starsNum;
               existingRating.evaluation = evaluationData || {};
-              existingRating.numericRating = null; // Remove numericRating
+              // Don't set numericRating - let it remain as is in database
               existingRating.comment = comment || null;
               await existingRating.save();
               
