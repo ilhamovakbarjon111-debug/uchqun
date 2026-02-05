@@ -1067,15 +1067,29 @@ export const rateSchool = async (req, res) => {
     });
 
     try {
+      // Safely serialize rating to JSON
+      let ratingData;
+      try {
+        ratingData = rating.toJSON();
+      } catch (toJsonError) {
+        logger.warn('Error calling toJSON(), using get() instead', {
+          error: toJsonError.message,
+          ratingId: rating.id,
+        });
+        // Fallback to get() method
+        ratingData = rating.get({ plain: true });
+      }
+
       res.json({
         success: true,
         message: created ? 'School rating created successfully' : 'School rating updated successfully',
-        data: rating.toJSON(),
+        data: ratingData,
       });
     } catch (jsonError) {
       logger.error('Error serializing rating to JSON', {
         error: jsonError.message,
-        ratingId: rating.id,
+        stack: jsonError.stack,
+        ratingId: rating?.id,
       });
       res.status(500).json({
         error: 'Failed to rate school',
@@ -1099,25 +1113,43 @@ export const rateSchool = async (req, res) => {
       column: error.original?.column,
     });
     
-    // Return detailed error in development mode
+    // Always return detailed error for debugging (can be disabled in production if needed)
     const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production';
     
-    res.status(500).json({ 
+    // Build error response
+    const errorResponse = {
       error: 'Failed to rate school',
       message: 'An error occurred while saving your rating. Please try again.',
-      details: isDevelopment ? {
+    };
+    
+    // Add detailed error information
+    if (isDevelopment || process.env.DEBUG === 'true') {
+      errorResponse.details = {
         message: error.message,
+        errorName: error.name,
+        errorCode: error.code,
         originalMessage: error.original?.message,
-        code: error.original?.code,
-        detail: error.original?.detail,
-        hint: error.original?.hint,
+        originalCode: error.original?.code,
+        originalDetail: error.original?.detail,
+        originalHint: error.original?.hint,
         constraint: error.original?.constraint,
         table: error.original?.table,
         column: error.original?.column,
-        errorName: error.name,
         stack: error.stack,
-      } : undefined,
-    });
+      };
+      
+      // Add validation errors if present
+      if (error.errors && Array.isArray(error.errors)) {
+        errorResponse.details.validationErrors = error.errors.map(e => ({
+          message: e.message,
+          path: e.path,
+          value: e.value,
+          type: e.type,
+        }));
+      }
+    }
+    
+    res.status(500).json(errorResponse);
   }
 };
 
