@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
-import Card from '../../components/common/Card';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
+import { GlassCard } from '../../components/teacher/GlassCard';
 
 export function HelpScreen() {
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [expandedFaq, setExpandedFaq] = useState(null);
+
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   const faqs = [
     {
@@ -40,40 +44,21 @@ export function HelpScreen() {
     Linking.openURL('tel:+998901234567');
   };
 
-  const header = (
-    <View style={styles.headerContainer}>
-      <LinearGradient
-        colors={[tokens.colors.accent.blue, tokens.colors.accent.blueVibrant]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
-      >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </Pressable>
-        <View style={styles.headerTitleContainer}>
-          <Ionicons name="help-circle" size={24} color="#fff" />
-          <Text style={styles.topBarTitle} allowFontScaling={true}>
-            {t('help.title', { defaultValue: 'Help & Support' })}
-          </Text>
-        </View>
-        <View style={styles.placeholder} />
-      </LinearGradient>
-    </View>
-  );
-
   return (
-    <Screen scroll={true} padded={true} header={header} background="parent">
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader title={t('help.title', { defaultValue: 'Help & Support' })} showBack={true} />
+      
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
       <Text style={styles.subtitle} allowFontScaling={true}>
         {t('help.subtitle', { defaultValue: 'Find answers to common questions and get support' })}
       </Text>
 
       {/* Contact Information */}
-      <Card style={styles.card} variant="elevated" shadow="soft">
+      <GlassCard style={styles.card}>
         <View style={styles.sectionHeader}>
           <Ionicons name="chatbubbles-outline" size={24} color={tokens.colors.accent.blue} />
           <Text style={styles.sectionTitle} allowFontScaling={true}>
@@ -100,7 +85,7 @@ export function HelpScreen() {
             </View>
           </Pressable>
         </View>
-      </Card>
+      </GlassCard>
 
       {/* FAQ Section */}
       <View style={styles.faqSection}>
@@ -112,7 +97,7 @@ export function HelpScreen() {
         </View>
         <View style={styles.faqList}>
           {faqs.map((faq, index) => (
-            <Card key={index} style={styles.faqCard} variant="elevated" shadow="soft">
+            <GlassCard key={index} style={styles.faqCard}>
               <Pressable
                 style={styles.faqHeader}
                 onPress={() => setExpandedFaq(expandedFaq === index ? null : index)}
@@ -127,13 +112,13 @@ export function HelpScreen() {
               {expandedFaq === index && (
                 <Text style={styles.faqAnswer} allowFontScaling={true}>{faq.answer}</Text>
               )}
-            </Card>
+            </GlassCard>
           ))}
         </View>
       </View>
 
       {/* Quick Links */}
-      <Card style={styles.quickLinksCard} variant="elevated" shadow="soft">
+      <GlassCard style={styles.quickLinksCard}>
         <Text style={styles.quickLinksTitle} allowFontScaling={true}>
           {t('help.quickLinks', { defaultValue: 'Quick Links' })}
         </Text>
@@ -171,46 +156,22 @@ export function HelpScreen() {
             </Text>
           </Pressable>
         </View>
-      </Card>
-    </Screen>
+      </GlassCard>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    overflow: 'hidden',
-  },
-  headerGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: tokens.space.lg,
-    paddingVertical: tokens.space.md,
-    paddingTop: tokens.space.xl,
-    paddingBottom: tokens.space.lg,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...tokens.shadow.sm,
-  },
-  headerTitleContainer: {
+  container: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: tokens.space.sm,
+    backgroundColor: tokens.colors.background.primary,
   },
-  topBarTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: '#fff',
+  scrollView: {
+    flex: 1,
   },
-  placeholder: {
-    width: 44,
+  scrollContent: {
+    padding: tokens.space.lg,
   },
   subtitle: {
     fontSize: tokens.type.body.fontSize,

@@ -1,18 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View, Pressable } from 'react-native';
+import { FlatList, StyleSheet, Text, View, Pressable, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { notificationService } from '../../services/notificationService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
-import TeacherBackground from '../../components/layout/TeacherBackground';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
+import { GlassCard } from '../../components/teacher/GlassCard';
 import tokens from '../../styles/tokens';
 
 export function NotificationsScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   useEffect(() => {
     loadNotifications();
@@ -49,88 +57,82 @@ export function NotificationsScreen() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 1) return t('notifications.justNow', { defaultValue: 'Just now' });
+    if (diffMins < 60) return t('notifications.minutesAgo', { defaultValue: '{{count}}m ago', count: diffMins });
+    if (diffHours < 24) return t('notifications.hoursAgo', { defaultValue: '{{count}}h ago', count: diffHours });
+    if (diffDays < 7) return t('notifications.daysAgo', { defaultValue: '{{count}}d ago', count: diffDays });
     return date.toLocaleDateString();
   };
 
   const renderNotification = ({ item }) => (
     <Pressable
-      style={[styles.card, !item.isRead && styles.unreadCard]}
       onPress={() => markAsRead(item.id)}
     >
-      <View style={styles.cardRow}>
-        <View style={[styles.iconContainer, !item.isRead && styles.unreadIconContainer]}>
-          <Ionicons
-            name={item.isRead ? 'notifications-outline' : 'notifications'}
-            size={20}
-            color={!item.isRead ? tokens.colors.accent.blue : tokens.colors.text.secondary}
-          />
-        </View>
-        <View style={styles.contentContainer}>
-          <View style={styles.titleRow}>
-            <Text style={[styles.title, !item.isRead && styles.unreadTitle]} numberOfLines={1}>
-              {item.title || 'Notification'}
-            </Text>
-            {!item.isRead && <View style={styles.unreadDot} />}
+      <GlassCard style={[styles.card, !item.isRead && styles.unreadCard]}>
+        <View style={styles.cardRow}>
+          <View style={[styles.iconContainer, !item.isRead && styles.unreadIconContainer]}>
+            <Ionicons
+              name={item.isRead ? 'notifications-outline' : 'notifications'}
+              size={20}
+              color={!item.isRead ? tokens.colors.accent.blue : tokens.colors.text.secondary}
+            />
           </View>
-          {item.message ? (
-            <Text style={styles.message} numberOfLines={2}>{item.message}</Text>
-          ) : null}
-          <Text style={styles.time}>{formatTimestamp(item.createdAt)}</Text>
+          <View style={styles.contentContainer}>
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, !item.isRead && styles.unreadTitle]} numberOfLines={1}>
+                {item.title || t('notifications.notification', { defaultValue: 'Notification' })}
+              </Text>
+              {!item.isRead && <View style={styles.unreadDot} />}
+            </View>
+            {item.message ? (
+              <Text style={styles.message} numberOfLines={2}>{item.message}</Text>
+            ) : null}
+            <Text style={styles.time}>{formatTimestamp(item.createdAt)}</Text>
+          </View>
         </View>
-      </View>
+      </GlassCard>
     </Pressable>
   );
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <TeacherBackground />
-        <ScreenHeader title="Notifications" />
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ScreenHeader title={t('notifications.title', { defaultValue: 'Notifications' })} showBack={false} />
         <LoadingSpinner />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <TeacherBackground />
-      <ScreenHeader title="Notifications" />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader title={t('notifications.title', { defaultValue: 'Notifications' })} showBack={false} />
       {notifications.length === 0 ? (
-        <EmptyState icon="notifications-outline" message="No notifications" />
+        <EmptyState icon="notifications-outline" message={t('notifications.noNotifications', { defaultValue: 'No notifications' })} />
       ) : (
         <FlatList
           data={notifications}
           renderItem={renderNotification}
           keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomPadding }]}
           refreshing={loading}
           onRefresh={loadNotifications}
           showsVerticalScrollIndicator={false}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.surface.secondary,
+    backgroundColor: tokens.colors.background.primary,
   },
   list: {
-    padding: tokens.space.md,
-    paddingBottom: 100,
+    padding: tokens.space.lg,
   },
   card: {
-    backgroundColor: tokens.colors.card.base,
-    borderRadius: tokens.radius.md,
-    padding: tokens.space.md,
-    marginBottom: tokens.space.sm,
-    ...tokens.shadow.sm,
+    marginBottom: tokens.space.md,
   },
   unreadCard: {
     borderLeftWidth: 4,

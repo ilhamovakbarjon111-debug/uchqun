@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { teacherService } from '../../services/teacherService';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import tokens from '../../styles/tokens';
 
 export function ResponsibilitiesScreen() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [responsibilities, setResponsibilities] = useState([]);
 
@@ -34,7 +36,12 @@ export function ResponsibilitiesScreen() {
   }
 
   if (responsibilities.length === 0) {
-    return <EmptyState message="No responsibilities assigned" />;
+    return (
+      <>
+        <ScreenHeader title={t('responsibilities.title', { defaultValue: 'Responsibilities' })} />
+        <EmptyState icon="list-outline" message={t('responsibilities.noResponsibilities', { defaultValue: 'No responsibilities assigned' })} />
+      </>
+    );
   }
 
   const renderResponsibility = ({ item }) => (
@@ -44,12 +51,12 @@ export function ResponsibilitiesScreen() {
           <Ionicons name="list" size={24} color={tokens.colors.accent.blue} />
         </View>
         <View style={styles.responsibilityContent}>
-          <Text style={styles.title}>{item.title || item.name || 'Responsibility'}</Text>
+          <Text style={styles.title}>{item.title || item.name || t('responsibilities.responsibility', { defaultValue: 'Responsibility' })}</Text>
           {item.deadline && (
             <View style={styles.deadlineContainer}>
               <Ionicons name="calendar-outline" size={14} color={tokens.colors.text.secondary} />
               <Text style={styles.deadline}>
-                Deadline: {new Date(item.deadline).toLocaleDateString()}
+                {t('responsibilities.deadline', { defaultValue: 'Deadline' })}: {new Date(item.deadline).toLocaleDateString()}
               </Text>
             </View>
           )}
@@ -61,9 +68,9 @@ export function ResponsibilitiesScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Responsibilities" />
+      <ScreenHeader title={t('responsibilities.title', { defaultValue: 'Responsibilities' })} />
       {responsibilities.length === 0 ? (
-        <EmptyState icon="list-outline" message="No responsibilities assigned" />
+        <EmptyState icon="list-outline" message={t('responsibilities.noResponsibilities', { defaultValue: 'No responsibilities assigned' })} />
       ) : (
         <FlatList
           data={responsibilities}

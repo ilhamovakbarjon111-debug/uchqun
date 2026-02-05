@@ -1,116 +1,106 @@
 /**
- * Design Tokens - Premium Joyful Design System
- * Elegant, child-friendly, with delightful micro-interactions
- * Supports both Light and Dark modes
+ * Design Tokens - Teacher Dashboard
+ * Elegant, Modern, Accessible Design System
+ * Based on Figma design with glassmorphism
  */
 
-// Light theme colors
+// Light theme colors - New Design Palette
 const lightColors = {
-  // Core text colors - darker for better readability on light backgrounds
   text: {
-    primary: "#0F172A",
-    secondary: "#475569",
-    muted: "#64748B",
-    tertiary: "#94A3B8",
+    primary: "#2E3A59", // Soft Navy
+    secondary: "#5A6B8C", // Mid Gray Blue
+    muted: "#8C9BB5", // Light Gray Blue
+    tertiary: "#8C9BB5",
     white: "#FFFFFF",
-    inverse: "#F8FAFC",
+    inverse: "#FFFFFF",
   },
 
-  // Light backgrounds - soft, not harsh white
   background: {
-    primary: "#F8FAFC",      // Soft off-white
-    secondary: "#F1F5F9",    // Light slate
-    tertiary: "#E2E8F0",     // Slightly darker slate
-    soft: "#FFFFFF",         // Pure white for cards
-    gradient: ["#F8FAFC", "#F1F5F9", "#E2E8F0"],
-    parentGradient: ["#6366F1", "#8B5CF6", "#EC4899"],
-    teacherGradient: ["#0EA5E9", "#06B6D4", "#14B8A6"],
+    primary: "#F4EDE2", // Warm Sand
+    secondary: "#FFFFFF", // White surface
+    tertiary: "#F8F9FA",
+    soft: "#F4EDE2",
+    gradient: ["#BFD7EA", "#DFF4EC"], // Powder Blue to Mint
+    parentGradient: ["#BFD7EA", "#DFF4EC"],
+    teacherGradient: ["#BFD7EA", "#DFF4EC"],
   },
 
-  // Navigation colors
   nav: {
-    active: "#6366F1",
-    inactive: "#64748B",
+    active: "#A78BFA", // Purple accent
+    inactive: "#8C9BB5",
     background: "#FFFFFF",
   },
 
-  // Glassmorphism cards - light and airy
   card: {
-    base: "rgba(255, 255, 255, 0.9)",
-    elevated: "rgba(255, 255, 255, 0.95)",
-    light: "rgba(248, 250, 252, 0.85)",
-    border: "rgba(148, 163, 184, 0.2)",
-    borderLight: "rgba(148, 163, 184, 0.1)",
+    base: "#FFFFFF",
+    elevated: "#FFFFFF",
+    light: "#F8F9FA",
+    border: "rgba(191, 215, 234, 0.3)",
+    borderLight: "rgba(191, 215, 234, 0.15)",
+    glass: "rgba(255, 255, 255, 0.7)", // Glassmorphism
   },
 
-  // Surface colors
   surface: {
-    card: "rgba(255, 255, 255, 0.9)",
-    secondary: "#F1F5F9",
-    tertiary: "#E2E8F0",
-    overlay: "rgba(15, 23, 42, 0.75)",
+    card: "#FFFFFF",
+    secondary: "#F8F9FA",
+    tertiary: "#F4EDE2",
+    overlay: "rgba(46, 58, 89, 0.5)",
+    glass: "rgba(255, 255, 255, 0.7)",
   },
 
-  // Border colors
   border: {
-    light: "rgba(148, 163, 184, 0.2)",
-    medium: "rgba(148, 163, 184, 0.3)",
-    dark: "rgba(148, 163, 184, 0.5)",
+    light: "rgba(191, 215, 234, 0.15)",
+    medium: "rgba(191, 215, 234, 0.3)",
+    dark: "rgba(191, 215, 234, 0.5)",
   },
 };
 
-// Dark theme colors - improved contrast
+// Dark theme colors
 const darkColors = {
-  // Core text colors - much lighter for visibility on dark backgrounds
   text: {
-    primary: "#F8FAFC",      // Very light for primary text
-    secondary: "#CBD5E1",    // Light slate for secondary
-    muted: "#94A3B8",        // Medium slate for muted
-    tertiary: "#64748B",     // Darker slate for tertiary
+    primary: "#FFFFFF",
+    secondary: "#CCCCCC",
+    muted: "#999999",
+    tertiary: "#666666",
     white: "#FFFFFF",
-    inverse: "#0F172A",
+    inverse: "#000000",
   },
 
-  // Dark backgrounds
   background: {
-    primary: "#0F172A",      // Deep slate
-    secondary: "#1E293B",    // Dark slate
-    tertiary: "#334155",     // Medium slate
-    soft: "#475569",         // Lighter slate
-    gradient: ["#0F172A", "#1E293B", "#334155"],
-    parentGradient: ["#6366F1", "#8B5CF6", "#EC4899"],
-    teacherGradient: ["#0EA5E9", "#06B6D4", "#14B8A6"],
+    primary: "#000000",
+    secondary: "#1A1A1A",
+    tertiary: "#333333",
+    soft: "#4D4D4D",
+    gradient: ["#000000", "#1A1A1A", "#333333"],
+    parentGradient: ["#000000", "#1A1A1A", "#333333"],
+    teacherGradient: ["#000000", "#1A1A1A", "#333333"],
   },
 
-  // Navigation colors
   nav: {
-    active: "#818CF8",       // Lighter indigo for visibility
-    inactive: "#94A3B8",     // Light slate
-    background: "#1E293B",   // Dark slate
+    active: "#FFFFFF",
+    inactive: "#999999",
+    background: "#1A1A1A",
   },
 
-  // Glassmorphism cards - lighter for better visibility
   card: {
-    base: "rgba(51, 65, 85, 0.8)",         // Lighter dark glass
-    elevated: "rgba(71, 85, 105, 0.85)",   // Even lighter for elevation
-    light: "rgba(248, 250, 252, 0.1)",     // Subtle light overlay
-    border: "rgba(148, 163, 184, 0.3)",    // More visible borders
-    borderLight: "rgba(148, 163, 184, 0.15)",
+    base: "#1A1A1A",
+    elevated: "#333333",
+    light: "#4D4D4D",
+    border: "#666666",
+    borderLight: "#4D4D4D",
   },
 
-  // Surface colors
   surface: {
-    card: "rgba(51, 65, 85, 0.8)",
-    secondary: "#1E293B",
-    tertiary: "#334155",
-    overlay: "rgba(15, 23, 42, 0.9)",
+    card: "#1A1A1A",
+    secondary: "#1A1A1A",
+    tertiary: "#333333",
+    overlay: "rgba(0, 0, 0, 0.8)",
   },
 
-  // Border colors - more visible in dark mode
   border: {
-    light: "rgba(148, 163, 184, 0.25)",
-    medium: "rgba(148, 163, 184, 0.35)",
-    dark: "rgba(148, 163, 184, 0.5)",
+    light: "#333333",
+    medium: "#4D4D4D",
+    dark: "#666666",
   },
 };
 
@@ -126,324 +116,292 @@ export function getTokens(isDark = false) {
   return {
     colors: {
       ...colors,
-      // Primary accent - vibrant indigo
-    accent: {
-      blue: "#6366F1",
-      blueSoft: "#A5B4FC",
-      blueVibrant: "#4F46E5",
-      50: "#EEF2FF",
-      100: "#E0E7FF",
-      200: "#C7D2FE",
-      500: "#6366F1",
-      600: "#4F46E5",
-      700: "#4338CA",
+
+      accent: {
+        blue: "#BFD7EA", // Powder Blue
+        blueSoft: "#E8F4F8",
+        blueVibrant: "#2E3A59", // Soft Navy
+        purple: "#A78BFA", // Lavender
+        purpleSoft: "#EDE9FE",
+        50: "#F8F9FA",
+        100: "#E8F4F8",
+        200: "#BFD7EA",
+        500: "#2E3A59",
+        600: "#1E2A47",
+        700: "#0E1A35",
+      },
+
+      semantic: {
+        success: "#34D399", // Green
+        successSoft: "#DFF4EC", // Mint Mist
+        warning: "#F59E0B", // Orange
+        warningSoft: "#FEF3C7",
+        error: "#EF4444", // Red
+        errorSoft: "#FEE2E2",
+        info: "#A78BFA", // Purple
+        infoSoft: "#EDE9FE",
+      },
+
+      joy: {
+        coral: "#F472B6", // Pink
+        coralSoft: "#FCE7F3",
+        mint: "#DFF4EC", // Mint Mist
+        mintSoft: "#F0FAF7",
+        sunflower: "#E8C27E", // Honey Gold
+        sunflowerSoft: "#FAF3E7",
+        lavender: "#A78BFA", // Purple
+        lavenderSoft: "#EDE9FE",
+        sky: "#BFD7EA", // Powder Blue
+        skySoft: "#E8F4F8",
+        peach: "#F8D7C4", // Blush Peach
+        peachSoft: "#FDF0EA",
+        rose: "#F472B6",
+        roseSoft: "#FCE7F3",
+        emerald: "#34D399",
+        emeraldSoft: "#DFF4EC",
+      },
+
+      gradients: {
+        primary: ["#BFD7EA", "#DFF4EC"], // Powder Blue to Mint
+        success: ["#DFF4EC", "#34D399"],
+        sunset: ["#F8D7C4", "#E8C27E"], // Peach to Gold
+        ocean: ["#BFD7EA", "#2E3A59"], // Blue to Navy
+        aurora: ["#A78BFA", "#F472B6"], // Purple to Pink
+        golden: ["#E8C27E", "#F8D7C4"], // Gold to Peach
+        forest: ["#DFF4EC", "#BFD7EA"],
+        candy: ["#F472B6", "#A78BFA"],
+      },
+
+      ui: {
+        shadow: "#000000",
+        shadowBlue: "#000000",
+        overlay: "rgba(0, 0, 0, 0.5)",
+      },
     },
 
-    // Semantic colors
-    semantic: {
-      success: "#10B981",
-      successSoft: "#D1FAE5",
-      warning: "#F59E0B",
-      warningSoft: "#FEF3C7",
-      error: "#EF4444",
-      errorSoft: "#FEE2E2",
-      info: "#3B82F6",
-      infoSoft: "#DBEAFE",
+    space: {
+      xs: 4,
+      sm: 8,
+      md: 12,
+      lg: 16,
+      xl: 24,
+      "2xl": 32,
+      "3xl": 48,
+      "4xl": 64,
     },
 
-    // Joyful palette - for icons, badges, illustrations
-    joy: {
-      coral: "#FF6B6B",
-      coralSoft: "#FFE5E5",
-      mint: "#20E3B2",
-      mintSoft: "#D1FAE5",
-      sunflower: "#FFD93D",
-      sunflowerSoft: "#FFF9DB",
-      lavender: "#A78BFA",
-      lavenderSoft: "#EDE9FE",
-      sky: "#38BDF8",
-      skySoft: "#E0F2FE",
-      peach: "#FB923C",
-      peachSoft: "#FFEDD5",
-      rose: "#F472B6",
-      roseSoft: "#FCE7F3",
-      emerald: "#34D399",
-      emeraldSoft: "#D1FAE5",
+    spacing: {
+      xs: 4,
+      sm: 8,
+      md: 12,
+      lg: 16,
+      xl: 24,
+      "2xl": 32,
+      "3xl": 48,
+      "4xl": 64,
     },
 
-    // Gradient presets (for LinearGradient)
-    gradients: {
-      primary: ["#3B82F6", "#8B5CF6"],
-      success: ["#10B981", "#34D399"],
-      sunset: ["#F472B6", "#FB923C"],
-      ocean: ["#06B6D4", "#3B82F6"],
-      aurora: ["#A78BFA", "#38BDF8"],
-      golden: ["#F59E0B", "#FBBF24"],
-      forest: ["#059669", "#10B981"],
-      candy: ["#EC4899", "#F472B6"],
+    radius: {
+      sm: 4,
+      md: 8,
+      lg: 12,
+      xl: 16,
+      "2xl": 20,
+      pill: 999,
+      full: 999,
     },
 
-    // Shadow colors
-    ui: {
-      shadow: "#0F172A",
-      shadowBlue: "#3B82F6",
-      overlay: "rgba(15, 23, 42, 0.4)",
+    typography: {
+      fontSize: {
+        xs: 12,
+        sm: 14,
+        base: 16,
+        lg: 18,
+        xl: 20,
+        "2xl": 24,
+        "3xl": 30,
+        "4xl": 36,
+      },
+      fontWeight: {
+        regular: "400",
+        medium: "500",
+        semibold: "600",
+        bold: "700",
+        extrabold: "800",
+      },
     },
-  },
 
-  // Spacing scale - more compact and elegant
-  space: {
-    xs: 4,
-    sm: 6,
-    md: 10,
-    lg: 14,
-    xl: 18,
-    "2xl": 24,
-    "3xl": 36,
-    "4xl": 48,
-  },
+    type: {
+      hero: { fontSize: 28, fontWeight: "700", lineHeight: 34 },
+      h1: { fontSize: 22, fontWeight: "700", lineHeight: 28 },
+      h2: { fontSize: 18, fontWeight: "600", lineHeight: 24 },
+      h3: { fontSize: 16, fontWeight: "600", lineHeight: 20 },
+      body: { fontSize: 14, fontWeight: "400", lineHeight: 20 },
+      bodyLarge: { fontSize: 16, fontWeight: "500", lineHeight: 22 },
+      sub: { fontSize: 12, fontWeight: "500", lineHeight: 16 },
+      caption: { fontSize: 11, fontWeight: "600", lineHeight: 14 },
+      button: { fontSize: 14, fontWeight: "600", lineHeight: 18 },
+    },
 
-  // Alias for spacing
-  spacing: {
-    xs: 4,
-    sm: 6,
-    md: 10,
-    lg: 14,
-    xl: 18,
-    "2xl": 24,
-    "3xl": 36,
-    "4xl": 48,
-  },
+    shadow: {
+      none: {
+        shadowColor: "transparent",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0,
+        shadowRadius: 0,
+        elevation: 0,
+      },
+      xs: {
+        shadowColor: "#2E3A59",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 2,
+        elevation: 1,
+      },
+      sm: {
+        shadowColor: "#2E3A59",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 3,
+        elevation: 2,
+      },
+      soft: {
+        shadowColor: "#2E3A59",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 12,
+        elevation: 2,
+      },
+      card: {
+        shadowColor: "#2E3A59",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 20,
+        elevation: 3,
+      },
+      elevated: {
+        shadowColor: "#2E3A59",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 32,
+        elevation: 4,
+      },
+      glow: {
+        shadowColor: "#A78BFA",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+        elevation: 3,
+      },
+      glowSuccess: {
+        shadowColor: "#34D399",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+        elevation: 3,
+      },
+    },
 
-  // Border radius - more refined
-  radius: {
-    sm: 6,
-    md: 10,
-    lg: 14,
-    xl: 18,
-    "2xl": 24,
-    pill: 999,
-    full: 999,
-  },
+    animation: {
+      instant: 100,
+      fast: 200,
+      normal: 300,
+      slow: 500,
+      verySlow: 700,
+      spring: { damping: 18, stiffness: 180 },
+      springGentle: { damping: 25, stiffness: 120 },
+      easing: {
+        easeInOut: [0.4, 0, 0.2, 1],
+        easeOut: [0, 0, 0.2, 1],
+        easeIn: [0.4, 0, 1, 1],
+        sharp: [0.4, 0, 0.6, 1],
+      },
+    },
 
-  // Typography
-  typography: {
-    fontSize: {
-      xs: 11,
-      sm: 13,
-      base: 15,
-      lg: 17,
-      xl: 20,
-      "2xl": 24,
-      "3xl": 30,
-      "4xl": 36,
+    touchTarget: {
+      min: 44,
+      comfortable: 48,
     },
-    fontWeight: {
-      regular: "400",
-      medium: "500",
-      semibold: "600",
-      bold: "700",
-      extrabold: "800",
-    },
-  },
 
-  // Type presets - more refined and elegant
-  type: {
-    hero: { fontSize: 28, fontWeight: "700", letterSpacing: -0.8, lineHeight: 34 },
-    h1: { fontSize: 22, fontWeight: "700", letterSpacing: -0.5, lineHeight: 28 },
-    h2: { fontSize: 18, fontWeight: "600", letterSpacing: -0.3, lineHeight: 24 },
-    h3: { fontSize: 15, fontWeight: "600", letterSpacing: -0.1, lineHeight: 20 },
-    body: { fontSize: 14, fontWeight: "400", letterSpacing: 0, lineHeight: 20 },
-    bodyLarge: { fontSize: 15, fontWeight: "500", letterSpacing: 0, lineHeight: 22 },
-    sub: { fontSize: 12, fontWeight: "500", letterSpacing: 0.1, lineHeight: 16 },
-    caption: { fontSize: 10, fontWeight: "600", letterSpacing: 0.4, lineHeight: 13 },
-    button: { fontSize: 14, fontWeight: "600", letterSpacing: 0.3, lineHeight: 18 },
-  },
-
-  // Shadows with color options
-  shadow: {
-    none: {
-      shadowColor: "transparent",
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0,
-      shadowRadius: 0,
-      elevation: 0,
+    icon: {
+      xs: 16,
+      sm: 20,
+      md: 24,
+      lg: 28,
+      xl: 32,
+      "2xl": 48,
     },
-    xs: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 2,
-      elevation: 1,
-    },
-    sm: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    soft: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-      elevation: 3,
-    },
-    card: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.1,
-      shadowRadius: 24,
-      elevation: 5,
-    },
-    elevated: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: 12 },
-      shadowOpacity: 0.15,
-      shadowRadius: 32,
-      elevation: 8,
-    },
-    glow: {
-      shadowColor: "#3B82F6",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 16,
-      elevation: 6,
-    },
-    glowSuccess: {
-      shadowColor: "#10B981",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 16,
-      elevation: 6,
-    },
-  },
-
-  // Animation timing - smoother and more refined
-  animation: {
-    instant: 100,
-    fast: 200,
-    normal: 300,
-    slow: 500,
-    verySlow: 700,
-    spring: { damping: 18, stiffness: 180 },
-    springGentle: { damping: 25, stiffness: 120 },
-    easing: {
-      easeInOut: [0.4, 0, 0.2, 1],
-      easeOut: [0, 0, 0.2, 1],
-      easeIn: [0.4, 0, 1, 1],
-      sharp: [0.4, 0, 0.6, 1],
-    },
-  },
-
-  // Touch targets (accessibility) - more compact
-  touchTarget: {
-    min: 40,
-    comfortable: 44,
-  },
-
-  // Icon sizes - more refined
-  icon: {
-    xs: 14,
-    sm: 16,
-    md: 20,
-    lg: 24,
-    xl: 32,
-    "2xl": 48,
-  },
   };
 }
 
 // Default tokens (light theme)
 export const tokens = getTokens(false);
 
-// Joyful icon mapping - maps generic names to fun alternatives
+// Icon mapping (kept for compatibility, removed emojis)
 export const joyfulIcons = {
-  // Navigation & Actions
-  home: "🏠",
-  dashboard: "✨",
-  back: "👈",
-  forward: "👉",
-  menu: "☰",
-  close: "✕",
-  settings: "⚙️",
-
-  // Content types
-  activity: "🎨",
-  activities: "🎯",
-  meal: "🍽️",
-  meals: "🥗",
-  media: "📸",
-  photos: "🖼️",
-  video: "🎬",
-
-  // People
-  child: "👶",
-  children: "👨‍👩‍👧‍👦",
-  parent: "👨‍👩‍👧",
-  teacher: "👩‍🏫",
-  student: "🎒",
-
-  // Status & Emotions
-  success: "🎉",
-  warning: "⚠️",
-  error: "😕",
-  info: "💡",
-  love: "💖",
-  star: "⭐",
-  trophy: "🏆",
-
-  // Actions
-  add: "➕",
-  edit: "✏️",
-  delete: "🗑️",
-  save: "💾",
-  send: "📤",
-  download: "📥",
-  upload: "☁️",
-
-  // Communication
-  chat: "💬",
-  ai: "🤖",
-  notification: "🔔",
-  message: "✉️",
-
-  // Time & Calendar
-  calendar: "📅",
-  clock: "⏰",
-  today: "📆",
-
-  // School
-  school: "🏫",
-  book: "📚",
-  pencil: "✏️",
-  art: "🎨",
-  music: "🎵",
-  sports: "⚽",
-  science: "🔬",
-  math: "🔢",
-
-  // Food
-  breakfast: "🥞",
-  lunch: "🍱",
-  snack: "🍎",
-  dinner: "🍝",
-  drink: "🥤",
-
-  // Weather/Nature (for backgrounds)
-  sun: "☀️",
-  cloud: "☁️",
-  rainbow: "🌈",
-  flower: "🌸",
-  tree: "🌳",
-
-  // Misc
-  sparkle: "✨",
-  magic: "🪄",
-  gift: "🎁",
-  balloon: "🎈",
-  confetti: "🎊",
+  home: "home",
+  dashboard: "dashboard",
+  back: "back",
+  forward: "forward",
+  menu: "menu",
+  close: "close",
+  settings: "settings",
+  activity: "activity",
+  activities: "activities",
+  meal: "meal",
+  meals: "meals",
+  media: "media",
+  photos: "photos",
+  video: "video",
+  child: "child",
+  children: "children",
+  parent: "parent",
+  teacher: "teacher",
+  student: "student",
+  success: "success",
+  warning: "warning",
+  error: "error",
+  info: "info",
+  love: "love",
+  star: "star",
+  trophy: "trophy",
+  add: "add",
+  edit: "edit",
+  delete: "delete",
+  save: "save",
+  send: "send",
+  download: "download",
+  upload: "upload",
+  chat: "chat",
+  ai: "ai",
+  notification: "notification",
+  message: "message",
+  calendar: "calendar",
+  clock: "clock",
+  today: "today",
+  school: "school",
+  book: "book",
+  pencil: "pencil",
+  art: "art",
+  music: "music",
+  sports: "sports",
+  science: "science",
+  math: "math",
+  breakfast: "breakfast",
+  lunch: "lunch",
+  snack: "snack",
+  dinner: "dinner",
+  drink: "drink",
+  sun: "sun",
+  cloud: "cloud",
+  rainbow: "rainbow",
+  flower: "flower",
+  tree: "tree",
+  sparkle: "sparkle",
+  magic: "magic",
+  gift: "gift",
+  balloon: "balloon",
+  confetti: "confetti",
 };
 
 export default tokens;

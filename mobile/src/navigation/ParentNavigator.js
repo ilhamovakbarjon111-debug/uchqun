@@ -27,8 +27,8 @@ import { useTranslation } from 'react-i18next';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Icon size - more compact and refined
-const ICON_SIZE = 16;
+// Icon size - optimized for touch targets
+const ICON_SIZE = 24;
 
 // Tab configuration per Mobile-icons.md design system
 const TAB_CONFIG = {
@@ -74,11 +74,11 @@ function TabIcon({ route, focused, color }) {
 
   const baseIcon = config.icon || 'help';
 
-  // Active state with gradient glow
+  // Active state with rounded container (matching teacher design)
   if (focused) {
     return (
       <View style={styles.activeTabIcon}>
-        <Ionicons name={baseIcon} size={ICON_SIZE} color="#FFFFFF" />
+        <Ionicons name={baseIcon} size={ICON_SIZE} color={tokens.colors.text.white} />
       </View>
     );
   }
@@ -111,17 +111,16 @@ function ParentTabs() {
         tabBarInactiveTintColor: tokens.colors.text.muted,
         tabBarStyle: {
           backgroundColor: tokens.colors.background.secondary,
-          borderTopWidth: 1,
-          borderTopColor: tokens.colors.border.light,
-          height: 70 + insets.bottom,
-          paddingBottom: 6 + insets.bottom,
-          paddingTop: 8,
-          ...tokens.shadow.elevated,
+          borderTopWidth: 0, // Remove border to match teacher design
+          height: 75 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
+          paddingTop: 10,
+          ...tokens.shadow.card,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: '600',
-          marginTop: 2,
+          marginTop: 4,
           letterSpacing: 0.3,
         },
         tabBarLabel: getTabLabel(route.name),
@@ -167,11 +166,11 @@ export function ParentNavigator() {
 }
 
 const styles = StyleSheet.create({
-  // Compact, elegant active tab with gradient
+  // Active tab icon matching teacher design
   activeTabIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     backgroundColor: tokens.colors.accent.blue,
     alignItems: 'center',
     justifyContent: 'center',

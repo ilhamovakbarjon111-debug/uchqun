@@ -11,14 +11,17 @@ import {
   Animated,
   Dimensions,
   Image,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { clearAuth } from '../../storage/authStorage';
 import { API_URL } from '../../config';
 import tokens from '../../styles/tokens';
+import { GlassCard } from '../../components/teacher/GlassCard';
 
 const { width } = Dimensions.get('window');
 
@@ -34,8 +37,6 @@ export function LoginScreen() {
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
-  const floatAnim1 = useRef(new Animated.Value(0)).current;
-  const floatAnim2 = useRef(new Animated.Value(0)).current;
 
   // Clear any stale auth data when LoginScreen mounts
   useEffect(() => {
@@ -58,37 +59,6 @@ export function LoginScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-
-    // Floating animations for decorative elements
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim1, {
-          toValue: -20,
-          duration: 3000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAnim1, {
-          toValue: 0,
-          duration: 3000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim2, {
-          toValue: -15,
-          duration: 4000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAnim2, {
-          toValue: 0,
-          duration: 4000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
   }, []);
 
   const onSubmit = async () => {
@@ -126,86 +96,44 @@ export function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Animated gradient background */}
-      <LinearGradient
-        colors={['#0F172A', '#1E293B', '#334155', '#1E293B']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
-
-      {/* Decorative floating orbs */}
-      <Animated.View
-        style={[
-          styles.orb,
-          styles.orb1,
-          { transform: [{ translateY: floatAnim1 }] }
-        ]}
-      >
-        <LinearGradient
-          colors={['rgba(139, 92, 246, 0.2)', 'rgba(99, 102, 241, 0.1)']}
-          style={styles.orbGradient}
-        />
-      </Animated.View>
-      <Animated.View
-        style={[
-          styles.orb,
-          styles.orb2,
-          { transform: [{ translateY: floatAnim2 }] }
-        ]}
-      >
-        <LinearGradient
-          colors={['rgba(59, 130, 246, 0.15)', 'rgba(14, 165, 233, 0.1)']}
-          style={styles.orbGradient}
-        />
-      </Animated.View>
-
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <Animated.View
-          style={[
-            styles.content,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          {/* Logo and header */}
-          <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <LinearGradient
-                colors={['#8B5CF6', '#6366F1']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.iconGradient}
-              >
+          <Animated.View
+            style={[
+              styles.content,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            {/* Logo and header */}
+            <View style={styles.header}>
+              <View style={styles.iconContainer}>
                 <Image
                   source={require('../../../assets/Uchqun logo.png')}
                   style={styles.appIcon}
                   resizeMode="contain"
                 />
-              </LinearGradient>
+              </View>
+              <Text style={styles.title}>{t('login.title', { defaultValue: 'Uchqun Portal' })}</Text>
+              <Text style={styles.subtitle}>{t('login.subtitle', { defaultValue: 'Maxsus ta\'lim maktabi boshqaruvi' })}</Text>
             </View>
-            <Text style={styles.title}>{t('login.title', { defaultValue: 'Uchqun Portal' })}</Text>
-            <Text style={styles.subtitle}>{t('login.subtitle', { defaultValue: 'Maxsus ta\'lim maktabi boshqaruvi' })}</Text>
-          </View>
 
-          {/* Glassmorphic card */}
-          <View style={styles.card}>
-            <LinearGradient
-              colors={['rgba(51, 65, 85, 0.7)', 'rgba(30, 41, 59, 0.6)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={styles.cardGradient}
-            >
+            {/* Login card */}
+            <GlassCard style={styles.card}>
               {error ? (
                 <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle" size={18} color="#FCA5A5" />
+                  <Ionicons name="alert-circle" size={18} color={tokens.colors.semantic.error} />
                   <Text style={styles.error}>{error}</Text>
                 </View>
               ) : null}
@@ -215,25 +143,20 @@ export function LoginScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>{t('login.email', { defaultValue: 'Email manzil' })}</Text>
                   <View style={styles.inputContainer}>
-                    <LinearGradient
-                      colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
-                      style={styles.inputGradient}
-                    >
-                      <View style={styles.inputIconContainer}>
-                        <Ionicons name="mail-outline" size={18} color={tokens.colors.text.muted} />
-                      </View>
-                      <TextInput
-                        value={email}
-                        onChangeText={setEmail}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        keyboardType="email-address"
-                        textContentType="username"
-                        placeholder={t('login.emailPlaceholder', { defaultValue: 'sizning@email.com' })}
-                        placeholderTextColor={tokens.colors.text.muted}
-                        style={styles.input}
-                      />
-                    </LinearGradient>
+                    <View style={styles.inputIconContainer}>
+                      <Ionicons name="mail-outline" size={20} color={tokens.colors.text.secondary} />
+                    </View>
+                    <TextInput
+                      value={email}
+                      onChangeText={setEmail}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="email-address"
+                      textContentType="username"
+                      placeholder={t('login.emailPlaceholder', { defaultValue: 'sizning@email.com' })}
+                      placeholderTextColor={tokens.colors.text.tertiary}
+                      style={styles.input}
+                    />
                   </View>
                 </View>
 
@@ -241,37 +164,32 @@ export function LoginScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>{t('login.password', { defaultValue: 'Parol' })}</Text>
                   <View style={styles.inputContainer}>
-                    <LinearGradient
-                      colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
-                      style={styles.inputGradient}
+                    <View style={styles.inputIconContainer}>
+                      <Ionicons name="lock-closed-outline" size={20} color={tokens.colors.text.secondary} />
+                    </View>
+                    <TextInput
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                      textContentType="password"
+                      placeholder={t('login.passwordPlaceholder', { defaultValue: 'Parolni kiriting' })}
+                      placeholderTextColor={tokens.colors.text.tertiary}
+                      style={[styles.input, styles.inputWithIcon]}
+                    />
+                    <Pressable
+                      onPress={() => setShowPassword((v) => !v)}
+                      hitSlop={10}
+                      style={({ pressed }) => [
+                        styles.eyeButton,
+                        pressed && { opacity: 0.7 }
+                      ]}
                     >
-                      <View style={styles.inputIconContainer}>
-                        <Ionicons name="lock-closed-outline" size={18} color={tokens.colors.text.muted} />
-                      </View>
-                      <TextInput
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry={!showPassword}
-                        textContentType="password"
-                        placeholder={t('login.passwordPlaceholder', { defaultValue: 'Parolni kiriting' })}
-                        placeholderTextColor={tokens.colors.text.muted}
-                        style={[styles.input, styles.inputWithIcon]}
+                      <Ionicons
+                        name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                        size={20}
+                        color={tokens.colors.text.secondary}
                       />
-                      <Pressable
-                        onPress={() => setShowPassword((v) => !v)}
-                        hitSlop={10}
-                        style={({ pressed }) => [
-                          styles.eyeButton,
-                          pressed && { opacity: 0.7 }
-                        ]}
-                      >
-                        <Ionicons
-                          name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                          size={18}
-                          color={tokens.colors.text.muted}
-                        />
-                      </Pressable>
-                    </LinearGradient>
+                    </Pressable>
                   </View>
                 </View>
 
@@ -282,112 +200,96 @@ export function LoginScreen() {
                   style={({ pressed }) => [
                     styles.buttonContainer,
                     pressed && !submitting && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+                    submitting && styles.buttonDisabled,
                   ]}
                 >
                   <LinearGradient
-                    colors={submitting ? ['#475569', '#334155'] : ['#8B5CF6', '#6366F1', '#3B82F6']}
+                    colors={submitting 
+                      ? [tokens.colors.text.muted, tokens.colors.text.muted] 
+                      : [tokens.colors.joy.lavender, tokens.colors.accent.blue]
+                    }
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.button}
                   >
                     {submitting ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
+                      <ActivityIndicator color={tokens.colors.text.white} size="small" />
                     ) : (
                       <>
                         <Text style={styles.buttonText}>{t('login.submit', { defaultValue: 'Kirish' })}</Text>
-                        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                        <Ionicons name="arrow-forward" size={18} color={tokens.colors.text.white} />
                       </>
                     )}
                   </LinearGradient>
                 </Pressable>
               </View>
-            </LinearGradient>
-          </View>
+            </GlassCard>
 
-          {/* Footer hint */}
-          <Text style={styles.footerText}>
-            <Ionicons name="shield-checkmark-outline" size={12} color={tokens.colors.text.muted} />
-            {' '}{t('login.secureAuth', { defaultValue: 'JWT bilan xavfsiz autentifikatsiya' })}
-          </Text>
-        </Animated.View>
+            {/* Footer hint */}
+            <Text style={styles.footerText}>
+              <Ionicons name="shield-checkmark-outline" size={12} color={tokens.colors.text.muted} />
+              {' '}{t('login.secureAuth', { defaultValue: 'JWT bilan xavfsiz autentifikatsiya' })}
+            </Text>
+          </Animated.View>
+        </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: tokens.colors.background.primary, // Warm Sand background
   },
   keyboardView: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: tokens.space['2xl'],
+    paddingHorizontal: tokens.space.xl,
+    paddingVertical: tokens.space['2xl'],
   },
-  orb: {
-    position: 'absolute',
-    borderRadius: 999,
-  },
-  orb1: {
-    width: 300,
-    height: 300,
-    top: -100,
-    right: -100,
-  },
-  orb2: {
-    width: 250,
-    height: 250,
-    bottom: -80,
-    left: -80,
-  },
-  orbGradient: {
+  content: {
     width: '100%',
-    height: '100%',
-    borderRadius: 999,
+    maxWidth: 400,
+    alignSelf: 'center',
   },
   header: {
     alignItems: 'center',
     marginBottom: tokens.space['3xl'],
   },
   iconContainer: {
-    marginBottom: tokens.space.lg,
-  },
-  iconGradient: {
     width: 80,
     height: 80,
     borderRadius: 40,
+    backgroundColor: tokens.colors.background.secondary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...tokens.shadow.glow,
+    marginBottom: tokens.space.lg,
+    ...tokens.shadow.soft,
   },
   appIcon: {
     width: 50,
     height: 50,
   },
   title: {
-    fontSize: tokens.type.hero.fontSize,
-    fontWeight: tokens.type.hero.fontWeight,
-    color: tokens.colors.text.white,
+    fontSize: tokens.type.h1.fontSize,
+    fontWeight: tokens.type.h1.fontWeight,
+    color: tokens.colors.text.primary,
     marginBottom: tokens.space.sm,
     letterSpacing: -0.5,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: tokens.type.sub.fontSize,
-    color: tokens.colors.text.muted,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.secondary,
+    textAlign: 'center',
     letterSpacing: 0.3,
   },
   card: {
-    borderRadius: tokens.radius['2xl'],
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.15)',
-    ...tokens.shadow.elevated,
-  },
-  cardGradient: {
-    padding: tokens.space['2xl'],
+    marginBottom: tokens.space.xl,
   },
   form: {
     gap: tokens.space.xl,
@@ -398,20 +300,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: tokens.type.sub.fontSize,
     fontWeight: '600',
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     letterSpacing: 0.3,
   },
   inputContainer: {
-    borderRadius: tokens.radius.lg,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.2)',
-  },
-  inputGradient: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: tokens.colors.background.tertiary,
+    borderRadius: tokens.radius.lg,
     paddingHorizontal: tokens.space.md,
     paddingVertical: tokens.space.sm,
+    // Removed: borderWidth, borderColor - no borders per design
   },
   inputIconContainer: {
     marginRight: tokens.space.sm,
@@ -419,8 +318,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: tokens.type.body.fontSize,
-    color: tokens.colors.text.white,
-    paddingVertical: tokens.space.sm,
+    color: tokens.colors.text.primary,
+    paddingVertical: tokens.space.xs,
   },
   inputWithIcon: {
     paddingRight: tokens.space['3xl'],
@@ -431,10 +330,13 @@ const styles = StyleSheet.create({
     padding: tokens.space.sm,
   },
   buttonContainer: {
-    marginTop: tokens.space.lg,
+    marginTop: tokens.space.md,
     borderRadius: tokens.radius.lg,
     overflow: 'hidden',
-    ...tokens.shadow.glow,
+    ...tokens.shadow.soft,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   button: {
     flexDirection: 'row',
@@ -452,17 +354,16 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(252, 165, 165, 0.3)',
+    backgroundColor: tokens.colors.semantic.errorSoft,
     padding: tokens.space.md,
     borderRadius: tokens.radius.md,
     marginBottom: tokens.space.xl,
     gap: tokens.space.sm,
+    // Removed: borderWidth, borderColor - no borders per design
   },
   error: {
     flex: 1,
-    color: '#FCA5A5',
+    color: tokens.colors.semantic.error,
     fontSize: tokens.type.sub.fontSize,
     lineHeight: 18,
   },
@@ -470,7 +371,7 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.caption.fontSize,
     color: tokens.colors.text.muted,
     textAlign: 'center',
-    marginTop: tokens.space.xl,
+    marginTop: tokens.space.lg,
     letterSpacing: 0.5,
   },
 });

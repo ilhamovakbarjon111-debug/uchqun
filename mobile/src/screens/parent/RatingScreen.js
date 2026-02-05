@@ -1,18 +1,22 @@
 import React, { useRef, useEffect } from 'react';
-import { StyleSheet, Text, View, Pressable, Animated } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Animated, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '../../hooks/useThemeTokens';
-import { useTheme } from '../../context/ThemeContext';
-import Screen from '../../components/layout/Screen';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import tokens from '../../styles/tokens';
 
 export function RatingScreen() {
   const navigation = useNavigation();
   const { t } = useTranslation();
-  const tokens = useThemeTokens();
-  const { isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -46,134 +50,95 @@ export function RatingScreen() {
   ];
 
   return (
-    <Screen scroll={true} padded={false} showAI={false} background="parent">
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: tokens.colors.background.secondary }]}>
-        <View style={styles.headerContent}>
-          <View style={[styles.headerIconContainer, { backgroundColor: tokens.colors.accent.blue + '20' }]}>
-            <Ionicons name="star" size={20} color={tokens.colors.accent.blue} />
-          </View>
-          <Text style={[styles.headerTitle, { color: tokens.colors.text.primary }]}>
-            {t('nav.rating', { defaultValue: 'Baholash' })}
-          </Text>
-        </View>
-        <Text style={[styles.headerSubtitle, { color: tokens.colors.text.secondary }]}>
-          {t('rating.chooseOption', { defaultValue: 'Baholash turini tanlang' })}
-        </Text>
-      </View>
-
-      {/* Rating Options */}
-      <Animated.View
-        style={[
-          styles.content,
-          {
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('nav.rating', { defaultValue: 'Rating' })}
+        showBack={false}
+      />
+      
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View
+          style={{
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
-        {ratingOptions.map((option, index) => (
-          <Pressable
-            key={option.id}
-            onPress={() => navigation.navigate(option.screen)}
-            style={({ pressed }) => [
-              styles.optionCard,
-              pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
-            ]}
-          >
-            <LinearGradient
-              colors={option.gradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.optionGradient}
+          }}
+        >
+          {ratingOptions.map((option, index) => (
+            <Pressable
+              key={option.id}
+              onPress={() => navigation.navigate(option.screen)}
+              style={({ pressed }) => [
+                styles.optionCard,
+                pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+              ]}
             >
-              <View style={styles.optionIconContainer}>
-                <View style={styles.optionIconCircle}>
-                  <Ionicons name={option.icon} size={32} color="#FFFFFF" />
+              <GlassCard style={styles.optionCardInner}>
+                <View style={styles.optionContent}>
+                  <View style={styles.optionIconContainer}>
+                    <View style={styles.optionIconCircle}>
+                      <Ionicons name={option.icon} size={32} color={tokens.colors.accent.blue} />
+                    </View>
+                  </View>
+                  <View style={styles.optionTextContainer}>
+                    <Text style={styles.optionTitle}>{option.title}</Text>
+                    <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+                  </View>
+                  <View style={styles.optionArrow}>
+                    <Ionicons name="chevron-forward" size={24} color={tokens.colors.text.tertiary} />
+                  </View>
                 </View>
-              </View>
-              <View style={styles.optionTextContainer}>
-                <Text style={styles.optionTitle}>{option.title}</Text>
-                <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
-              </View>
-              <View style={styles.optionArrow}>
-                <Ionicons name="chevron-forward" size={24} color="rgba(255, 255, 255, 0.8)" />
-              </View>
-            </LinearGradient>
-          </Pressable>
-        ))}
-      </Animated.View>
+              </GlassCard>
+            </Pressable>
+          ))}
 
-      {/* Info Card */}
-      <View style={styles.infoSection}>
-        <View style={[styles.infoCard, { backgroundColor: tokens.colors.card.base, borderColor: tokens.colors.border.light }]}>
-          <Ionicons name="information-circle" size={20} color={tokens.colors.accent.blue} />
-          <Text style={[styles.infoText, { color: tokens.colors.text.secondary }]}>
-            {t('rating.infoText', { defaultValue: 'Sizning fikringiz bizga xizmatimizni yaxshilashga yordam beradi' })}
-          </Text>
-        </View>
-      </View>
-    </Screen>
+          {/* Info Card */}
+          <GlassCard style={styles.infoCard}>
+            <Ionicons name="information-circle" size={20} color={tokens.colors.accent.blue} />
+            <Text style={styles.infoText}>
+              {t('rating.infoText', { defaultValue: 'Your feedback helps us improve our service' })}
+            </Text>
+          </GlassCard>
+        </Animated.View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 20,
+  container: {
+    flex: 1,
+    backgroundColor: tokens.colors.background.primary,
   },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+  scrollView: {
+    flex: 1,
   },
-  headerIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
-    marginLeft: 52,
-  },
-  content: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    gap: 16,
+  scrollContent: {
+    padding: tokens.space.lg,
+    paddingTop: tokens.space.md,
   },
   optionCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    marginBottom: tokens.space.lg,
   },
-  optionGradient: {
-    padding: 24,
+  optionCardInner: {
+    padding: tokens.space.xl,
+  },
+  optionContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 120,
+    minHeight: 100,
   },
   optionIconContainer: {
-    marginRight: 16,
+    marginRight: tokens.space.md,
   },
   optionIconCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: tokens.colors.accent[50],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -181,34 +146,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 6,
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: tokens.type.h3.fontWeight,
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs,
   },
   optionSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
     lineHeight: 18,
   },
   optionArrow: {
-    marginLeft: 12,
-  },
-  infoSection: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
+    marginLeft: tokens.space.sm,
   },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 12,
+    padding: tokens.space.md,
+    gap: tokens.space.sm,
+    marginTop: tokens.space.md,
   },
   infoText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: tokens.type.sub.fontSize,
     lineHeight: 18,
+    color: tokens.colors.text.secondary,
   },
 });

@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View, Image, TouchableOpacity, Alert, ActivityIndicator, Animated, TextInput } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { parentService } from '../../services/parentService';
-import Card from '../../components/common/Card';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import tokens from '../../styles/tokens';
@@ -25,6 +27,7 @@ export function ParentProfileScreen() {
   const { user, refreshUser } = useAuth();
   const { t } = useTranslation();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [children, setChildren] = useState([]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -34,6 +37,10 @@ export function ParentProfileScreen() {
     lastName: '',
     email: '',
   });
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -167,24 +174,17 @@ export function ParentProfileScreen() {
 
   const u = user || {};
 
-  const header = (
-    <View style={styles.topBar}>
-      <View style={styles.placeholder} />
-      <Text style={styles.topBarTitle}>{t('nav.profile', { defaultValue: 'Profile' })}</Text>
-      <View style={styles.placeholder} />
-    </View>
-  );
-
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#9333EA', '#7C3AED', '#6D28D9']}
-        style={styles.backgroundGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('nav.profile', { defaultValue: 'Profile' })}
+        showBack={false}
       />
-      <View style={styles.header}>{header}</View>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
         <Animated.View
           style={{
             opacity: fadeAnim,
@@ -192,11 +192,7 @@ export function ParentProfileScreen() {
           }}
         >
           {/* Profile Card */}
-          <View style={styles.profileCard}>
-            <LinearGradient
-              colors={['rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.1)']}
-              style={styles.profileCardGradient}
-            >
+          <GlassCard style={styles.profileCard}>
               <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar}>
                 <View style={styles.avatarContainer}>
                   {u.avatar ? (
@@ -250,7 +246,7 @@ export function ParentProfileScreen() {
                       style={styles.input}
                       value={editForm.firstName}
                       onChangeText={(text) => setEditForm({ ...editForm, firstName: text })}
-                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                      placeholderTextColor={tokens.colors.text.tertiary}
                     />
                   </View>
                   <View style={styles.inputGroup}>
@@ -259,7 +255,7 @@ export function ParentProfileScreen() {
                       style={styles.input}
                       value={editForm.lastName}
                       onChangeText={(text) => setEditForm({ ...editForm, lastName: text })}
-                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                      placeholderTextColor={tokens.colors.text.tertiary}
                     />
                   </View>
                   <View style={styles.buttonRow}>
@@ -267,22 +263,17 @@ export function ParentProfileScreen() {
                       <Text style={styles.cancelButtonText}>{t('common.cancel', { defaultValue: 'Cancel' })}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
-                      <LinearGradient colors={['#A78BFA', '#8B5CF6']} style={styles.saveButtonGradient}>
+                      <LinearGradient colors={tokens.colors.gradients.aurora} style={styles.saveButtonGradient}>
                         <Text style={styles.saveButtonText}>{t('common.save', { defaultValue: 'Save' })}</Text>
                       </LinearGradient>
                     </TouchableOpacity>
                   </View>
                 </View>
               )}
-            </LinearGradient>
-          </View>
+          </GlassCard>
 
           {/* Children Section */}
-          <View style={styles.sectionCard}>
-            <LinearGradient
-              colors={['rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.1)']}
-              style={styles.sectionCardGradient}
-            >
+          <GlassCard style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>{t('profile.myChildren', { defaultValue: 'My Children' })} ({children.length})</Text>
               {children.length === 0 ? (
                 <EmptyState
@@ -323,11 +314,10 @@ export function ParentProfileScreen() {
                   </TouchableOpacity>
                 ))
               )}
-            </LinearGradient>
-          </View>
+          </GlassCard>
         </Animated.View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -336,49 +326,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: tokens.colors.background.primary,
   },
-  backgroundGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-  },
-  header: {
-    paddingTop: 50,
-    paddingBottom: 16,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-  },
-  topBarTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: tokens.colors.text.white,
-    letterSpacing: -0.3,
-  },
-  placeholder: {
-    width: 40,
-  },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: 16,
-    paddingBottom: 100,
+    padding: tokens.space.lg,
   },
   profileCard: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: tokens.space.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  profileCardGradient: {
-    padding: tokens.space.xl,
+    marginBottom: tokens.space.xl,
     alignItems: 'center',
+    padding: tokens.space.xl,
   },
   avatarContainer: {
     position: 'relative',
@@ -388,8 +345,6 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   avatarGradient: {
     width: 100,
@@ -397,8 +352,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: tokens.colors.accent.blue,
   },
   avatarText: {
     fontSize: 36,
@@ -421,14 +375,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: tokens.colors.accent.blue,
     width: 32,
     height: 32,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    ...tokens.shadow.sm,
   },
   profileInfo: {
     alignItems: 'center',
@@ -437,7 +390,7 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 24,
     fontWeight: '700',
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     marginBottom: 8,
     letterSpacing: -0.5,
   },
@@ -449,28 +402,27 @@ const styles = StyleSheet.create({
   },
   profileEmail: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: tokens.colors.text.secondary,
   },
   roleBadge: {
     marginBottom: 16,
-  },
-  roleBadgeGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: tokens.colors.semantic.successSoft,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
   },
   roleText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#C4B5FD',
+    color: tokens.colors.semantic.success,
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: tokens.colors.accent.blue,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
@@ -479,7 +431,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: tokens.colors.text.white,
   },
   editForm: {
     width: '100%',
@@ -491,11 +443,11 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: tokens.colors.text.primary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: tokens.colors.background.tertiary,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -536,28 +488,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   sectionCard: {
-    borderRadius: 16,
-    overflow: 'hidden',
     marginBottom: tokens.space.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  sectionCardGradient: {
     padding: tokens.space.lg,
   },
   sectionTitle: {
-    fontSize: 17,
+    fontSize: tokens.type.h3.fontSize,
     fontWeight: '600',
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     marginBottom: tokens.space.md,
-    letterSpacing: -0.1,
+    paddingHorizontal: 2,
   },
   childItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: tokens.space.md,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: tokens.colors.border.light,
   },
   lastChildItem: {
     borderBottomWidth: 0,
@@ -571,6 +517,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: tokens.colors.joy.lavenderSoft,
   },
   childContent: {
     flex: 1,
@@ -578,7 +525,7 @@ const styles = StyleSheet.create({
   childName: {
     fontSize: 16,
     fontWeight: '600',
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     marginBottom: 4,
   },
   childMeta: {
@@ -587,15 +534,15 @@ const styles = StyleSheet.create({
   },
   childAge: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: tokens.colors.text.secondary,
   },
   childGender: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: tokens.colors.text.secondary,
   },
   childDisability: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: tokens.colors.text.muted,
     marginTop: 2,
     fontStyle: 'italic',
   },

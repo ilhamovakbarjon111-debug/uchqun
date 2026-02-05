@@ -18,7 +18,8 @@ import { useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
 import { useTranslation } from 'react-i18next';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 
 const CHAT_STORAGE_KEY = '@uchqun/ai-chat-messages';
 const getDefaultMessage = (t) => ({
@@ -104,12 +105,16 @@ function TypingIndicator() {
 export function AIChatScreen() {
   const navigation = useNavigation();
   const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState([DEFAULT_MESSAGE]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const scrollViewRef = useRef(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const BOTTOM_NAV_HEIGHT = 75;
+  const keyboardVerticalOffset = Platform.OS === 'ios' ? (insets.bottom > 0 ? insets.bottom + 60 : 90) : 0;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -238,48 +243,26 @@ export function AIChatScreen() {
     });
   };
 
-  const header = (
-    <View style={styles.headerContainer}>
-      <LinearGradient
-        colors={['#667EEA', '#764BA2']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
-      >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </Pressable>
-        <View style={styles.headerTitleContainer}>
-          <View style={styles.headerAvatar}>
-            <Text style={styles.headerAvatarEmoji}>🤖</Text>
-          </View>
-          <View>
-            <Text style={styles.headerTitle}>AI Yordamchi</Text>
-            <Text style={styles.headerSubtitle}>Doim yordamga tayyor</Text>
-          </View>
-        </View>
-        <Pressable
-          style={styles.clearButton}
-          onPress={clearChat}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="trash-outline" size={20} color="rgba(255,255,255,0.8)" />
-        </Pressable>
-      </LinearGradient>
-    </View>
-  );
-
   return (
-    <Screen scroll={false} padded={false} header={header} showAI={false}>
-      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title="AI Yordamchi" 
+        showBack={true}
+        rightComponent={
+          <Pressable
+            style={styles.clearButton}
+            onPress={clearChat}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="trash-outline" size={20} color={tokens.colors.text.primary} />
+          </Pressable>
+        }
+      />
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <KeyboardAvoidingView
           style={styles.keyboardView}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+          keyboardVerticalOffset={keyboardVerticalOffset}
         >
           <ScrollView
             ref={scrollViewRef}
@@ -379,7 +362,7 @@ export function AIChatScreen() {
                 value={inputText}
                 onChangeText={setInputText}
                 placeholder="Savol yozing..."
-                placeholderTextColor={tokens.colors.text.muted}
+                placeholderTextColor={tokens.colors.text.tertiary}
                 multiline
                 maxLength={500}
               />
@@ -405,7 +388,7 @@ export function AIChatScreen() {
                   <Ionicons
                     name="send"
                     size={18}
-                    color={inputText.trim() && !loading ? '#fff' : tokens.colors.text.muted}
+                    color={inputText.trim() && !loading ? '#fff' : tokens.colors.text.tertiary}
                   />
                 </LinearGradient>
               </Pressable>
@@ -413,65 +396,22 @@ export function AIChatScreen() {
           </View>
         </KeyboardAvoidingView>
       </Animated.View>
-    </Screen>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: tokens.colors.background.primary,
   },
-  headerContainer: {
-    overflow: 'hidden',
-  },
-  headerGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: tokens.space.lg,
-    paddingVertical: tokens.space.md,
-    paddingTop: tokens.space.lg,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitleContainer: {
+  content: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: tokens.space.md,
-    gap: tokens.space.sm,
-  },
-  headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerAvatarEmoji: {
-    fontSize: 22,
-  },
-  headerTitle: {
-    fontSize: tokens.type.h3.fontSize,
-    fontWeight: tokens.type.h3.fontWeight,
-    color: '#fff',
-  },
-  headerSubtitle: {
-    fontSize: tokens.type.caption.fontSize,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 1,
   },
   clearButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -486,7 +426,7 @@ const styles = StyleSheet.create({
     paddingBottom: tokens.space.xl,
   },
   welcomeCard: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: tokens.colors.background.secondary,
     borderRadius: tokens.radius.xl,
     padding: tokens.space.xl,
     marginBottom: tokens.space.xl,
@@ -533,8 +473,6 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space.sm,
     borderRadius: tokens.radius.pill,
     gap: tokens.space.xs,
-    borderWidth: 1,
-    borderColor: tokens.colors.accent[200],
   },
   quickPromptPressed: {
     backgroundColor: tokens.colors.accent[100],
@@ -584,7 +522,7 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.lg,
   },
   aiBubble: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: tokens.colors.background.secondary,
     borderBottomLeftRadius: tokens.radius.xs,
     ...tokens.shadow.xs,
   },
@@ -602,7 +540,7 @@ const styles = StyleSheet.create({
   },
   messageTime: {
     fontSize: 10,
-    color: tokens.colors.text.muted,
+    color: tokens.colors.text.secondary,
     marginTop: tokens.space.xs,
     alignSelf: 'flex-end',
   },
@@ -627,7 +565,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   typingBubble: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: tokens.colors.background.secondary,
     paddingHorizontal: tokens.space.lg,
     paddingVertical: tokens.space.md,
     borderRadius: tokens.radius.lg,
@@ -648,20 +586,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space.lg,
     paddingVertical: tokens.space.md,
     paddingBottom: tokens.space.lg,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: tokens.colors.background.secondary,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: tokens.colors.accent[50],
+    backgroundColor: tokens.colors.background.tertiary,
     borderRadius: tokens.radius.xl,
     paddingLeft: tokens.space.md,
     paddingRight: tokens.space.xs,
     paddingVertical: tokens.space.xs,
-    borderWidth: 1,
-    borderColor: tokens.colors.accent[200],
   },
   input: {
     flex: 1,

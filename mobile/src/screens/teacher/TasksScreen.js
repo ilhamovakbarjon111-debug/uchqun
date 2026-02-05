@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { teacherService } from '../../services/teacherService';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import tokens from '../../styles/tokens';
 
 export function TasksScreen() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
 
@@ -43,7 +45,12 @@ export function TasksScreen() {
   }
 
   if (tasks.length === 0) {
-    return <EmptyState message="No tasks assigned" />;
+    return (
+      <>
+        <ScreenHeader title={t('tasks.title', { defaultValue: 'Tasks' })} />
+        <EmptyState icon="checkmark-circle-outline" message={t('tasks.noTasks', { defaultValue: 'No tasks assigned' })} />
+      </>
+    );
   }
 
   const renderTask = ({ item }) => {
@@ -60,7 +67,7 @@ export function TasksScreen() {
           </View>
           <View style={styles.taskContent}>
             <Text style={[styles.title, isCompleted && styles.titleCompleted]}>
-              {item.title || item.name || 'Task'}
+              {item.title || item.name || t('tasks.task', { defaultValue: 'Task' })}
             </Text>
             {item.dueDate && (
               <View style={styles.dateContainer}>
@@ -74,7 +81,7 @@ export function TasksScreen() {
         <View style={styles.statusContainer}>
           <View style={[styles.statusBadge, isCompleted && styles.statusBadgeCompleted]}>
             <Text style={[styles.status, isCompleted && styles.statusCompleted]}>
-              {isCompleted ? 'Completed' : (item.status || 'Pending')}
+              {isCompleted ? t('tasks.completed', { defaultValue: 'Completed' }) : (item.status || t('tasks.pending', { defaultValue: 'Pending' }))}
             </Text>
           </View>
         </View>
@@ -84,7 +91,7 @@ export function TasksScreen() {
             onPress={() => updateTaskStatus(item.id, 'completed')}
           >
             <Ionicons name="checkmark-circle" size={18} color={tokens.colors.text.white} />
-            <Text style={styles.completeButtonText}>Mark as Completed</Text>
+            <Text style={styles.completeButtonText}>{t('tasks.markCompleted', { defaultValue: 'Mark as Completed' })}</Text>
           </Pressable>
         )}
       </Card>
@@ -93,9 +100,9 @@ export function TasksScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Tasks" />
+      <ScreenHeader title={t('tasks.title', { defaultValue: 'Tasks' })} />
       {tasks.length === 0 ? (
-        <EmptyState icon="checkmark-circle-outline" message="No tasks assigned" />
+        <EmptyState icon="checkmark-circle-outline" message={t('tasks.noTasks', { defaultValue: 'No tasks assigned' })} />
       ) : (
         <FlatList
           data={tasks}

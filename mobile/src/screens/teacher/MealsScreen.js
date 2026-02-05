@@ -12,28 +12,47 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Switch
+  Switch,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mealService } from '../../services/mealService';
 import { teacherService } from '../../services/teacherService';
-import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import TeacherBackground from '../../components/layout/TeacherBackground';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import tokens from '../../styles/tokens';
 
-const MEAL_TYPES = ['Breakfast', 'Lunch', 'Snack', 'Dinner'];
-const QUANTITY_OPTIONS = ['Full portion', 'Half portion', 'Small portion'];
-
 export function MealsScreen() {
   const navigation = useNavigation();
   const { t } = useTranslation();
+  
+  // Meal types with translations
+  const MEAL_TYPES = [
+    { key: 'breakfast', label: t('mealsPage.types.breakfast', { defaultValue: 'Breakfast' }) },
+    { key: 'lunch', label: t('mealsPage.types.lunch', { defaultValue: 'Lunch' }) },
+    { key: 'snack', label: t('mealsPage.types.snack', { defaultValue: 'Snack' }) },
+    { key: 'dinner', label: t('mealsPage.types.dinner', { defaultValue: 'Dinner' }) },
+  ];
+  
+  // Quantity options with translations
+  const QUANTITY_OPTIONS = [
+    { key: 'full', label: t('mealsPage.quantity.full', { defaultValue: 'Full portion' }) },
+    { key: 'half', label: t('mealsPage.quantity.half', { defaultValue: 'Half portion' }) },
+    { key: 'small', label: t('mealsPage.quantity.small', { defaultValue: 'Small portion' }) },
+  ];
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
   const [meals, setMeals] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [showModal, setShowModal] = useState(false);
@@ -43,8 +62,8 @@ export function MealsScreen() {
     childId: '',
     mealName: '',
     description: '',
-    mealType: 'Breakfast',
-    quantity: 'Full portion',
+    mealType: 'breakfast',
+    quantity: 'full',
     specialNotes: '',
     time: '08:30',
     eaten: true,
@@ -99,7 +118,7 @@ export function MealsScreen() {
       mealName: '',
       description: '',
       mealType: 'Breakfast',
-      quantity: 'Full portion',
+      quantity: 'full',
       specialNotes: '',
       time: '08:30',
       eaten: true,
@@ -114,8 +133,8 @@ export function MealsScreen() {
       childId: meal.childId || '',
       mealName: meal.mealName || '',
       description: meal.description || '',
-      mealType: meal.mealType || 'Breakfast',
-      quantity: meal.quantity || 'Full portion',
+      mealType: meal.mealType || 'breakfast',
+      quantity: meal.quantity || 'full',
       specialNotes: meal.specialNotes || '',
       time: meal.time || '08:30',
       eaten: meal.eaten !== undefined ? meal.eaten : true,
@@ -191,20 +210,20 @@ export function MealsScreen() {
 
   const renderMeal = ({ item }) => {
     const mealTypeIcons = {
-      Breakfast: 'cafe',
-      Lunch: 'sunny',
-      Snack: 'nutrition',
-      Dinner: 'moon',
+      breakfast: 'sunny-outline',
+      lunch: 'restaurant-outline',
+      snack: 'cafe-outline',
+      dinner: 'moon-outline',
     };
     const mealTypeColors = {
-      Breakfast: '#f59e0b',
-      Lunch: '#3b82f6',
-      Snack: '#10b981',
-      Dinner: '#6366f1',
+      breakfast: tokens.colors.semantic.warning,
+      lunch: tokens.colors.semantic.success,
+      snack: tokens.colors.joy.sunflower,
+      dinner: tokens.colors.joy.lavender,
     };
 
     return (
-      <Card style={styles.card}>
+      <GlassCard style={styles.card}>
         <View style={styles.mealHeader}>
           <View style={[styles.mealIconContainer, { backgroundColor: mealTypeColors[item.mealType] + '20' }]}>
             <Ionicons name={mealTypeIcons[item.mealType] || 'restaurant'} size={24} color={mealTypeColors[item.mealType]} />
@@ -214,7 +233,7 @@ export function MealsScreen() {
               <Text style={styles.mealName}>{item.mealName}</Text>
               <View style={[styles.mealTypeBadge, { backgroundColor: mealTypeColors[item.mealType] + '20' }]}>
                 <Text style={[styles.mealTypeText, { color: mealTypeColors[item.mealType] }]}>
-                  {item.mealType}
+                  {MEAL_TYPES.find(t => t.key === item.mealType)?.label || item.mealType}
                 </Text>
               </View>
             </View>
@@ -232,7 +251,7 @@ export function MealsScreen() {
             <Text style={styles.detailLabel}>
               {t('mealsPage.quantity', { defaultValue: 'Miqdori' })}:
             </Text>
-            <Text style={styles.detailValue}>{item.quantity}</Text>
+            <Text style={styles.detailValue}>{QUANTITY_OPTIONS.find(q => q.key === item.quantity)?.label || item.quantity}</Text>
           </View>
           <View style={styles.detailRow}>
             <Ionicons
@@ -271,25 +290,17 @@ export function MealsScreen() {
             <Text style={styles.deleteButtonText}>{t('common.delete', { defaultValue: 'Delete' })}</Text>
           </Pressable>
         </View>
-      </Card>
+      </GlassCard>
     );
   };
 
   return (
-    <View style={styles.container}>
-      <TeacherBackground />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={tokens.colors.text.white} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {t('mealsPage.title', { defaultValue: 'Taomlar' })}
-        </Text>
-        <TouchableOpacity onPress={handleCreate} style={styles.headerAction}>
-          <Ionicons name="add" size={24} color={tokens.colors.text.white} />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('mealsPage.title', { defaultValue: 'Meals' })} 
+        rightActionIcon="add"
+        onRightActionPress={handleCreate}
+      />
 
       {/* Date Picker */}
       <View style={styles.datePickerContainer}>
@@ -315,7 +326,7 @@ export function MealsScreen() {
           data={filteredMeals}
           renderItem={renderMeal}
           keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomPadding }]}
           refreshing={loading}
           onRefresh={loadMeals}
           showsVerticalScrollIndicator={false}
@@ -323,7 +334,7 @@ export function MealsScreen() {
       )}
 
       {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab} onPress={handleCreate}>
+      <TouchableOpacity style={[styles.fab, { bottom: bottomPadding - 20 }]} onPress={handleCreate}>
         <Ionicons name="add" size={28} color={tokens.colors.text.white} />
       </TouchableOpacity>
 
@@ -393,20 +404,20 @@ export function MealsScreen() {
                       <ScrollView style={styles.pickerScrollView} nestedScrollEnabled>
                         {MEAL_TYPES.map((type) => (
                           <Pressable
-                            key={type}
+                            key={type.key}
                             style={[
                               styles.pickerOption,
-                              formData.mealType === type && styles.pickerOptionSelected
+                              formData.mealType === type.key && styles.pickerOptionSelected
                             ]}
-                            onPress={() => setFormData(prev => ({ ...prev, mealType: type }))}
+                            onPress={() => setFormData(prev => ({ ...prev, mealType: type.key }))}
                           >
                             <Text style={[
                               styles.pickerOptionText,
-                              formData.mealType === type && styles.pickerOptionTextSelected
+                              formData.mealType === type.key && styles.pickerOptionTextSelected
                             ]}>
-                              {type}
+                              {type.label}
                             </Text>
-                            {formData.mealType === type && (
+                            {formData.mealType === type.key && (
                               <Ionicons name="checkmark" size={20} color={tokens.colors.accent.blue} />
                             )}
                           </Pressable>
@@ -480,20 +491,20 @@ export function MealsScreen() {
                       <ScrollView style={styles.pickerScrollView} nestedScrollEnabled>
                         {QUANTITY_OPTIONS.map((qty) => (
                           <Pressable
-                            key={qty}
+                            key={qty.key}
                             style={[
                               styles.pickerOption,
-                              formData.quantity === qty && styles.pickerOptionSelected
+                              formData.quantity === qty.key && styles.pickerOptionSelected
                             ]}
-                            onPress={() => setFormData(prev => ({ ...prev, quantity: qty }))}
+                            onPress={() => setFormData(prev => ({ ...prev, quantity: qty.key }))}
                           >
                             <Text style={[
                               styles.pickerOptionText,
-                              formData.quantity === qty && styles.pickerOptionTextSelected
+                              formData.quantity === qty.key && styles.pickerOptionTextSelected
                             ]}>
-                              {qty}
+                              {qty.label}
                             </Text>
-                            {formData.quantity === qty && (
+                            {formData.quantity === qty.key && (
                               <Ionicons name="checkmark" size={20} color={tokens.colors.accent.blue} />
                             )}
                           </Pressable>
@@ -554,36 +565,14 @@ export function MealsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.surface.secondary,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: tokens.colors.accent.blue,
-    paddingTop: 50,
-    paddingBottom: tokens.space.md,
-    paddingHorizontal: tokens.space.md,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  backButton: {
-    padding: tokens.space.xs,
-  },
-  headerTitle: {
-    fontSize: tokens.type.h3.fontSize,
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.text.white,
-  },
-  headerAction: {
-    padding: tokens.space.xs,
+    backgroundColor: tokens.colors.background.primary,
   },
   datePickerContainer: {
     padding: tokens.space.md,
@@ -614,19 +603,17 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 90,
-    right: tokens.space.md,
+    right: tokens.space.lg,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: tokens.colors.semantic.warning,
+    backgroundColor: '#F59E0B', // Orange/Amber
     alignItems: 'center',
     justifyContent: 'center',
     ...tokens.shadow.elevated,
   },
   list: {
-    padding: tokens.space.md,
-    paddingBottom: 100,
+    padding: tokens.space.lg,
   },
   card: {
     marginBottom: tokens.space.md,
@@ -885,7 +872,7 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space.md,
     alignItems: 'center',
     borderRadius: tokens.radius.sm,
-    backgroundColor: tokens.colors.semantic.warning,
+    backgroundColor: '#F59E0B', // Orange/Amber
   },
   saveButtonText: {
     color: tokens.colors.text.white,

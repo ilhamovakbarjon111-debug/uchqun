@@ -37,13 +37,15 @@ try {
 }
 import { parentService } from '../../services/parentService';
 import { mediaService } from '../../services/mediaService';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
-import Card from '../../components/common/Card';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import Skeleton from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
 import { ImageViewer } from '../../components/common/ImageViewer';
 import { API_URL } from '../../config';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 const GRID_GAP = tokens.space.sm;
@@ -53,6 +55,8 @@ const itemSize = (width - GRID_PADDING * 2 - GRID_GAP * (COLUMNS - 1)) / COLUMNS
 
 export function MediaScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [children, setChildren] = useState([]);
   const [selectedChildId, setSelectedChildId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +68,10 @@ export function MediaScreen() {
   const [videoUri, setVideoUri] = useState(null);
   const [videoVisible, setVideoVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   useEffect(() => {
     const loadChildren = async () => {
@@ -168,47 +176,15 @@ export function MediaScreen() {
     return groups;
   }, {});
 
-  const header = (
-    <View style={styles.headerContainer}>
-      <LinearGradient
-        colors={[tokens.colors.joy.rose, tokens.colors.joy.coral]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
-      >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </Pressable>
-        <View style={styles.headerTitleContainer}>
-          <View style={styles.headerEmojiContainer}>
-            <Text style={styles.headerEmoji}>📸</Text>
-          </View>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>Galereya</Text>
-            <Text style={styles.headerSubtitle}>
-              {media.length} ta rasm
-            </Text>
-          </View>
-        </View>
-        <View style={styles.headerRight} />
-      </LinearGradient>
-    </View>
-  );
-
   return (
-    <Screen
-      scroll={true}
-      padded={false}
-      header={header}
-      contentStyle={styles.content}
-    >
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('media.title', { defaultValue: 'Media' })}
+        showBack={navigation.canGoBack()}
+      />
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -242,13 +218,13 @@ export function MediaScreen() {
         )}
         {children.length === 0 && !loading && (
           <View style={styles.emptyContainer}>
-            <Card style={styles.emptyCard}>
+            <GlassCard style={styles.emptyCard}>
               <EmptyState
                 emoji="👶"
-                title="Farzand tanlang"
-                description="Farzand qo'shilgach rasmlar ko'rinadi"
+                title={t('media.selectChild', { defaultValue: 'Select Child' })}
+                description={t('media.selectChildDesc', { defaultValue: 'After adding a child, media will appear' })}
               />
-            </Card>
+            </GlassCard>
           </View>
         )}
         {children.length > 0 && (
@@ -267,13 +243,13 @@ export function MediaScreen() {
           </View>
         ) : media.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Card style={styles.emptyCard}>
+            <GlassCard style={styles.emptyCard}>
               <EmptyState
                 emoji="📷"
-                title="Rasmlar topilmadi"
-                description="Yangi rasmlar va videolar tez orada qo'shiladi"
+                title={t('media.noMedia', { defaultValue: 'No Media Found' })}
+                description={t('media.noMediaDesc', { defaultValue: 'New photos and videos will be added soon' })}
               />
-            </Card>
+            </GlassCard>
           </View>
         ) : (
           <Animated.View style={{ opacity: fadeAnim }}>
@@ -463,16 +439,17 @@ export function MediaScreen() {
           }}
         />
       )}
-    </Screen>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
     flex: 1,
+    backgroundColor: tokens.colors.background.primary,
   },
   scrollContent: {
-    paddingBottom: tokens.space['3xl'],
+    padding: tokens.space.lg,
   },
   childRow: {
     marginBottom: tokens.space.lg,
@@ -486,13 +463,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space.md,
     paddingVertical: tokens.space.sm,
     borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.colors.card.base,
-    borderWidth: 2,
-    borderColor: tokens.colors.border.light,
+    backgroundColor: tokens.colors.background.secondary,
   },
   childPillActive: {
     backgroundColor: tokens.colors.joy.rose,
-    borderColor: tokens.colors.joy.rose,
   },
   childPillText: {
     fontSize: tokens.type.sub.fontSize,
@@ -575,6 +549,7 @@ const styles = StyleSheet.create({
     paddingTop: tokens.space.xl,
   },
   emptyCard: {
+    marginTop: tokens.space.xl,
     backgroundColor: 'rgba(255,255,255,0.95)',
   },
   dateSection: {

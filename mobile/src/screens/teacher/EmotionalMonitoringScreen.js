@@ -1,21 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View, Text, Modal, TextInput, TouchableOpacity, Pressable, ScrollView, Alert } from 'react-native';
+import { FlatList, StyleSheet, View, Text, Modal, TextInput, TouchableOpacity, Pressable, ScrollView, Alert, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { teacherService } from '../../services/teacherService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import Card from '../../components/common/Card';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
-import TeacherBackground from '../../components/layout/TeacherBackground';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import tokens from '../../styles/tokens';
 
 const EMOTIONAL_STATES = ['happy', 'sad', 'angry', 'anxious', 'calm', 'excited', 'tired', 'focused'];
 
 export function EmotionalMonitoringScreen() {
   const route = useRoute();
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { childId, childName } = route.params || {};
 
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -56,7 +62,7 @@ export function EmotionalMonitoringScreen() {
 
   const handleSave = async () => {
     if (selectedStates.length === 0) {
-      Alert.alert('Error', 'Please select at least one emotional state.');
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('emotional.selectState', { defaultValue: 'Please select at least one emotional state.' }));
       return;
     }
     setSaving(true);
@@ -70,7 +76,7 @@ export function EmotionalMonitoringScreen() {
       loadRecords();
     } catch (error) {
       console.error('Error creating emotional record:', error);
-      Alert.alert('Error', 'Failed to create record.');
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('emotional.createFailed', { defaultValue: 'Failed to create record.' }));
     } finally {
       setSaving(false);
     }
@@ -104,17 +110,16 @@ export function EmotionalMonitoringScreen() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <View style={styles.container}>
-      <TeacherBackground />
-      <ScreenHeader title={`Emotional Monitoring - ${childName || ''}`} />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader title={t('emotional.title', { defaultValue: 'Emotional Monitoring' })} />
       {records.length === 0 ? (
-        <EmptyState icon="heart-outline" message="No emotional records found" />
+        <EmptyState icon="heart-outline" message={t('emotional.noRecords', { defaultValue: 'No emotional records found' })} />
       ) : (
         <FlatList
           data={records}
           renderItem={renderRecord}
           keyExtractor={(item) => (item.id || item._id || Math.random()).toString()}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomPadding }]}
           refreshing={loading}
           onRefresh={loadRecords}
           showsVerticalScrollIndicator={false}
@@ -129,14 +134,14 @@ export function EmotionalMonitoringScreen() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>New Record</Text>
+              <Text style={styles.modalTitle}>{t('emotional.newRecord', { defaultValue: 'New Record' })}</Text>
               <TouchableOpacity onPress={() => setShowModal(false)}>
                 <Ionicons name="close" size={24} color={tokens.colors.text.secondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.inputLabel}>Date</Text>
+              <Text style={styles.inputLabel}>{t('emotional.date', { defaultValue: 'Date' })}</Text>
               <TextInput
                 style={styles.input}
                 value={date}
@@ -145,7 +150,7 @@ export function EmotionalMonitoringScreen() {
                 placeholderTextColor={tokens.colors.text.tertiary}
               />
 
-              <Text style={styles.inputLabel}>Emotional States</Text>
+              <Text style={styles.inputLabel}>{t('emotional.states', { defaultValue: 'Emotional States' })}</Text>
               <View style={styles.checkboxGrid}>
                 {EMOTIONAL_STATES.map((state) => (
                   <Pressable key={state} style={styles.checkboxRow} onPress={() => toggleState(state)}>
@@ -154,17 +159,17 @@ export function EmotionalMonitoringScreen() {
                       size={22}
                       color={selectedStates.includes(state) ? tokens.colors.accent.blue : tokens.colors.text.tertiary}
                     />
-                    <Text style={styles.checkboxLabel}>{state.charAt(0).toUpperCase() + state.slice(1)}</Text>
+                    <Text style={styles.checkboxLabel}>{t(`emotional.states.${state}`, { defaultValue: state.charAt(0).toUpperCase() + state.slice(1) })}</Text>
                   </Pressable>
                 ))}
               </View>
 
-              <Text style={styles.inputLabel}>Notes</Text>
+              <Text style={styles.inputLabel}>{t('emotional.notes', { defaultValue: 'Notes' })}</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
                 value={notes}
                 onChangeText={setNotes}
-                placeholder="Optional notes..."
+                placeholder={t('emotional.notesPlaceholder', { defaultValue: 'Optional notes...' })}
                 placeholderTextColor={tokens.colors.text.tertiary}
                 multiline
               />
@@ -172,21 +177,21 @@ export function EmotionalMonitoringScreen() {
 
             <View style={styles.modalActions}>
               <Pressable style={styles.cancelButton} onPress={() => setShowModal(false)}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>{t('common.cancel', { defaultValue: 'Cancel' })}</Text>
               </Pressable>
               <Pressable style={[styles.saveButton, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-                <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save'}</Text>
+                <Text style={styles.saveButtonText}>{saving ? t('common.saving', { defaultValue: 'Saving...' }) : t('common.save', { defaultValue: 'Save' })}</Text>
               </Pressable>
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: tokens.colors.surface.secondary },
+  container: { flex: 1, backgroundColor: tokens.colors.background.primary },
   list: { padding: tokens.space.md, paddingBottom: 100 },
   fab: {
     position: 'absolute', bottom: 90, right: tokens.space.md,
