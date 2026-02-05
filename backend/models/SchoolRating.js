@@ -25,7 +25,7 @@ const SchoolRating = sequelize.define('SchoolRating', {
   },
   stars: {
     type: DataTypes.INTEGER,
-    allowNull: false, // Stars is now required
+    allowNull: true, // Allow null temporarily for backward compatibility, but validation requires it
     validate: {
       // Custom validator for valid integer between 1-5
       isValidStars(value) {
