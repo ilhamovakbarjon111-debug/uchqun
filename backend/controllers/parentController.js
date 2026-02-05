@@ -908,12 +908,12 @@ export const rateSchool = async (req, res) => {
     
     // Prepare evaluation data - ensure it's a valid object or empty object
     // Model has defaultValue: {} for evaluation, so use empty object instead of null
-    let finalEvaluationData = {};
+    let evaluationForSave = {};
     if (evaluationData && typeof evaluationData === 'object' && !Array.isArray(evaluationData) && Object.keys(evaluationData).length > 0) {
-      finalEvaluationData = evaluationData;
+      evaluationForSave = evaluationData;
     }
     
-    const hasValidEvaluation = finalEvaluationData && typeof finalEvaluationData === 'object' && Object.keys(finalEvaluationData).length > 0;
+    const hasValidEvaluation = evaluationForSave && typeof evaluationForSave === 'object' && Object.keys(evaluationForSave).length > 0;
     
     // Log for debugging
     logger.info('Preparing to save rating', {
@@ -921,8 +921,8 @@ export const rateSchool = async (req, res) => {
       parentId,
       hasEvaluation: hasValidEvaluation,
       starsNum,
-      evaluationKeys: hasValidEvaluation ? Object.keys(finalEvaluationData) : [],
-      finalEvaluationData,
+      evaluationKeys: hasValidEvaluation ? Object.keys(evaluationForSave) : [],
+      evaluationForSave,
     });
 
     try {
@@ -940,7 +940,7 @@ export const rateSchool = async (req, res) => {
         // Stars is always required and updated
         existingRating.stars = starsNum;
         // Evaluation is optional
-        existingRating.evaluation = finalEvaluationData;
+        existingRating.evaluation = evaluationForSave;
         existingRating.numericRating = null; // Remove numericRating
         existingRating.comment = comment || null;
         await existingRating.save();
@@ -951,14 +951,14 @@ export const rateSchool = async (req, res) => {
         // Stars is required, evaluation is optional
         // Ensure evaluation is properly formatted for JSONB
         let evaluationForDB = {};
-        if (hasValidEvaluation && finalEvaluationData && typeof finalEvaluationData === 'object' && Object.keys(finalEvaluationData).length > 0) {
+        if (hasValidEvaluation && evaluationForSave && typeof evaluationForSave === 'object' && Object.keys(evaluationForSave).length > 0) {
           try {
             // Deep clone to ensure it's a plain object
-            evaluationForDB = JSON.parse(JSON.stringify(finalEvaluationData));
+            evaluationForDB = JSON.parse(JSON.stringify(evaluationForSave));
             // Validate that it's still an object after stringify/parse
             if (typeof evaluationForDB !== 'object' || Array.isArray(evaluationForDB)) {
               logger.warn('Evaluation data is not a valid object after stringify/parse', {
-                original: finalEvaluationData,
+                original: evaluationForSave,
                 parsed: evaluationForDB,
               });
               evaluationForDB = {};
@@ -966,7 +966,7 @@ export const rateSchool = async (req, res) => {
           } catch (parseError) {
             logger.error('Error parsing evaluation data', {
               error: parseError.message,
-              evaluationData: finalEvaluationData,
+              evaluationData: evaluationForSave,
             });
             evaluationForDB = {};
           }
@@ -1055,8 +1055,7 @@ export const rateSchool = async (req, res) => {
         hasEvaluation: !!evaluationData,
         evaluationType: typeof evaluationData,
         starsNum,
-        numericRatingNum,
-        finalEvaluationData,
+        evaluationData,
         sequelizeError: ratingError.original?.code || ratingError.original?.constraint,
         table: ratingError.table,
         constraint: ratingError.constraint,
@@ -1076,24 +1075,10 @@ export const rateSchool = async (req, res) => {
           });
           
           if (existingRating) {
-            // Recalculate validation flags in error handling context
-            const errorHasValidEvaluation = finalEvaluationData && typeof finalEvaluationData === 'object' && Object.keys(finalEvaluationData).length > 0;
-            const errorHasValidNumericRating = numericRatingNum !== null && numericRatingNum !== undefined && !isNaN(numericRatingNum) && numericRatingNum >= 1 && numericRatingNum <= 10;
-            const errorHasValidStars = starsNum !== null && starsNum !== undefined && !isNaN(starsNum) && starsNum >= 1 && starsNum <= 5;
-            
-            if (errorHasValidEvaluation) {
-              existingRating.evaluation = finalEvaluationData;
-              existingRating.stars = null;
-              existingRating.numericRating = null;
-            } else if (errorHasValidNumericRating) {
-              existingRating.numericRating = numericRatingNum;
-              existingRating.stars = null;
-              existingRating.evaluation = {};
-            } else if (errorHasValidStars) {
-              existingRating.stars = starsNum;
-              existingRating.numericRating = null;
-              existingRating.evaluation = {}; // Use empty object to match model's defaultValue
-            }
+            // Update existing rating - stars is required, evaluation is optional
+            existingRating.stars = starsNum;
+            existingRating.evaluation = evaluationData || {};
+            existingRating.numericRating = null; // Remove numericRating
             existingRating.comment = comment || null;
             await existingRating.save();
             
@@ -1190,7 +1175,7 @@ export const rateSchool = async (req, res) => {
             if (existingRating) {
               // Update existing rating - stars is required, evaluation is optional
               existingRating.stars = starsNum;
-              existingRating.evaluation = finalEvaluationData || {};
+              existingRating.evaluation = evaluationData || {};
               existingRating.numericRating = null; // Remove numericRating
               existingRating.comment = comment || null;
               await existingRating.save();
@@ -1243,7 +1228,7 @@ export const rateSchool = async (req, res) => {
           stack: ratingError.stack,
           schoolId: finalSchoolId,
           parentId,
-          finalEvaluationData,
+          evaluationData,
           starsNum,
         } : undefined,
       });
