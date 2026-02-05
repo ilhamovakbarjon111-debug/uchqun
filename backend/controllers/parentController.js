@@ -864,23 +864,55 @@ export const rateSchool = async (req, res) => {
     }
 
     // Create or update rating - use same pattern as teacher rating
-    const [rating, created] = await SchoolRating.findOrCreate({
-      where: {
+    let rating;
+    let created;
+    
+    try {
+      [rating, created] = await SchoolRating.findOrCreate({
+        where: {
+          schoolId: finalSchoolId,
+          parentId,
+        },
+        defaults: {
+          stars: starsNum,
+          comment: comment || null,
+        },
+      });
+
+      if (!created) {
+        rating.stars = starsNum;
+        rating.comment = comment || null;
+        await rating.save();
+      }
+    } catch (findOrCreateError) {
+      // If findOrCreate fails, try manual approach
+      logger.warn('findOrCreate failed, trying manual find/update', {
+        error: findOrCreateError.message,
         schoolId: finalSchoolId,
         parentId,
-      },
-      defaults: {
-        stars: starsNum,
-        evaluation: {},
-        comment: comment || null,
-      },
-    });
-
-    if (!created) {
-      rating.stars = starsNum;
-      rating.evaluation = {};
-      rating.comment = comment || null;
-      await rating.save();
+      });
+      
+      rating = await SchoolRating.findOne({
+        where: {
+          schoolId: finalSchoolId,
+          parentId,
+        },
+      });
+      
+      if (rating) {
+        rating.stars = starsNum;
+        rating.comment = comment || null;
+        await rating.save();
+        created = false;
+      } else {
+        rating = await SchoolRating.create({
+          schoolId: finalSchoolId,
+          parentId,
+          stars: starsNum,
+          comment: comment || null,
+        });
+        created = true;
+      }
     }
 
     logger.info('School rating saved', {
