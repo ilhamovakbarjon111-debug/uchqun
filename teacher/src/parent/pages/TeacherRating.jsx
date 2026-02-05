@@ -20,18 +20,6 @@ const TeacherRating = () => {
   const [schoolRating, setSchoolRating] = useState(null);
   const [schoolSummary, setSchoolSummary] = useState({ average: 0, count: 0 });
   const [schoolStars, setSchoolStars] = useState(0);
-  const [schoolEvaluation, setSchoolEvaluation] = useState({
-    officiallyRegistered: false,
-    qualifiedSpecialists: false,
-    individualPlan: false,
-    safeEnvironment: false,
-    medicalRequirements: false,
-    developmentalActivities: false,
-    foodQuality: false,
-    regularInformation: false,
-    clearPayments: false,
-    kindAttitude: false,
-  });
   const [schoolComment, setSchoolComment] = useState('');
   
   const [loading, setLoading] = useState(true);
@@ -92,18 +80,6 @@ const TeacherRating = () => {
       setSchool(schoolRatingData.school);
       setSchoolRating(schoolRatingData.rating);
       setSchoolStars(schoolRatingData.rating?.stars || 0);
-      setSchoolEvaluation(schoolRatingData.rating?.evaluation || {
-        officiallyRegistered: false,
-        qualifiedSpecialists: false,
-        individualPlan: false,
-        safeEnvironment: false,
-        medicalRequirements: false,
-        developmentalActivities: false,
-        foodQuality: false,
-        regularInformation: false,
-        clearPayments: false,
-        kindAttitude: false,
-      });
       setSchoolComment(schoolRatingData.rating?.comment || '');
       setSchoolSummary(schoolRatingData.summary || { average: 0, count: 0 });
     } catch (err) {
@@ -194,9 +170,6 @@ const TeacherRating = () => {
       return;
     }
 
-    // Evaluation is optional
-    const hasEvaluation = Object.values(schoolEvaluation).some(value => value === true);
-
     // Validate school data
     if (!school.id && (!school.name || typeof school.name !== 'string' || school.name.trim().length === 0)) {
       setSchoolError(t('schoolRatingPage.noSchool'));
@@ -205,20 +178,18 @@ const TeacherRating = () => {
 
     setSavingSchool(true);
     try {
-      // Stars (1-5) is REQUIRED, evaluation is optional
+      // Stars (1-5) is REQUIRED
       let payload;
       if (school.id) {
         payload = {
           schoolId: school.id,
           stars: schoolStars, // Required
-          ...(hasEvaluation ? { evaluation: schoolEvaluation } : {}), // Optional
           comment: schoolComment || null
         };
       } else {
         payload = {
           schoolName: school.name.trim(),
           stars: schoolStars, // Required
-          ...(hasEvaluation ? { evaluation: schoolEvaluation } : {}), // Optional
           comment: schoolComment || null
         };
       }
@@ -227,7 +198,6 @@ const TeacherRating = () => {
       await api.post('/parent/school-rating', payload);
       setSchoolRating({
         stars: schoolStars,
-        evaluation: hasEvaluation ? schoolEvaluation : {},
         comment: schoolComment,
         updatedAt: new Date().toISOString(),
       });
@@ -542,34 +512,6 @@ const TeacherRating = () => {
                           stroke={schoolStars >= value ? '#16a34a' : 'currentColor'}
                         />
                       </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Evaluation Criteria - OPTIONAL */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-semibold text-gray-700">{t('schoolRatingPage.evaluationLabel')}</p>
-                    <span className="text-xs text-gray-400">{t('schoolRatingPage.optional')}</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mb-4">{t('schoolRatingPage.evaluationSubtitle')}</p>
-                  <div className="space-y-3">
-                    {Object.keys(schoolEvaluation).map((key) => (
-                      <label
-                        key={key}
-                        className="flex items-start gap-3 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={schoolEvaluation[key] || false}
-                          onChange={(e) => setSchoolEvaluation(prev => ({
-                            ...prev,
-                            [key]: e.target.checked
-                          }))}
-                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                        />
-                        <span className="text-sm text-gray-700 flex-1">{t(`schoolRatingPage.criteria.${key}`)}</span>
-                      </label>
                     ))}
                   </div>
                 </div>
