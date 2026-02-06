@@ -956,29 +956,25 @@ export const rateSchool = async (req, res) => {
       });
     }
 
-    // 11. Create or update rating (using findOrCreate like teacher rating)
+    // 11. Create or update rating (using findOne + create/update for reliability)
     let rating;
     let created;
     try {
-      [rating, created] = await SchoolRating.findOrCreate({
+      // First try to find existing rating
+      rating = await SchoolRating.findOne({
         where: {
           schoolId: finalSchoolId,
           parentId,
         },
-        defaults: {
-          schoolId: finalSchoolId,
-          parentId,
-          stars: starsNum,
-          comment: commentValue,
-          // evaluation will use database default value
-        },
       });
 
-      if (!created) {
+      if (rating) {
         // Update existing rating
-        rating.stars = starsNum;
-        rating.comment = commentValue;
-        await rating.save();
+        await rating.update({
+          stars: starsNum,
+          comment: commentValue,
+        });
+        created = false;
         logger.info('School rating updated', {
           ratingId: rating.id,
           schoolId: finalSchoolId,
@@ -986,6 +982,14 @@ export const rateSchool = async (req, res) => {
           stars: starsNum,
         });
       } else {
+        // Create new rating
+        rating = await SchoolRating.create({
+          schoolId: finalSchoolId,
+          parentId,
+          stars: starsNum,
+          comment: commentValue,
+        });
+        created = true;
         logger.info('School rating created', {
           ratingId: rating.id,
           schoolId: finalSchoolId,
@@ -1097,21 +1101,24 @@ export const rateSchool = async (req, res) => {
       parentId: req.user?.id,
       body: req.body,
       originalError: error.original?.message,
+      originalCode: error.original?.code,
       errors: error.errors?.map(e => ({ message: e.message, path: e.path, value: e.value })),
+      sql: error.sql,
+      parameters: error.parameters,
     });
 
-    // Return safe error response with more details in development
+    // Return error response with details for debugging (always include in response for now)
     res.status(500).json({
       error: 'Internal server error',
       message: 'An unexpected error occurred. Please try again later.',
-      ...(process.env.NODE_ENV === 'development' && {
-        details: {
-          message: error.message,
-          name: error.name,
-          originalError: error.original?.message,
-          errors: error.errors?.map(e => ({ message: e.message, path: e.path })),
-        },
-      }),
+      // Always include error details for debugging (remove in production after fixing)
+      details: {
+        message: error.message,
+        name: error.name,
+        originalError: error.original?.message,
+        originalCode: error.original?.code,
+        errors: error.errors?.map(e => ({ message: e.message, path: e.path })),
+      },
     });
   }
 };
