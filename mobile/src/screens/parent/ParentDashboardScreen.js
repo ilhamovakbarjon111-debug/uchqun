@@ -4,6 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useNotification } from '../../context/NotificationContext';
 import { parentService } from '../../services/parentService';
@@ -17,6 +18,7 @@ import tokens from '../../styles/tokens';
 
 export function ParentDashboardScreen() {
   const { user } = useAuth();
+  const { on, off, connected } = useSocket();
   const navigation = useNavigation();
   const { t } = useTranslation();
   const { count = 0, refreshNotifications } = useNotification();
@@ -70,6 +72,57 @@ export function ParentDashboardScreen() {
 
     return () => subscription?.remove();
   }, [selectedChildId]);
+
+  // Real-time WebSocket listeners for instant updates
+  useEffect(() => {
+    if (!connected) return;
+
+    const handleActivityChange = (data) => {
+      console.log('[Dashboard] Activity change received:', data);
+      loadData(); // Reload stats when activity changes
+    };
+
+    const handleMealChange = (data) => {
+      console.log('[Dashboard] Meal change received:', data);
+      loadData(); // Reload stats when meal changes
+    };
+
+    const handleMediaChange = (data) => {
+      console.log('[Dashboard] Media change received:', data);
+      loadData(); // Reload stats when media changes
+    };
+
+    const handleChildUpdate = (data) => {
+      console.log('[Dashboard] Child updated:', data);
+      loadData(); // Reload to update child info
+    };
+
+    // Subscribe to all relevant events
+    on('activity:created', handleActivityChange);
+    on('activity:updated', handleActivityChange);
+    on('activity:deleted', handleActivityChange);
+    on('meal:created', handleMealChange);
+    on('meal:updated', handleMealChange);
+    on('meal:deleted', handleMealChange);
+    on('media:created', handleMediaChange);
+    on('media:updated', handleMediaChange);
+    on('media:deleted', handleMediaChange);
+    on('child:updated', handleChildUpdate);
+
+    // Cleanup on unmount
+    return () => {
+      off('activity:created', handleActivityChange);
+      off('activity:updated', handleActivityChange);
+      off('activity:deleted', handleActivityChange);
+      off('meal:created', handleMealChange);
+      off('meal:updated', handleMealChange);
+      off('meal:deleted', handleMealChange);
+      off('media:created', handleMediaChange);
+      off('media:updated', handleMediaChange);
+      off('media:deleted', handleMediaChange);
+      off('child:updated', handleChildUpdate);
+    };
+  }, [connected, on, off]);
 
   const loadData = async () => {
     try {

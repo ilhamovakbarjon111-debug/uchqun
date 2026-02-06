@@ -3,7 +3,6 @@ import { ScrollView, StyleSheet, Text, View, Pressable, Alert, Modal, TextInput,
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -11,16 +10,8 @@ import { useNavigation } from '@react-navigation/native';
 import { changeLanguage, getCurrentLanguage, getAvailableLanguages } from '../../i18n/config';
 import tokens from '../../styles/tokens';
 import { api } from '../../services/api';
-import { API_URL } from '../../config';
 import { GlassCard } from '../../components/teacher/GlassCard';
 import { ScreenHeader } from '../../components/teacher/ScreenHeader';
-
-function getAvatarUrl(avatar) {
-  if (!avatar) return null;
-  if (avatar.startsWith('http')) return avatar;
-  const base = (API_URL || '').replace(/\/api\/?$/, '');
-  return `${base}${avatar.startsWith('/') ? '' : '/'}${avatar}`;
-}
 
 export function SettingsScreen() {
   const { user, logout, refreshUser } = useAuth();
@@ -57,7 +48,6 @@ export function SettingsScreen() {
     },
   });
   const [profileLoading, setProfileLoading] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     setCurrentLanguage(getCurrentLanguage());
@@ -146,73 +136,6 @@ export function SettingsScreen() {
       Alert.alert(t('common.error', { defaultValue: 'Error' }), message);
     } finally {
       setPasswordLoading(false);
-    }
-  };
-
-  const handleAvatarUpload = async () => {
-    try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          t('common.error', { defaultValue: 'Error' }),
-          t('profile.photoPermissionRequired', { defaultValue: 'Photo library permission is required' })
-        );
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (result.canceled) return;
-
-      setUploadingAvatar(true);
-
-      const asset = result.assets[0];
-      const uri = asset.uri;
-      const filename = uri.split('/').pop() || `avatar-${Date.now()}.jpg`;
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-      const formData = new FormData();
-      // Properly format the file for React Native
-      formData.append('avatar', {
-        uri: uri,
-        name: filename,
-        type: type,
-      });
-
-      console.log('[Avatar Upload] Uploading avatar:', { filename, type, uri: uri.substring(0, 50) });
-
-      const response = await api.put('/user/avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      console.log('[Avatar Upload] Success:', response.data);
-
-      if (refreshUser) {
-        await refreshUser();
-      }
-
-      Alert.alert(
-        t('common.success', { defaultValue: 'Muvaffaqiyatli' }),
-        t('profile.avatarUpdated', { defaultValue: 'Avatar muvaffaqiyatli yangilandi' })
-      );
-    } catch (error) {
-      console.error('[Avatar Upload] Error:', error);
-      console.error('[Avatar Upload] Error response:', error?.response?.data);
-      const errorMessage = error?.response?.data?.error || error?.message || t('profile.uploadError', { defaultValue: 'Avatar yuklashda xatolik' });
-      Alert.alert(
-        t('common.error', { defaultValue: 'Xatolik' }),
-        errorMessage
-      );
-    } finally {
-      setUploadingAvatar(false);
     }
   };
 
@@ -335,52 +258,6 @@ export function SettingsScreen() {
             transform: [{ translateY: slideAnim }],
           }}
         >
-          {/* Profile Card */}
-          <GlassCard style={styles.profileCard}>
-              <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar}>
-                <View style={styles.avatarContainer}>
-                  {user?.avatar ? (
-                    <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.avatarImage} resizeMode="cover" />
-                  ) : (
-                    <LinearGradient
-                      colors={['#8B5CF6', '#6366F1']}
-                      style={styles.avatarGradient}
-                    >
-                      <Text style={styles.avatarText}>
-                        {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
-                      </Text>
-                    </LinearGradient>
-                  )}
-                  {uploadingAvatar && (
-                    <View style={styles.uploadingOverlay}>
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    </View>
-                  )}
-                  <View style={styles.cameraButton}>
-                    <Ionicons name="camera" size={12} color="#FFFFFF" />
-                  </View>
-                </View>
-              </TouchableOpacity>
-              <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>
-                  {user?.firstName ?? '—'} {user?.lastName ?? ''}
-                </Text>
-                <View style={styles.emailRow}>
-                  <Ionicons name="mail-outline" size={12} color={tokens.colors.text.muted} />
-                  <Text style={styles.profileEmail}>{user?.email ?? '—'}</Text>
-                </View>
-                <View style={styles.roleBadge}>
-                  <LinearGradient
-                    colors={['rgba(99, 102, 241, 0.15)', 'rgba(139, 92, 246, 0.15)']}
-                    style={styles.roleBadgeGradient}
-                  >
-                    <Ionicons name="people" size={12} color="#A78BFA" />
-                    <Text style={styles.roleText}>{t('dashboard.roleParent', { defaultValue: 'Parent' })}</Text>
-                  </LinearGradient>
-                </View>
-              </View>
-          </GlassCard>
-
           {/* Language Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('settings.language', { defaultValue: 'Language' })}</Text>
@@ -641,91 +518,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: tokens.space.lg,
-  },
-  profileCard: {
-    marginBottom: tokens.space.xl,
-    alignItems: 'center',
-    padding: tokens.space.xl,
-  },
-  avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: tokens.space.md,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  avatarGradient: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: tokens.colors.text.white,
-  },
-  avatarGradient: {
-    backgroundColor: tokens.colors.accent.blue,
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: tokens.colors.accent.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...tokens.shadow.sm,
-  },
-  uploadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileInfo: {
-    alignItems: 'center',
-  },
-  profileName: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.primary,
-    marginBottom: tokens.space.xs,
-    letterSpacing: -0.3,
-  },
-  emailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.space.xs,
-    marginBottom: tokens.space.sm,
-  },
-  profileEmail: {
-    fontSize: tokens.type.sub.fontSize,
-    color: tokens.colors.text.secondary,
-  },
-  roleBadge: {
-    borderRadius: tokens.radius.pill,
-    overflow: 'hidden',
-    backgroundColor: tokens.colors.semantic.successSoft,
-    paddingHorizontal: tokens.space.md,
-    paddingVertical: tokens.space.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.space.xs,
-  },
-  roleText: {
-    fontSize: tokens.type.sub.fontSize,
-    fontWeight: '600',
-    color: tokens.colors.semantic.success,
-    letterSpacing: 0.3,
   },
   section: {
     marginBottom: tokens.space.xl,

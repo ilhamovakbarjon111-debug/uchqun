@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useChild } from '../context/ChildContext';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../../shared/context/SocketContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import api from '../services/api';
@@ -28,8 +29,9 @@ import { useTranslation } from 'react-i18next';
 const defaultAvatar = '/avatars/avatar1.jfif';
 
 const ChildProfile = () => {
-  const { children, selectedChild, selectedChildId, selectChild, loading: childrenLoading } = useChild();
+  const { children, selectedChildId, selectChild, loading: childrenLoading } = useChild();
   const { logout } = useAuth();
+  const { on, off, connected } = useSocket();
   const { success: toastSuccess, error: toastError } = useToast();
   const navigate = useNavigate();
   const [child, setChild] = useState(null);
@@ -55,7 +57,6 @@ const ChildProfile = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showMessagesModal, setShowMessagesModal] = useState(false);
   const [monitoringRecords, setMonitoringRecords] = useState([]);
-  const [loadingMonitoring, setLoadingMonitoring] = useState(false);
   
   const handleFileUpload = async (event) => {
     const file = event.target.files?.[0];
@@ -134,7 +135,7 @@ const ChildProfile = () => {
         img.onload = () => {
           setImageLoading(false);
         };
-        img.onerror = (e) => {
+        img.onerror = () => {
           setImageLoading(false);
         };
       }
@@ -346,7 +347,58 @@ const ChildProfile = () => {
       setError(t('child.errorNotFound'));
       setLoading(false);
     }
-  }, [selectedChildId, children, childrenLoading, t]);
+  }, [selectedChildId, children, childrenLoading, t, API_BASE]);
+
+  // Real-time WebSocket listeners
+  useEffect(() => {
+    if (!connected || !selectedChildId) return;
+
+    const handleChildUpdate = (data) => {
+      console.log('[ChildProfile] Child updated:', data);
+      if (data.child?.id === selectedChildId) {
+        // Update photo timestamp to force image refresh
+        setPhotoTimestamp(Date.now());
+        // Trigger reload by updating a dependency
+        window.location.reload(); // Simple but effective for now
+      }
+    };
+
+    const handleDataChange = (data) => {
+      console.log('[ChildProfile] Data change:', data);
+      // Check if event is for our selected child
+      const eventChildId = data.activity?.childId || data.meal?.childId || data.media?.childId || data.childId;
+      if (eventChildId === selectedChildId) {
+        // Trigger reload by updating a dependency
+        window.location.reload(); // Simple but effective for now
+      }
+    };
+
+    // Subscribe to events
+    on('child:updated', handleChildUpdate);
+    on('activity:created', handleDataChange);
+    on('activity:updated', handleDataChange);
+    on('activity:deleted', handleDataChange);
+    on('meal:created', handleDataChange);
+    on('meal:updated', handleDataChange);
+    on('meal:deleted', handleDataChange);
+    on('media:created', handleDataChange);
+    on('media:updated', handleDataChange);
+    on('media:deleted', handleDataChange);
+
+    // Cleanup
+    return () => {
+      off('child:updated', handleChildUpdate);
+      off('activity:created', handleDataChange);
+      off('activity:updated', handleDataChange);
+      off('activity:deleted', handleDataChange);
+      off('meal:created', handleDataChange);
+      off('meal:updated', handleDataChange);
+      off('meal:deleted', handleDataChange);
+      off('media:created', handleDataChange);
+      off('media:updated', handleDataChange);
+      off('media:deleted', handleDataChange);
+    };
+  }, [connected, selectedChildId, on, off]);
 
   const calculateAge = (dateOfBirth) => {
     const today = new Date();
@@ -495,7 +547,7 @@ const ChildProfile = () => {
                 }`}
                 loading="eager"
                 decoding="async"
-                fetchpriority="high"
+                fetchPriority="high"
                 onLoad={(e) => {
                   setImageLoading(false);
                   e.target.style.opacity = '1';
@@ -521,7 +573,7 @@ const ChildProfile = () => {
                   <LoadingSpinner size="md" />
                 ) : (
                   <span className="text-white text-sm font-semibold">
-                    Rasmni o'zgartirish
+                    Rasmni o&apos;zgartirish
                   </span>
                 )}
               </div>

@@ -52,8 +52,8 @@ const styles = StyleSheet.create({
     paddingBottom: tokens.space.md,
     paddingHorizontal: tokens.space.lg,
     borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.border.light,
-    ...tokens.shadow.xs,
+    borderBottomColor: tokens.colors.border.medium, // Slightly more visible border
+    ...tokens.shadow.sm, // Better shadow definition
   },
   headerRow: {
     flexDirection: 'row',

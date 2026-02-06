@@ -21,6 +21,7 @@ import { PaymentsScreen } from '../screens/parent/PaymentsScreen';
 import { HelpScreen } from '../screens/parent/HelpScreen';
 import { AIWarningsScreen } from '../screens/parent/AIWarningsScreen';
 import { DiagnosticsScreen } from '../screens/parent/DiagnosticsScreen';
+import FloatingAI from '../components/common/FloatingAI';
 import tokens from '../styles/tokens';
 import { useTranslation } from 'react-i18next';
 
@@ -107,8 +108,8 @@ function ParentTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: (props) => <TabIcon route={route} {...props} />,
-        tabBarActiveTintColor: tokens.colors.accent.blue,
-        tabBarInactiveTintColor: tokens.colors.text.muted,
+        tabBarActiveTintColor: tokens.colors.nav.active,
+        tabBarInactiveTintColor: tokens.colors.nav.inactive,
         tabBarStyle: {
           backgroundColor: tokens.colors.background.secondary,
           borderTopWidth: 0, // Remove border to match teacher design
@@ -138,30 +139,35 @@ function ParentTabs() {
 
 export function ParentNavigator() {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-        animation: 'slide_from_right',
-        animationDuration: 250,
-      }}
-    >
-      <Stack.Screen name="ParentTabs" component={ParentTabs} />
-      <Stack.Screen name="ChildProfile" component={ChildProfileScreen} />
-      <Stack.Screen name="Activities" component={ActivitiesScreen} />
-      <Stack.Screen name="Meals" component={MealsScreen} />
-      <Stack.Screen name="Media" component={MediaScreen} />
-      <Stack.Screen name="Chat" component={ChatScreen} />
+    <>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          animationDuration: 250,
+        }}
+      >
+        <Stack.Screen name="ParentTabs" component={ParentTabs} />
+        <Stack.Screen name="ChildProfile" component={ChildProfileScreen} />
+        <Stack.Screen name="Activities" component={ActivitiesScreen} />
+        <Stack.Screen name="Meals" component={MealsScreen} />
+        <Stack.Screen name="Media" component={MediaScreen} />
+        <Stack.Screen name="Chat" component={ChatScreen} />
 
-      <Stack.Screen name="SchoolRating" component={SchoolRatingScreen} />
-      <Stack.Screen name="Notifications" component={NotificationsScreen} />
-      <Stack.Screen name="Therapy" component={TherapyScreen} />
-      <Stack.Screen name="Payments" component={PaymentsScreen} />
-      <Stack.Screen name="Help" component={HelpScreen} />
-      <Stack.Screen name="AIWarnings" component={AIWarningsScreen} />
-      {__DEV__ && (
-        <Stack.Screen name="Diagnostics" component={DiagnosticsScreen} />
-      )}
-    </Stack.Navigator>
+        <Stack.Screen name="SchoolRating" component={SchoolRatingScreen} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        <Stack.Screen name="Therapy" component={TherapyScreen} />
+        <Stack.Screen name="Payments" component={PaymentsScreen} />
+        <Stack.Screen name="Help" component={HelpScreen} />
+        <Stack.Screen name="AIWarnings" component={AIWarningsScreen} />
+        {__DEV__ && (
+          <Stack.Screen name="Diagnostics" component={DiagnosticsScreen} />
+        )}
+      </Stack.Navigator>
+      
+      {/* Floating AI Chat Button - Appears on all parent screens */}
+      <FloatingAI />
+    </>
   );
 }
 
@@ -171,9 +177,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: tokens.colors.accent.blue,
+    backgroundColor: tokens.colors.nav.active, // More vibrant blue
     alignItems: 'center',
     justifyContent: 'center',
-    ...tokens.shadow.glow,
+    ...tokens.shadow.card, // Better shadow definition
   },
 });

@@ -34,6 +34,6 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius['2xl'],
     padding: tokens.space.lg,
     // Removed: borderWidth, borderColor
-    ...tokens.shadow.soft,
+    ...tokens.shadow.card, // Enhanced shadow for better definition
   },
 });

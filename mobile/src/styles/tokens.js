@@ -7,27 +7,27 @@
 // Light theme colors - New Design Palette
 const lightColors = {
   text: {
-    primary: "#2E3A59", // Soft Navy
-    secondary: "#5A6B8C", // Mid Gray Blue
-    muted: "#8C9BB5", // Light Gray Blue
-    tertiary: "#8C9BB5",
+    primary: "#1E2A47", // Deeper navy for better contrast
+    secondary: "#4A5A7A", // More visible secondary text
+    muted: "#6B7A99", // Less faded, more readable
+    tertiary: "#6B7A99",
     white: "#FFFFFF",
     inverse: "#FFFFFF",
   },
 
   background: {
-    primary: "#F4EDE2", // Warm Sand
+    primary: "#F5F1E8", // Cleaner Warm Sand - slightly richer
     secondary: "#FFFFFF", // White surface
     tertiary: "#F8F9FA",
-    soft: "#F4EDE2",
+    soft: "#F5F1E8",
     gradient: ["#BFD7EA", "#DFF4EC"], // Powder Blue to Mint
     parentGradient: ["#BFD7EA", "#DFF4EC"],
     teacherGradient: ["#BFD7EA", "#DFF4EC"],
   },
 
   nav: {
-    active: "#A78BFA", // Purple accent
-    inactive: "#8C9BB5",
+    active: "#4A90E2", // More vibrant blue - less faded
+    inactive: "#6B7A99", // Darker, more visible
     background: "#FFFFFF",
   },
 
@@ -118,7 +118,7 @@ export function getTokens(isDark = false) {
       ...colors,
 
       accent: {
-        blue: "#BFD7EA", // Powder Blue
+        blue: "#4A90E2", // More vibrant blue for active states
         blueSoft: "#E8F4F8",
         blueVibrant: "#2E3A59", // Soft Navy
         purple: "#A78BFA", // Lavender
@@ -268,23 +268,23 @@ export function getTokens(isDark = false) {
       soft: {
         shadowColor: "#2E3A59",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
+        shadowOpacity: 0.06,
         shadowRadius: 12,
-        elevation: 2,
+        elevation: 3,
       },
       card: {
         shadowColor: "#2E3A59",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
+        shadowOpacity: 0.1,
         shadowRadius: 20,
-        elevation: 3,
+        elevation: 4,
       },
       elevated: {
         shadowColor: "#2E3A59",
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.12,
+        shadowOpacity: 0.15,
         shadowRadius: 32,
-        elevation: 4,
+        elevation: 5,
       },
       glow: {
         shadowColor: "#A78BFA",

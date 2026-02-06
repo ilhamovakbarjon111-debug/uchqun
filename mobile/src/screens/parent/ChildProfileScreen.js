@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import { changeLanguage, getCurrentLanguage, getAvailableLanguages } from '../../i18n/config';
 import { parentService } from '../../services/parentService';
 import { activityService } from '../../services/activityService';
@@ -57,6 +58,7 @@ export function ChildProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { user, logout } = useAuth();
+  const { on, off, connected } = useSocket();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { childId = null } = route?.params || {};
@@ -114,6 +116,67 @@ export function ChildProfileScreen() {
     // Messages endpoint might not be available, so we handle errors gracefully
     loadMessages();
   }, []);
+
+  // Real-time WebSocket listeners
+  useEffect(() => {
+    if (!connected || !selectedChildId) return;
+
+    const handleChildUpdate = (data) => {
+      console.log('[ChildProfile] Child updated:', data);
+      if (data.child?.id === selectedChildId) {
+        // Update photo timestamp to force image refresh
+        setPhotoTimestamp(Date.now());
+        loadChild(); // Reload child data
+      }
+    };
+
+    const handleActivityChange = (data) => {
+      console.log('[ChildProfile] Activity change:', data);
+      if (data.activity?.childId === selectedChildId || data.childId === selectedChildId) {
+        loadChild(); // Reload to update stats
+      }
+    };
+
+    const handleMealChange = (data) => {
+      console.log('[ChildProfile] Meal change:', data);
+      if (data.meal?.childId === selectedChildId || data.childId === selectedChildId) {
+        loadChild(); // Reload to update stats
+      }
+    };
+
+    const handleMediaChange = (data) => {
+      console.log('[ChildProfile] Media change:', data);
+      if (data.media?.childId === selectedChildId || data.childId === selectedChildId) {
+        loadChild(); // Reload to update stats
+      }
+    };
+
+    // Subscribe to events
+    on('child:updated', handleChildUpdate);
+    on('activity:created', handleActivityChange);
+    on('activity:updated', handleActivityChange);
+    on('activity:deleted', handleActivityChange);
+    on('meal:created', handleMealChange);
+    on('meal:updated', handleMealChange);
+    on('meal:deleted', handleMealChange);
+    on('media:created', handleMediaChange);
+    on('media:updated', handleMediaChange);
+    on('media:deleted', handleMediaChange);
+
+    // Cleanup
+    return () => {
+      off('child:updated', handleChildUpdate);
+      off('activity:created', handleActivityChange);
+      off('activity:updated', handleActivityChange);
+      off('activity:deleted', handleActivityChange);
+      off('meal:created', handleMealChange);
+      off('meal:updated', handleMealChange);
+      off('meal:deleted', handleMealChange);
+      off('media:created', handleMediaChange);
+      off('media:updated', handleMediaChange);
+      off('media:deleted', handleMediaChange);
+    };
+  }, [connected, selectedChildId, on, off]);
 
   const loadChildren = async () => {
     try {

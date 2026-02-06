@@ -143,6 +143,10 @@ export function ChatScreen() {
     setConfirmDeleteId(null);
   };
 
+  // Input bar height + bottom nav + safe area
+  const INPUT_BAR_HEIGHT = 64;
+  const inputBarBottomOffset = BOTTOM_NAV_HEIGHT + insets.bottom;
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScreenHeader 
@@ -153,12 +157,15 @@ export function ChatScreen() {
       <KeyboardAvoidingView 
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={insets.top + 60}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView 
           ref={messagesWrapRef}
           style={styles.messagesContainer}
-          contentContainerStyle={[styles.messagesContent, { paddingBottom: bottomPadding }]}
+          contentContainerStyle={[
+            styles.messagesContent, 
+            { paddingBottom: INPUT_BAR_HEIGHT + inputBarBottomOffset + tokens.space.lg }
+          ]}
           showsVerticalScrollIndicator={false}
           onScroll={(e) => {
             const el = e.nativeEvent;
@@ -305,8 +312,8 @@ export function ChatScreen() {
           </Pressable>
         )}
 
-        {/* Input Bar */}
-        <View style={[styles.inputContainer, { paddingBottom: insets.bottom }]}>
+        {/* Input Bar - Positioned right above navbar */}
+        <View style={[styles.inputContainer, { bottom: inputBarBottomOffset }]}>
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
@@ -432,11 +439,18 @@ const styles = StyleSheet.create({
     marginTop: tokens.space.xl,
   },
   inputContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'flex-end',
     padding: tokens.space.md,
+    paddingBottom: tokens.space.md,
     backgroundColor: tokens.colors.background.secondary,
     gap: tokens.space.sm,
+    borderTopWidth: 1,
+    borderTopColor: tokens.colors.border.light,
+    ...tokens.shadow.elevated,
   },
   inputWrapper: {
     flex: 1,
@@ -528,7 +542,7 @@ const styles = StyleSheet.create({
   },
   scrollToBottom: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 140, // Above input bar + navbar
     right: tokens.space.md,
     width: 44,
     height: 44,
