@@ -113,15 +113,31 @@ const SchoolCard = ({ school, t }) => {
   return (
     <Card className="p-6">
       <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-            <Building2 className="w-6 h-6 text-primary-600" />
+        <div className="flex items-center gap-3 flex-1">
+          {/* Rank Badge */}
+          <div className="flex-shrink-0">
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center font-bold text-lg ${
+              school.rank === 1 
+                ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-400' 
+                : school.rank === 2 
+                ? 'bg-gray-100 text-gray-700 border-2 border-gray-400'
+                : school.rank === 3
+                ? 'bg-orange-100 text-orange-700 border-2 border-orange-400'
+                : 'bg-primary-100 text-primary-600'
+            }`}>
+              {school.rank || '—'}
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-gray-900">{school.name}</h3>
-            {school.address && (
-              <p className="text-sm text-gray-500 mt-0.5">{school.address}</p>
-            )}
+          <div className="flex items-center gap-3 flex-1">
+            <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+              <Building2 className="w-6 h-6 text-primary-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900">{school.name}</h3>
+              {school.address && (
+                <p className="text-sm text-gray-500 mt-0.5">{school.address}</p>
+              )}
+            </div>
           </div>
         </div>
         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${LEVEL_COLORS[level] || LEVEL_COLORS[0]}`}>
@@ -258,9 +274,25 @@ const Ratings = () => {
     }
   };
 
-  const filteredSchools = schools.filter((school) =>
-    school.name.toLowerCase().includes(search.toLowerCase())
-  );
+  // Filter and sort schools by rating (highest first), then add rank
+  const filteredSchools = schools
+    .filter((school) =>
+      school.name.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+      // Sort by average rating (descending), then by ratings count (descending)
+      const ratingA = a.averageRating || 0;
+      const ratingB = b.averageRating || 0;
+      if (ratingB !== ratingA) {
+        return ratingB - ratingA;
+      }
+      // If ratings are equal, sort by count
+      return (b.ratingsCount || 0) - (a.ratingsCount || 0);
+    })
+    .map((school, index) => ({
+      ...school,
+      rank: index + 1, // Add rank (1, 2, 3, ...)
+    }));
 
   if (loading) {
     return (
