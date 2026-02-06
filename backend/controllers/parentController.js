@@ -969,11 +969,12 @@ export const rateSchool = async (req, res) => {
       });
 
       if (rating) {
-        // Update existing rating
-        await rating.update({
+        // Update existing rating - only update fields that exist
+        const updateData = {
           stars: starsNum,
           comment: commentValue,
-        });
+        };
+        await rating.update(updateData);
         created = false;
         logger.info('School rating updated', {
           ratingId: rating.id,
@@ -982,13 +983,14 @@ export const rateSchool = async (req, res) => {
           stars: starsNum,
         });
       } else {
-        // Create new rating
-        rating = await SchoolRating.create({
+        // Create new rating - only include fields that exist in database
+        const createData = {
           schoolId: finalSchoolId,
           parentId,
           stars: starsNum,
           comment: commentValue,
-        });
+        };
+        rating = await SchoolRating.create(createData);
         created = true;
         logger.info('School rating created', {
           ratingId: rating.id,
