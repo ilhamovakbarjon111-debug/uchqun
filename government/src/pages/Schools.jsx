@@ -98,31 +98,49 @@ const Schools = () => {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {schools.map((school) => {
-            const level = school.governmentLevel ?? 0;
-            return (
-              <Card key={school.id} className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                      <Building2 className="w-6 h-6 text-primary-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900">{school.name}</h3>
-                      {school.address && (
-                        <p className="text-sm text-gray-600 mt-1">{school.address}</p>
-                      )}
+          {schools
+            .sort((a, b) => {
+              // Sort by average rating (descending), then by ratings count (descending)
+              const ratingA = a.averageRating || 0;
+              const ratingB = b.averageRating || 0;
+              if (ratingB !== ratingA) {
+                return ratingB - ratingA;
+              }
+              return (b.ratingsCount || 0) - (a.ratingsCount || 0);
+            })
+            .map((school, index) => {
+              const rank = index + 1;
+              return (
+                <Card key={school.id} className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      {/* Rank Badge */}
+                      <div className="flex-shrink-0">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center font-bold text-lg ${
+                          rank === 1 
+                            ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-400' 
+                            : rank === 2 
+                            ? 'bg-gray-100 text-gray-700 border-2 border-gray-400'
+                            : rank === 3
+                            ? 'bg-orange-100 text-orange-700 border-2 border-orange-400'
+                            : 'bg-primary-100 text-primary-600'
+                        }`}>
+                          {rank}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                          <Building2 className="w-6 h-6 text-primary-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-gray-900">{school.name}</h3>
+                          {school.address && (
+                            <p className="text-sm text-gray-600 mt-1">{school.address}</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  {/* Government level badge */}
-                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${LEVEL_COLORS[level] || LEVEL_COLORS[0]}`}>
-                    <Award className="w-3 h-3" />
-                    {level
-                      ? `${t('schools.level', { defaultValue: 'Daraja' })} ${level}`
-                      : t('schools.unrated', { defaultValue: 'Baholanmagan' })
-                    }
-                  </span>
-                </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">
