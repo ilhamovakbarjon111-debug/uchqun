@@ -14,17 +14,20 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mediaService } from '../../services/mediaService';
 import { teacherService } from '../../services/teacherService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { ImageViewer } from '../../components/common/ImageViewer';
-import TeacherBackground from '../../components/layout/TeacherBackground';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import { API_URL } from '../../config';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -39,7 +42,12 @@ export function MediaScreen() {
   const navigation = useNavigation();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
   const [media, setMedia] = useState([]);
   const [filter, setFilter] = useState('all');
   const [selectedImage, setSelectedImage] = useState(null);
@@ -51,8 +59,6 @@ export function MediaScreen() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [formData, setFormData] = useState({
     childId: '',
-    title: '',
-    description: '',
     type: 'photo',
     date: new Date().toISOString().split('T')[0],
   });
@@ -104,8 +110,6 @@ export function MediaScreen() {
     setSelectedFile(null);
     setFormData({
       childId: children.length > 0 ? children[0].id : '',
-      title: '',
-      description: '',
       type: 'photo',
       date: new Date().toISOString().split('T')[0],
     });
@@ -117,8 +121,6 @@ export function MediaScreen() {
     setSelectedFile(null);
     setFormData({
       childId: item.childId || '',
-      title: item.title || '',
-      description: item.description || '',
       type: item.type || 'photo',
       date: item.date ? item.date.split('T')[0] : new Date().toISOString().split('T')[0],
     });
@@ -197,11 +199,7 @@ export function MediaScreen() {
     try {
       // Validation
       if (!formData.childId) {
-        Alert.alert(t('common.error', { defaultValue: 'Error' }), t('mediaPage.modal.selectChild', { defaultValue: 'Bolani tanlang' }));
-        return;
-      }
-      if (!formData.title || formData.title.trim() === '') {
-        Alert.alert(t('common.error', { defaultValue: 'Error' }), t('mediaPage.modal.title', { defaultValue: 'Sarlavha majburiy' }));
+        Alert.alert(t('common.error', { defaultValue: 'Error' }), t('mediaPage.modal.selectChild', { defaultValue: 'Please select a child' }));
         return;
       }
 
@@ -209,15 +207,13 @@ export function MediaScreen() {
         // Only metadata update in edit flow
         await mediaService.updateMedia(editingMedia.id, {
           childId: formData.childId,
-          title: formData.title,
-          description: formData.description,
           type: formData.type,
           date: formData.date,
         });
-        Alert.alert(t('common.success', { defaultValue: 'Success' }), t('mediaPage.toastUpdate', { defaultValue: 'Media yangilandi' }));
+        Alert.alert(t('common.success', { defaultValue: 'Success' }), t('mediaPage.toastUpdate', { defaultValue: 'Media updated' }));
       } else {
         if (!selectedFile) {
-          Alert.alert(t('common.error', { defaultValue: 'Error' }), t('mediaPage.modal.fileRequired', { defaultValue: 'Fayl yuklash majburiy' }));
+          Alert.alert(t('common.error', { defaultValue: 'Error' }), t('mediaPage.modal.fileRequired', { defaultValue: 'Please select a file to upload' }));
           return;
         }
 
@@ -225,8 +221,6 @@ export function MediaScreen() {
         setUploading(true);
         const uploadFormData = new FormData();
         uploadFormData.append('childId', formData.childId);
-        uploadFormData.append('title', formData.title.trim());
-        if (formData.description) uploadFormData.append('description', formData.description.trim());
         if (formData.date) uploadFormData.append('date', formData.date);
 
         // Append file
@@ -244,7 +238,7 @@ export function MediaScreen() {
         });
 
         await mediaService.uploadMedia(uploadFormData);
-        Alert.alert(t('common.success', { defaultValue: 'Success' }), t('mediaPage.toastCreate', { defaultValue: 'Media yaratildi' }));
+        Alert.alert(t('common.success', { defaultValue: 'Success' }), t('mediaPage.toastCreate', { defaultValue: 'Media created' }));
       }
 
       setShowModal(false);
@@ -358,20 +352,12 @@ export function MediaScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <TeacherBackground />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={tokens.colors.text.white} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {t('mediaPage.title', { defaultValue: 'Media' })}
-        </Text>
-        <TouchableOpacity onPress={handleCreate} style={styles.headerAction}>
-          <Ionicons name="add" size={24} color={tokens.colors.text.white} />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('mediaPage.title', { defaultValue: 'Media' })} 
+        rightActionIcon="add"
+        onRightActionPress={handleCreate}
+      />
 
       {/* Filters */}
       <View style={styles.filtersContainer}>
@@ -413,7 +399,7 @@ export function MediaScreen() {
           renderItem={renderMediaItem}
           keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
           numColumns={3}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomPadding }]}
           refreshing={loading}
           onRefresh={loadMedia}
           showsVerticalScrollIndicator={false}
@@ -421,7 +407,7 @@ export function MediaScreen() {
       )}
 
       {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab} onPress={handleCreate}>
+      <TouchableOpacity style={[styles.fab, { bottom: bottomPadding - 20 }]} onPress={handleCreate}>
         <Ionicons name="add" size={28} color={tokens.colors.text.white} />
       </TouchableOpacity>
 
@@ -495,36 +481,6 @@ export function MediaScreen() {
                   )}
                 </View>
 
-                {/* Title */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>
-                    {t('mediaPage.modal.title', { defaultValue: 'Sarlavha' })}
-                  </Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder={t('mediaPage.modal.titlePlaceholder', { defaultValue: 'Media sarlavhasini kiriting' })}
-                    placeholderTextColor={tokens.colors.text.tertiary}
-                    value={formData.title}
-                    onChangeText={(text) => setFormData({ ...formData, title: text })}
-                  />
-                </View>
-
-                {/* Description */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>
-                    {t('mediaPage.modal.description', { defaultValue: 'Tavsif' })}
-                  </Text>
-                  <TextInput
-                    style={[styles.input, styles.textArea]}
-                    placeholder={t('mediaPage.modal.descriptionPlaceholder', { defaultValue: 'Media tavsifini kiriting' })}
-                    placeholderTextColor={tokens.colors.text.tertiary}
-                    value={formData.description}
-                    onChangeText={(text) => setFormData({ ...formData, description: text })}
-                    multiline
-                    numberOfLines={3}
-                  />
-                </View>
-
                 {/* Type and Date */}
                 <View style={styles.row}>
                   <View style={[styles.inputGroup, styles.halfWidth]}>
@@ -590,7 +546,7 @@ export function MediaScreen() {
                           color={tokens.colors.accent.blue}
                         />
                         <Text style={styles.fileName} numberOfLines={1}>
-                          {selectedFile.name || 'Selected file'}
+                          {selectedFile.name || t('mediaPage.selectedFile', { defaultValue: 'Selected file' })}
                         </Text>
                         <TouchableOpacity onPress={() => setSelectedFile(null)}>
                           <Ionicons name="close-circle" size={24} color={tokens.colors.semantic.error} />
@@ -655,36 +611,14 @@ export function MediaScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.surface.secondary,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: tokens.colors.accent.blue,
-    paddingTop: 50,
-    paddingBottom: tokens.space.md,
-    paddingHorizontal: tokens.space.md,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  backButton: {
-    padding: tokens.space.xs,
-  },
-  headerTitle: {
-    fontSize: tokens.type.h3.fontSize,
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.text.white,
-  },
-  headerAction: {
-    padding: tokens.space.xs,
+    backgroundColor: tokens.colors.background.primary,
   },
   filtersContainer: {
     paddingVertical: tokens.space.md,
@@ -708,8 +642,8 @@ const styles = StyleSheet.create({
     borderColor: tokens.colors.border.medium,
   },
   filterButtonActive: {
-    backgroundColor: tokens.colors.accent.blue,
-    borderColor: tokens.colors.accent.blue,
+    backgroundColor: tokens.colors.joy.lavender, // Purple
+    borderColor: tokens.colors.joy.lavender,
   },
   filterText: {
     fontSize: tokens.type.sub.fontSize,
@@ -721,8 +655,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 90,
-    right: tokens.space.md,
+    right: tokens.space.lg,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -732,8 +665,7 @@ const styles = StyleSheet.create({
     ...tokens.shadow.elevated,
   },
   list: {
-    padding: tokens.space.md,
-    paddingBottom: 100,
+    padding: tokens.space.lg,
   },
   mediaItemContainer: {
     width: itemSize,
@@ -949,7 +881,7 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space.md,
     alignItems: 'center',
     borderRadius: tokens.radius.sm,
-    backgroundColor: tokens.colors.joy.lavender,
+    backgroundColor: tokens.colors.joy.lavender, // Purple
   },
   saveButtonDisabled: {
     opacity: 0.7,

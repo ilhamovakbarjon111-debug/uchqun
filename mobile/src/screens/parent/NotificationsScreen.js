@@ -4,9 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { notificationService } from '../../services/notificationService';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
-import Card from '../../components/common/Card';
-import ListRow from '../../components/common/ListRow';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
+import { GlassCard } from '../../components/teacher/GlassCard';
 import Skeleton from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
 
@@ -56,7 +56,7 @@ function AnimatedNotificationCard({ item, index, markAsRead, onDelete }) {
         transform: [{ translateY: slideAnim }],
       }}
     >
-      <Card
+      <GlassCard
         style={[
           styles.card,
           !item.isRead && styles.unreadCard
@@ -82,18 +82,22 @@ function AnimatedNotificationCard({ item, index, markAsRead, onDelete }) {
           onPress={() => onDelete(item.id)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="trash-outline" size={16} color={tokens.colors.text.muted} />
+          <Ionicons name="trash-outline" size={16} color={tokens.colors.text.secondary} />
         </TouchableOpacity>
-      </Card>
+      </GlassCard>
     </Animated.View>
   );
 }
 
 export function NotificationsScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('all');
+
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   useEffect(() => {
     loadNotifications();
@@ -167,32 +171,27 @@ export function NotificationsScreen() {
     { key: 'read', label: 'Read', count: readCount },
   ];
 
-  const header = (
-    <View style={styles.topBar}>
-      <Pressable
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Ionicons name="arrow-back" size={24} color={tokens.colors.text.primary} />
-      </Pressable>
-      <Text style={styles.topBarTitle} allowFontScaling={true}>Notifications</Text>
-      {unreadCount > 0 ? (
-        <TouchableOpacity
-          style={styles.markAllButton}
-          onPress={handleMarkAllAsRead}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="checkmark-done-outline" size={22} color={tokens.colors.accent.blue} />
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.placeholder} />
-      )}
-    </View>
-  );
-
   return (
-    <Screen scroll={true} padded={true} header={header}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title="Notifications"
+        showBack={true}
+        rightComponent={unreadCount > 0 ? (
+          <TouchableOpacity
+            style={styles.markAllButton}
+            onPress={handleMarkAllAsRead}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="checkmark-done-outline" size={22} color={tokens.colors.accent.blue} />
+          </TouchableOpacity>
+        ) : null}
+      />
+      
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Filter Tabs */}
         {!loading && notifications.length > 0 && (
           <View style={styles.filterRow}>
@@ -220,21 +219,21 @@ export function NotificationsScreen() {
 
         {loading ? (
           <>
-            <Card style={styles.card}>
+            <GlassCard style={styles.card}>
               <Skeleton width="100%" height={80} />
-            </Card>
-            <Card style={styles.card}>
+            </GlassCard>
+            <GlassCard style={styles.card}>
               <Skeleton width="100%" height={80} />
-            </Card>
+            </GlassCard>
           </>
         ) : filteredNotifications.length === 0 ? (
-          <Card style={styles.emptyCard}>
+          <GlassCard style={styles.emptyCard}>
             <EmptyState
               icon="notifications-outline"
               title={filter !== 'all' ? `No ${filter} notifications` : 'No notifications'}
               description={filter !== 'all' ? 'Try a different filter' : "You're all caught up!"}
             />
-          </Card>
+          </GlassCard>
         ) : (
           <View style={styles.list}>
             {filteredNotifications.map((item, index) => (
@@ -248,34 +247,21 @@ export function NotificationsScreen() {
             ))}
           </View>
         )}
-    </Screen>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: tokens.space.xl,
-    paddingTop: tokens.space.md,
-    paddingBottom: tokens.space.md,
-    backgroundColor: 'transparent',
+  container: {
+    flex: 1,
+    backgroundColor: tokens.colors.background.primary,
   },
-  backButton: {
-    padding: tokens.space.sm,
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+  scrollView: {
+    flex: 1,
   },
-  topBarTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.primary,
-  },
-  placeholder: {
-    width: 44,
+  scrollContent: {
+    padding: tokens.space.lg,
   },
   markAllButton: {
     width: 44,
@@ -293,11 +279,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: tokens.space.md,
     paddingVertical: tokens.space.sm,
-    backgroundColor: tokens.colors.card.base,
+    backgroundColor: tokens.colors.background.secondary,
     borderRadius: tokens.radius.pill,
     gap: tokens.space.xs,
-    borderWidth: 2,
-    borderColor: tokens.colors.border.light,
   },
   filterPillActive: {
     backgroundColor: tokens.colors.accent.blue,
@@ -326,7 +310,7 @@ const styles = StyleSheet.create({
   filterCountText: {
     fontSize: 11,
     fontWeight: '700',
-    color: tokens.colors.text.muted,
+    color: tokens.colors.text.secondary,
   },
   filterCountTextActive: {
     color: '#fff',
@@ -341,6 +325,7 @@ const styles = StyleSheet.create({
   unreadCard: {
     borderLeftWidth: 4,
     borderLeftColor: tokens.colors.accent.blue,
+    backgroundColor: tokens.colors.accent[50],
   },
   emptyCard: {
     marginTop: tokens.space.xl,
@@ -363,7 +348,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: tokens.colors.semantic.errorSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

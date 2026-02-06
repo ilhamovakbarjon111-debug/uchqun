@@ -18,9 +18,10 @@ import { useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
 import { activityService } from '../../services/activityService';
 import { useTranslation } from 'react-i18next';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
-import Card from '../../components/common/Card';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import Skeleton from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
 
@@ -96,6 +97,7 @@ function AnimatedProgress({ progress, delay = 0 }) {
 export function ActivitiesScreen() {
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [children, setChildren] = useState([]);
   const [selectedChildId, setSelectedChildId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -105,6 +107,10 @@ export function ActivitiesScreen() {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   useEffect(() => {
     const loadChildren = async () => {
@@ -220,46 +226,15 @@ export function ActivitiesScreen() {
     { key: 'week', label: 'Hafta', emoji: '🗓️' },
   ];
 
-  const header = (
-    <View style={styles.headerContainer}>
-      <LinearGradient
-        colors={[tokens.colors.semantic.success, '#34D399']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
-      >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </Pressable>
-        <View style={styles.headerTitleContainer}>
-          <View style={styles.headerEmojiContainer}>
-            <Text style={styles.headerEmoji}>🎯</Text>
-          </View>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>{t('activities.title') || t('activitiesPage.title') || 'Individual reja'}</Text>
-            <Text style={styles.headerSubtitle}>
-              {filteredActivities.length} ta faoliyat
-            </Text>
-          </View>
-        </View>
-        <View style={styles.headerRight} />
-      </LinearGradient>
-    </View>
-  );
-
   return (
-    <Screen
-      scroll={true}
-      padded={true}
-      header={header}
-      contentStyle={styles.content}
-    >
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('activities.title', { defaultValue: 'Individual Plan' }) || t('activitiesPage.title', { defaultValue: 'Activities' })}
+        showBack={navigation.canGoBack()}
+      />
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -315,13 +290,13 @@ export function ActivitiesScreen() {
               </View>
             )}
             {children.length === 0 && !loading && (
-              <Card style={styles.emptyCard}>
+              <GlassCard style={styles.emptyCard}>
                 <EmptyState
                   emoji="👶"
-                  title={t('child.selectPrompt', { defaultValue: 'Farzand tanlang' })}
-                  description="Farzand qo'shilgach faoliyatlar ko'rinadi"
+                  title={t('child.selectPrompt', { defaultValue: 'Select Child' })}
+                  description={t('activities.selectChildDesc', { defaultValue: 'After adding a child, activities will appear' })}
                 />
-              </Card>
+              </GlassCard>
             )}
             {children.length > 0 && (
             <>
@@ -352,17 +327,17 @@ export function ActivitiesScreen() {
 
             {/* Activities List */}
             {filteredActivities.length === 0 ? (
-              <Card style={styles.emptyCard}>
+              <GlassCard style={styles.emptyCard}>
                 <EmptyState
                   emoji="📭"
-                  title="Faoliyat topilmadi"
+                  title={t('activities.noActivities', { defaultValue: 'No Activities Found' })}
                   description={
                     filter !== 'all'
-                      ? "Filterni o'zgartirib ko'ring"
-                      : "Yangi faoliyatlar tez orada qo'shiladi"
+                      ? t('activities.changeFilter', { defaultValue: 'Try changing the filter' })
+                      : t('activities.noActivitiesDesc', { defaultValue: 'New activities will be added soon' })
                   }
                 />
-              </Card>
+              </GlassCard>
             ) : (
               <View style={styles.list}>
                 {filteredActivities.map((item, index) => {
@@ -372,7 +347,7 @@ export function ActivitiesScreen() {
 
                   return (
                     <Pressable key={item.id || index} onPress={() => { setSelectedActivity(item); setShowDetailsModal(true); }}>
-                    <Card style={styles.activityCard} variant="elevated" shadow="soft">
+                    <GlassCard style={styles.activityCard}>
                       <View style={styles.activityHeader}>
                         <LinearGradient
                           colors={[tokens.colors.joy.lavenderSoft, tokens.colors.joy.skySoft]}
@@ -444,7 +419,7 @@ export function ActivitiesScreen() {
                         <Text style={styles.detailHintText}>Batafsil</Text>
                         <Ionicons name="chevron-forward" size={14} color={tokens.colors.accent.blue} />
                       </View>
-                    </Card>
+                    </GlassCard>
                     </Pressable>
                   );
                 })}
@@ -599,13 +574,17 @@ export function ActivitiesScreen() {
           </View>
         </View>
       </Modal>
-    </Screen>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    paddingTop: tokens.space.md,
+  container: {
+    flex: 1,
+    backgroundColor: tokens.colors.background.primary,
+  },
+  scrollContent: {
+    padding: tokens.space.lg,
   },
   childRow: {
     marginBottom: tokens.space.lg,
@@ -618,13 +597,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space.md,
     paddingVertical: tokens.space.sm,
     borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.colors.card.base,
-    borderWidth: 2,
-    borderColor: tokens.colors.border.light,
+    backgroundColor: tokens.colors.background.secondary,
   },
   childPillActive: {
     backgroundColor: tokens.colors.semantic.success,
-    borderColor: tokens.colors.semantic.success,
   },
   childPillText: {
     fontSize: tokens.type.sub.fontSize,
@@ -699,16 +675,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: tokens.space.lg,
     paddingVertical: tokens.space.md,
-    backgroundColor: tokens.colors.card.base,
+    backgroundColor: tokens.colors.background.secondary,
     borderRadius: tokens.radius.pill,
     gap: tokens.space.sm,
-    borderWidth: 2,
-    borderColor: tokens.colors.border.light,
     ...tokens.shadow.sm,
   },
   filterPillActive: {
     backgroundColor: tokens.colors.semantic.success,
-    borderColor: tokens.colors.semantic.success,
     ...tokens.shadow.soft,
   },
   filterPillPressed: {

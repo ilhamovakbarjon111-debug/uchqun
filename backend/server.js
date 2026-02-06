@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
@@ -6,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { syncDatabase } from './models/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+import { initializeSocket } from './config/socket.js';
 
 // Import security middleware
 import { securityHeaders, enforceHTTPS } from './middleware/security.js';
@@ -276,9 +278,18 @@ if (process.env.NODE_ENV !== 'production') {
 app.use(notFound);
 app.use(errorHandler);
 
+// Create HTTP server for Socket.IO
+const httpServer = createServer(app);
+
+// Initialize Socket.IO
+const io = initializeSocket(httpServer);
+
+// Export io for use in controllers
+export { io };
+
 // Start server immediately so healthcheck can respond
 // Run migrations in background after server starts
-app.listen(PORT, '0.0.0.0', () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server started`, {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
@@ -286,6 +297,7 @@ app.listen(PORT, '0.0.0.0', () => {
   });
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 API available at http://localhost:${PORT}/api`);
+  console.log(`⚡ Socket.IO WebSocket server ready`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`✅ Health check available at /health`);
   

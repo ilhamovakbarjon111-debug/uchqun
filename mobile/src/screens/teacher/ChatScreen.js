@@ -1,26 +1,31 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Alert } from 'react-native';
+﻿import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { StyleSheet, Text, View, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Alert, FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useThemeTokens } from '../../hooks/useThemeTokens';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import tokens from '../../styles/tokens';
 import { teacherService } from '../../services/teacherService';
 import { loadMessages, addMessage, markRead, updateMessage, deleteMessage } from '../../services/chatStore';
-import Card from '../../components/common/Card';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import Screen from '../../components/layout/Screen';
 
 export function ChatScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
   const { t } = useTranslation();
-  const tokens = useThemeTokens();
-  const styles = getStyles(tokens);
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
   const [parents, setParents] = useState([]);
+  const [parentsWithLastMessage, setParentsWithLastMessage] = useState([]);
   const [selectedParent, setSelectedParent] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -33,6 +38,7 @@ export function ChatScreen() {
   const justSentRef = useRef(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
+  // Load parents and their last messages
   useEffect(() => {
     const fetchParents = async () => {
       try {
@@ -41,9 +47,34 @@ export function ChatScreen() {
           (p) => !user?.id || p.teacherId === user.id
         ) : [];
         setParents(list);
-        if (list.length > 0 && !selectedParent) {
-          setSelectedParent(list[0]);
-        }
+
+        // Load last message for each parent
+        const parentsWithMessages = await Promise.all(
+          list.map(async (parent) => {
+            const convoId = `parent:${parent.id}`;
+            const msgs = await loadMessages(convoId);
+            const sorted = Array.isArray(msgs) 
+              ? [...msgs].sort((a, b) => new Date(b.createdAt || b.time) - new Date(a.createdAt || a.time))
+              : [];
+            const lastMsg = sorted[0] || null;
+            
+            return {
+              ...parent,
+              lastMessage: lastMsg,
+              unreadCount: msgs.filter(m => m.senderRole === 'parent' && !m.readByTeacher).length,
+            };
+          })
+        );
+
+        // Sort by last message time (most recent first)
+        parentsWithMessages.sort((a, b) => {
+          if (!a.lastMessage && !b.lastMessage) return 0;
+          if (!a.lastMessage) return 1;
+          if (!b.lastMessage) return -1;
+          return new Date(b.lastMessage.createdAt || b.lastMessage.time) - new Date(a.lastMessage.createdAt || a.lastMessage.time);
+        });
+
+        setParentsWithLastMessage(parentsWithMessages);
       } catch (err) {
         console.error('Failed to load parents for chat', err);
       } finally {
@@ -53,22 +84,38 @@ export function ChatScreen() {
     fetchParents();
   }, [user?.id]);
 
+  // Load messages when parent is selected
   useEffect(() => {
     let alive = true;
     let intervalId;
 
     const load = async () => {
-      if (!selectedParent) return;
+      if (!selectedParent) {
+        setMessages([]);
+        return;
+      }
       const convoId = `parent:${selectedParent.id}`;
       const msgs = await loadMessages(convoId);
       if (!alive) return;
       setMessages(Array.isArray(msgs) ? msgs : []);
       await markRead(convoId);
-      if (loading) setLoading(false);
+      
+      // Update parent list with latest message
+      setParentsWithLastMessage(prev => prev.map(p => {
+        if (p.id === selectedParent.id) {
+          const sorted = [...msgs].sort((a, b) => new Date(b.createdAt || b.time) - new Date(a.createdAt || a.time));
+          return {
+            ...p,
+            lastMessage: sorted[0] || null,
+            unreadCount: msgs.filter(m => m.senderRole === 'parent' && !m.readByTeacher).length,
+          };
+        }
+        return p;
+      }));
     };
 
     load();
-    // Poll for new messages every 15 seconds (reduced from 5s to prevent performance issues)
+    // Poll for new messages every 15 seconds
     intervalId = setInterval(load, 15000);
 
     return () => {
@@ -125,6 +172,13 @@ export function ChatScreen() {
     // Replace optimistic message with real one
     if (result) {
       setMessages(prev => prev.map(m => m.id === tempId ? result : m));
+      // Update parent list
+      setParentsWithLastMessage(prev => prev.map(p => {
+        if (p.id === selectedParent.id) {
+          return { ...p, lastMessage: result, unreadCount: 0 };
+        }
+        return p;
+      }));
     } else {
       // If failed, reload messages to get clean state
       const msgs = await loadMessages(convoId);
@@ -169,515 +223,613 @@ export function ChatScreen() {
     setConfirmDeleteId(null);
   };
 
+  const formatTime = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'now';
+    if (minutes < 60) return `${minutes}m`;
+    if (hours < 24) return `${hours}h`;
+    if (days < 7) return `${days}d`;
+    return date.toLocaleDateString();
+  };
+
+  const getParentInitials = (parent) => {
+    const first = parent.firstName?.charAt(0) || '';
+    const last = parent.lastName?.charAt(0) || '';
+    return (first + last).toUpperCase() || 'P';
+  };
+
+  const handleParentSelect = (parent) => {
+    setSelectedParent(parent);
+    setInputText(''); // Clear input when switching
+  };
+
+  const handleBackToList = () => {
+    setSelectedParent(null);
+    setMessages([]);
+    setInputText('');
+  };
+
   if (loading && parents.length === 0) {
     return <LoadingSpinner />;
   }
 
-  const header = (
-    <View style={styles.header}>
-      <LinearGradient
-        colors={['rgba(255, 255, 255, 0.98)', 'rgba(255, 255, 255, 0.95)']}
-        style={styles.headerGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <View style={styles.headerContent}>
-          <View style={[styles.headerIconContainer, { backgroundColor: '#22D3EE' + '20' }]}>
-            <Ionicons name="chatbubbles" size={20} color="#22D3EE" />
-          </View>
-          <Text style={[styles.headerTitle, { color: tokens.colors.text.primary }]}>
-            {t('chat.title', { defaultValue: 'Chat' })}
-          </Text>
-        </View>
-      </LinearGradient>
-    </View>
-  );
-
-  return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#F0F9FF', '#E0F2FE', '#BAE6FD']}
-        style={styles.backgroundGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-      <Screen scroll={false} padded={false} showAI={false} background="transparent" header={header}>
-      {/* Parent selector - Like website */}
-      {parents.length > 0 && (
-        <View style={styles.parentSelector}>
-          <Text style={styles.parentLabel}>{t('chat.parent') || 'Parent'}:</Text>
-          <View style={styles.parentSelectContainer}>
-            {parents.map((p) => (
+  // Show parent list (Telegram style) when no parent is selected
+  if (!selectedParent) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ScreenHeader 
+          title={t('chat.title', { defaultValue: 'Chat' })} 
+          showBack={false}
+        />
+        
+        {parentsWithLastMessage.length === 0 ? (
+          <EmptyState 
+            icon="people-outline" 
+            title={t('chat.noParents', { defaultValue: 'No parents available' })} 
+            description={t('chat.noParentsDesc', { defaultValue: 'Parents will appear here when available' })}
+          />
+        ) : (
+          <FlatList
+            data={parentsWithLastMessage}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={[styles.parentListContent, { paddingBottom: bottomPadding }]}
+            renderItem={({ item }) => (
               <Pressable
-                key={p.id}
-                style={[
-                  styles.parentOption,
-                  selectedParent?.id === p.id && styles.parentOptionActive,
-                ]}
-                onPress={() => setSelectedParent(p)}
+                style={styles.parentListItem}
+                onPress={() => handleParentSelect(item)}
               >
-                <Text
+                {/* Avatar */}
+                <View style={styles.parentAvatar}>
+                  <Text style={styles.parentAvatarText}>
+                    {getParentInitials(item)}
+                  </Text>
+                </View>
+
+                {/* Content */}
+                <View style={styles.parentItemContent}>
+                  <View style={styles.parentItemHeader}>
+                    <Text style={styles.parentItemName} numberOfLines={1}>
+                      {item.firstName} {item.lastName}
+                    </Text>
+                    {item.lastMessage && (
+                      <Text style={styles.parentItemTime}>
+                        {formatTime(item.lastMessage.createdAt || item.lastMessage.time)}
+                      </Text>
+                    )}
+                  </View>
+                  {item.lastMessage ? (
+                    <Text style={styles.parentItemPreview} numberOfLines={1}>
+                      {item.lastMessage.content || item.lastMessage.text || ''}
+                    </Text>
+                  ) : (
+                    <Text style={styles.parentItemPreviewEmpty}>
+                      {t('chat.noMessages', { defaultValue: 'No messages yet' })}
+                    </Text>
+                  )}
+                </View>
+
+                {/* Unread badge */}
+                {item.unreadCount > 0 && (
+                  <View style={styles.unreadBadge}>
+                    <Text style={styles.unreadBadgeText}>
+                      {item.unreadCount > 99 ? '99+' : item.unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+            )}
+            ItemSeparatorComponent={() => <View style={styles.parentListSeparator} />}
+          />
+        )}
+      </SafeAreaView>
+    );
+  }
+
+  // Show chat with selected parent
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={styles.chatHeader}>
+          <Pressable onPress={handleBackToList} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={tokens.colors.text.primary} />
+          </Pressable>
+          <View style={styles.chatHeaderAvatar}>
+            <Text style={styles.chatHeaderAvatarText}>
+              {getParentInitials(selectedParent)}
+            </Text>
+          </View>
+          <View style={styles.chatHeaderInfo}>
+            <Text style={styles.chatHeaderName} numberOfLines={1}>
+              {selectedParent.firstName} {selectedParent.lastName}
+            </Text>
+            <Text style={styles.chatHeaderStatus}>
+              {t('chat.online', { defaultValue: 'Online' })}
+            </Text>
+          </View>
+        </View>
+
+        <ScrollView
+          ref={messagesWrapRef}
+          style={styles.messagesContainer}
+          contentContainerStyle={[styles.messagesContent, { paddingBottom: 100 }]}
+          onScroll={(e) => {
+            const el = e?.nativeEvent;
+            if (!el?.contentSize?.height) return;
+            const distance = el.contentSize.height - el.contentOffset.y - (el.layoutMeasurement?.height ?? 0);
+            setIsAtBottom(distance < 80);
+          }}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+        >
+          {sorted.length === 0 ? (
+            <EmptyState 
+              icon="chatbubbles-outline" 
+              title={t('chat.empty', { defaultValue: 'No messages yet' })} 
+              description={t('chat.subtitle', { defaultValue: 'Start a conversation' })}
+            />
+          ) : (
+            sorted.map((msg, index) => {
+              const isYou = msg.senderRole === 'teacher';
+              const msgKey = msg.id ?? msg._id ?? `msg-${index}`;
+              return (
+                <View
+                  key={msgKey}
                   style={[
-                    styles.parentOptionText,
-                    selectedParent?.id === p.id && styles.parentOptionTextActive,
+                    styles.messageRow,
+                    isYou && styles.ownMessageRow,
                   ]}
                 >
-                  {p.firstName} {p.lastName}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {!selectedParent ? (
-        <EmptyState 
-          icon="people-outline" 
-          title={t('chat.selectParent') || 'Please select a parent to start chatting'} 
-        />
-      ) : (
-        <>
-          <ScrollView
-            ref={messagesWrapRef}
-            style={styles.messagesContainer}
-            contentContainerStyle={styles.messagesContent}
-            onScroll={(e) => {
-              const el = e?.nativeEvent;
-              if (!el?.contentSize?.height) return;
-              const distance = el.contentSize.height - el.contentOffset.y - (el.layoutMeasurement?.height ?? 0);
-              setIsAtBottom(distance < 80);
-            }}
-            scrollEventThrottle={16}
-          >
-            {sorted.length === 0 ? (
-              <EmptyState 
-                icon="chatbubbles-outline" 
-                title={t('chat.empty') || 'No messages yet'} 
-                description={t('chat.subtitle') || 'Start a conversation'}
-              />
-            ) : (
-              sorted.map((msg, index) => {
-                const isYou = msg.senderRole === 'teacher';
-                const msgKey = msg.id ?? msg._id ?? `msg-${index}`;
-                return (
                   <View
-                    key={msgKey}
                     style={[
-                      styles.messageRow,
-                      isYou && styles.ownMessageRow,
+                      styles.messageBubble,
+                      isYou ? styles.ownMessageBubble : styles.otherMessageBubble,
                     ]}
                   >
-                    <View
-                      style={[
-                        styles.messageBubble,
-                        isYou ? styles.ownMessageBubble : styles.otherMessageBubble,
-                      ]}
-                    >
-                      <View style={styles.messageHeader}>
-                        <Text style={styles.messageSender}>
-                          {isYou ? t('chat.you') : t('chat.parent')}
-                        </Text>
-                        {(isYou || user?.role === 'teacher' || user?.role === 'admin') && (
-                          <View style={styles.messageActions}>
-                            {isYou && (
-                              <Pressable
-                                onPress={() => {
-                                  setEditingId(msg.id);
-                                  setEditValue((msg.content || msg.text || '').toString());
-                                }}
-                                disabled={busyId === msg.id}
-                              >
-                                <Ionicons name="pencil" size={16} color={isYou ? '#fff' : tokens.colors.text.secondary} />
-                              </Pressable>
-                            )}
+                    <View style={styles.messageHeader}>
+                      <Text style={styles.messageSender}>
+                        {isYou ? t('chat.you', { defaultValue: 'You' }) : t('chat.parent', { defaultValue: 'Parent' })}
+                      </Text>
+                      {(isYou || user?.role === 'teacher' || user?.role === 'admin') && (
+                        <View style={styles.messageActions}>
+                          {isYou && (
                             <Pressable
-                              onPress={() => setConfirmDeleteId(msg.id)}
+                              onPress={() => {
+                                setEditingId(msg.id);
+                                setEditValue((msg.content || msg.text || '').toString());
+                              }}
                               disabled={busyId === msg.id}
                             >
-                              <Ionicons name="trash-outline" size={16} color={isYou ? '#fff' : tokens.colors.semantic.error} />
+                              <Ionicons name="pencil" size={16} color={isYou ? '#fff' : tokens.colors.text.secondary} />
                             </Pressable>
-                          </View>
-                        )}
-                      </View>
-
-                      {editingId === msg.id ? (
-                        <View style={styles.editContainer}>
-                          <TextInput
-                            style={styles.editInput}
-                            value={editValue}
-                            onChangeText={setEditValue}
-                            multiline
-                          />
-                          <View style={styles.editActions}>
-                            <Pressable
-                              style={styles.editCancel}
-                              onPress={() => {
-                                setEditingId(null);
-                                setEditValue('');
-                              }}
-                            >
-                              <Text style={styles.editCancelText}>{t('common.cancel') || 'Cancel'}</Text>
-                            </Pressable>
-                            <Pressable
-                              style={styles.editSave}
-                              onPress={() => handleSaveEdit(msg.id)}
-                              disabled={!editValue.trim() || busyId === msg.id}
-                            >
-                              <Text style={styles.editSaveText}>{t('common.save') || 'Save'}</Text>
-                            </Pressable>
-                          </View>
+                          )}
+                          <Pressable
+                            onPress={() => setConfirmDeleteId(msg.id)}
+                            disabled={busyId === msg.id}
+                          >
+                            <Ionicons name="trash-outline" size={16} color={isYou ? '#fff' : tokens.colors.semantic.error} />
+                          </Pressable>
                         </View>
-                      ) : (
-                        <Text style={[styles.messageText, isYou && styles.ownMessageText]}>
-                          {msg.content || msg.text}
-                        </Text>
                       )}
                     </View>
+
+                    {editingId === msg.id ? (
+                      <View style={styles.editContainer}>
+                        <TextInput
+                          style={styles.editInput}
+                          value={editValue}
+                          onChangeText={setEditValue}
+                          multiline
+                        />
+                        <View style={styles.editActions}>
+                          <Pressable
+                            style={styles.editCancel}
+                            onPress={() => {
+                              setEditingId(null);
+                              setEditValue('');
+                            }}
+                          >
+                            <Text style={styles.editCancelText}>{t('common.cancel', { defaultValue: 'Cancel' })}</Text>
+                          </Pressable>
+                          <Pressable
+                            style={styles.editSave}
+                            onPress={() => handleSaveEdit(msg.id)}
+                            disabled={!editValue.trim() || busyId === msg.id}
+                          >
+                            <Text style={styles.editSaveText}>{t('common.save', { defaultValue: 'Save' })}</Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    ) : (
+                      <Text style={[styles.messageText, isYou && styles.ownMessageText]}>
+                        {msg.content || msg.text}
+                      </Text>
+                    )}
                   </View>
-                );
-              })
-            )}
-            <View ref={messagesEndRef} />
-          </ScrollView>
-
-          {!isAtBottom && sorted.length > 0 && (
-            <Pressable
-              style={styles.scrollToBottom}
-              onPress={() => messagesWrapRef.current?.scrollToEnd({ animated: true })}
-            >
-              <Ionicons name="arrow-down" size={20} color={tokens.colors.text.primary} />
-            </Pressable>
+                </View>
+              );
+            })
           )}
+          <View ref={messagesEndRef} />
+        </ScrollView>
 
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        {!isAtBottom && sorted.length > 0 && (
+          <Pressable
+            style={styles.scrollToBottom}
+            onPress={() => messagesWrapRef.current?.scrollToEnd({ animated: true })}
           >
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                value={inputText}
-                onChangeText={setInputText}
-                placeholder={t('chat.placeholder') || 'Write a message...'}
-                placeholderTextColor={tokens.colors.text.tertiary}
-                multiline
-                maxLength={500}
-              />
-              <Pressable
-                style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-                onPress={handleSend}
-                disabled={!inputText.trim()}
-              >
-                <Ionicons name="send" size={20} color={tokens.colors.text.inverse} />
-              </Pressable>
-            </View>
-          </KeyboardAvoidingView>
-        </>
-      )}
+            <Ionicons name="arrow-down" size={20} color={tokens.colors.text.primary} />
+          </Pressable>
+        )}
+
+        <View style={[styles.inputContainer, { paddingBottom: insets.bottom + tokens.space.sm }]}>
+          <TextInput
+            style={styles.input}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder={t('chat.placeholder', { defaultValue: 'Write a message...' })}
+            placeholderTextColor={tokens.colors.text.tertiary}
+            multiline
+            maxLength={500}
+          />
+          <Pressable
+            style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
+            onPress={handleSend}
+            disabled={!inputText.trim()}
+          >
+            <Ionicons name="send" size={20} color={tokens.colors.text.inverse} />
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
 
       {/* Delete confirmation modal */}
       {confirmDeleteId && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('chat.delete') || 'Delete'}</Text>
-            <Text style={styles.modalText}>{t('chat.confirmDelete') || 'Delete this message?'}</Text>
+            <Text style={styles.modalTitle}>{t('chat.delete', { defaultValue: 'Delete' })}</Text>
+            <Text style={styles.modalText}>{t('chat.confirmDelete', { defaultValue: 'Delete this message?' })}</Text>
             <View style={styles.modalActions}>
               <Pressable
                 style={styles.modalCancel}
                 onPress={() => setConfirmDeleteId(null)}
               >
-                <Text style={styles.modalCancelText}>{t('common.cancel') || 'Cancel'}</Text>
+                <Text style={styles.modalCancelText}>{t('common.cancel', { defaultValue: 'Cancel' })}</Text>
               </Pressable>
               <Pressable
                 style={styles.modalDelete}
                 onPress={() => handleDelete(confirmDeleteId)}
                 disabled={busyId === confirmDeleteId}
               >
-                <Text style={styles.modalDeleteText}>{t('chat.delete') || 'Delete'}</Text>
+                <Text style={styles.modalDeleteText}>{t('chat.delete', { defaultValue: 'Delete' })}</Text>
               </Pressable>
             </View>
           </View>
         </View>
       )}
-      </Screen>
-    </View>
+    </SafeAreaView>
   );
 }
 
-function getStyles(tokens) {
-  return StyleSheet.create({
-    container: {
-      flex: 1,
-    },
-    backgroundGradient: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-    },
-    header: {
-      overflow: 'hidden',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    headerGradient: {
-      paddingHorizontal: 24,
-      paddingTop: 16,
-      paddingBottom: 16,
-    },
-    headerContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerIconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 12,
-    },
-    headerTitle: {
-      fontSize: 24,
-      fontWeight: '700',
-      letterSpacing: -0.5,
-    },
-    parentSelector: {
-      backgroundColor: 'rgba(255, 255, 255, 0.85)',
-      padding: tokens.space.md,
-      borderBottomWidth: 1,
-      borderBottomColor: 'rgba(203, 213, 225, 0.3)',
-    },
-    parentLabel: {
-      fontSize: tokens.typography.fontSize.sm,
-      fontWeight: tokens.typography.fontWeight.medium,
-      color: tokens.colors.text.secondary,
-      marginBottom: tokens.space.sm,
-    },
-    parentSelectContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: tokens.space.sm,
-    },
-    parentOption: {
-      paddingHorizontal: tokens.space.md,
-      paddingVertical: tokens.space.sm,
-      borderRadius: tokens.radius.md,
-      borderWidth: 1,
-      borderColor: 'rgba(203, 213, 225, 0.5)',
-      backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    },
-    parentOptionActive: {
-      backgroundColor: '#22D3EE',
-      borderColor: '#22D3EE',
-    },
-    parentOptionText: {
-      fontSize: tokens.typography.fontSize.sm,
-      color: tokens.colors.text.primary,
-    },
-    parentOptionTextActive: {
-      color: tokens.colors.text.inverse,
-    },
-    messagesContainer: {
-      flex: 1,
-    },
-    messagesContent: {
-      padding: tokens.space.md,
-      paddingBottom: tokens.space.md,
-    },
-    messageRow: {
-      alignItems: 'flex-start',
-      marginBottom: tokens.space.md,
-    },
-    ownMessageRow: {
-      alignItems: 'flex-end',
-    },
-    messageBubble: {
-      maxWidth: '85%',
-      padding: tokens.space.md,
-      borderRadius: tokens.radius.lg,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 2,
-    },
-    ownMessageBubble: {
-      backgroundColor: '#22D3EE',
-      borderBottomRightRadius: tokens.radius.xs,
-    },
-    otherMessageBubble: {
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderBottomLeftRadius: tokens.radius.xs,
-    },
-    messageHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: tokens.space.xs,
-    },
-    messageSender: {
-      fontSize: tokens.typography.fontSize.xs,
-      fontWeight: tokens.typography.fontWeight.semibold,
-      color: tokens.colors.text.secondary,
-    },
-    messageActions: {
-      flexDirection: 'row',
-      gap: tokens.space.sm,
-    },
-    messageText: {
-      fontSize: tokens.typography.fontSize.base,
-      color: tokens.colors.text.primary,
-      lineHeight: 20,
-    },
-    ownMessageText: {
-      color: tokens.colors.text.inverse,
-    },
-    editContainer: {
-      marginTop: tokens.space.sm,
-    },
-    editInput: {
-      backgroundColor: tokens.colors.background.secondary,
-      borderRadius: tokens.radius.md,
-      padding: tokens.space.sm,
-      fontSize: tokens.typography.fontSize.base,
-      color: tokens.colors.text.primary,
-      borderWidth: 1,
-      borderColor: tokens.colors.border.medium,
-      minHeight: 60,
-      textAlignVertical: 'top',
-    },
-    editActions: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      gap: tokens.space.sm,
-      marginTop: tokens.space.sm,
-    },
-    editCancel: {
-      paddingHorizontal: tokens.space.md,
-      paddingVertical: tokens.space.sm,
-    },
-    editCancelText: {
-      color: tokens.colors.text.secondary,
-      fontSize: tokens.typography.fontSize.sm,
-    },
-    editSave: {
-      backgroundColor: tokens.colors.accent.blue,
-      paddingHorizontal: tokens.space.md,
-      paddingVertical: tokens.space.sm,
-      borderRadius: tokens.radius.sm,
-    },
-    editSaveText: {
-      color: tokens.colors.text.inverse,
-      fontSize: tokens.typography.fontSize.sm,
-      fontWeight: tokens.typography.fontWeight.semibold,
-    },
-    scrollToBottom: {
-      position: 'absolute',
-      bottom: 80,
-      right: tokens.space.md,
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: tokens.colors.card.base,
-      alignItems: 'center',
-      justifyContent: 'center',
-      ...tokens.shadow.soft,
-    },
-    inputContainer: {
-      flexDirection: 'row',
-      padding: tokens.space.md,
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      borderTopWidth: 1,
-      borderTopColor: 'rgba(203, 213, 225, 0.3)',
-      alignItems: 'flex-end',
-    },
-    input: {
-      flex: 1,
-      borderWidth: 1,
-      borderColor: 'rgba(203, 213, 225, 0.5)',
-      borderRadius: tokens.radius.xl,
-      paddingHorizontal: tokens.space.md,
-      paddingVertical: tokens.space.sm,
-      marginRight: tokens.space.sm,
-      maxHeight: 100,
-      fontSize: tokens.typography.fontSize.base,
-      color: tokens.colors.text.primary,
-      backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    },
-    sendButton: {
-      backgroundColor: '#22D3EE',
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      justifyContent: 'center',
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 3,
-      elevation: 3,
-    },
-    sendButtonDisabled: {
-      opacity: 0.5,
-    },
-    modalOverlay: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000,
-    },
-    modalContent: {
-      backgroundColor: tokens.colors.card.base,
-      borderRadius: tokens.radius.lg,
-      padding: tokens.space.lg,
-      width: '80%',
-      maxWidth: 400,
-      ...tokens.shadow.card,
-    },
-    modalTitle: {
-      fontSize: tokens.typography.fontSize.lg,
-      fontWeight: tokens.typography.fontWeight.bold,
-      color: tokens.colors.text.primary,
-      marginBottom: tokens.space.sm,
-    },
-    modalText: {
-      fontSize: tokens.typography.fontSize.base,
-      color: tokens.colors.text.secondary,
-      marginBottom: tokens.space.lg,
-    },
-    modalActions: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      gap: tokens.space.md,
-    },
-    modalCancel: {
-      paddingHorizontal: tokens.space.lg,
-      paddingVertical: tokens.space.sm,
-    },
-    modalCancelText: {
-      color: tokens.colors.text.secondary,
-      fontSize: tokens.typography.fontSize.base,
-    },
-    modalDelete: {
-      backgroundColor: tokens.colors.semantic.error,
-      paddingHorizontal: tokens.space.lg,
-      paddingVertical: tokens.space.sm,
-      borderRadius: tokens.radius.sm,
-    },
-    modalDeleteText: {
-      color: tokens.colors.text.inverse,
-      fontSize: tokens.typography.fontSize.base,
-      fontWeight: tokens.typography.fontWeight.semibold,
-    },
-  });
-}
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: tokens.colors.background.primary,
+  },
+  // Parent List Styles (Telegram style)
+  parentListContent: {
+    padding: 0,
+  },
+  parentListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: tokens.space.md,
+    backgroundColor: tokens.colors.background.secondary,
+    paddingHorizontal: tokens.space.lg,
+  },
+  parentListSeparator: {
+    height: 1,
+    backgroundColor: tokens.colors.border.light,
+    marginLeft: 80, // Align with content after avatar
+  },
+  parentAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: tokens.colors.joy.lavender,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: tokens.space.md,
+  },
+  parentAvatarText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: tokens.colors.text.white,
+  },
+  parentItemContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  parentItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  parentItemName: {
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.primary,
+    flex: 1,
+  },
+  parentItemTime: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.text.muted,
+    marginLeft: tokens.space.sm,
+  },
+  parentItemPreview: {
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.secondary,
+  },
+  parentItemPreviewEmpty: {
+    fontSize: tokens.type.sub.fontSize,
+    color: tokens.colors.text.muted,
+    fontStyle: 'italic',
+  },
+  unreadBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: tokens.colors.joy.lavender,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    marginLeft: tokens.space.sm,
+  },
+  unreadBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: tokens.colors.text.white,
+  },
+  // Chat Header
+  chatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: tokens.space.md,
+    paddingHorizontal: tokens.space.lg,
+    backgroundColor: tokens.colors.background.secondary,
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.colors.border.light,
+  },
+  backButton: {
+    padding: tokens.space.xs,
+    marginRight: tokens.space.sm,
+  },
+  chatHeaderAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: tokens.colors.joy.lavender,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: tokens.space.sm,
+  },
+  chatHeaderAvatarText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: tokens.colors.text.white,
+  },
+  chatHeaderInfo: {
+    flex: 1,
+  },
+  chatHeaderName: {
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.primary,
+  },
+  chatHeaderStatus: {
+    fontSize: tokens.type.caption.fontSize,
+    color: tokens.colors.text.muted,
+  },
+  // Messages
+  messagesContainer: {
+    flex: 1,
+  },
+  messagesContent: {
+    padding: tokens.space.md,
+    paddingBottom: tokens.space.xl,
+  },
+  messageRow: {
+    alignItems: 'flex-start',
+    marginBottom: tokens.space.md,
+  },
+  ownMessageRow: {
+    alignItems: 'flex-end',
+  },
+  messageBubble: {
+    maxWidth: '85%',
+    padding: tokens.space.md,
+    borderRadius: tokens.radius.lg,
+    ...tokens.shadow.soft,
+  },
+  ownMessageBubble: {
+    backgroundColor: tokens.colors.joy.lavender,
+    borderBottomRightRadius: tokens.radius.xs,
+  },
+  otherMessageBubble: {
+    backgroundColor: tokens.colors.background.secondary,
+    borderBottomLeftRadius: tokens.radius.xs,
+  },
+  messageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: tokens.space.xs,
+  },
+  messageSender: {
+    fontSize: tokens.type.caption.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.secondary,
+  },
+  messageActions: {
+    flexDirection: 'row',
+    gap: tokens.space.sm,
+  },
+  messageText: {
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
+    lineHeight: 20,
+  },
+  ownMessageText: {
+    color: tokens.colors.text.white,
+  },
+  editContainer: {
+    marginTop: tokens.space.sm,
+  },
+  editInput: {
+    backgroundColor: tokens.colors.background.secondary,
+    borderRadius: tokens.radius.md,
+    padding: tokens.space.sm,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
+    minHeight: 60,
+    textAlignVertical: 'top',
+  },
+  editActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: tokens.space.sm,
+    marginTop: tokens.space.sm,
+  },
+  editCancel: {
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.sm,
+  },
+  editCancelText: {
+    color: tokens.colors.text.secondary,
+    fontSize: tokens.type.sub.fontSize,
+  },
+  editSave: {
+    backgroundColor: tokens.colors.accent.blue,
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.sm,
+    borderRadius: tokens.radius.sm,
+  },
+  editSaveText: {
+    color: tokens.colors.text.white,
+    fontSize: tokens.type.sub.fontSize,
+    fontWeight: '600',
+  },
+  scrollToBottom: {
+    position: 'absolute',
+    bottom: 100,
+    right: tokens.space.md,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: tokens.colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...tokens.shadow.soft,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingHorizontal: tokens.space.md,
+    paddingTop: tokens.space.sm,
+    backgroundColor: tokens.colors.background.secondary,
+    borderTopWidth: 1,
+    borderTopColor: tokens.colors.border.light,
+    minHeight: 60,
+  },
+  input: {
+    flex: 1,
+    borderRadius: tokens.radius.xl,
+    paddingHorizontal: tokens.space.md,
+    paddingVertical: tokens.space.sm,
+    marginRight: tokens.space.sm,
+    maxHeight: 100,
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.primary,
+    backgroundColor: tokens.colors.background.tertiary,
+    minHeight: 44,
+  },
+  sendButton: {
+    backgroundColor: tokens.colors.joy.lavender,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...tokens.shadow.sm,
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  // Modal
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: tokens.colors.background.secondary,
+    borderRadius: tokens.radius.lg,
+    padding: tokens.space.lg,
+    width: '80%',
+    maxWidth: 400,
+    ...tokens.shadow.card,
+  },
+  modalTitle: {
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.sm,
+  },
+  modalText: {
+    fontSize: tokens.type.body.fontSize,
+    color: tokens.colors.text.secondary,
+    marginBottom: tokens.space.lg,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: tokens.space.md,
+  },
+  modalCancel: {
+    paddingHorizontal: tokens.space.lg,
+    paddingVertical: tokens.space.sm,
+  },
+  modalCancelText: {
+    color: tokens.colors.text.secondary,
+    fontSize: tokens.type.body.fontSize,
+  },
+  modalDelete: {
+    backgroundColor: tokens.colors.semantic.error,
+    paddingHorizontal: tokens.space.lg,
+    paddingVertical: tokens.space.sm,
+    borderRadius: tokens.radius.sm,
+  },
+  modalDeleteText: {
+    color: tokens.colors.text.white,
+    fontSize: tokens.type.body.fontSize,
+    fontWeight: '600',
+  },
+});
+
+

@@ -3,6 +3,7 @@ import Activity from '../models/Activity.js';
 import Child from '../models/Child.js';
 import User from '../models/User.js';
 import { createNotification } from './notificationController.js';
+import { emitToUser } from '../config/socket.js';
 
 export const getActivities = async (req, res) => {
   try {
@@ -301,6 +302,12 @@ export const createActivity = async (req, res) => {
         activity.id,
         'activity'
       ).catch(err => console.error('Error creating notification:', err));
+
+      // Emit real-time update to parent
+      emitToUser(child.parentId, 'activity:created', {
+        activity: activityJson,
+        timestamp: new Date().toISOString(),
+      });
     }
 
     res.status(201).json(activityJson);
@@ -348,11 +355,14 @@ export const updateActivity = async (req, res) => {
       return res.status(404).json({ error: 'Activity not found' });
     }
 
+    // Get child for parent notification
+    const child = await Child.findByPk(activity.childId);
+
     // Handle services array
     const updateData = { ...req.body };
     if (updateData.services !== undefined) {
-      updateData.services = Array.isArray(updateData.services) 
-        ? updateData.services 
+      updateData.services = Array.isArray(updateData.services)
+        ? updateData.services
         : (updateData.services ? [updateData.services] : []);
     }
 
@@ -385,6 +395,14 @@ export const updateActivity = async (req, res) => {
       activityJson.services = [];
     }
 
+    // Emit real-time update to parent
+    if (child && child.parentId) {
+      emitToUser(child.parentId, 'activity:updated', {
+        activity: activityJson,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     res.json(activityJson);
   } catch (error) {
     console.error('Update activity error:', error);
@@ -406,7 +424,21 @@ export const deleteActivity = async (req, res) => {
       return res.status(404).json({ error: 'Activity not found' });
     }
 
+    // Get child for parent notification before destroying
+    const child = await Child.findByPk(activity.childId);
+    const activityId = activity.id;
+
     await activity.destroy();
+
+    // Emit real-time update to parent
+    if (child && child.parentId) {
+      emitToUser(child.parentId, 'activity:deleted', {
+        activityId,
+        childId: child.id,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     res.json({ success: true, message: 'Activity deleted successfully' });
   } catch (error) {
     console.error('Delete activity error:', error);

@@ -7,8 +7,9 @@ import { useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
 import { api } from '../../services/api';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
-import Card from '../../components/common/Card';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
+import { GlassCard } from '../../components/teacher/GlassCard';
 import Skeleton from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
@@ -16,6 +17,7 @@ import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 export function TherapyScreen() {
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [selectedChildId, setSelectedChildId] = useState(null);
   const [therapies, setTherapies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +25,9 @@ export function TherapyScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSession, setActiveSession] = useState(null);
   const [selectedTherapy, setSelectedTherapy] = useState(null);
+
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   useEffect(() => {
     // Get first child as selected child
@@ -128,42 +133,24 @@ export function TherapyScreen() {
     return true;
   });
 
-  const header = (
-    <View style={styles.headerContainer}>
-      <LinearGradient
-        colors={[tokens.colors.joy.lavender, tokens.colors.joy.sky]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
-      >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </Pressable>
-        <View style={styles.headerTitleContainer}>
-          <Ionicons name="musical-notes" size={24} color="#fff" />
-          <Text style={styles.topBarTitle} allowFontScaling={true}>
-            {t('therapy.title', { defaultValue: 'Terapiya' })}
-          </Text>
-        </View>
-        <View style={styles.placeholder} />
-      </LinearGradient>
-    </View>
-  );
-
   if (loading) {
     return (
-      <Screen scroll={false} padded={false} header={header}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ScreenHeader title={t('therapy.title', { defaultValue: 'Terapiya' })} showBack={true} />
         <LoadingSpinner />
-      </Screen>
+      </SafeAreaView>
     );
   }
 
   return (
-    <Screen scroll={true} padded={true} header={header} background="parent">
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader title={t('therapy.title', { defaultValue: 'Terapiya' })} showBack={true} />
+      
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
       <Text style={styles.subtitle} allowFontScaling={true}>
         {t('therapy.subtitle', { defaultValue: 'Musiqa, video va content terapiyalar' })}
       </Text>
@@ -210,7 +197,12 @@ export function TherapyScreen() {
 
       {/* Active Session */}
       {activeSession && selectedTherapy && (
-        <Card style={styles.activeSessionCard} variant="gradient" gradientColors={[tokens.colors.accent.blue, tokens.colors.accent.blueVibrant]} shadow="elevated">
+        <GlassCard style={styles.activeSessionCard}>
+          <LinearGradient
+            colors={[tokens.colors.accent.blue, tokens.colors.accent.blueVibrant]}
+            style={StyleSheet.absoluteFill}
+            borderRadius={tokens.radius.lg}
+          />
           <View style={styles.activeSessionContent}>
             <View style={styles.activeSessionInfo}>
               <Text style={styles.activeSessionTitle} allowFontScaling={true}>
@@ -229,7 +221,7 @@ export function TherapyScreen() {
               </Text>
             </Pressable>
           </View>
-        </Card>
+        </GlassCard>
       )}
 
       {/* Therapies List */}
@@ -239,7 +231,7 @@ export function TherapyScreen() {
             const iconName = getTherapyIcon(therapy.therapyType);
             const iconColor = getTherapyColor(therapy.therapyType);
             return (
-              <Card key={therapy.id} style={styles.therapyCard} variant="elevated" shadow="soft">
+              <GlassCard key={therapy.id} style={styles.therapyCard}>
                 <View style={styles.therapyHeader}>
                   <LinearGradient
                     colors={[iconColor + '30', iconColor + '15']}
@@ -298,58 +290,34 @@ export function TherapyScreen() {
                     {t('therapy.start', { defaultValue: 'Boshlash' })}
                   </Text>
                 </Pressable>
-              </Card>
+              </GlassCard>
             );
           })}
         </View>
       ) : (
-        <Card style={styles.emptyCard}>
+        <GlassCard style={styles.emptyCard}>
           <EmptyState
             icon="musical-notes-outline"
             title={t('therapy.noTherapies', { defaultValue: 'Terapiyalar topilmadi' })}
             description={t('therapy.noTherapiesDesc', { defaultValue: 'Qidiruv natijalari bo\'sh' })}
           />
-        </Card>
+        </GlassCard>
       )}
-    </Screen>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    overflow: 'hidden',
-  },
-  headerGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: tokens.space.lg,
-    paddingVertical: tokens.space.md,
-    paddingTop: tokens.space.xl,
-    paddingBottom: tokens.space.lg,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...tokens.shadow.sm,
-  },
-  headerTitleContainer: {
+  container: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: tokens.space.sm,
+    backgroundColor: tokens.colors.background.primary,
   },
-  topBarTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: '#fff',
+  scrollView: {
+    flex: 1,
   },
-  placeholder: {
-    width: 44,
+  scrollContent: {
+    padding: tokens.space.lg,
   },
   subtitle: {
     fontSize: tokens.type.body.fontSize,
@@ -363,12 +331,10 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: tokens.colors.surface.secondary,
+    backgroundColor: tokens.colors.background.tertiary,
     borderRadius: tokens.radius.lg,
     paddingHorizontal: tokens.space.md,
     marginBottom: tokens.space.md,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.light,
     ...tokens.shadow.sm,
   },
   searchIcon: {
@@ -391,9 +357,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space.lg,
     paddingVertical: tokens.space.sm,
     borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.colors.surface.secondary,
-    borderWidth: 2,
-    borderColor: tokens.colors.border.light,
+    backgroundColor: tokens.colors.background.secondary,
   },
   filterPillActive: {
     backgroundColor: tokens.colors.accent.blue,
@@ -501,7 +465,7 @@ const styles = StyleSheet.create({
   therapyTag: {
     paddingHorizontal: tokens.space.sm,
     paddingVertical: tokens.space.xs / 2,
-    backgroundColor: tokens.colors.surface.secondary,
+    backgroundColor: tokens.colors.background.tertiary,
     borderRadius: tokens.radius.sm,
   },
   therapyTagText: {
@@ -515,7 +479,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   startButtonDisabled: {
-    backgroundColor: tokens.colors.surface.tertiary,
+    backgroundColor: tokens.colors.background.tertiary,
   },
   startButtonText: {
     fontSize: tokens.type.body.fontSize,

@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Image, Animated } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, Alert, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Image, Animated, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import { changeLanguage, getCurrentLanguage, getAvailableLanguages } from '../../i18n/config';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import tokens from '../../styles/tokens';
 import { api } from '../../services/api';
 import { API_URL } from '../../config';
@@ -24,7 +27,12 @@ export function SettingsScreen() {
   const { theme, toggleTheme, isDark } = useTheme();
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [currentLanguage, setCurrentLanguage] = useState('en');
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -198,14 +206,14 @@ export function SettingsScreen() {
           title: t('settings.tasks', { defaultValue: 'Tasks' }),
           subtitle: t('settings.viewTasks', { defaultValue: 'Manage your tasks' }),
           onPress: () => navigation.navigate('Tasks'),
-          color: '#F59E0B',
+          color: tokens.colors.semantic.warning,
         },
         {
           icon: 'time-outline',
           title: t('settings.workHistory', { defaultValue: 'Work History' }),
           subtitle: t('settings.viewHistory', { defaultValue: 'Employment records' }),
           onPress: () => navigation.navigate('WorkHistory'),
-          color: '#8B5CF6',
+          color: tokens.colors.joy.lavender,
         },
       ],
     },
@@ -217,7 +225,7 @@ export function SettingsScreen() {
           title: t('settings.darkMode', { defaultValue: 'Dark Mode' }),
           subtitle: t('settings.darkModeDesc', { defaultValue: isDark ? 'Switch to light theme' : 'Switch to dark theme' }),
           onPress: toggleTheme,
-          color: isDark ? '#F59E0B' : '#0EA5E9',
+          color: isDark ? tokens.colors.semantic.warning : tokens.colors.accent.blue,
           hasToggle: true,
         },
         {
@@ -225,14 +233,14 @@ export function SettingsScreen() {
           title: t('settings.about', { defaultValue: 'About' }),
           subtitle: 'Uchqun Platform v1.0.0',
           onPress: () => Alert.alert(t('settings.about', { defaultValue: 'About' }), 'Uchqun Platform v1.0.0\nSpecial Education School Management'),
-          color: '#64748B',
+          color: tokens.colors.text.secondary,
         },
         {
           icon: 'log-out-outline',
           title: t('profile.logoutTitle', { defaultValue: 'Logout' }),
           subtitle: t('profile.logoutDesc', { defaultValue: 'Sign out of your account' }),
           onPress: handleLogout,
-          color: '#EF4444',
+          color: tokens.colors.semantic.error,
           destructive: true,
         },
       ],
@@ -240,31 +248,15 @@ export function SettingsScreen() {
   ];
 
   return (
-    <View style={styles.container}>
-      {/* Gradient background */}
-      <LinearGradient
-        colors={['#0F172A', '#1E293B', '#334155']}
-        style={StyleSheet.absoluteFillObject}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('settings.title', { defaultValue: 'Settings' })} 
+        showBack={false}
       />
-
-      {/* Header */}
-      <LinearGradient
-        colors={['#0EA5E9', '#06B6D4']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.header}
-      >
-        <View style={styles.headerContent}>
-          <View style={styles.headerIconContainer}>
-            <Ionicons name="settings" size={20} color="#FFFFFF" />
-          </View>
-          <Text style={styles.headerTitle}>{t('settings.title', { defaultValue: 'Settings' })}</Text>
-        </View>
-      </LinearGradient>
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View
@@ -276,14 +268,10 @@ export function SettingsScreen() {
           {/* Language Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Ionicons name="language-outline" size={18} color="#22D3EE" />
+              <Ionicons name="language-outline" size={18} color={tokens.colors.joy.lavender} />
               <Text style={styles.sectionTitle}>{t('settings.language', { defaultValue: 'Language' })}</Text>
             </View>
-            <View style={styles.sectionCard}>
-              <LinearGradient
-                colors={['rgba(51, 65, 85, 0.6)', 'rgba(30, 41, 59, 0.5)']}
-                style={styles.sectionCardGradient}
-              >
+            <GlassCard style={styles.sectionCard}>
                 {(getAvailableLanguages() || []).map((lang, index) => (
                   <Pressable
                     key={lang.code}
@@ -300,19 +288,15 @@ export function SettingsScreen() {
                       <Text style={styles.languageSubtitle}>{lang.name}</Text>
                     </View>
                     {currentLanguage === lang.code ? (
-                      <LinearGradient
-                        colors={['#0EA5E9', '#06B6D4']}
-                        style={styles.checkCircle}
-                      >
+                      <View style={styles.checkCircle}>
                         <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-                      </LinearGradient>
+                      </View>
                     ) : (
                       <View style={styles.emptyCircle} />
                     )}
                   </Pressable>
                 ))}
-              </LinearGradient>
-            </View>
+            </GlassCard>
           </View>
 
           {/* Settings Sections */}
@@ -321,11 +305,7 @@ export function SettingsScreen() {
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>{section.title}</Text>
               </View>
-              <View style={styles.sectionCard}>
-                <LinearGradient
-                  colors={['rgba(51, 65, 85, 0.6)', 'rgba(30, 41, 59, 0.5)']}
-                  style={styles.sectionCardGradient}
-                >
+              <GlassCard style={styles.sectionCard}>
                   {section.items.map((item, itemIndex) => (
                     <Pressable
                       key={itemIndex}
@@ -350,8 +330,7 @@ export function SettingsScreen() {
                       <Ionicons name="chevron-forward" size={16} color={tokens.colors.text.muted} />
                     </Pressable>
                   ))}
-                </LinearGradient>
-              </View>
+              </GlassCard>
             </View>
           ))}
         </Animated.View>
@@ -369,15 +348,11 @@ export function SettingsScreen() {
           style={styles.modalContainer}
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <LinearGradient
-                colors={['rgba(51, 65, 85, 0.95)', 'rgba(30, 41, 59, 0.95)']}
-                style={styles.modalGradient}
-              >
+            <GlassCard style={styles.modalContent}>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>{t('settings.editProfile', { defaultValue: 'Edit Profile' })}</Text>
                   <TouchableOpacity onPress={() => setShowProfileModal(false)} hitSlop={10}>
-                    <Ionicons name="close" size={24} color={tokens.colors.text.white} />
+                    <Ionicons name="close" size={24} color={tokens.colors.text.primary} />
                   </TouchableOpacity>
                 </View>
 
@@ -385,55 +360,40 @@ export function SettingsScreen() {
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>{t('settings.firstName', { defaultValue: 'First Name' })}</Text>
                     <View style={styles.inputContainer}>
-                      <LinearGradient
-                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
-                        style={styles.inputGradient}
-                      >
-                        <TextInput
-                          style={styles.textInput}
-                          value={profileData.firstName}
-                          onChangeText={(text) => setProfileData({ ...profileData, firstName: text })}
-                          placeholder={t('settings.firstName', { defaultValue: 'First Name' })}
-                          placeholderTextColor={tokens.colors.text.muted}
-                        />
-                      </LinearGradient>
+                      <TextInput
+                        style={styles.textInput}
+                        value={profileData.firstName}
+                        onChangeText={(text) => setProfileData({ ...profileData, firstName: text })}
+                        placeholder={t('settings.firstName', { defaultValue: 'First Name' })}
+                        placeholderTextColor={tokens.colors.text.muted}
+                      />
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>{t('settings.lastName', { defaultValue: 'Last Name' })}</Text>
                     <View style={styles.inputContainer}>
-                      <LinearGradient
-                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
-                        style={styles.inputGradient}
-                      >
-                        <TextInput
-                          style={styles.textInput}
-                          value={profileData.lastName}
-                          onChangeText={(text) => setProfileData({ ...profileData, lastName: text })}
-                          placeholder={t('settings.lastName', { defaultValue: 'Last Name' })}
-                          placeholderTextColor={tokens.colors.text.muted}
-                        />
-                      </LinearGradient>
+                      <TextInput
+                        style={styles.textInput}
+                        value={profileData.lastName}
+                        onChangeText={(text) => setProfileData({ ...profileData, lastName: text })}
+                        placeholder={t('settings.lastName', { defaultValue: 'Last Name' })}
+                        placeholderTextColor={tokens.colors.text.muted}
+                      />
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>{t('settings.phone', { defaultValue: 'Phone' })}</Text>
                     <View style={styles.inputContainer}>
-                      <LinearGradient
-                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
-                        style={styles.inputGradient}
-                      >
-                        <TextInput
-                          style={styles.textInput}
-                          value={profileData.phone}
-                          onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
-                          placeholder="+998 XX XXX XX XX"
-                          placeholderTextColor={tokens.colors.text.muted}
-                          keyboardType="phone-pad"
-                        />
-                      </LinearGradient>
+                      <TextInput
+                        style={styles.textInput}
+                        value={profileData.phone}
+                        onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
+                        placeholder="+998 XX XXX XX XX"
+                        placeholderTextColor={tokens.colors.text.muted}
+                        keyboardType="phone-pad"
+                      />
                     </View>
                   </View>
 
@@ -445,10 +405,7 @@ export function SettingsScreen() {
                     onPress={handleProfileUpdate}
                     disabled={profileLoading}
                   >
-                    <LinearGradient
-                      colors={profileLoading ? ['#475569', '#334155'] : ['#0EA5E9', '#06B6D4']}
-                      style={styles.saveButtonGradient}
-                    >
+                    <View style={styles.saveButtonGradient}>
                       {profileLoading ? (
                         <ActivityIndicator color="#FFFFFF" size="small" />
                       ) : (
@@ -457,27 +414,37 @@ export function SettingsScreen() {
                           <Text style={styles.saveButtonText}>{t('settings.saveProfile', { defaultValue: 'Save Changes' })}</Text>
                         </>
                       )}
-                    </LinearGradient>
+                    </View>
                   </Pressable>
                 </View>
-              </LinearGradient>
-            </View>
+            </GlassCard>
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: tokens.colors.background.primary, // Warm Sand - beige background
+  },
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: tokens.colors.background.primary, // Warm Sand
   },
   header: {
     paddingTop: 50,
     paddingBottom: tokens.space.lg,
     paddingHorizontal: tokens.space.xl,
-    ...tokens.shadow.soft,
+  },
+  headerCard: {
+    padding: tokens.space.md,
   },
   headerContent: {
     flexDirection: 'row',
@@ -489,14 +456,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: tokens.colors.joy.lavenderSoft, // Purple soft
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     letterSpacing: -0.3,
   },
   scrollView: {
@@ -510,8 +477,8 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.xl,
     marginBottom: tokens.space.xl,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.15)',
+    backgroundColor: tokens.colors.background.secondary, // Solid white
+    // Removed: borderWidth, borderColor - no borders per design requirements
     ...tokens.shadow.soft,
   },
   profileCardGradient: {
@@ -548,11 +515,10 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#0EA5E9',
+    backgroundColor: tokens.colors.accent.blue,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#334155',
+    // Removed: borderWidth, borderColor - no borders per design requirements
     ...tokens.shadow.sm,
   },
   uploadingOverlay: {
@@ -611,16 +577,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: tokens.type.h3.fontSize,
     fontWeight: tokens.type.h3.fontWeight,
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     letterSpacing: -0.1,
   },
   sectionCard: {
-    borderRadius: tokens.radius.lg,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.1)',
-  },
-  sectionCardGradient: {
     padding: tokens.space.xs,
   },
   languageItem: {
@@ -630,12 +590,12 @@ const styles = StyleSheet.create({
     padding: tokens.space.md,
     borderRadius: tokens.radius.md,
     marginBottom: tokens.space.xs,
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.1)',
+    backgroundColor: tokens.colors.background.secondary, // Solid white
+    // Removed: borderWidth, borderColor - no borders per design requirements
   },
   languageItemActive: {
-    backgroundColor: 'rgba(14, 165, 233, 0.15)',
-    borderColor: 'rgba(14, 165, 233, 0.3)',
+    backgroundColor: tokens.colors.joy.lavenderSoft, // Purple soft
+    // Removed: borderColor - no borders per design requirements
   },
   languageInfo: {
     flex: 1,
@@ -643,7 +603,7 @@ const styles = StyleSheet.create({
   languageName: {
     fontSize: tokens.type.body.fontSize,
     fontWeight: '600',
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     marginBottom: 2,
   },
   languageSubtitle: {
@@ -656,14 +616,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: tokens.colors.joy.lavender, // Purple
     ...tokens.shadow.sm,
   },
   emptyCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(148, 163, 184, 0.3)',
+    backgroundColor: tokens.colors.background.secondary, // Solid white instead of border
+    // Removed: borderWidth, borderColor - no borders per design requirements
   },
   settingsItem: {
     flexDirection: 'row',
@@ -686,7 +647,7 @@ const styles = StyleSheet.create({
   settingsItemTitle: {
     fontSize: tokens.type.body.fontSize,
     fontWeight: '600',
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     marginBottom: 2,
   },
   settingsItemSubtitle: {
@@ -707,10 +668,7 @@ const styles = StyleSheet.create({
   modalContent: {
     borderTopLeftRadius: tokens.radius['2xl'],
     borderTopRightRadius: tokens.radius['2xl'],
-    overflow: 'hidden',
     maxHeight: '80%',
-  },
-  modalGradient: {
     padding: tokens.space.xl,
   },
   modalHeader: {
@@ -722,7 +680,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     letterSpacing: -0.3,
   },
   modalBody: {
@@ -734,28 +692,24 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: tokens.type.sub.fontSize,
     fontWeight: '600',
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     letterSpacing: 0.3,
   },
   inputContainer: {
     borderRadius: tokens.radius.md,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.2)',
-  },
-  inputGradient: {
+    // Removed: borderWidth, borderColor - no borders per design requirements
     padding: tokens.space.md,
+    backgroundColor: tokens.colors.background.secondary, // Solid white
   },
   textInput: {
     fontSize: tokens.type.body.fontSize,
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     padding: 0,
   },
   saveButton: {
     marginTop: tokens.space.md,
     borderRadius: tokens.radius.md,
     overflow: 'hidden',
-    ...tokens.shadow.glow,
   },
   saveButtonGradient: {
     flexDirection: 'row',
@@ -763,11 +717,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: tokens.space.lg,
     gap: tokens.space.sm,
+    backgroundColor: tokens.colors.joy.lavender, // Purple
+    borderRadius: tokens.radius.md,
   },
   saveButtonText: {
     fontSize: tokens.type.button.fontSize,
     fontWeight: tokens.type.button.fontWeight,
-    color: tokens.colors.text.white,
+    color: '#FFFFFF',
     letterSpacing: tokens.type.button.letterSpacing,
   },
 });

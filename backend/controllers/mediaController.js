@@ -5,6 +5,7 @@ import Activity from '../models/Activity.js';
 import User from '../models/User.js';
 import { uploadFile, deleteFile } from '../config/storage.js';
 import { createNotification } from './notificationController.js';
+import { emitToUser } from '../config/socket.js';
 import fs from 'fs';
 import path from 'path';
 import logger from '../utils/logger.js';
@@ -545,6 +546,12 @@ export const createMedia = async (req, res) => {
         media.id,
         'media'
       );
+
+      // Emit real-time update to parent
+      emitToUser(child.parentId, 'media:created', {
+        media: createdMedia.toJSON(),
+        timestamp: new Date().toISOString(),
+      });
     }
 
     res.status(201).json(createdMedia);
@@ -584,6 +591,9 @@ export const updateMedia = async (req, res) => {
       return res.status(404).json({ error: 'Media not found' });
     }
 
+    // Get child for parent notification
+    const child = await Child.findByPk(media.childId);
+
     const payload = { ...req.body };
     delete payload.thumbnail;
     await media.update(payload);
@@ -602,6 +612,14 @@ export const updateMedia = async (req, res) => {
         },
       ],
     });
+
+    // Emit real-time update to parent
+    if (child && child.parentId) {
+      emitToUser(child.parentId, 'media:updated', {
+        media: updatedMedia.toJSON(),
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     res.json(updatedMedia);
   } catch (error) {
@@ -855,10 +873,14 @@ export const deleteMedia = async (req, res) => {
       return res.status(404).json({ error: 'Media not found' });
     }
 
+    // Get child for parent notification before destroying
+    const child = await Child.findByPk(media.childId);
+    const mediaId = media.id;
+
     // Delete file from storage
     try {
       await deleteFile(media.url);
-      
+
       // Also delete thumbnail if it exists
       if (media.thumbnail && media.thumbnail !== media.url) {
         await deleteFile(media.thumbnail);
@@ -869,6 +891,16 @@ export const deleteMedia = async (req, res) => {
     }
 
     await media.destroy();
+
+    // Emit real-time update to parent
+    if (child && child.parentId) {
+      emitToUser(child.parentId, 'media:deleted', {
+        mediaId,
+        childId: child.id,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     res.json({ success: true, message: 'Media deleted successfully' });
   } catch (error) {
     logger.error('Delete media error', { error: error.message, stack: error.stack, mediaId: req.params.id });

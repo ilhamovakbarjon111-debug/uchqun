@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './shared/context/AuthContext';
+import { SocketProvider } from './shared/context/SocketContext';
 import { ToastProvider } from './shared/context/ToastContext';
 import { NotificationProvider } from './shared/context/NotificationContext';
 import { ToastContainer } from './shared/components/Toast';
@@ -35,9 +36,10 @@ function App() {
     <ToastProvider>
       <NotificationProvider>
         <AuthProvider>
-          <Router>
-            <ToastContainer />
-            <Routes>
+          <SocketProvider>
+            <Router>
+              <ToastContainer />
+              <Routes>
               <Route path="/login" element={<Login />} />
 
               {/* Parent routes */}
@@ -86,7 +88,8 @@ function App() {
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </Router>
+            </Router>
+          </SocketProvider>
         </AuthProvider>
       </NotificationProvider>
     </ToastProvider>

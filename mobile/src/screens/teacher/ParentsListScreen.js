@@ -8,7 +8,9 @@ import {
   TextInput,
   TouchableOpacity,
   Linking,
+  SafeAreaView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -17,15 +19,21 @@ import { teacherService } from '../../services/teacherService';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
+import { GlassCard } from '../../components/teacher/GlassCard';
 import tokens from '../../styles/tokens';
 
 export function ParentsListScreen() {
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [parents, setParents] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   useEffect(() => {
     loadParents();
@@ -77,14 +85,9 @@ export function ParentsListScreen() {
           console.error('[TeacherParentsList] Navigation error:', error);
         }
       }}
+      style={styles.cardWrapper}
     >
-      <View style={styles.cardWrapper}>
-        <LinearGradient
-          colors={['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.85)']}
-          style={styles.cardGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+      <GlassCard style={styles.cardContent}>
           <View style={styles.parentHeader}>
             <View style={styles.parentAvatar}>
               <Text style={styles.parentAvatarText}>
@@ -113,7 +116,7 @@ export function ParentsListScreen() {
               {item.phone && (
                 <View style={styles.phoneRow}>
                   <View style={styles.phoneItem}>
-                    <Ionicons name="call-outline" size={14} color="#9333EA" />
+                    <Ionicons name="call-outline" size={14} color={tokens.colors.joy.lavender} />
                     <Text style={styles.phoneText}>{item.phone}</Text>
                   </View>
                   <TouchableOpacity
@@ -129,7 +132,7 @@ export function ParentsListScreen() {
               {/* Group Badge */}
               {item.group && (
                 <View style={styles.groupBadge}>
-                  <Ionicons name="school-outline" size={12} color="#9333EA" />
+                  <Ionicons name="school-outline" size={12} color={tokens.colors.joy.lavender} />
                   <Text style={styles.groupText}>{item.group.name}</Text>
                 </View>
               )}
@@ -160,39 +163,31 @@ export function ParentsListScreen() {
               </View>
             </View>
           )}
-        </LinearGradient>
-      </View>
+      </GlassCard>
     </Pressable>
   );
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#9333EA', '#7C3AED', '#6D28D9']}
-        style={styles.backgroundGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('parentsPage.title', { defaultValue: 'Parents' })} 
+        showBack={false} 
       />
-      <ScreenHeader title={t('parentsPage.title')} showBack={false} />
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <LinearGradient
-          colors={['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.9)']}
-          style={styles.searchGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+        <GlassCard style={styles.searchCard}>
           <View style={styles.searchInputWrapper}>
-            <Ionicons name="search" size={20} color={tokens.colors.text.secondary} />
+            <Ionicons name="search" size={20} color={tokens.colors.text.muted} />
             <TextInput
               style={styles.searchInput}
               placeholder={t('parentsPage.searchPlaceholder')}
-              placeholderTextColor={tokens.colors.text.tertiary}
+              placeholderTextColor={tokens.colors.text.muted}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCapitalize="none"
               autoCorrect={false}
+              cursorColor={tokens.colors.joy.lavender}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -203,7 +198,7 @@ export function ParentsListScreen() {
           <Text style={styles.resultCount}>
             {filteredParents.length} {t('parentsPage.results')}
           </Text>
-        </LinearGradient>
+        </GlassCard>
       </View>
 
       {filteredParents.length === 0 ? (
@@ -220,56 +215,33 @@ export function ParentsListScreen() {
           data={filteredParents}
           renderItem={renderParent}
           keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomPadding }]}
           refreshing={loading}
           onRefresh={loadParents}
           showsVerticalScrollIndicator={false}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  backgroundGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
+    backgroundColor: tokens.colors.background.primary,
   },
   searchContainer: {
     marginHorizontal: tokens.space.md,
     marginTop: tokens.space.sm,
-    borderRadius: tokens.radius.md,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  searchGradient: {
-    paddingHorizontal: tokens.space.md,
-    paddingVertical: tokens.space.sm,
-    borderRadius: tokens.radius.md,
+  searchCard: {
+    padding: tokens.space.md,
   },
   cardWrapper: {
     marginBottom: tokens.space.md,
-    borderRadius: tokens.radius.md,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  cardGradient: {
+  cardContent: {
     padding: tokens.space.md,
-    borderRadius: tokens.radius.md,
   },
   searchInputWrapper: {
     flexDirection: 'row',
@@ -293,7 +265,6 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: tokens.space.md,
-    paddingBottom: 100,
   },
   parentHeader: {
     flexDirection: 'row',
@@ -303,7 +274,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: tokens.colors.accent.blue + '20',
+    backgroundColor: tokens.colors.joy.lavenderSoft, // Purple soft background
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: tokens.space.md,
@@ -311,7 +282,7 @@ const styles = StyleSheet.create({
   parentAvatarText: {
     fontSize: tokens.type.bodyLarge.fontSize,
     fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.accent.blue,
+    color: tokens.colors.joy.lavender, // Purple accent
   },
   parentContent: {
     flex: 1,
@@ -348,21 +319,21 @@ const styles = StyleSheet.create({
   },
   phoneText: {
     fontSize: tokens.type.sub.fontSize,
-    color: '#9333EA',
+    color: tokens.colors.joy.lavender, // Purple accent
     fontWeight: tokens.typography.fontWeight.medium,
   },
   callButton: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: tokens.colors.semantic.success,
+    backgroundColor: tokens.colors.semantic.success, // Green
     alignItems: 'center',
     justifyContent: 'center',
   },
   groupBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+    backgroundColor: tokens.colors.joy.lavenderSoft, // Purple soft
     paddingHorizontal: tokens.space.sm,
     paddingVertical: 4,
     borderRadius: 12,
@@ -372,7 +343,7 @@ const styles = StyleSheet.create({
   },
   groupText: {
     fontSize: tokens.type.caption.fontSize,
-    color: '#9333EA',
+    color: tokens.colors.joy.lavender, // Purple accent
     fontWeight: tokens.typography.fontWeight.semibold,
   },
   childrenSection: {

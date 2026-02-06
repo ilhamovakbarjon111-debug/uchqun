@@ -28,8 +28,8 @@ const Stack = createNativeStackNavigator();
 import theme from '../styles/theme';
 import tokens from '../styles/tokens';
 
-// Icon size - more compact and refined
-const ICON_SIZE = 16;
+// Icon size - optimized for touch targets
+const ICON_SIZE = 24;
 
 const TAB_LABELS = {
   Dashboard: 'nav.dashboard',
@@ -64,53 +64,45 @@ function TeacherTabs() {
             Settings: 'settings',   // Settings icon
           };
 
-          // Color mapping for each tab
-          const colorMap = {
-            Dashboard: '#0EA5E9',   // Blue
-            Parents: '#9333EA',     // Purple
-            Chat: '#22D3EE',        // Light blue
-            Profile: '#52B788',     // Green
-            Settings: '#64748B',    // Gray
-          };
-
           const baseIcon = iconMap[routeName] || 'help';
           const iconName = focused ? baseIcon : `${baseIcon}-outline`;
-          const activeColor = colorMap[routeName] || '#0EA5E9';
+          const activeColor = tokens.colors.joy.lavender; // Purple accent from design
+          const inactiveColor = tokens.colors.text.muted;
 
-          // Compact, elegant active tab with gradient
+          // New glassmorphism design: Purple accent with rounded container
           if (focused) {
             return (
               <View style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
+                width: 48,
+                height: 48,
+                borderRadius: 16,
                 backgroundColor: activeColor,
                 alignItems: 'center',
                 justifyContent: 'center',
                 ...tokens.shadow.glow,
               }}>
-                <Ionicons name={baseIcon} size={ICON_SIZE} color="#FFFFFF" />
+                <Ionicons name={baseIcon} size={ICON_SIZE} color={tokens.colors.text.white} />
               </View>
             );
           }
 
-          return <Ionicons name={iconName} size={ICON_SIZE} color={activeColor} />;
+          return <Ionicons name={iconName} size={ICON_SIZE} color={inactiveColor} />;
         },
-        tabBarActiveTintColor: '#0EA5E9',
+        tabBarActiveTintColor: tokens.colors.joy.lavender, // Purple accent
         tabBarInactiveTintColor: tokens.colors.text.muted,
         tabBarStyle: {
           backgroundColor: tokens.colors.background.secondary,
           borderTopWidth: 1,
           borderTopColor: tokens.colors.border.light,
-          height: 70 + insets.bottom,
-          paddingBottom: 6 + insets.bottom,
-          paddingTop: 8,
-          ...tokens.shadow.elevated,
+          height: 75 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
+          paddingTop: 10,
+          ...tokens.shadow.card,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: '600',
-          marginTop: 2,
+          marginTop: 4,
           letterSpacing: 0.3,
         },
         headerShown: false,

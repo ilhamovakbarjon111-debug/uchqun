@@ -4,7 +4,7 @@ import SchoolRating from '../models/SchoolRating.js';
 import User from '../models/User.js';
 import Child from '../models/Child.js';
 import Payment from '../models/Payment.js';
-import TherapyUsage from '../models/TherapyUsage.js';
+import _TherapyUsage from '../models/TherapyUsage.js';
 import AIWarning from '../models/AIWarning.js';
 import { Op } from 'sequelize';
 import logger from '../utils/logger.js';
@@ -258,7 +258,7 @@ export const getSchoolsStats = async (req, res) => {
  */
 export const getStudentsStats = async (req, res) => {
   try {
-    const { schoolId, region, district } = req.query;
+    const { schoolId, region: _region, district: _district } = req.query;
 
     const where = {};
     if (schoolId) {
@@ -596,23 +596,27 @@ export const generateStats = async (req, res) => {
     let data = {};
 
     switch (statType) {
-      case 'overview':
+      case 'overview': {
         // Get overview data
         const overview = await getOverviewData(region, district, periodStart, periodEnd);
         data = overview;
         break;
-      case 'schools':
+      }
+      case 'schools': {
         const schools = await getSchoolsData(region, district);
         data = schools;
         break;
-      case 'ratings':
+      }
+      case 'ratings': {
         const ratings = await getRatingsData(schoolId, periodStart, periodEnd);
         data = ratings;
         break;
-      case 'payments':
+      }
+      case 'payments': {
         const payments = await getPaymentsData(schoolId, periodStart, periodEnd);
         data = payments;
         break;
+      }
       default:
         return res.status(400).json({ error: 'Invalid stat type' });
     }
@@ -758,12 +762,12 @@ export const getSchoolRatings = async (req, res) => {
 };
 
 // Helper functions
-async function getOverviewData(region, district, startDate, endDate) {
+async function getOverviewData(_region, _district, _startDate, _endDate) {
   const schoolsCount = await School.count({ where: { isActive: true } });
   const studentsCount = await Child.count();
   const teachersCount = await User.count({ where: { role: 'teacher' } });
   const parentsCount = await User.count({ where: { role: 'parent' } });
-  
+
   const ratings = await SchoolRating.findAll({ attributes: ['stars', 'evaluation'] });
   const ratingResult = computeAverageRating(ratings);
 
@@ -776,7 +780,7 @@ async function getOverviewData(region, district, startDate, endDate) {
   };
 }
 
-async function getSchoolsData(region, district) {
+async function getSchoolsData(_region, _district) {
   const schools = await School.findAll({ where: { isActive: true } });
   return { schools: schools.length, data: schools };
 }

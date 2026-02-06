@@ -1,21 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View, Text, Modal, TextInput, TouchableOpacity, Pressable, Alert } from 'react-native';
+import { FlatList, StyleSheet, View, Text, Modal, TextInput, TouchableOpacity, Pressable, Alert, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { teacherService } from '../../services/teacherService';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import Card from '../../components/common/Card';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
-import TeacherBackground from '../../components/layout/TeacherBackground';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import tokens from '../../styles/tokens';
 
 const THERAPY_TYPES = ['speech', 'occupational', 'physical', 'behavioral', 'other'];
 
 export function TherapyScreen() {
   const route = useRoute();
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { childId, childName } = route.params || {};
 
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -46,7 +52,7 @@ export function TherapyScreen() {
 
   const handleSave = async () => {
     if (!formData.date || !formData.duration) {
-      Alert.alert('Error', 'Date and duration are required.');
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('therapy.dateDurationRequired', { defaultValue: 'Date and duration are required.' }));
       return;
     }
     setSaving(true);
@@ -59,7 +65,7 @@ export function TherapyScreen() {
       loadSessions();
     } catch (error) {
       console.error('Error creating therapy session:', error);
-      Alert.alert('Error', 'Failed to create session.');
+      Alert.alert(t('common.error', { defaultValue: 'Error' }), t('therapy.createFailed', { defaultValue: 'Failed to create session.' }));
     } finally {
       setSaving(false);
     }
@@ -78,7 +84,7 @@ export function TherapyScreen() {
         <Text style={styles.sessionDate}>{formatDate(item.date || item.createdAt)}</Text>
       </View>
       {item.duration != null && (
-        <Text style={styles.sessionDuration}>{item.duration} minutes</Text>
+        <Text style={styles.sessionDuration}>{item.duration} {t('therapy.minutes', { defaultValue: 'minutes' })}</Text>
       )}
       {item.notes ? <Text style={styles.sessionNotes}>{item.notes}</Text> : null}
     </Card>
@@ -87,17 +93,16 @@ export function TherapyScreen() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <View style={styles.container}>
-      <TeacherBackground />
-      <ScreenHeader title={`Therapy - ${childName || ''}`} />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader title={t('therapy.title', { defaultValue: 'Therapy' })} />
       {sessions.length === 0 ? (
-        <EmptyState icon="medkit-outline" message="No therapy sessions found" />
+        <EmptyState icon="medkit-outline" message={t('therapy.noSessions', { defaultValue: 'No therapy sessions found' })} />
       ) : (
         <FlatList
           data={sessions}
           renderItem={renderSession}
           keyExtractor={(item) => (item.id || item._id || Math.random()).toString()}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomPadding }]}
           refreshing={loading}
           onRefresh={loadSessions}
           showsVerticalScrollIndicator={false}
@@ -112,13 +117,13 @@ export function TherapyScreen() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>New Session</Text>
+              <Text style={styles.modalTitle}>{t('therapy.newSession', { defaultValue: 'New Session' })}</Text>
               <TouchableOpacity onPress={() => setShowModal(false)}>
                 <Ionicons name="close" size={24} color={tokens.colors.text.secondary} />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.inputLabel}>Type</Text>
+            <Text style={styles.inputLabel}>{t('therapy.type', { defaultValue: 'Type' })}</Text>
             <View style={styles.typeSelector}>
               {THERAPY_TYPES.map((t) => (
                 <Pressable
@@ -127,13 +132,13 @@ export function TherapyScreen() {
                   onPress={() => setFormData({ ...formData, type: t })}
                 >
                   <Text style={[styles.typeOptionText, formData.type === t && styles.typeOptionTextActive]}>
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                    {t(`therapy.types.${t}`, { defaultValue: t.charAt(0).toUpperCase() + t.slice(1) })}
                   </Text>
                 </Pressable>
               ))}
             </View>
 
-            <Text style={styles.inputLabel}>Date</Text>
+            <Text style={styles.inputLabel}>{t('therapy.date', { defaultValue: 'Date' })}</Text>
             <TextInput
               style={styles.input}
               value={formData.date}
@@ -142,7 +147,7 @@ export function TherapyScreen() {
               placeholderTextColor={tokens.colors.text.tertiary}
             />
 
-            <Text style={styles.inputLabel}>Duration (minutes)</Text>
+            <Text style={styles.inputLabel}>{t('therapy.duration', { defaultValue: 'Duration (minutes)' })}</Text>
             <TextInput
               style={styles.input}
               value={formData.duration}
@@ -152,33 +157,33 @@ export function TherapyScreen() {
               keyboardType="numeric"
             />
 
-            <Text style={styles.inputLabel}>Notes</Text>
+            <Text style={styles.inputLabel}>{t('therapy.notes', { defaultValue: 'Notes' })}</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={formData.notes}
               onChangeText={(v) => setFormData({ ...formData, notes: v })}
-              placeholder="Optional notes..."
+              placeholder={t('therapy.notesPlaceholder', { defaultValue: 'Optional notes...' })}
               placeholderTextColor={tokens.colors.text.tertiary}
               multiline
             />
 
             <View style={styles.modalActions}>
               <Pressable style={styles.cancelButton} onPress={() => setShowModal(false)}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>{t('common.cancel', { defaultValue: 'Cancel' })}</Text>
               </Pressable>
               <Pressable style={[styles.saveButton, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-                <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save'}</Text>
+                <Text style={styles.saveButtonText}>{saving ? t('common.saving', { defaultValue: 'Saving...' }) : t('common.save', { defaultValue: 'Save' })}</Text>
               </Pressable>
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: tokens.colors.surface.secondary },
+  container: { flex: 1, backgroundColor: tokens.colors.background.primary },
   list: { padding: tokens.space.md, paddingBottom: 100 },
   fab: {
     position: 'absolute', bottom: 90, right: tokens.space.md,
