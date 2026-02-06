@@ -7,8 +7,9 @@ import { useNavigation } from '@react-navigation/native';
 import { parentService } from '../../services/parentService';
 import { api } from '../../services/api';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
-import Card from '../../components/common/Card';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
+import { GlassCard } from '../../components/teacher/GlassCard';
 import Skeleton from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
@@ -16,12 +17,16 @@ import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 export function PaymentsScreen() {
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [selectedChildId, setSelectedChildId] = useState(null);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [daysRemaining, setDaysRemaining] = useState(0);
   const [nextPaymentDate, setNextPaymentDate] = useState(null);
   const [monthlyAmount, setMonthlyAmount] = useState(0);
+
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   useEffect(() => {
     // Get first child as selected child
@@ -133,48 +138,35 @@ export function PaymentsScreen() {
     return labels[provider] || t('payments.paymentProvider.other', { defaultValue: 'To\'lov' });
   };
 
-  const header = (
-    <View style={styles.headerContainer}>
-      <LinearGradient
-        colors={[tokens.colors.semantic.warning, tokens.colors.joy.peach]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
-      >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </Pressable>
-        <View style={styles.headerTitleContainer}>
-          <Ionicons name="card-outline" size={24} color="#fff" />
-          <Text style={styles.topBarTitle} allowFontScaling={true}>
-            {t('payments.title', { defaultValue: 'To\'lovlar' })}
-          </Text>
-        </View>
-        <View style={styles.placeholder} />
-      </LinearGradient>
-    </View>
-  );
-
   if (loading) {
     return (
-      <Screen scroll={false} padded={false} header={header}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ScreenHeader title={t('payments.title', { defaultValue: 'To\'lovlar' })} showBack={true} />
         <LoadingSpinner />
-      </Screen>
+      </SafeAreaView>
     );
   }
 
   return (
-    <Screen scroll={true} padded={true} header={header} background="parent">
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader title={t('payments.title', { defaultValue: 'To\'lovlar' })} showBack={true} />
+      
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
       <Text style={styles.subtitle} allowFontScaling={true}>
         {t('payments.subtitle', { defaultValue: 'Oylik to\'lovlar va to\'lov tarixi' })}
       </Text>
 
       {/* Monthly Payment Card */}
-      <Card style={styles.monthlyCard} variant="gradient" gradientColors={[tokens.colors.accent.blue, tokens.colors.accent.blueVibrant]} shadow="elevated">
+      <GlassCard style={styles.monthlyCard}>
+        <LinearGradient
+          colors={[tokens.colors.accent.blue, tokens.colors.accent.blueVibrant]}
+          style={StyleSheet.absoluteFill}
+          borderRadius={tokens.radius.lg}
+        />
         <View style={styles.monthlyCardContent}>
           <View style={styles.monthlyCardLeft}>
             <Text style={styles.monthlyCardTitle} allowFontScaling={true}>
@@ -212,7 +204,7 @@ export function PaymentsScreen() {
             <Text style={styles.noteLabel}>{t('payments.note', { defaultValue: 'Eslatma' })}:</Text> {t('payments.noteText', { defaultValue: 'To\'lov qilish uchun admin bilan bog\'laning yoki admin panel orqali to\'lov qiling.' })}
           </Text>
         </View>
-      </Card>
+      </GlassCard>
 
       {/* Payment History */}
       <View style={styles.historySection}>
@@ -226,7 +218,7 @@ export function PaymentsScreen() {
         {payments && payments.length > 0 ? (
           <View style={styles.paymentsList}>
             {payments.map((payment) => (
-              <Card key={payment.id} style={styles.paymentCard} variant="elevated" shadow="soft">
+              <GlassCard key={payment.id} style={styles.paymentCard}>
                 <View style={styles.paymentCardContent}>
                   <View style={styles.paymentCardLeft}>
                     <View style={styles.paymentIconContainer}>
@@ -250,58 +242,34 @@ export function PaymentsScreen() {
                     </Text>
                   </View>
                 </View>
-              </Card>
+              </GlassCard>
             ))}
           </View>
         ) : (
-          <Card style={styles.emptyCard}>
+          <GlassCard style={styles.emptyCard}>
             <EmptyState
               icon="card-outline"
               title={t('payments.noPayments', { defaultValue: 'To\'lovlar yo\'q' })}
               description={t('payments.noPaymentsDesc', { defaultValue: 'Hozircha to\'lovlar mavjud emas' })}
             />
-          </Card>
+          </GlassCard>
         )}
       </View>
-    </Screen>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    overflow: 'hidden',
-  },
-  headerGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: tokens.space.lg,
-    paddingVertical: tokens.space.md,
-    paddingTop: tokens.space.xl,
-    paddingBottom: tokens.space.lg,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...tokens.shadow.sm,
-  },
-  headerTitleContainer: {
+  container: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: tokens.space.sm,
+    backgroundColor: tokens.colors.background.primary,
   },
-  topBarTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: '#fff',
+  scrollView: {
+    flex: 1,
   },
-  placeholder: {
-    width: 44,
+  scrollContent: {
+    padding: tokens.space.lg,
   },
   subtitle: {
     fontSize: tokens.type.body.fontSize,
@@ -311,6 +279,7 @@ const styles = StyleSheet.create({
   },
   monthlyCard: {
     marginBottom: tokens.space.lg,
+    overflow: 'hidden',
   },
   monthlyCardContent: {
     flexDirection: 'row',

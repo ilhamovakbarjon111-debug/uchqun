@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, Alert, Modal, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Image, Animated } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -10,22 +10,21 @@ import { useNavigation } from '@react-navigation/native';
 import { changeLanguage, getCurrentLanguage, getAvailableLanguages } from '../../i18n/config';
 import tokens from '../../styles/tokens';
 import { api } from '../../services/api';
-import { API_URL } from '../../config';
-
-function getAvatarUrl(avatar) {
-  if (!avatar) return null;
-  if (avatar.startsWith('http')) return avatar;
-  const base = (API_URL || '').replace(/\/api\/?$/, '');
-  return `${base}${avatar.startsWith('/') ? '' : '/'}${avatar}`;
-}
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 
 export function SettingsScreen() {
   const { user, logout, refreshUser } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [currentLanguage, setCurrentLanguage] = useState('en');
   const parentNavigation = navigation?.getParent?.();
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -49,7 +48,6 @@ export function SettingsScreen() {
     },
   });
   const [profileLoading, setProfileLoading] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     setCurrentLanguage(getCurrentLanguage());
@@ -138,73 +136,6 @@ export function SettingsScreen() {
       Alert.alert(t('common.error', { defaultValue: 'Error' }), message);
     } finally {
       setPasswordLoading(false);
-    }
-  };
-
-  const handleAvatarUpload = async () => {
-    try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          t('common.error', { defaultValue: 'Error' }),
-          t('profile.photoPermissionRequired', { defaultValue: 'Photo library permission is required' })
-        );
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (result.canceled) return;
-
-      setUploadingAvatar(true);
-
-      const asset = result.assets[0];
-      const uri = asset.uri;
-      const filename = uri.split('/').pop() || `avatar-${Date.now()}.jpg`;
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-      const formData = new FormData();
-      // Properly format the file for React Native
-      formData.append('avatar', {
-        uri: uri,
-        name: filename,
-        type: type,
-      });
-
-      console.log('[Avatar Upload] Uploading avatar:', { filename, type, uri: uri.substring(0, 50) });
-
-      const response = await api.put('/user/avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      console.log('[Avatar Upload] Success:', response.data);
-
-      if (refreshUser) {
-        await refreshUser();
-      }
-
-      Alert.alert(
-        t('common.success', { defaultValue: 'Muvaffaqiyatli' }),
-        t('profile.avatarUpdated', { defaultValue: 'Avatar muvaffaqiyatli yangilandi' })
-      );
-    } catch (error) {
-      console.error('[Avatar Upload] Error:', error);
-      console.error('[Avatar Upload] Error response:', error?.response?.data);
-      const errorMessage = error?.response?.data?.error || error?.message || t('profile.uploadError', { defaultValue: 'Avatar yuklashda xatolik' });
-      Alert.alert(
-        t('common.error', { defaultValue: 'Xatolik' }),
-        errorMessage
-      );
-    } finally {
-      setUploadingAvatar(false);
     }
   };
 
@@ -310,31 +241,15 @@ export function SettingsScreen() {
   ];
 
   return (
-    <View style={styles.container}>
-      {/* Gradient background */}
-      <LinearGradient
-        colors={['#0F172A', '#1E293B', '#334155']}
-        style={StyleSheet.absoluteFillObject}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('settings.title', { defaultValue: 'Settings' })}
+        showBack={false}
       />
-
-      {/* Header */}
-      <LinearGradient
-        colors={['#6366F1', '#8B5CF6']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.header}
-      >
-        <View style={styles.headerContent}>
-          <View style={styles.headerIconContainer}>
-            <Ionicons name="settings" size={20} color="#FFFFFF" />
-          </View>
-          <Text style={styles.headerTitle}>{t('settings.title', { defaultValue: 'Settings' })}</Text>
-        </View>
-      </LinearGradient>
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View
@@ -343,68 +258,10 @@ export function SettingsScreen() {
             transform: [{ translateY: slideAnim }],
           }}
         >
-          {/* Profile Card */}
-          <View style={styles.profileCard}>
-            <LinearGradient
-              colors={['rgba(51, 65, 85, 0.8)', 'rgba(30, 41, 59, 0.7)']}
-              style={styles.profileCardGradient}
-            >
-              <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar}>
-                <View style={styles.avatarContainer}>
-                  {user?.avatar ? (
-                    <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.avatarImage} resizeMode="cover" />
-                  ) : (
-                    <LinearGradient
-                      colors={['#8B5CF6', '#6366F1']}
-                      style={styles.avatarGradient}
-                    >
-                      <Text style={styles.avatarText}>
-                        {user?.firstName?.charAt(0) || ''}{user?.lastName?.charAt(0) || ''}
-                      </Text>
-                    </LinearGradient>
-                  )}
-                  {uploadingAvatar && (
-                    <View style={styles.uploadingOverlay}>
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    </View>
-                  )}
-                  <View style={styles.cameraButton}>
-                    <Ionicons name="camera" size={12} color="#FFFFFF" />
-                  </View>
-                </View>
-              </TouchableOpacity>
-              <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>
-                  {user?.firstName ?? '—'} {user?.lastName ?? ''}
-                </Text>
-                <View style={styles.emailRow}>
-                  <Ionicons name="mail-outline" size={12} color={tokens.colors.text.muted} />
-                  <Text style={styles.profileEmail}>{user?.email ?? '—'}</Text>
-                </View>
-                <View style={styles.roleBadge}>
-                  <LinearGradient
-                    colors={['rgba(99, 102, 241, 0.15)', 'rgba(139, 92, 246, 0.15)']}
-                    style={styles.roleBadgeGradient}
-                  >
-                    <Ionicons name="people" size={12} color="#A78BFA" />
-                    <Text style={styles.roleText}>{t('dashboard.roleParent', { defaultValue: 'Parent' })}</Text>
-                  </LinearGradient>
-                </View>
-              </View>
-            </LinearGradient>
-          </View>
-
           {/* Language Section */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="language-outline" size={18} color="#A78BFA" />
-              <Text style={styles.sectionTitle}>{t('settings.language', { defaultValue: 'Language' })}</Text>
-            </View>
-            <View style={styles.sectionCard}>
-              <LinearGradient
-                colors={['rgba(51, 65, 85, 0.6)', 'rgba(30, 41, 59, 0.5)']}
-                style={styles.sectionCardGradient}
-              >
+            <Text style={styles.sectionTitle}>{t('settings.language', { defaultValue: 'Language' })}</Text>
+            <GlassCard style={styles.sectionCard}>
                 {(getAvailableLanguages() || []).map((lang, index) => (
                   <Pressable
                     key={lang.code}
@@ -432,21 +289,14 @@ export function SettingsScreen() {
                     )}
                   </Pressable>
                 ))}
-              </LinearGradient>
-            </View>
+            </GlassCard>
           </View>
 
           {/* Settings Sections */}
           {settingsSections.map((section, sectionIndex) => (
             <View key={sectionIndex} style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>{section.title}</Text>
-              </View>
-              <View style={styles.sectionCard}>
-                <LinearGradient
-                  colors={['rgba(51, 65, 85, 0.6)', 'rgba(30, 41, 59, 0.5)']}
-                  style={styles.sectionCardGradient}
-                >
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+              <GlassCard style={styles.sectionCard}>
                   {section.items.map((item, itemIndex) => (
                     <Pressable
                       key={itemIndex}
@@ -471,8 +321,7 @@ export function SettingsScreen() {
                       <Ionicons name="chevron-forward" size={16} color={tokens.colors.text.muted} />
                     </Pressable>
                   ))}
-                </LinearGradient>
-              </View>
+              </GlassCard>
             </View>
           ))}
         </Animated.View>
@@ -511,10 +360,7 @@ export function SettingsScreen() {
                     <View key={field.key} style={styles.inputGroup}>
                       <Text style={styles.inputLabel}>{field.label}</Text>
                       <View style={styles.inputContainer}>
-                        <LinearGradient
-                          colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
-                          style={styles.passwordInputGradient}
-                        >
+                        <View style={styles.passwordInputGradient}>
                           <TextInput
                             style={styles.passwordTextInput}
                             value={passwordData[field.key]}
@@ -534,7 +380,7 @@ export function SettingsScreen() {
                               color={tokens.colors.text.muted}
                             />
                           </TouchableOpacity>
-                        </LinearGradient>
+                        </View>
                       </View>
                     </View>
                   ))}
@@ -581,10 +427,7 @@ export function SettingsScreen() {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <LinearGradient
-                colors={['rgba(51, 65, 85, 0.95)', 'rgba(30, 41, 59, 0.95)']}
-                style={styles.modalGradient}
-              >
+              <View style={styles.modalGradient}>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>{t('settings.editProfile', { defaultValue: 'Edit Profile' })}</Text>
                   <TouchableOpacity onPress={() => setShowProfileModal(false)} hitSlop={10}>
@@ -596,55 +439,40 @@ export function SettingsScreen() {
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>{t('settings.firstName', { defaultValue: 'First Name' })}</Text>
                     <View style={styles.inputContainer}>
-                      <LinearGradient
-                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
-                        style={styles.inputGradient}
-                      >
-                        <TextInput
-                          style={styles.textInput}
-                          value={profileData.firstName}
-                          onChangeText={(text) => setProfileData({ ...profileData, firstName: text })}
-                          placeholder={t('settings.firstName', { defaultValue: 'First Name' })}
-                          placeholderTextColor={tokens.colors.text.muted}
-                        />
-                      </LinearGradient>
+                      <TextInput
+                        style={styles.textInput}
+                        value={profileData.firstName}
+                        onChangeText={(text) => setProfileData({ ...profileData, firstName: text })}
+                        placeholder={t('settings.firstName', { defaultValue: 'First Name' })}
+                        placeholderTextColor={tokens.colors.text.muted}
+                      />
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>{t('settings.lastName', { defaultValue: 'Last Name' })}</Text>
                     <View style={styles.inputContainer}>
-                      <LinearGradient
-                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
-                        style={styles.inputGradient}
-                      >
-                        <TextInput
-                          style={styles.textInput}
-                          value={profileData.lastName}
-                          onChangeText={(text) => setProfileData({ ...profileData, lastName: text })}
-                          placeholder={t('settings.lastName', { defaultValue: 'Last Name' })}
-                          placeholderTextColor={tokens.colors.text.muted}
-                        />
-                      </LinearGradient>
+                      <TextInput
+                        style={styles.textInput}
+                        value={profileData.lastName}
+                        onChangeText={(text) => setProfileData({ ...profileData, lastName: text })}
+                        placeholder={t('settings.lastName', { defaultValue: 'Last Name' })}
+                        placeholderTextColor={tokens.colors.text.muted}
+                      />
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>{t('settings.phone', { defaultValue: 'Phone' })}</Text>
                     <View style={styles.inputContainer}>
-                      <LinearGradient
-                        colors={['rgba(148, 163, 184, 0.1)', 'rgba(100, 116, 139, 0.05)']}
-                        style={styles.inputGradient}
-                      >
-                        <TextInput
-                          style={styles.textInput}
-                          value={profileData.phone}
-                          onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
-                          placeholder="+998 XX XXX XX XX"
-                          placeholderTextColor={tokens.colors.text.muted}
-                          keyboardType="phone-pad"
-                        />
-                      </LinearGradient>
+                      <TextInput
+                        style={styles.textInput}
+                        value={profileData.phone}
+                        onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
+                        placeholder="+998 XX XXX XX XX"
+                        placeholderTextColor={tokens.colors.text.muted}
+                        keyboardType="phone-pad"
+                      />
                     </View>
                   </View>
 
@@ -671,167 +499,37 @@ export function SettingsScreen() {
                     </LinearGradient>
                   </Pressable>
                 </View>
-              </LinearGradient>
+              </View>
             </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    paddingTop: 50,
-    paddingBottom: tokens.space.lg,
-    paddingHorizontal: tokens.space.xl,
-    ...tokens.shadow.soft,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: tokens.space.sm,
-  },
-  headerIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.white,
-    letterSpacing: -0.3,
+    backgroundColor: tokens.colors.background.primary,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: tokens.space.lg,
-    paddingBottom: tokens.space['3xl'],
-  },
-  profileCard: {
-    borderRadius: tokens.radius.xl,
-    marginBottom: tokens.space.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.15)',
-    ...tokens.shadow.soft,
-  },
-  profileCardGradient: {
-    padding: tokens.space.xl,
-    alignItems: 'center',
-  },
-  avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: tokens.space.md,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  avatarGradient: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: tokens.colors.text.white,
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#6366F1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#334155',
-    ...tokens.shadow.sm,
-  },
-  uploadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileInfo: {
-    alignItems: 'center',
-  },
-  profileName: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.white,
-    marginBottom: tokens.space.xs,
-    letterSpacing: -0.3,
-  },
-  emailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.space.xs,
-    marginBottom: tokens.space.sm,
-  },
-  profileEmail: {
-    fontSize: tokens.type.sub.fontSize,
-    color: tokens.colors.text.muted,
-  },
-  roleBadge: {
-    borderRadius: tokens.radius.pill,
-    overflow: 'hidden',
-  },
-  roleBadgeGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: tokens.space.md,
-    paddingVertical: tokens.space.sm,
-    gap: tokens.space.xs,
-  },
-  roleText: {
-    fontSize: tokens.type.sub.fontSize,
-    fontWeight: '600',
-    color: '#A78BFA',
-    letterSpacing: 0.3,
   },
   section: {
     marginBottom: tokens.space.xl,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.space.sm,
-    marginBottom: tokens.space.md,
-    paddingHorizontal: tokens.space.sm,
-  },
   sectionTitle: {
     fontSize: tokens.type.h3.fontSize,
-    fontWeight: tokens.type.h3.fontWeight,
-    color: tokens.colors.text.white,
-    letterSpacing: -0.1,
+    fontWeight: '600',
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.md,
+    paddingHorizontal: 2,
   },
   sectionCard: {
-    borderRadius: tokens.radius.lg,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.1)',
-  },
-  sectionCardGradient: {
     padding: tokens.space.xs,
   },
   languageItem: {
@@ -841,12 +539,10 @@ const styles = StyleSheet.create({
     padding: tokens.space.md,
     borderRadius: tokens.radius.md,
     marginBottom: tokens.space.xs,
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.1)',
+    backgroundColor: tokens.colors.background.secondary,
   },
   languageItemActive: {
-    backgroundColor: 'rgba(139, 92, 246, 0.15)',
-    borderColor: 'rgba(139, 92, 246, 0.3)',
+    backgroundColor: tokens.colors.joy.lavenderSoft,
   },
   languageInfo: {
     flex: 1,
@@ -854,12 +550,12 @@ const styles = StyleSheet.create({
   languageName: {
     fontSize: tokens.type.body.fontSize,
     fontWeight: '600',
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     marginBottom: 2,
   },
   languageSubtitle: {
     fontSize: tokens.type.sub.fontSize,
-    color: tokens.colors.text.muted,
+    color: tokens.colors.text.secondary,
   },
   checkCircle: {
     width: 24,
@@ -867,14 +563,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: tokens.colors.accent.blue,
     ...tokens.shadow.sm,
   },
   emptyCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(148, 163, 184, 0.3)',
+    backgroundColor: tokens.colors.background.tertiary,
   },
   settingsItem: {
     flexDirection: 'row',
@@ -883,6 +579,7 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.md,
     marginBottom: tokens.space.xs,
     gap: tokens.space.md,
+    backgroundColor: tokens.colors.background.secondary,
   },
   iconCircle: {
     width: 40,
@@ -897,7 +594,7 @@ const styles = StyleSheet.create({
   settingsItemTitle: {
     fontSize: tokens.type.body.fontSize,
     fontWeight: '600',
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     marginBottom: 2,
   },
   settingsItemSubtitle: {
@@ -923,6 +620,7 @@ const styles = StyleSheet.create({
   },
   modalGradient: {
     padding: tokens.space.xl,
+    backgroundColor: tokens.colors.background.secondary,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -933,7 +631,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     letterSpacing: -0.3,
   },
   modalBody: {
@@ -945,21 +643,17 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: tokens.type.sub.fontSize,
     fontWeight: '600',
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     letterSpacing: 0.3,
   },
   inputContainer: {
     borderRadius: tokens.radius.md,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.2)',
-  },
-  inputGradient: {
+    backgroundColor: tokens.colors.background.tertiary,
     padding: tokens.space.md,
   },
   textInput: {
     fontSize: tokens.type.body.fontSize,
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     padding: 0,
   },
   saveButton: {
@@ -984,12 +678,12 @@ const styles = StyleSheet.create({
   passwordInputGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: tokens.space.md,
+    flex: 1,
   },
   passwordTextInput: {
     flex: 1,
     fontSize: tokens.type.body.fontSize,
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     padding: 0,
   },
 });

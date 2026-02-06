@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import { uploadFile } from '../config/storage.js';
+import { emitToUser } from '../config/socket.js';
 
 export const updateProfile = async (req, res) => {
   try {
@@ -28,11 +29,19 @@ export const updateProfile = async (req, res) => {
 
     // Update the user
     await user.update(updateData);
-    
+
     // Reload to get fresh data
     await user.reload();
-    
-    res.json(user.toJSON());
+
+    const userData = user.toJSON();
+
+    // Emit real-time update to user (for other devices)
+    emitToUser(user.id, 'user:updated', {
+      user: userData,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.json(userData);
   } catch (error) {
     console.error('Update profile error:', error);
     const errorMessage = error.message || 'Failed to update profile';
@@ -53,7 +62,16 @@ export const updateAvatar = async (req, res) => {
     const uploadResult = await uploadFile(req.file.buffer, filename, req.file.mimetype);
     await user.update({ avatar: uploadResult.url });
     await user.reload();
-    res.json(user.toJSON());
+
+    const userData = user.toJSON();
+
+    // Emit real-time update to user (for other devices)
+    emitToUser(user.id, 'user:updated', {
+      user: userData,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.json(userData);
   } catch (error) {
     console.error('Update avatar error:', error);
     res.status(500).json({ error: error.message || 'Failed to update avatar' });

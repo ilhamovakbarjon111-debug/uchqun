@@ -15,8 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { teacherService } from '../../services/teacherService';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
-import TeacherBackground from '../../components/layout/TeacherBackground';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import tokens from '../../styles/tokens';
@@ -39,7 +39,12 @@ const defaultEmotionalState = () =>
 export function MonitoringJournalScreen() {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
   const [monitoringRecords, setMonitoringRecords] = useState([]);
   const [children, setChildren] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -201,12 +206,11 @@ export function MonitoringJournalScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <TeacherBackground />
-      <ScreenHeader title={t('monitoring.title')} />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader title={t('monitoring.title', { defaultValue: 'Weekly Monitoring Journal' })} />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.subtitle}>{t('monitoring.subtitle')}</Text>
@@ -365,12 +369,12 @@ export function MonitoringJournalScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: tokens.colors.surface.secondary },
+  container: { flex: 1, backgroundColor: tokens.colors.background.primary }, // Warm Sand - beige background
   scroll: { flex: 1 },
   content: { padding: tokens.space.md, paddingBottom: tokens.space.xl * 2 },
   subtitle: {

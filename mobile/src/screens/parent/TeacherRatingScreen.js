@@ -1,11 +1,16 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { StyleSheet, Text, View, Pressable, TextInput, Alert, ScrollView, Animated } from 'react-native';
+import { StyleSheet, Text, View, Pressable, TextInput, Alert, ScrollView, Animated, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import tokens from '../../styles/tokens';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import EmptyState from '../../components/common/EmptyState';
 
 // Animated Star Component
 function AnimatedStar({ value, currentRating, onPress }) {
@@ -47,6 +52,7 @@ export function TeacherRatingScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { childId = null } = route?.params || {};
 
   const [loading, setLoading] = useState(true);
@@ -63,6 +69,9 @@ export function TeacherRatingScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const successAnim = useRef(new Animated.Value(0)).current;
+
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   useEffect(() => {
     loadData();
@@ -166,109 +175,48 @@ export function TeacherRatingScreen() {
   };
 
   if (loading) {
-    return (
-      <View style={styles.container}>
-        <LinearGradient
-          colors={['#0F172A', '#1E293B', '#334155']}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <View style={styles.loadingContainer}>
-          <Ionicons name="star" size={48} color="#FBBF24" />
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      </View>
-    );
-  }
-
-  if (!teacher) {
-    return (
-      <View style={styles.container}>
-        <LinearGradient
-          colors={['#0F172A', '#1E293B', '#334155']}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <LinearGradient
-          colors={['#F59E0B', '#F97316']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.header}
-        >
-          <Pressable
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            hitSlop={10}
-          >
-            <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
-          </Pressable>
-          <Text style={styles.headerTitle}>{t('ratingPage.title', { defaultValue: 'Rate Teacher' })}</Text>
-          <View style={styles.backButton} />
-        </LinearGradient>
-        <View style={styles.emptyContainer}>
-          <Ionicons name="person-outline" size={64} color="rgba(148, 163, 184, 0.5)" />
-          <Text style={styles.emptyTitle}>{t('ratingPage.noTeacher', { defaultValue: 'No Teacher Assigned' })}</Text>
-          <Text style={styles.emptyText}>{t('ratingPage.noTeacherDesc', { defaultValue: 'You will be able to rate your teacher once assigned' })}</Text>
-        </View>
-      </View>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
-    <View style={styles.container}>
-      {/* Background */}
-      <LinearGradient
-        colors={['#0F172A', '#1E293B', '#334155']}
-        style={StyleSheet.absoluteFillObject}
-      />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader title={t('ratingPage.title', { defaultValue: 'Rate Teacher' })} showBack={true} />
 
-      {/* Header */}
-      <LinearGradient
-        colors={['#F59E0B', '#F97316']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.header}
-      >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={10}
+      {!teacher ? (
+        <View style={styles.emptyContainer}>
+          <GlassCard style={styles.emptyCard}>
+            <EmptyState
+              icon="person-outline"
+              title={t('ratingPage.noTeacher', { defaultValue: 'No Teacher Assigned' })}
+              description={t('ratingPage.noTeacherDesc', { defaultValue: 'You will be able to rate your teacher once assigned' })}
+            />
+          </GlassCard>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+          showsVerticalScrollIndicator={false}
         >
-          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
-        </Pressable>
-        <Text style={styles.headerTitle}>{t('ratingPage.title', { defaultValue: 'Rate Teacher' })}</Text>
-        <View style={styles.backButton} />
-      </LinearGradient>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Animated.View
-          style={{
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          }}
-        >
-          {/* Teacher Card */}
-          <View style={styles.teacherCard}>
-            <LinearGradient
-              colors={['rgba(51, 65, 85, 0.8)', 'rgba(30, 41, 59, 0.7)']}
-              style={styles.teacherCardGradient}
-            >
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            }}
+          >
+            {/* Teacher Card */}
+            <GlassCard style={styles.teacherCard}>
               <View style={styles.teacherInfo}>
-                <LinearGradient
-                  colors={['#F59E0B', '#F97316']}
-                  style={styles.teacherAvatar}
-                >
+                <View style={styles.teacherAvatar}>
                   <Text style={styles.teacherAvatarText}>
                     {teacher.firstName?.[0]}{teacher.lastName?.[0]}
                   </Text>
-                </LinearGradient>
+                </View>
                 <View style={styles.teacherDetails}>
                   <Text style={styles.teacherLabel}>{t('ratingPage.yourTeacher', { defaultValue: 'Your Teacher' })}</Text>
                   <Text style={styles.teacherName}>{teacher.firstName} {teacher.lastName}</Text>
                   <View style={styles.teacherMeta}>
-                    <Ionicons name="mail-outline" size={12} color={tokens.colors.text.muted} />
+                    <Ionicons name="mail-outline" size={12} color={tokens.colors.text.secondary} />
                     <Text style={styles.teacherEmail}>{teacher.email}</Text>
                   </View>
                 </View>
@@ -276,24 +224,16 @@ export function TeacherRatingScreen() {
 
               {/* Average Rating Badge */}
               <View style={styles.averageBadge}>
-                <LinearGradient
-                  colors={['rgba(251, 191, 36, 0.15)', 'rgba(251, 191, 36, 0.05)']}
-                  style={styles.averageBadgeGradient}
-                >
+                <View style={styles.averageBadgeContent}>
                   <Ionicons name="star" size={18} color="#FBBF24" />
                   <Text style={styles.averageValue}>{summary.average?.toFixed(1) || '0.0'}</Text>
                   <Text style={styles.averageCount}>({summary.count || 0})</Text>
-                </LinearGradient>
+                </View>
               </View>
-            </LinearGradient>
-          </View>
+            </GlassCard>
 
-          {/* Rating Section */}
-          <View style={styles.ratingCard}>
-            <LinearGradient
-              colors={['rgba(51, 65, 85, 0.6)', 'rgba(30, 41, 59, 0.5)']}
-              style={styles.ratingCardGradient}
-            >
+            {/* Rating Section */}
+            <GlassCard style={styles.ratingCard}>
               <View style={styles.ratingHeader}>
                 <Ionicons name="star-outline" size={22} color="#FBBF24" />
                 <Text style={styles.ratingTitle}>{t('ratingPage.starsLabel', { defaultValue: 'Rate Your Teacher' })}</Text>
@@ -330,28 +270,23 @@ export function TeacherRatingScreen() {
                   <Text style={styles.optionalLabel}>{t('ratingPage.optional', { defaultValue: 'Optional' })}</Text>
                 </View>
                 <View style={styles.commentInputContainer}>
-                  <LinearGradient
-                    colors={['rgba(148, 163, 184, 0.08)', 'rgba(100, 116, 139, 0.04)']}
-                    style={styles.commentInputGradient}
-                  >
-                    <TextInput
-                      style={styles.commentInput}
-                      value={comment}
-                      onChangeText={setComment}
-                      placeholder={t('ratingPage.commentPlaceholder', { defaultValue: 'Share your thoughts...' })}
-                      placeholderTextColor={tokens.colors.text.muted}
-                      multiline
-                      numberOfLines={4}
-                      textAlignVertical="top"
-                    />
-                  </LinearGradient>
+                  <TextInput
+                    style={styles.commentInput}
+                    value={comment}
+                    onChangeText={setComment}
+                    placeholder={t('ratingPage.commentPlaceholder', { defaultValue: 'Share your thoughts...' })}
+                    placeholderTextColor={tokens.colors.text.tertiary}
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                  />
                 </View>
               </View>
 
               {/* Error Message */}
               {error && (
                 <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle" size={16} color="#FCA5A5" />
+                  <Ionicons name="alert-circle" size={16} color={tokens.colors.semantic.error} />
                   <Text style={styles.errorText}>{error}</Text>
                 </View>
               )}
@@ -367,14 +302,14 @@ export function TeacherRatingScreen() {
                 disabled={saving}
               >
                 <LinearGradient
-                  colors={saving ? ['#64748B', '#475569'] : ['#F59E0B', '#F97316']}
+                  colors={saving ? [tokens.colors.border.medium, tokens.colors.border.medium] : [tokens.colors.semantic.warning, tokens.colors.semantic.warningVibrant]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.submitButtonGradient}
                 >
                   {saving ? (
                     <>
-                      <Ionicons name="hourglass-outline" size={18} color="#FFFFFF" />
+                      <ActivityIndicator color="#FFFFFF" size="small" />
                       <Text style={styles.submitButtonText}>{t('ratingPage.saving', { defaultValue: 'Saving...' })}</Text>
                     </>
                   ) : (
@@ -397,10 +332,10 @@ export function TeacherRatingScreen() {
                   })}
                 </Text>
               )}
-            </LinearGradient>
-          </View>
-        </Animated.View>
-      </ScrollView>
+            </GlassCard>
+          </Animated.View>
+        </ScrollView>
+      )}
 
       {/* Success Animation Overlay */}
       {showSuccess && (
@@ -418,63 +353,42 @@ export function TeacherRatingScreen() {
             },
           ]}
         >
-          <LinearGradient
-            colors={['rgba(16, 185, 129, 0.95)', 'rgba(5, 150, 105, 0.95)']}
-            style={styles.successContent}
-          >
+          <GlassCard style={styles.successContent}>
+            <LinearGradient
+              colors={[tokens.colors.semantic.success, tokens.colors.semantic.successVibrant]}
+              style={StyleSheet.absoluteFill}
+              borderRadius={tokens.radius['2xl']}
+            />
             <Ionicons name="checkmark-circle" size={64} color="#FFFFFF" />
             <Text style={styles.successTitle}>{t('ratingPage.success', { defaultValue: 'Rating Submitted!' })}</Text>
             <Text style={styles.successMessage}>{t('ratingPage.successDesc', { defaultValue: 'Thank you for your feedback' })}</Text>
-          </LinearGradient>
+          </GlassCard>
         </Animated.View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 50,
-    paddingBottom: tokens.space.lg,
-    paddingHorizontal: tokens.space.xl,
-    ...tokens.shadow.soft,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.white,
-    letterSpacing: -0.3,
+    backgroundColor: tokens.colors.background.primary,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: tokens.space.lg,
-    paddingBottom: tokens.space['3xl'],
+  },
+  emptyContainer: {
+    flex: 1,
+    padding: tokens.space.lg,
+  },
+  emptyCard: {
+    marginTop: tokens.space.xl,
   },
   teacherCard: {
-    borderRadius: tokens.radius.xl,
     marginBottom: tokens.space.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.15)',
-    ...tokens.shadow.soft,
-  },
-  teacherCardGradient: {
     padding: tokens.space.xl,
   },
   teacherInfo: {
@@ -489,6 +403,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: tokens.space.md,
+    backgroundColor: tokens.colors.semantic.warning,
     ...tokens.shadow.sm,
   },
   teacherAvatarText: {
@@ -502,7 +417,7 @@ const styles = StyleSheet.create({
   teacherLabel: {
     fontSize: tokens.type.caption.fontSize,
     fontWeight: '600',
-    color: '#FBBF24',
+    color: tokens.colors.semantic.warning,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -510,7 +425,7 @@ const styles = StyleSheet.create({
   teacherName: {
     fontSize: tokens.type.h3.fontSize,
     fontWeight: tokens.type.h3.fontWeight,
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     marginBottom: 4,
   },
   teacherMeta: {
@@ -520,14 +435,14 @@ const styles = StyleSheet.create({
   },
   teacherEmail: {
     fontSize: tokens.type.sub.fontSize,
-    color: tokens.colors.text.muted,
+    color: tokens.colors.text.secondary,
   },
   averageBadge: {
     borderRadius: tokens.radius.pill,
-    overflow: 'hidden',
     alignSelf: 'flex-start',
+    backgroundColor: tokens.colors.semantic.warningSoft,
   },
-  averageBadgeGradient: {
+  averageBadgeContent: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: tokens.space.md,
@@ -537,20 +452,14 @@ const styles = StyleSheet.create({
   averageValue: {
     fontSize: tokens.type.h3.fontSize,
     fontWeight: '700',
-    color: '#FBBF24',
+    color: tokens.colors.semantic.warning,
   },
   averageCount: {
     fontSize: tokens.type.sub.fontSize,
-    color: tokens.colors.text.muted,
+    color: tokens.colors.text.secondary,
   },
   ratingCard: {
-    borderRadius: tokens.radius.xl,
     marginBottom: tokens.space.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.1)',
-  },
-  ratingCardGradient: {
     padding: tokens.space.xl,
   },
   ratingHeader: {
@@ -562,7 +471,7 @@ const styles = StyleSheet.create({
   ratingTitle: {
     fontSize: tokens.type.h3.fontSize,
     fontWeight: tokens.type.h3.fontWeight,
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     letterSpacing: -0.1,
   },
   starsContainer: {
@@ -593,25 +502,21 @@ const styles = StyleSheet.create({
   commentLabel: {
     fontSize: tokens.type.sub.fontSize,
     fontWeight: '600',
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     letterSpacing: 0.2,
   },
   optionalLabel: {
     fontSize: tokens.type.caption.fontSize,
-    color: tokens.colors.text.muted,
+    color: tokens.colors.text.secondary,
   },
   commentInputContainer: {
     borderRadius: tokens.radius.md,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.2)',
-  },
-  commentInputGradient: {
+    backgroundColor: tokens.colors.background.tertiary,
     padding: tokens.space.md,
   },
   commentInput: {
     fontSize: tokens.type.body.fontSize,
-    color: tokens.colors.text.white,
+    color: tokens.colors.text.primary,
     minHeight: 100,
     textAlignVertical: 'top',
   },
@@ -619,9 +524,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: tokens.space.sm,
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(252, 165, 165, 0.3)',
+    backgroundColor: tokens.colors.semantic.errorSoft,
     padding: tokens.space.md,
     borderRadius: tokens.radius.md,
     marginBottom: tokens.space.xl,
@@ -629,7 +532,7 @@ const styles = StyleSheet.create({
   errorText: {
     flex: 1,
     fontSize: tokens.type.sub.fontSize,
-    color: '#FCA5A5',
+    color: tokens.colors.semantic.error,
   },
   submitButton: {
     borderRadius: tokens.radius.md,
@@ -651,7 +554,7 @@ const styles = StyleSheet.create({
   },
   lastUpdated: {
     fontSize: tokens.type.caption.fontSize,
-    color: tokens.colors.text.muted,
+    color: tokens.colors.text.secondary,
     textAlign: 'center',
     marginTop: tokens.space.md,
   },
@@ -667,6 +570,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...tokens.shadow.elevated,
     minWidth: '80%',
+    overflow: 'hidden',
   },
   successTitle: {
     fontSize: tokens.type.h1.fontSize,
@@ -678,34 +582,6 @@ const styles = StyleSheet.create({
   successMessage: {
     fontSize: tokens.type.body.fontSize,
     color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: tokens.space.md,
-  },
-  loadingText: {
-    fontSize: tokens.type.body.fontSize,
-    color: tokens.colors.text.white,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: tokens.space['3xl'],
-  },
-  emptyTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.white,
-    marginTop: tokens.space.xl,
-    marginBottom: tokens.space.sm,
-  },
-  emptyText: {
-    fontSize: tokens.type.body.fontSize,
-    color: tokens.colors.text.muted,
     textAlign: 'center',
   },
 });

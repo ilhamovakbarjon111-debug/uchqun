@@ -20,15 +20,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import { changeLanguage, getCurrentLanguage, getAvailableLanguages } from '../../i18n/config';
 import { parentService } from '../../services/parentService';
 import { activityService } from '../../services/activityService';
 import { mealService } from '../../services/mealService';
 import { mediaService } from '../../services/mediaService';
 import { api } from '../../services/api';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
-import Card from '../../components/common/Card';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import ListRow from '../../components/common/ListRow';
 import Skeleton from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
@@ -56,10 +58,16 @@ export function ChildProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { user, logout } = useAuth();
+  const { on, off, connected } = useSocket();
   const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { childId = null } = route?.params || {};
   
   const [loading, setLoading] = useState(true);
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
   const [child, setChild] = useState(null);
   const [children, setChildren] = useState([]);
   const [selectedChildId, setSelectedChildId] = useState(childId);
@@ -108,6 +116,67 @@ export function ChildProfileScreen() {
     // Messages endpoint might not be available, so we handle errors gracefully
     loadMessages();
   }, []);
+
+  // Real-time WebSocket listeners
+  useEffect(() => {
+    if (!connected || !selectedChildId) return;
+
+    const handleChildUpdate = (data) => {
+      console.log('[ChildProfile] Child updated:', data);
+      if (data.child?.id === selectedChildId) {
+        // Update photo timestamp to force image refresh
+        setPhotoTimestamp(Date.now());
+        loadChild(); // Reload child data
+      }
+    };
+
+    const handleActivityChange = (data) => {
+      console.log('[ChildProfile] Activity change:', data);
+      if (data.activity?.childId === selectedChildId || data.childId === selectedChildId) {
+        loadChild(); // Reload to update stats
+      }
+    };
+
+    const handleMealChange = (data) => {
+      console.log('[ChildProfile] Meal change:', data);
+      if (data.meal?.childId === selectedChildId || data.childId === selectedChildId) {
+        loadChild(); // Reload to update stats
+      }
+    };
+
+    const handleMediaChange = (data) => {
+      console.log('[ChildProfile] Media change:', data);
+      if (data.media?.childId === selectedChildId || data.childId === selectedChildId) {
+        loadChild(); // Reload to update stats
+      }
+    };
+
+    // Subscribe to events
+    on('child:updated', handleChildUpdate);
+    on('activity:created', handleActivityChange);
+    on('activity:updated', handleActivityChange);
+    on('activity:deleted', handleActivityChange);
+    on('meal:created', handleMealChange);
+    on('meal:updated', handleMealChange);
+    on('meal:deleted', handleMealChange);
+    on('media:created', handleMediaChange);
+    on('media:updated', handleMediaChange);
+    on('media:deleted', handleMediaChange);
+
+    // Cleanup
+    return () => {
+      off('child:updated', handleChildUpdate);
+      off('activity:created', handleActivityChange);
+      off('activity:updated', handleActivityChange);
+      off('activity:deleted', handleActivityChange);
+      off('meal:created', handleMealChange);
+      off('meal:updated', handleMealChange);
+      off('meal:deleted', handleMealChange);
+      off('media:created', handleMediaChange);
+      off('media:updated', handleMediaChange);
+      off('media:deleted', handleMediaChange);
+    };
+  }, [connected, selectedChildId, on, off]);
 
   const loadChildren = async () => {
     try {
@@ -431,90 +500,79 @@ export function ChildProfileScreen() {
   // Show child selector if multiple children and no child selected
   if (Array.isArray(children) && children.length > 1 && !selectedChildId) {
     return (
-      <Screen scroll={true} padded={true}>
-        <Card style={styles.card} variant="elevated" shadow="soft">
-          <Text style={styles.sectionTitle} allowFontScaling={true}>{t('child.selectPrompt', { defaultValue: 'Select your child' })}</Text>
-          <View style={styles.childrenGrid}>
-            {children.map((c) => (
-              <Pressable
-                key={c.id}
-                onPress={() => setSelectedChildId(c.id)}
-                style={styles.childSelectorCard}
-              >
-                <Card variant="elevated" shadow="sm" padding="md">
-                  <View style={styles.childSelectorContent}>
-                    <LinearGradient
-                      colors={[tokens.colors.accent.blue + '30', tokens.colors.accent.blue + '15']}
-                      style={styles.childSelectorAvatar}
-                    >
-                      <Text style={styles.childSelectorAvatarText}>
-                        {c.firstName?.charAt(0) || ''}{c.lastName?.charAt(0) || ''}
-                      </Text>
-                    </LinearGradient>
-                    <View style={styles.childSelectorInfo}>
-                      <Text style={styles.childSelectorName} allowFontScaling={true}>
-                        {c.firstName} {c.lastName}
-                      </Text>
-                      {c.school && (
-                        <Text style={styles.childSelectorSchool} allowFontScaling={true}>
-                          {c.school}
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ScreenHeader 
+          title={t('child.selectPrompt', { defaultValue: 'Select your child' })}
+          showBack={navigation.canGoBack()}
+        />
+        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}>
+          <GlassCard style={styles.card}>
+            <Text style={styles.sectionTitle} allowFontScaling={true}>{t('child.selectPrompt', { defaultValue: 'Select your child' })}</Text>
+            <View style={styles.childrenGrid}>
+              {children.map((c) => (
+                <Pressable
+                  key={c.id}
+                  onPress={() => setSelectedChildId(c.id)}
+                  style={styles.childSelectorCard}
+                >
+                  <GlassCard>
+                    <View style={styles.childSelectorContent}>
+                      <View style={[styles.childSelectorAvatar, { backgroundColor: tokens.colors.accent.blue + '30' }]}>
+                        <Text style={styles.childSelectorAvatarText}>
+                          {c.firstName?.charAt(0) || ''}{c.lastName?.charAt(0) || ''}
                         </Text>
-                      )}
+                      </View>
+                      <View style={styles.childSelectorInfo}>
+                        <Text style={styles.childSelectorName} allowFontScaling={true}>
+                          {c.firstName} {c.lastName}
+                        </Text>
+                        {c.school && (
+                          <Text style={styles.childSelectorSchool} allowFontScaling={true}>
+                            {c.school}
+                          </Text>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                </Card>
-              </Pressable>
-            ))}
-          </View>
-        </Card>
-      </Screen>
+                  </GlassCard>
+                </Pressable>
+              ))}
+            </View>
+          </GlassCard>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   if (!child) {
     return (
-      <Screen scroll={true} padded={true}>
-        <Card style={styles.emptyCard}>
-          <EmptyState
-            icon="person-outline"
-            title={t('child.notFoundTitle', { defaultValue: 'Child not found' })}
-            description={t('child.notFoundDesc', { defaultValue: 'No information found about your child' })}
-          />
-        </Card>
-      </Screen>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ScreenHeader 
+          title={t('child.profile', { defaultValue: 'Child Profile' })}
+          showBack={navigation.canGoBack()}
+        />
+        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}>
+          <GlassCard style={styles.emptyCard}>
+            <EmptyState
+              icon="person-outline"
+              title={t('child.notFoundTitle', { defaultValue: 'Child not found' })}
+              description={t('child.notFoundDesc', { defaultValue: 'No information found about your child' })}
+            />
+          </GlassCard>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
-  const header = (
-    <View style={styles.headerContainer}>
-      <LinearGradient
-        colors={[tokens.colors.accent.blue, tokens.colors.accent.blueVibrant]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
-      >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </Pressable>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.topBarTitle} allowFontScaling={true}>
-            {child.firstName} {child.lastName}
-          </Text>
-        </View>
-        <View style={styles.placeholder} />
-      </LinearGradient>
-    </View>
-  );
-
   return (
-    <Screen scroll={true} padded={false} header={header} background="parent">
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={`${child.firstName} ${child.lastName}`}
+        showBack={navigation.canGoBack()}
+      />
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}>
       {/* Child Selector (if multiple children) */}
       {Array.isArray(children) && children.length > 1 && (
-        <Card style={styles.selectorCard} variant="elevated" shadow="soft">
+        <GlassCard style={styles.selectorCard}>
           <View style={styles.selectorHeader}>
             <Ionicons name="people" size={20} color={tokens.colors.accent.blue} />
             <Text style={styles.selectorLabel} allowFontScaling={true}>
@@ -549,11 +607,11 @@ export function ChildProfileScreen() {
               </Pressable>
             ))}
           </View>
-        </Card>
+        </GlassCard>
       )}
 
       {/* Top Profile Hero - Like Web */}
-      <Card style={styles.heroCard} variant="elevated" shadow="elevated">
+      <GlassCard style={styles.heroCard}>
         <View style={styles.heroContent}>
           <Pressable
             style={styles.avatarContainer}
@@ -648,11 +706,11 @@ export function ChildProfileScreen() {
             </View>
           </View>
         </View>
-      </Card>
+      </GlassCard>
 
       <View style={styles.contentContainer}>
         {/* Basic Info */}
-        <Card style={styles.card} variant="elevated" shadow="soft">
+        <GlassCard style={styles.card}>
           <View style={styles.sectionHeader}>
             <Ionicons name="person" size={24} color={tokens.colors.accent.blue} />
             <Text style={styles.sectionTitle} allowFontScaling={true}>{t('child.basicInfo', { defaultValue: 'Basic Information' })}</Text>
@@ -685,11 +743,11 @@ export function ChildProfileScreen() {
               color={tokens.colors.accent.blue}
             />
           </View>
-        </Card>
+        </GlassCard>
 
         {/* Special Needs */}
         {child.specialNeeds && (
-          <Card style={styles.card} variant="elevated" shadow="soft">
+          <GlassCard style={styles.card}>
             <View style={styles.specialNeedsHeader}>
               <Ionicons name="heart" size={24} color={tokens.colors.semantic.error} />
               <Text style={styles.specialNeedsTitle} allowFontScaling={true}>
@@ -701,11 +759,11 @@ export function ChildProfileScreen() {
                 {child.specialNeeds}
               </Text>
             </View>
-          </Card>
+          </GlassCard>
         )}
 
         {/* Weekly Stats */}
-        <Card style={styles.statsCard} variant="elevated" shadow="soft">
+        <GlassCard style={styles.statsCard}>
           <Text style={styles.statsTitle} allowFontScaling={true}>
             {t('child.weeklyResults', { defaultValue: 'Weekly Results' })}
           </Text>
@@ -723,11 +781,11 @@ export function ChildProfileScreen() {
               value={weeklyStats.media}
             />
           </View>
-        </Card>
+        </GlassCard>
 
         {/* Emotional Monitoring */}
         {monitoringRecords.length > 0 && (
-          <Card style={styles.card} variant="elevated" shadow="soft">
+          <GlassCard style={styles.card}>
             <View style={styles.sectionHeader}>
               <Ionicons name="heart" size={24} color={tokens.colors.joy.rose} />
               <Text style={styles.sectionTitle} allowFontScaling={true}>
@@ -775,7 +833,7 @@ export function ChildProfileScreen() {
                 +{monitoringRecords.length - 5} {t('common.more', { defaultValue: 'more' })}
               </Text>
             )}
-          </Card>
+          </GlassCard>
         )}
       </View>
 
@@ -1010,7 +1068,8 @@ export function ChildProfileScreen() {
           </View>
         </View>
       </Modal>
-    </Screen>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -1040,6 +1099,13 @@ function StatRow({ label, value }) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: tokens.colors.background.primary,
+  },
+  scrollContent: {
+    padding: tokens.space.lg,
+  },
   headerContainer: {
     overflow: 'hidden',
   },
@@ -1097,12 +1163,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: tokens.space.md,
     borderRadius: tokens.radius.md,
-    borderWidth: 2,
-    borderColor: tokens.colors.border.light,
+    backgroundColor: tokens.colors.background.secondary,
   },
   selectorOptionActive: {
     backgroundColor: tokens.colors.accent[50],
-    borderColor: tokens.colors.accent.blue,
   },
   selectorOptionText: {
     fontSize: tokens.type.body.fontSize,
@@ -1137,8 +1201,6 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    borderWidth: 4,
-    borderColor: '#fff',
   },
   avatarImageLoading: {
     opacity: 0,
@@ -1170,8 +1232,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     backgroundColor: tokens.colors.semantic.success,
-    borderWidth: 3,
-    borderColor: '#fff',
+    ...tokens.shadow.sm,
   },
   heroInfo: {
     flex: 1,
@@ -1219,12 +1280,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: tokens.space.xs,
-    backgroundColor: tokens.colors.card.base,
+    backgroundColor: tokens.colors.background.secondary,
     paddingHorizontal: tokens.space.md,
     paddingVertical: tokens.space.sm,
     borderRadius: tokens.radius.lg,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.light,
     ...tokens.shadow.sm,
   },
   infoBadgeText: {
@@ -1289,8 +1348,6 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.colors.semantic.errorSoft,
     borderRadius: tokens.radius.lg,
     padding: tokens.space.lg,
-    borderWidth: 1,
-    borderColor: tokens.colors.semantic.error + '30',
   },
   specialNeedsText: {
     fontSize: tokens.type.body.fontSize,
@@ -1367,13 +1424,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space.md,
     paddingVertical: tokens.space.sm,
     borderRadius: tokens.radius.md,
-    borderWidth: 2,
-    borderColor: tokens.colors.border.light,
-    backgroundColor: tokens.colors.card.base,
+    backgroundColor: tokens.colors.background.secondary,
   },
   languageButtonActive: {
     backgroundColor: tokens.colors.accent.blue,
-    borderColor: tokens.colors.accent.blue,
   },
   languageButtonText: {
     fontSize: tokens.type.sub.fontSize,
@@ -1390,8 +1444,6 @@ const styles = StyleSheet.create({
     padding: tokens.space.md,
     borderRadius: tokens.radius.md,
     backgroundColor: tokens.colors.accent[50],
-    borderWidth: 1,
-    borderColor: tokens.colors.accent.blue + '30',
     marginBottom: tokens.space.sm,
     position: 'relative',
   },
@@ -1434,7 +1486,7 @@ const styles = StyleSheet.create({
   statsTitle: {
     fontSize: tokens.type.h3.fontSize,
     fontWeight: tokens.type.h3.fontWeight,
-    color: '#fff',
+    color: tokens.colors.text.primary,
     marginBottom: tokens.space.lg,
   },
   statsList: {
@@ -1458,12 +1510,12 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: tokens.type.sub.fontSize,
-    color: 'rgba(255,255,255,0.8)',
+    color: tokens.colors.text.secondary,
   },
   statValue: {
     fontSize: tokens.type.h2.fontSize,
     fontWeight: tokens.type.h1.fontWeight,
-    color: '#fff',
+    color: tokens.colors.text.primary,
   },
   childrenGrid: {
     gap: tokens.space.md,

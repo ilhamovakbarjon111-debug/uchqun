@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Pressable, TextInput, Alert } from 'react-native';
+import { StyleSheet, Text, View, Pressable, TextInput, Alert, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { parentService } from '../../services/parentService';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
-import Card from '../../components/common/Card';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import Skeleton from '../../components/common/Skeleton';
 
 const CRITERIA_KEYS = [
@@ -28,12 +29,17 @@ const DEFAULT_EVALUATION = Object.fromEntries(CRITERIA_KEYS.map((k) => [k, false
 export function SchoolRatingScreen() {
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(null);
   const [evaluation, setEvaluation] = useState({ ...DEFAULT_EVALUATION });
   const [selectedRating, setSelectedRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   useEffect(() => {
     loadRating();
@@ -89,35 +95,26 @@ export function SchoolRatingScreen() {
     }
   };
 
-  const header = (
-    <View style={styles.topBar}>
-      <Pressable
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Ionicons name="arrow-back" size={24} color={tokens.colors.text.primary} />
-      </Pressable>
-      <Text style={styles.topBarTitle} allowFontScaling={true}>{t('schoolRatingPage.title')}</Text>
-      <View style={styles.placeholder} />
-    </View>
-  );
-
   const canSubmit = hasAnyCriteria || selectedRating > 0;
 
   return (
-    <Screen scroll={true} padded={true} header={header}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('schoolRatingPage.title', { defaultValue: 'School Rating' })}
+        showBack={navigation.canGoBack()}
+      />
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}>
         {loading ? (
-          <Card style={styles.card}>
+          <GlassCard style={styles.card}>
             <Skeleton width={80} height={80} variant="circle" style={{ alignSelf: 'center', marginBottom: tokens.space.lg }} />
             <Skeleton width="60%" height={24} variant="text" style={{ alignSelf: 'center', marginBottom: tokens.space.md }} />
             <Skeleton width="80%" height={60} variant="text" style={{ alignSelf: 'center' }} />
-          </Card>
+          </GlassCard>
         ) : (
           <>
             {/* School Info Card */}
             {rating?.school && (
-              <Card style={styles.infoCard} variant="elevated" shadow="soft">
+              <GlassCard style={styles.infoCard}>
                 <View style={styles.schoolInfo}>
                   <LinearGradient
                     colors={[tokens.colors.accent.blue + '30', tokens.colors.accent.blue + '15']}
@@ -145,17 +142,14 @@ export function SchoolRatingScreen() {
                     </View>
                   )}
                 </View>
-              </Card>
+              </GlassCard>
             )}
 
             {/* Evaluation Checklist Card */}
-            <Card style={styles.card} variant="elevated" shadow="soft">
-              <LinearGradient
-                colors={[tokens.colors.accent.blue + '20', tokens.colors.accent.blue + '10']}
-                style={styles.iconContainer}
-              >
+            <GlassCard style={styles.card}>
+              <View style={[styles.iconContainer, { backgroundColor: tokens.colors.accent.blue + '20' }]}>
                 <Ionicons name="clipboard-outline" size={48} color={tokens.colors.accent.blue} />
-              </LinearGradient>
+              </View>
               <Text style={styles.title} allowFontScaling={true}>
                 {t('schoolRatingPage.evaluationLabel')}
               </Text>
@@ -241,14 +235,14 @@ export function SchoolRatingScreen() {
                   ]}
                   allowFontScaling={true}
                 >
-                  {submitting ? t('common.loading') : t('schoolRatingPage.submit')}
+                  {submitting ? t('common.loading', { defaultValue: 'Loading...' }) : t('schoolRatingPage.submit', { defaultValue: 'Submit' })}
                 </Text>
               </Pressable>
-            </Card>
+            </GlassCard>
 
             {/* Previous Rating */}
             {rating?.yourRating != null && (
-              <Card style={styles.previousCard} variant="elevated" shadow="soft">
+              <GlassCard style={styles.previousCard}>
                 <Text style={styles.previousTitle} allowFontScaling={true}>
                   {t('schoolRatingPage.yourRating')}
                 </Text>
@@ -301,61 +295,27 @@ export function SchoolRatingScreen() {
                     {t('schoolRatingPage.lastUpdated', { date: new Date(rating.lastUpdated).toLocaleDateString() })}
                   </Text>
                 )}
-              </Card>
+              </GlassCard>
             )}
           </>
         )}
-    </Screen>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    overflow: 'hidden',
-  },
-  headerGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: tokens.space.lg,
-    paddingVertical: tokens.space.md,
-    paddingTop: tokens.space.xl,
-    paddingBottom: tokens.space.lg,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...tokens.shadow.sm,
-  },
-  headerTitleContainer: {
+  container: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: tokens.space.md,
-    gap: tokens.space.md,
+    backgroundColor: tokens.colors.background.primary,
   },
-  headerIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  topBarTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: '#fff',
-  },
-  placeholder: {
-    width: 44,
+  scrollContent: {
+    padding: tokens.space.lg,
   },
   // School Info Card
   infoCard: {
     marginBottom: tokens.space.lg,
+    padding: tokens.space.lg,
   },
   schoolInfo: {
     flexDirection: 'row',
@@ -500,13 +460,11 @@ const styles = StyleSheet.create({
   commentInput: {
     width: '100%',
     minHeight: 100,
-    backgroundColor: tokens.colors.surface.secondary,
+    backgroundColor: tokens.colors.background.tertiary,
     borderRadius: tokens.radius.md,
     padding: tokens.space.md,
     fontSize: tokens.type.body.fontSize,
     color: tokens.colors.text.primary,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.light,
   },
   submitButton: {
     width: '100%',

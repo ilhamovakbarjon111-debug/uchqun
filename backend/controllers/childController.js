@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import Group from '../models/Group.js';
 import { uploadFile } from '../config/storage.js';
 import logger from '../utils/logger.js';
+import { emitToUser } from '../config/socket.js';
 
 // Get all children for the logged-in parent
 export const getChildren = async (req, res) => {
@@ -281,7 +282,7 @@ export const updateChild = async (req, res) => {
         childId: id,
         updateData: { ...updateData, photo: updateData.photo?.substring(0, 100) }
       });
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to update child record',
         details: process.env.NODE_ENV === 'development' ? updateError.message : undefined
       });
@@ -289,6 +290,12 @@ export const updateChild = async (req, res) => {
 
     const childData = child.toJSON();
     childData.age = child.getAge();
+
+    // Emit real-time update to parent
+    emitToUser(child.parentId, 'child:updated', {
+      child: childData,
+      timestamp: new Date().toISOString(),
+    });
 
     res.json(childData);
   } catch (error) {

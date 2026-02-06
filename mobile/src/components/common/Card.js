@@ -32,12 +32,12 @@ export default function Card({
       case 'elevated':
         return {
           backgroundColor: tokens?.colors?.card?.elevated || 'rgba(255, 255, 255, 0.95)',
-          borderColor: 'rgba(255, 255, 255, 0.8)',
+          // Removed: borderColor - no borders per design requirements
         };
       case 'flat':
         return {
           backgroundColor: '#fff',
-          borderColor: '#E2E8F0',
+          // Removed: borderColor - no borders per design requirements
           ...(tokens?.shadow?.xs || {}),
         };
       case 'gradient':
@@ -45,7 +45,7 @@ export default function Card({
       default: // glass
         return {
           backgroundColor: tokens?.colors?.card?.base || 'rgba(255, 255, 255, 0.88)',
-          borderColor: tokens?.colors?.card?.border || 'rgba(255, 255, 255, 0.6)',
+          // Removed: borderColor - no borders per design requirements
         };
     }
   };
@@ -141,7 +141,7 @@ export function HighlightCard({
 const styles = StyleSheet.create({
   card: {
     borderRadius: tokens?.radius?.xl || 24,
-    borderWidth: 1,
+    // Removed: borderWidth - no borders per design requirements
     overflow: 'hidden',
   },
   gradientCard: {

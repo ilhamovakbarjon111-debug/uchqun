@@ -3,6 +3,7 @@ import Meal from '../models/Meal.js';
 import Child from '../models/Child.js';
 import User from '../models/User.js';
 import { createNotification } from './notificationController.js';
+import { emitToUser } from '../config/socket.js';
 
 export const getMeals = async (req, res) => {
   try {
@@ -227,6 +228,12 @@ export const createMeal = async (req, res) => {
         meal.id,
         'meal'
       );
+
+      // Emit real-time update to parent
+      emitToUser(child.parentId, 'meal:created', {
+        meal: createdMeal.toJSON(),
+        timestamp: new Date().toISOString(),
+      });
     }
 
     res.status(201).json(createdMeal);
@@ -250,6 +257,9 @@ export const updateMeal = async (req, res) => {
       return res.status(404).json({ error: 'Meal not found' });
     }
 
+    // Get child for parent notification
+    const child = await Child.findByPk(meal.childId);
+
     await meal.update(req.body);
 
     const updatedMeal = await Meal.findByPk(id, {
@@ -261,6 +271,14 @@ export const updateMeal = async (req, res) => {
         },
       ],
     });
+
+    // Emit real-time update to parent
+    if (child && child.parentId) {
+      emitToUser(child.parentId, 'meal:updated', {
+        meal: updatedMeal.toJSON(),
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     res.json(updatedMeal);
   } catch (error) {
@@ -283,7 +301,21 @@ export const deleteMeal = async (req, res) => {
       return res.status(404).json({ error: 'Meal not found' });
     }
 
+    // Get child for parent notification before destroying
+    const child = await Child.findByPk(meal.childId);
+    const mealId = meal.id;
+
     await meal.destroy();
+
+    // Emit real-time update to parent
+    if (child && child.parentId) {
+      emitToUser(child.parentId, 'meal:deleted', {
+        mealId,
+        childId: child.id,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     res.json({ success: true, message: 'Meal deleted successfully' });
   } catch (error) {
     console.error('Delete meal error:', error);

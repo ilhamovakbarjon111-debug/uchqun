@@ -1,79 +1,51 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, AppState, Animated } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, AppState, Animated, RefreshControl, Dimensions } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useNotification } from '../../context/NotificationContext';
 import { parentService } from '../../services/parentService';
 import { api } from '../../services/api';
-import Card from '../../components/common/Card';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { StatCard } from '../../components/teacher/StatCard';
+import { DashboardHeader } from '../../components/parent/DashboardHeader';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import BackgroundScene from '../../components/layout/BackgroundScene';
-import Screen from '../../components/layout/Screen';
 import tokens from '../../styles/tokens';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '../../context/ThemeContext';
-import { useThemeTokens } from '../../hooks/useThemeTokens';
 
 export function ParentDashboardScreen() {
   const { user } = useAuth();
+  const { on, off, connected } = useSocket();
   const navigation = useNavigation();
   const { t } = useTranslation();
   const { count = 0, refreshNotifications } = useNotification();
-  const { isDark } = useTheme();
-  const themeTokens = useThemeTokens();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [stats, setStats] = useState({
+    activities: 0,
+    meals: 0,
+    media: 0,
+    therapies: 0,
+  });
   const [children, setChildren] = useState([]);
   const [selectedChildId, setSelectedChildId] = useState(null);
 
-  // Animation refs
-  const headerFadeAnim = useRef(new Animated.Value(0)).current;
-  const headerSlideAnim = useRef(new Animated.Value(30)).current;
-  const statsFadeAnim = useRef(new Animated.Value(0)).current;
-  const statsSlideAnim = useRef(new Animated.Value(20)).current;
-  const childrenFadeAnim = useRef(new Animated.Value(0)).current;
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
-  // Entrance animations
+  // Calculate card width for 2-column grid
+  const screenWidth = Dimensions.get('window').width;
+  const padding = tokens.space.lg * 2; // Left + right padding
+  const gap = tokens.space.md;
+  const cardWidth = (screenWidth - padding - gap) / 2;
+
   useEffect(() => {
-    Animated.stagger(150, [
-      // Header animation
-      Animated.parallel([
-        Animated.timing(headerFadeAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.spring(headerSlideAnim, {
-          toValue: 0,
-          tension: 50,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-      ]),
-      // Stats animation
-      Animated.parallel([
-        Animated.timing(statsFadeAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.spring(statsSlideAnim, {
-          toValue: 0,
-          tension: 50,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-      ]),
-      // Children animation
-      Animated.timing(childrenFadeAnim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    loadData();
   }, []);
 
   // Real-time data loading - reload when screen is focused or child changes
@@ -100,6 +72,57 @@ export function ParentDashboardScreen() {
 
     return () => subscription?.remove();
   }, [selectedChildId]);
+
+  // Real-time WebSocket listeners for instant updates
+  useEffect(() => {
+    if (!connected) return;
+
+    const handleActivityChange = (data) => {
+      console.log('[Dashboard] Activity change received:', data);
+      loadData(); // Reload stats when activity changes
+    };
+
+    const handleMealChange = (data) => {
+      console.log('[Dashboard] Meal change received:', data);
+      loadData(); // Reload stats when meal changes
+    };
+
+    const handleMediaChange = (data) => {
+      console.log('[Dashboard] Media change received:', data);
+      loadData(); // Reload stats when media changes
+    };
+
+    const handleChildUpdate = (data) => {
+      console.log('[Dashboard] Child updated:', data);
+      loadData(); // Reload to update child info
+    };
+
+    // Subscribe to all relevant events
+    on('activity:created', handleActivityChange);
+    on('activity:updated', handleActivityChange);
+    on('activity:deleted', handleActivityChange);
+    on('meal:created', handleMealChange);
+    on('meal:updated', handleMealChange);
+    on('meal:deleted', handleMealChange);
+    on('media:created', handleMediaChange);
+    on('media:updated', handleMediaChange);
+    on('media:deleted', handleMediaChange);
+    on('child:updated', handleChildUpdate);
+
+    // Cleanup on unmount
+    return () => {
+      off('activity:created', handleActivityChange);
+      off('activity:updated', handleActivityChange);
+      off('activity:deleted', handleActivityChange);
+      off('meal:created', handleMealChange);
+      off('meal:updated', handleMealChange);
+      off('meal:deleted', handleMealChange);
+      off('media:created', handleMediaChange);
+      off('media:updated', handleMediaChange);
+      off('media:deleted', handleMediaChange);
+      off('child:updated', handleChildUpdate);
+    };
+  }, [connected, on, off]);
 
   const loadData = async () => {
     try {
@@ -162,424 +185,168 @@ export function ParentDashboardScreen() {
       });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadData();
   };
 
   if (loading) {
     return <LoadingSpinner />;
   }
 
-
-  const statCards = [
-    {
-      title: t('dashboard.individualPlan') || t('dashboard.activities'),
-      value: stats?.activities || 0,
-      icon: 'checkmark-circle',
-      color: tokens.colors.semantic.success,
-      onPress: () => navigation.navigate('Activities'),
-    },
-    {
-      title: t('dashboard.meals'),
-      value: stats?.meals || 0,
-      icon: 'restaurant',
-      color: tokens.colors.semantic.warning,
-      onPress: () => navigation.navigate('Meals'),
-    },
-    {
-      title: t('dashboard.media'),
-      value: stats?.media || 0,
-      icon: 'images',
-      color: '#8b5cf6',
-      onPress: () => navigation.navigate('Media'),
-    },
-    {
-      title: t('therapy.title', { defaultValue: 'Terapiya' }),
-      value: stats?.therapies || 0,
-      icon: 'musical-notes',
-      color: tokens.colors.joy.lavender,
-      onPress: () => navigation.navigate('Therapy'),
-    },
-  ];
-
-  const header = (
-    <View style={styles.topBar}>
-      <View style={styles.placeholder} />
-      <Text style={styles.topBarTitle} allowFontScaling={true}>{t('dashboard.overview')}</Text>
-      <View style={styles.placeholder} />
-    </View>
-  );
-
   return (
-    <Screen scroll={true} padded={false} header={null} background="parent">
-      {/* Welcome Header Card - Premium Gradient Design */}
-      <Animated.View
-        style={[
-          styles.headerWrapper,
-          {
-            opacity: headerFadeAnim,
-            transform: [{ translateY: headerSlideAnim }],
-          },
-        ]}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <DashboardHeader />
+      
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
-        <Card
-          variant="gradient"
-          gradientColors={['#3b82f6', '#2563eb']}
-          style={styles.headerCard}
-          padding="xl"
-        >
-          {/* Notifications Icon in Top Right Corner - Like Web */}
-          <Pressable
-            style={styles.notificationButton}
-            onPress={() => {
-              if (refreshNotifications) refreshNotifications();
-              navigation.navigate('Notifications');
-            }}
-          >
-            <View style={styles.notificationIconContainer}>
-              <Ionicons name="notifications" size={20} color="#fff" />
-              {count > 0 && (
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>
-                    {count > 9 ? '9+' : count}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </Pressable>
+        {/* Stats Grid - 2x2 grid */}
+        <View style={styles.statsGrid}>
+          <View style={{ width: cardWidth }}>
+            <StatCard
+              icon="checkmark-circle"
+              iconColor={tokens.colors.semantic.success}
+              iconBg={tokens.colors.semantic.successSoft}
+              count={stats.activities}
+              label={t('dashboard.individualPlan', { defaultValue: 'Individual Plan' }) || t('dashboard.activities', { defaultValue: 'Activities' })}
+              onPress={() => navigation.navigate('Activities')}
+            />
+          </View>
+          <View style={{ width: cardWidth }}>
+            <StatCard
+              icon="restaurant"
+              iconColor={tokens.colors.semantic.warning}
+              iconBg={tokens.colors.semantic.warningSoft}
+              count={stats.meals}
+              label={t('dashboard.meals', { defaultValue: 'Meals' })}
+              onPress={() => navigation.navigate('Meals')}
+            />
+          </View>
+          <View style={{ width: cardWidth }}>
+            <StatCard
+              icon="images"
+              iconColor={tokens.colors.joy.lavender}
+              iconBg={tokens.colors.joy.lavenderSoft}
+              count={stats.media}
+              label={t('dashboard.media', { defaultValue: 'Media' })}
+              onPress={() => navigation.navigate('Media')}
+            />
+          </View>
+          <View style={{ width: cardWidth }}>
+            <StatCard
+              icon="musical-notes"
+              iconColor={tokens.colors.joy.coral}
+              iconBg={tokens.colors.joy.coralSoft}
+              count={stats.therapies}
+              label={t('therapy.title', { defaultValue: 'Therapy' })}
+              onPress={() => navigation.navigate('Therapy')}
+            />
+          </View>
+        </View>
 
-          <View style={styles.headerContent}>
-            <View style={styles.headerTop}>
-              <Text style={styles.roleText}>{t('dashboard.roleParent', { defaultValue: 'Mening rolim: Ota-ona' })}</Text>
-            </View>
-            <Text style={styles.greetingText}>{t('dashboard.welcome')}</Text>
-            <Text style={styles.nameText} allowFontScaling={true}>
-              {user?.firstName || ''} {user?.lastName || ''}
+        {/* Children Section */}
+        {children.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {t('dashboard.myChildren', { defaultValue: 'My Children' })}
             </Text>
-          </View>
-        </Card>
-      </Animated.View>
-
-      {/* Overview Cards - Modern Grid Design */}
-      <Animated.View
-        style={[
-          styles.statsSection,
-          {
-            opacity: statsFadeAnim,
-            transform: [{ translateY: statsSlideAnim }],
-          },
-        ]}
-      >
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: themeTokens.colors.text.primary }]} allowFontScaling={true}>{t('dashboard.overview')}</Text>
-        </View>
-        <View style={styles.statsContainer}>
-          {statCards.map((stat, index) => (
-            <Pressable 
-              key={index} 
-              onPress={stat.onPress}
-              style={({ pressed }) => [
-                styles.statCard,
-                pressed && styles.statCardPressed,
-              ]}
-            >
-              <Card 
-                style={[
-                  styles.statCardInner,
-                  {
-                    backgroundColor: isDark ? themeTokens.colors.surface.card : themeTokens.colors.surface.card,
-                  }
-                ]} 
-                variant="elevated" 
-                padding="lg" 
-                shadow="soft"
-              >
-                <View style={styles.statCardContent}>
-                  {/* Modern Icon Container with Gradient */}
-                  <LinearGradient
-                    colors={getIconGradientColors(stat.color, isDark)}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.statIconGradient}
-                  >
-                    <Ionicons name={stat.icon} size={26} color={stat.color} />
-                  </LinearGradient>
-                  
-                  <View style={styles.statTextContainer}>
-                    <Text style={[styles.statValue, { color: themeTokens.colors.text.primary }]} allowFontScaling={true}>{stat.value}</Text>
-                    <Text style={[styles.statTitle, { color: themeTokens.colors.text.secondary }]} allowFontScaling={true} numberOfLines={2}>{stat.title}</Text>
-                  </View>
-                  
-                  <View style={styles.statChevronContainer}>
-                    <Ionicons 
-                      name="chevron-forward" 
-                      size={18} 
-                      color={themeTokens.colors.text.tertiary} 
-                    />
-                  </View>
-                </View>
-              </Card>
-            </Pressable>
-          ))}
-        </View>
-      </Animated.View>
-
-      {/* Child Selector - Enhanced Design */}
-      {children.length > 0 && (
-        <Animated.View
-          style={[
-            styles.childrenSection,
-            { opacity: childrenFadeAnim },
-          ]}
-        >
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: themeTokens.colors.text.primary }]} allowFontScaling={true}>{t('dashboard.myChildren')}</Text>
-            <Text style={[styles.sectionSubtitle, { color: themeTokens.colors.text.secondary }]}>{children.length} {t('dashboard.children') || 'farzand'}</Text>
-          </View>
-          <View style={styles.childrenList}>
-            {children.map((child) => (
-              <Pressable
-                key={child.id}
-                style={({ pressed }) => [
-                  styles.childCard,
-                  selectedChildId === child.id && styles.childCardActive,
-                  pressed && styles.childCardPressed,
-                ]}
-                onPress={() => {
-                  setSelectedChildId(child.id);
-                  navigation.navigate('ChildProfile', { childId: child.id });
-                }}
-              >
-                <Card 
-                  style={[
-                    styles.childCardInner,
-                    selectedChildId === child.id && styles.childCardActiveInner
-                  ]} 
-                  variant="elevated"
-                  padding="md"
-                  shadow="soft"
+            <View style={styles.childrenList}>
+              {children.map((child) => (
+                <Pressable
+                  key={child.id}
+                  onPress={() => {
+                    setSelectedChildId(child.id);
+                    navigation.navigate('ChildProfile', { childId: child.id });
+                  }}
                 >
-                  <View style={styles.childCardContent}>
-                    <LinearGradient
-                      colors={[tokens.colors.accent.blue + '20', tokens.colors.accent.blue + '10']}
-                      style={styles.childAvatar}
-                    >
-                      <Text style={styles.childAvatarText}>
-                        {child.firstName?.charAt(0) || ''}{child.lastName?.charAt(0) || ''}
-                      </Text>
-                    </LinearGradient>
-                    <View style={styles.childInfo}>
-                      <Text style={[styles.childName, { color: themeTokens.colors.text.primary }]} allowFontScaling={true} numberOfLines={1}>
-                        {child.firstName} {child.lastName}
-                      </Text>
-                      {child.dateOfBirth && (
-                        <View style={styles.childAgeContainer}>
-                          <Ionicons name="calendar-outline" size={12} color={themeTokens.colors.text.secondary} />
-                          <Text style={[styles.childAge, { color: themeTokens.colors.text.secondary }]} allowFontScaling={true}>
-                            {new Date().getFullYear() - new Date(child.dateOfBirth).getFullYear()} {t('dashboard.yearsOld')}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.childChevron}>
+                  <GlassCard style={styles.childCard}>
+                    <View style={styles.childCardContent}>
+                      <View style={[styles.childAvatar, { backgroundColor: tokens.colors.accent.blue + '20' }]}>
+                        <Text style={styles.childAvatarText}>
+                          {child.firstName?.charAt(0) || ''}{child.lastName?.charAt(0) || ''}
+                        </Text>
+                      </View>
+                      <View style={styles.childInfo}>
+                        <Text style={styles.childName} numberOfLines={1}>
+                          {child.firstName} {child.lastName}
+                        </Text>
+                        {child.dateOfBirth && (
+                          <View style={styles.childAgeContainer}>
+                            <Ionicons name="calendar-outline" size={12} color={tokens.colors.text.secondary} />
+                            <Text style={styles.childAge}>
+                              {new Date().getFullYear() - new Date(child.dateOfBirth).getFullYear()} {t('dashboard.yearsOld', { defaultValue: 'years old' })}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                       <Ionicons 
                         name="chevron-forward" 
                         size={20} 
-                        color={selectedChildId === child.id ? themeTokens.colors.accent.blue : themeTokens.colors.text.tertiary} 
+                        color={tokens.colors.text.tertiary} 
                       />
                     </View>
-                  </View>
-                </Card>
-              </Pressable>
-            ))}
+                  </GlassCard>
+                </Pressable>
+              ))}
+            </View>
           </View>
-        </Animated.View>
-      )}
-    </Screen>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: tokens.space.xl,
-    paddingTop: tokens.space.md,
-    paddingBottom: tokens.space.md,
-    backgroundColor: 'transparent',
-  },
-  placeholder: {
-    width: 44,
-  },
-  topBarTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.primary,
-  },
-  // Header Wrapper
-  headerWrapper: {
-    paddingHorizontal: tokens.space.md,
-    paddingTop: tokens.space.md,
-    paddingBottom: tokens.space.lg,
-  },
-  // Header Card - Premium Gradient Design
-  headerCard: {
-    borderRadius: tokens.radius['2xl'],
-    ...tokens.shadow.elevated,
-  },
-  headerContent: {
-    width: '100%',
-  },
-  headerTop: {
-    marginBottom: tokens.space.sm,
-  },
-  roleText: {
-    fontSize: tokens.type.sub.fontSize,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: tokens.type.body.fontWeight,
-  },
-  notificationButton: {
-    position: 'absolute',
-    top: tokens.space.lg,
-    right: tokens.space.lg,
-    zIndex: 10,
-  },
-  notificationIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...tokens.shadow.sm,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#ef4444',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  notificationBadgeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '800',
-    lineHeight: 12,
-  },
-  greetingText: {
-    fontSize: tokens.type.body.fontSize,
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: tokens.space.xs,
-    fontWeight: tokens.type.body.fontWeight,
-  },
-  nameText: {
-    fontSize: tokens.type.h1.fontSize,
-    fontWeight: tokens.type.h1.fontWeight,
-    color: tokens.colors.text.white,
-    letterSpacing: -0.5,
-  },
-  // Stats Section
-  statsSection: {
-    paddingHorizontal: tokens.space.md,
-    marginBottom: tokens.space.xl,
-  },
-  sectionHeader: {
-    marginBottom: tokens.space.md,
-  },
-  sectionTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    marginBottom: tokens.space.xs,
-  },
-  sectionSubtitle: {
-    fontSize: tokens.type.caption.fontSize,
-  },
-  statsContainer: {
-    flexDirection: 'column',
-    gap: tokens.space.md,
-  },
-  statCard: {
-    width: '100%',
-  },
-  statCardPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.96 }],
-  },
-  statCardInner: {
-    width: '100%',
-    minHeight: 88,
-  },
-  statCardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    gap: tokens.space.md,
-  },
-  statIconGradient: {
-    width: 60,
-    height: 60,
-    borderRadius: tokens.radius.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...tokens.shadow.soft,
-  },
-  statTextContainer: {
+  container: {
     flex: 1,
-    minWidth: 0,
+    backgroundColor: tokens.colors.background.primary,
   },
-  statValue: {
-    fontSize: 30,
-    fontWeight: '800',
-    marginBottom: tokens.space.xs / 2,
-    letterSpacing: -0.8,
+  scrollView: {
+    flex: 1,
   },
-  statTitle: {
-    fontSize: tokens.type.sub.fontSize,
-    fontWeight: tokens.type.h3.fontWeight,
-    lineHeight: 18,
+  scrollContent: {
+    padding: tokens.space.lg,
   },
-  statChevronContainer: {
-    paddingLeft: tokens.space.xs,
-  },
-  // Children Section
-  childrenSection: {
-    paddingHorizontal: tokens.space.md,
-    marginBottom: tokens.space['2xl'],
-  },
-  childrenList: {
+  // Stats Grid - 2x2 grid layout
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: tokens.space.md,
+    marginBottom: tokens.space.xl,
     marginTop: tokens.space.md,
   },
+  // Section
+  section: {
+    marginBottom: tokens.space.xl,
+  },
+  sectionTitle: {
+    fontSize: tokens.type.h3.fontSize,
+    fontWeight: '600',
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.md,
+    paddingHorizontal: 2,
+  },
+  // Children List
+  childrenList: {
+    gap: tokens.space.md,
+  },
   childCard: {
-    width: '100%',
-  },
-  childCardActive: {
-    // Active state handled by border in childCardInner
-  },
-  childCardPressed: {
-    opacity: 0.95,
-    transform: [{ scale: 0.98 }],
-  },
-  childCardInner: {
-    width: '100%',
-    borderWidth: 2,
-    borderColor: tokens.colors.border.light,
-  },
-  childCardActiveInner: {
-    borderColor: tokens.colors.accent.blue,
-    backgroundColor: tokens.colors.accent[50] + '40',
+    marginBottom: tokens.space.sm,
   },
   childCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
+    gap: tokens.space.md,
   },
   childAvatar: {
     width: 60,
@@ -587,7 +354,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: tokens.space.md,
     ...tokens.shadow.sm,
   },
   childAvatarText: {
@@ -601,44 +367,17 @@ const styles = StyleSheet.create({
   },
   childName: {
     fontSize: tokens.type.bodyLarge.fontSize,
-    fontWeight: tokens.type.h3.fontWeight,
-    marginBottom: tokens.space.xs / 2,
+    fontWeight: '600',
+    color: tokens.colors.text.primary,
+    marginBottom: tokens.space.xs * 0.5,
   },
   childAgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: tokens.space.xs / 2,
+    gap: tokens.space.xs * 0.5,
   },
   childAge: {
     fontSize: tokens.type.sub.fontSize,
-  },
-  childChevron: {
-    paddingLeft: tokens.space.sm,
+    color: tokens.colors.text.secondary,
   },
 });
-
-// Helper function to get gradient colors for icon containers (like website)
-function getIconGradientColors(baseColor, isDark = false) {
-  if (isDark) {
-    // Dark mode gradients - more subtle
-    const darkGradientMap = {
-      [tokens.colors.semantic.success]: ['rgba(16, 185, 129, 0.2)', 'rgba(16, 185, 129, 0.15)'], // Green gradients
-      [tokens.colors.semantic.warning]: ['rgba(245, 158, 11, 0.2)', 'rgba(245, 158, 11, 0.15)'], // Orange/Amber gradients
-      '#8b5cf6': ['rgba(139, 92, 246, 0.2)', 'rgba(139, 92, 246, 0.15)'], // Purple gradients
-    };
-    const defaultDarkGradient = ['rgba(59, 130, 246, 0.2)', 'rgba(59, 130, 246, 0.15)'];
-    return darkGradientMap[baseColor] || defaultDarkGradient;
-  }
-  
-  // Light mode gradients - vibrant
-  const gradientMap = {
-    [tokens.colors.semantic.success]: ['#D1FAE5', '#A7F3D0'], // Green gradients
-    [tokens.colors.semantic.warning]: ['#FEF3C7', '#FDE68A'], // Orange/Amber gradients
-    '#8b5cf6': ['#EDE9FE', '#DDD6FE'], // Purple gradients
-  };
-  
-  // Default blue gradient (most common)
-  const defaultGradient = ['#DBEAFE', '#BFDBFE']; // from-blue-50 to-blue-200
-  
-  return gradientMap[baseColor] || defaultGradient;
-}

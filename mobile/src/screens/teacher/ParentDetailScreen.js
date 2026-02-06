@@ -1,35 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Linking } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Linking, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { teacherService } from '../../services/teacherService';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
+import { GlassCard } from '../../components/teacher/GlassCard';
 import tokens from '../../styles/tokens';
 
 export function ParentDetailScreen() {
   const route = useRoute();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { parentId = null } = route?.params || {};
   const [loading, setLoading] = useState(true);
   const [parent, setParent] = useState(null);
 
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
+
   if (!parentId) {
     return (
-      <View style={styles.container}>
-        <ScreenHeader title={t('parentsPage.parentDetail') || 'Parent Detail'} />
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ScreenHeader title={t('parentsPage.parentDetail', { defaultValue: 'Parent Detail' })} />
         <View style={styles.content}>
-          <Card>
+          <GlassCard>
             <View style={styles.errorContainer}>
               <Ionicons name="alert-circle-outline" size={48} color={tokens.colors.semantic.error} />
               <Text style={styles.errorText}>Missing parentId parameter</Text>
             </View>
-          </Card>
+          </GlassCard>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -68,15 +75,18 @@ export function ParentDetailScreen() {
   }
 
   if (!parent) {
-    return <EmptyState message={t('parentsPage.notFound') || 'Parent not found'} />;
+    return <EmptyState message={t('parentsPage.notFound', { defaultValue: 'Parent not found' })} />;
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScreenHeader title={`${parent.firstName ?? '—'} ${parent.lastName ?? ''}`} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]} 
+        showsVerticalScrollIndicator={false}
+      >
         {/* Profile Card */}
-        <Card>
+        <GlassCard style={styles.card}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
@@ -151,11 +161,11 @@ export function ParentDetailScreen() {
               </View>
             </View>
           )}
-        </Card>
+        </GlassCard>
 
         {/* Children Card */}
         {parent.children && Array.isArray(parent.children) && parent.children.length > 0 && (
-          <Card>
+          <GlassCard style={styles.card}>
             <View style={styles.sectionHeader}>
               <Ionicons name="people" size={20} color={tokens.colors.accent.blue} />
               <Text style={styles.sectionTitle}>{t('parentsPage.children') || 'Children'}</Text>
@@ -238,22 +248,25 @@ export function ParentDetailScreen() {
                 </View>
               </View>
             ))}
-          </Card>
+          </GlassCard>
         )}
 
-        <View style={styles.bottomSpacer} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.surface.secondary,
+    backgroundColor: tokens.colors.background.primary,
   },
   content: {
-    padding: tokens.space.md,
+    padding: tokens.space.lg,
+  },
+  card: {
+    marginBottom: tokens.space.md,
+    padding: tokens.space.lg,
   },
   errorContainer: {
     padding: tokens.space.xl,
@@ -430,8 +443,5 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.caption.fontSize,
     color: tokens.colors.semantic.warning,
     fontWeight: tokens.typography.fontWeight.semibold,
-  },
-  bottomSpacer: {
-    height: 100,
   },
 });

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { StyleSheet, Text, View, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
@@ -7,8 +8,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { loadMessages, addMessage, markRead, updateMessage, deleteMessage } from '../../services/chatStore';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
-import Card from '../../components/common/Card';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import Skeleton from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
 
@@ -16,6 +17,7 @@ export function ChatScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const conversationId = user?.id ? `parent:${user.id}` : null;
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([]);
@@ -28,6 +30,10 @@ export function ChatScreen() {
   const messagesWrapRef = useRef(null);
   const justSentRef = useRef(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   useEffect(() => {
     let alive = true;
@@ -137,43 +143,29 @@ export function ChatScreen() {
     setConfirmDeleteId(null);
   };
 
-  const header = (
-    <View style={styles.headerContainer}>
-      <LinearGradient
-        colors={[tokens.colors.accent.blue, tokens.colors.accent.blueVibrant]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
-      >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </Pressable>
-        <View style={styles.headerTitleContainer}>
-          <View style={styles.headerIconContainer}>
-            <Ionicons name="chatbubbles" size={24} color="#fff" />
-          </View>
-          <Text style={styles.topBarTitle} allowFontScaling={true}>{t('chat.title') || 'Chat'}</Text>
-        </View>
-        <View style={styles.placeholder} />
-      </LinearGradient>
-    </View>
-  );
+  // Input bar height + bottom nav + safe area
+  const INPUT_BAR_HEIGHT = 64;
+  const inputBarBottomOffset = BOTTOM_NAV_HEIGHT + insets.bottom;
 
   return (
-    <Screen scroll={false} padded={false} header={header}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('chat.title', { defaultValue: 'Chat' })}
+        showBack={navigation.canGoBack()}
+      />
+      
       <KeyboardAvoidingView 
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView 
           ref={messagesWrapRef}
           style={styles.messagesContainer}
-          contentContainerStyle={styles.messagesContent}
+          contentContainerStyle={[
+            styles.messagesContent, 
+            { paddingBottom: INPUT_BAR_HEIGHT + inputBarBottomOffset + tokens.space.lg }
+          ]}
           showsVerticalScrollIndicator={false}
           onScroll={(e) => {
             const el = e.nativeEvent;
@@ -184,21 +176,21 @@ export function ChatScreen() {
         >
           {loading ? (
             <>
-              <Card style={styles.messageCard}>
+              <GlassCard style={styles.messageCard}>
                 <Skeleton width="70%" height={60} />
-              </Card>
-              <Card style={[styles.messageCard, styles.ownMessageCard]}>
+              </GlassCard>
+              <GlassCard style={[styles.messageCard, styles.ownMessageCard]}>
                 <Skeleton width="70%" height={60} />
-              </Card>
+              </GlassCard>
             </>
           ) : sorted.length === 0 ? (
-            <Card style={styles.emptyCard}>
+            <GlassCard style={styles.emptyCard}>
               <EmptyState
                 icon="chatbubbles-outline"
-                title={t('chat.empty') || 'No messages yet'}
-                description={t('chat.subtitle') || 'Start a conversation with your child\'s teacher'}
+                title={t('chat.empty', { defaultValue: 'No messages yet' })}
+                description={t('chat.subtitle', { defaultValue: 'Start a conversation with your child\'s teacher' })}
               />
-            </Card>
+            </GlassCard>
           ) : (
             sorted.map((msg) => {
               const isYou = msg.senderRole === 'parent';
@@ -210,94 +202,100 @@ export function ChatScreen() {
                     isYou && styles.ownMessageWrapper,
                   ]}
                 >
-                  <Card 
-                    style={[
-                      styles.messageBubble,
-                      isYou && styles.ownMessageBubble,
-                    ]}
-                    padding="md"
-                    variant={isYou ? "gradient" : "elevated"}
-                    gradientColors={isYou ? [tokens.colors.accent.blue, tokens.colors.accent.blueVibrant] : undefined}
-                    shadow="soft"
-                  >
-                    <View style={styles.messageHeader}>
-                      <Text style={[styles.messageSender, isYou && styles.ownMessageSender]}>
-                        {isYou ? t('chat.you') : t('chat.teacher')}
-                      </Text>
-                      {isYou && (
-                        <View style={styles.messageActions}>
-                          <Pressable
-                            onPress={() => {
-                              setEditingId(msg.id);
-                              setEditValue((msg.content || msg.text || '').toString());
-                            }}
-                            disabled={busyId === msg.id}
-                          >
-                            <Ionicons name="pencil" size={16} color={isYou ? tokens.colors.text.white : tokens.colors.text.secondary} />
-                          </Pressable>
-                          <Pressable
-                            onPress={() => setConfirmDeleteId(msg.id)}
-                            disabled={busyId === msg.id}
-                          >
-                            <Ionicons name="trash-outline" size={16} color={tokens.colors.text.white} />
-                          </Pressable>
+                  {isYou ? (
+                    <LinearGradient
+                      colors={[tokens.colors.accent.blue, tokens.colors.accent.blueVibrant]}
+                      style={[styles.messageBubble, styles.ownMessageBubble]}
+                    >
+                      <View style={styles.messageBubbleContent}>
+                        <View style={styles.messageHeader}>
+                          <Text style={styles.ownMessageSender}>
+                            {t('chat.you', { defaultValue: 'You' })}
+                          </Text>
+                          <View style={styles.messageActions}>
+                            <Pressable
+                              onPress={() => {
+                                setEditingId(msg.id);
+                                setEditValue((msg.content || msg.text || '').toString());
+                              }}
+                              disabled={busyId === msg.id}
+                            >
+                              <Ionicons name="pencil" size={16} color={tokens.colors.text.white} />
+                            </Pressable>
+                            <Pressable
+                              onPress={() => setConfirmDeleteId(msg.id)}
+                              disabled={busyId === msg.id}
+                            >
+                              <Ionicons name="trash-outline" size={16} color={tokens.colors.text.white} />
+                            </Pressable>
+                          </View>
                         </View>
-                      )}
-                    </View>
 
-                    {editingId === msg.id ? (
-                      <View style={styles.editContainer}>
-                        <TextInput
-                          style={styles.editInput}
-                          value={editValue}
-                          onChangeText={setEditValue}
-                          multiline
-                        />
-                        <View style={styles.editActions}>
-                          <Pressable
-                            style={styles.editCancel}
-                            onPress={() => {
-                              setEditingId(null);
-                              setEditValue('');
-                            }}
-                          >
-                            <Text style={styles.editCancelText}>{t('common.cancel') || 'Cancel'}</Text>
-                          </Pressable>
-                          <Pressable
-                            style={styles.editSave}
-                            onPress={() => handleSaveEdit(msg.id)}
-                            disabled={!editValue.trim() || busyId === msg.id}
-                          >
-                            <Text style={styles.editSaveText}>{t('common.save') || 'Save'}</Text>
-                          </Pressable>
-                        </View>
+                        {editingId === msg.id ? (
+                          <View style={styles.editContainer}>
+                            <TextInput
+                              style={styles.editInput}
+                              value={editValue}
+                              onChangeText={setEditValue}
+                              multiline
+                              placeholderTextColor={tokens.colors.text.white}
+                            />
+                            <View style={styles.editActions}>
+                              <Pressable
+                                style={styles.editCancel}
+                                onPress={() => {
+                                  setEditingId(null);
+                                  setEditValue('');
+                                }}
+                              >
+                                <Text style={styles.editCancelText}>{t('common.cancel', { defaultValue: 'Cancel' })}</Text>
+                              </Pressable>
+                              <Pressable
+                                style={styles.editSave}
+                                onPress={() => handleSaveEdit(msg.id)}
+                                disabled={!editValue.trim() || busyId === msg.id}
+                              >
+                                <Text style={styles.editSaveText}>{t('common.save', { defaultValue: 'Save' })}</Text>
+                              </Pressable>
+                            </View>
+                          </View>
+                        ) : (
+                          <Text style={styles.ownMessageText} allowFontScaling={true}>
+                            {msg.content || msg.text}
+                          </Text>
+                        )}
+                        {msg.createdAt && (
+                          <Text style={styles.ownMessageTime} allowFontScaling={true}>
+                            {new Date(msg.createdAt || msg.time).toLocaleTimeString('en-US', { 
+                              hour: 'numeric', 
+                              minute: '2-digit' 
+                            })}
+                          </Text>
+                        )}
                       </View>
-                    ) : (
-                      <Text 
-                        style={[
-                          styles.messageText,
-                          isYou && styles.ownMessageText,
-                        ]}
-                        allowFontScaling={true}
-                      >
-                        {msg.content || msg.text}
-                      </Text>
-                    )}
-                    {msg.createdAt && (
-                      <Text 
-                        style={[
-                          styles.messageTime,
-                          isYou && styles.ownMessageTime,
-                        ]}
-                        allowFontScaling={true}
-                      >
-                        {new Date(msg.createdAt || msg.time).toLocaleTimeString('en-US', { 
-                          hour: 'numeric', 
-                          minute: '2-digit' 
-                        })}
-                      </Text>
-                    )}
-                  </Card>
+                    </LinearGradient>
+                  ) : (
+                    <GlassCard style={styles.messageBubble}>
+                      <View style={styles.messageBubbleContent}>
+                        <View style={styles.messageHeader}>
+                          <Text style={styles.messageSender}>
+                            {t('chat.teacher', { defaultValue: 'Teacher' })}
+                          </Text>
+                        </View>
+                        <Text style={styles.messageText}>
+                          {msg.content || msg.text}
+                        </Text>
+                        {msg.createdAt && (
+                          <Text style={styles.messageTime}>
+                            {new Date(msg.createdAt || msg.time).toLocaleTimeString('en-US', { 
+                              hour: 'numeric', 
+                              minute: '2-digit' 
+                            })}
+                          </Text>
+                        )}
+                      </View>
+                    </GlassCard>
+                  )}
                 </View>
               );
             })
@@ -314,15 +312,15 @@ export function ChatScreen() {
           </Pressable>
         )}
 
-        {/* Input Bar - Enhanced Design */}
-        <View style={styles.inputContainer}>
+        {/* Input Bar - Positioned right above navbar */}
+        <View style={[styles.inputContainer, { bottom: inputBarBottomOffset }]}>
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
               value={inputText}
               onChangeText={setInputText}
-              placeholder={t('chat.placeholder') || 'Type a message...'}
-              placeholderTextColor={tokens.colors.text.muted}
+              placeholder={t('chat.placeholder', { defaultValue: 'Type a message...' })}
+              placeholderTextColor={tokens.colors.text.tertiary}
               multiline
               maxLength={500}
               allowFontScaling={true}
@@ -338,7 +336,7 @@ export function ChatScreen() {
             disabled={!inputText.trim()}
           >
             <LinearGradient
-              colors={inputText.trim() ? [tokens.colors.accent.blue, tokens.colors.accent.blueVibrant] : [tokens.colors.border.medium, tokens.colors.border.medium]}
+              colors={inputText.trim() ? tokens.colors.gradients.aurora : [tokens.colors.border.medium, tokens.colors.border.medium]}
               style={styles.sendButtonGradient}
             >
               <Ionicons 
@@ -375,53 +373,14 @@ export function ChatScreen() {
           </View>
         </View>
       )}
-    </Screen>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    overflow: 'hidden',
-  },
-  headerGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: tokens.space.lg,
-    paddingVertical: tokens.space.md,
-    paddingTop: tokens.space.xl,
-    paddingBottom: tokens.space.lg,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...tokens.shadow.sm,
-  },
-  headerTitleContainer: {
+  container: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: tokens.space.md,
-    gap: tokens.space.md,
-  },
-  headerIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  topBarTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: '#fff',
-  },
-  placeholder: {
-    width: 44,
+    backgroundColor: tokens.colors.background.primary,
   },
   keyboardView: {
     flex: 1,
@@ -430,8 +389,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messagesContent: {
-    padding: tokens.space.xl,
-    paddingBottom: tokens.space.md,
+    padding: tokens.space.lg,
   },
   messageWrapper: {
     alignItems: 'flex-start',
@@ -442,9 +400,15 @@ const styles = StyleSheet.create({
   },
   messageBubble: {
     maxWidth: '75%',
+    borderRadius: tokens.radius.lg,
+    padding: tokens.space.md,
   },
   ownMessageBubble: {
-    // Gradient handled by variant prop
+    borderRadius: tokens.radius.lg,
+    padding: tokens.space.md,
+  },
+  messageBubbleContent: {
+    gap: tokens.space.xs,
   },
   messageCard: {
     marginBottom: tokens.space.sm,
@@ -475,29 +439,30 @@ const styles = StyleSheet.create({
     marginTop: tokens.space.xl,
   },
   inputContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'flex-end',
     padding: tokens.space.md,
-    paddingBottom: tokens.space.xl,
-    backgroundColor: tokens.colors.surface.secondary,
+    paddingBottom: tokens.space.md,
+    backgroundColor: tokens.colors.background.secondary,
+    gap: tokens.space.sm,
     borderTopWidth: 1,
     borderTopColor: tokens.colors.border.light,
-    gap: tokens.space.sm,
+    ...tokens.shadow.elevated,
   },
   inputWrapper: {
     flex: 1,
-    ...tokens.shadow.sm,
   },
   input: {
-    backgroundColor: tokens.colors.card.base,
+    backgroundColor: tokens.colors.background.tertiary,
     borderRadius: tokens.radius.xl,
     paddingHorizontal: tokens.space.lg,
     paddingVertical: tokens.space.md,
     fontSize: tokens.type.body.fontSize,
     color: tokens.colors.text.primary,
     maxHeight: 100,
-    borderWidth: 2,
-    borderColor: tokens.colors.border.light,
   },
   sendButton: {
     width: 48,
@@ -542,13 +507,11 @@ const styles = StyleSheet.create({
     marginTop: tokens.space.sm,
   },
   editInput: {
-    backgroundColor: tokens.colors.surface.secondary,
+    backgroundColor: tokens.colors.background.tertiary,
     borderRadius: tokens.radius.md,
     padding: tokens.space.sm,
     fontSize: tokens.type.body.fontSize,
-    color: tokens.colors.text.primary,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.light,
+    color: tokens.colors.text.white,
     minHeight: 60,
     textAlignVertical: 'top',
   },
@@ -579,7 +542,7 @@ const styles = StyleSheet.create({
   },
   scrollToBottom: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 140, // Above input bar + navbar
     right: tokens.space.md,
     width: 44,
     height: 44,

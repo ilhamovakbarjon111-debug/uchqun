@@ -47,8 +47,7 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: tokens.colors.card.base,
-    borderColor: tokens.colors.card.border,
-    borderWidth: 1,
+    // Removed: borderColor, borderWidth - no borders per design requirements
     borderRadius: tokens.radius.xl,
     padding: tokens.space.lg,
     alignItems: "center",

@@ -11,43 +11,76 @@ import {
   ScrollView,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { activityService } from '../../services/activityService';
 import { teacherService } from '../../services/teacherService';
-import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import TeacherBackground from '../../components/layout/TeacherBackground';
+import { GlassCard } from '../../components/teacher/GlassCard';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import tokens from '../../styles/tokens';
 
-const SERVICES_LIST = [
-  'Logoped',
-  'Defektolog',
-  'SurdoPedagok',
-  'AbA teropiya',
-  'Ergoteropiya',
-  'Izo',
-  'SBO',
-  'Musiqa',
-  'Ipoteropiya',
-  'Umumiy Massaj',
-  'GidroVanna',
-  'LogoMassaj',
-  'CME',
-  'Issiq ovqat',
-  'Transport xizmati',
+// Services list - will be translated in component
+const SERVICES_KEYS = [
+  'logoped',
+  'defektolog',
+  'surdoPedagok',
+  'abaTeropiya',
+  'ergoteropiya',
+  'izo',
+  'sbo',
+  'musiqa',
+  'ipoteropiya',
+  'umumiyMassaj',
+  'gidroVanna',
+  'logoMassaj',
+  'cme',
+  'issiqOvqat',
+  'transportXizmati',
 ];
 
 export function ActivitiesScreen() {
   const navigation = useNavigation();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+  
+  // Services list with translations
+  const SERVICES_LIST = SERVICES_KEYS.map(key => ({
+    key,
+    label: t(`activitiesPage.services.${key}`, { 
+      defaultValue: {
+        logoped: 'Logoped',
+        defektolog: 'Defektolog',
+        surdoPedagok: 'SurdoPedagok',
+        abaTeropiya: 'AbA teropiya',
+        ergoteropiya: 'Ergoteropiya',
+        izo: 'Izo',
+        sbo: 'SBO',
+        musiqa: 'Musiqa',
+        ipoteropiya: 'Ipoteropiya',
+        umumiyMassaj: 'Umumiy Massaj',
+        gidroVanna: 'GidroVanna',
+        logoMassaj: 'LogoMassaj',
+        cme: 'CME',
+        issiqOvqat: 'Issiq ovqat',
+        transportXizmati: 'Transport xizmati',
+      }[key] || key
+    })
+  }));
+  
   const [loading, setLoading] = useState(true);
+
+  // Bottom nav height + safe area + padding
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
   const [activities, setActivities] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
@@ -58,7 +91,7 @@ export function ActivitiesScreen() {
   const [formData, setFormData] = useState({
     parentId: '',
     childId: '',
-    teacher: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher',
+      teacher: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : t('activitiesPage.teacher', { defaultValue: 'Teacher' }),
     skill: '',
     goal: '',
     startDate: new Date().toISOString().split('T')[0],
@@ -147,7 +180,7 @@ export function ActivitiesScreen() {
     setFormData({
       parentId: firstParent ? firstParent.id : '',
       childId: firstChild,
-      teacher: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher',
+      teacher: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : t('activitiesPage.teacher', { defaultValue: 'Teacher' }),
       skill: '',
       goal: '',
       startDate: today,
@@ -184,7 +217,7 @@ export function ActivitiesScreen() {
     setFormData({
       parentId: parentId,
       childId: activity.childId || '',
-      teacher: activity.teacher || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Teacher'),
+      teacher: activity.teacher || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : t('activitiesPage.teacher', { defaultValue: 'Teacher' })),
       skill: activity.skill || '',
       goal: activity.goal || '',
       startDate: activity.startDate ? activity.startDate.split('T')[0] : new Date().toISOString().split('T')[0],
@@ -282,7 +315,7 @@ export function ActivitiesScreen() {
   }
 
   const renderActivity = ({ item }) => (
-    <Card style={styles.card}>
+    <GlassCard style={styles.card}>
       <View style={styles.activityHeader}>
         <View style={styles.activityIconContainer}>
           <Ionicons name="clipboard" size={24} color={tokens.colors.semantic.success} />
@@ -328,24 +361,16 @@ export function ActivitiesScreen() {
           <Text style={styles.deleteButtonText}>{t('common.delete', { defaultValue: 'Delete' })}</Text>
         </Pressable>
       </View>
-    </Card>
+    </GlassCard>
   );
 
   return (
-    <View style={styles.container}>
-      <TeacherBackground />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={tokens.colors.text.white} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {t('activitiesPage.title') || t('activities.title') || 'Individual reja'}
-        </Text>
-        <TouchableOpacity onPress={handleCreate} style={styles.headerAction}>
-          <Ionicons name="add" size={24} color={tokens.colors.text.white} />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader 
+        title={t('activitiesPage.title', { defaultValue: 'Individual Plan' })} 
+        rightActionIcon="add"
+        onRightActionPress={handleCreate}
+      />
 
       {activities.length === 0 ? (
         <EmptyState icon="clipboard-outline" message={t('activitiesPage.empty', { defaultValue: 'No activities found' })} />
@@ -354,7 +379,7 @@ export function ActivitiesScreen() {
           data={activities}
           renderItem={renderActivity}
           keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomPadding }]}
           refreshing={loading}
           onRefresh={loadActivities}
           showsVerticalScrollIndicator={false}
@@ -362,7 +387,7 @@ export function ActivitiesScreen() {
       )}
 
       {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab} onPress={handleCreate}>
+      <TouchableOpacity style={[styles.fab, { bottom: bottomPadding - 20 }]} onPress={handleCreate}>
         <Ionicons name="add" size={28} color={tokens.colors.text.white} />
       </TouchableOpacity>
 
@@ -491,11 +516,14 @@ export function ActivitiesScreen() {
                     <Text style={styles.detailSectionTitle}>Xizmatlar</Text>
                   </View>
                   <View style={styles.detailServicesWrap}>
-                    {selectedActivity.services.map((service, idx) => (
-                      <View key={idx} style={styles.detailServiceBadge}>
-                        <Text style={styles.detailServiceText}>{service}</Text>
-                      </View>
-                    ))}
+                    {selectedActivity.services.map((serviceKey, idx) => {
+                      const service = SERVICES_LIST.find(s => s.key === serviceKey);
+                      return (
+                        <View key={idx} style={styles.detailServiceBadge}>
+                          <Text style={styles.detailServiceText}>{service?.label || serviceKey}</Text>
+                        </View>
+                      );
+                    })}
                   </View>
                 </View>
               ) : null}
@@ -766,35 +794,35 @@ export function ActivitiesScreen() {
                   <View style={styles.servicesGrid}>
                     {SERVICES_LIST.map((service) => (
                       <Pressable
-                        key={service}
+                        key={service.key}
                         style={[
                           styles.serviceCheckbox,
-                          formData.services.includes(service) && styles.serviceCheckboxSelected
+                          formData.services.includes(service.key) && styles.serviceCheckboxSelected
                         ]}
                         onPress={() => {
-                          if (formData.services.includes(service)) {
+                          if (formData.services.includes(service.key)) {
                             setFormData({
                               ...formData,
-                              services: formData.services.filter((s) => s !== service),
+                              services: formData.services.filter((s) => s !== service.key),
                             });
                           } else {
                             setFormData({
                               ...formData,
-                              services: [...formData.services, service],
+                              services: [...formData.services, service.key],
                             });
                           }
                         }}
                       >
                         <Ionicons
-                          name={formData.services.includes(service) ? 'checkbox' : 'checkbox-outline'}
+                          name={formData.services.includes(service.key) ? 'checkbox' : 'checkbox-outline'}
                           size={20}
-                          color={formData.services.includes(service) ? tokens.colors.accent.blue : tokens.colors.text.secondary}
+                          color={formData.services.includes(service.key) ? tokens.colors.accent.blue : tokens.colors.text.secondary}
                         />
                         <Text style={[
                           styles.serviceCheckboxText,
-                          formData.services.includes(service) && styles.serviceCheckboxTextSelected
+                          formData.services.includes(service.key) && styles.serviceCheckboxTextSelected
                         ]}>
-                          {service}
+                          {service.label}
                         </Text>
                       </Pressable>
                     ))}
@@ -821,41 +849,18 @@ export function ActivitiesScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.surface.secondary,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: tokens.colors.accent.blue,
-    paddingTop: 50,
-    paddingBottom: tokens.space.md,
-    paddingHorizontal: tokens.space.md,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  backButton: {
-    padding: tokens.space.xs,
-  },
-  headerTitle: {
-    fontSize: tokens.type.h3.fontSize,
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.text.white,
-  },
-  headerAction: {
-    padding: tokens.space.xs,
+    backgroundColor: tokens.colors.background.primary,
   },
   fab: {
     position: 'absolute',
-    bottom: 90,
-    right: tokens.space.md,
+    right: tokens.space.lg,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -865,8 +870,7 @@ const styles = StyleSheet.create({
     ...tokens.shadow.elevated,
   },
   list: {
-    padding: tokens.space.md,
-    paddingBottom: 100,
+    padding: tokens.space.lg,
   },
   card: {
     marginBottom: tokens.space.md,
@@ -880,7 +884,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: tokens.colors.semantic.success + '20',
+    backgroundColor: tokens.colors.semantic.successSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: tokens.space.md,

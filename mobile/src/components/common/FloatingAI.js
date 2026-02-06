@@ -136,28 +136,14 @@ export default function FloatingAI({ contextHint = '' }) {
             pressed && { transform: [{ scale: 0.95 }] }
           ]}
         >
-          {/* Outer glow ring */}
-          <View style={styles.glowRing}>
-            <LinearGradient
-              colors={['rgba(139, 92, 246, 0.3)', 'rgba(99, 102, 241, 0.2)', 'rgba(59, 130, 246, 0.1)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.glowGradient}
-            />
-          </View>
-          {/* Main orb */}
-          <LinearGradient
-            colors={['#A78BFA', '#8B5CF6', '#6366F1']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.fab}
-          >
+          {/* Main button with card background color */}
+          <View style={styles.fab}>
             <Image
               source={require('../../../assets/Uchqun logo.png')}
               style={styles.fabIcon}
               resizeMode="contain"
             />
-          </LinearGradient>
+          </View>
         </Pressable>
       </Animated.View>
 
@@ -326,30 +312,19 @@ const getStyles = (tokens, isDark) => StyleSheet.create({
   fabPressable: {
     position: 'relative',
   },
-  glowRing: {
-    position: 'absolute',
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    top: -8,
-    left: -8,
-  },
-  glowGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 32,
-  },
   fab: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    ...tokens.shadow.glow,
+    backgroundColor: tokens.colors.background.secondary, // White card background
+    ...tokens.shadow.card, // Card shadow instead of glow
   },
   fabIcon: {
-    width: 30,
-    height: 30,
+    width: 28,
+    height: 28,
+    tintColor: tokens.colors.accent.blue, // Blue icon color to match design
   },
   modalContainer: {
     flex: 1,

@@ -7,13 +7,18 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { safeNavigate, safeNavigateToTab } from '../../utils/safeNavigation';
 import tokens from '../../styles/tokens';
-import Screen from '../../components/layout/Screen';
-import Card from '../../components/common/Card';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenHeader } from '../../components/teacher/ScreenHeader';
+import { GlassCard } from '../../components/teacher/GlassCard';
 
 export function DiagnosticsScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [results, setResults] = useState([]);
   const [testing, setTesting] = useState(false);
+
+  const BOTTOM_NAV_HEIGHT = 75;
+  const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   const logResult = (route, success, error = null) => {
     const result = {
@@ -75,26 +80,19 @@ export function DiagnosticsScreen() {
     setTesting(false);
   };
 
-  const header = (
-    <View style={styles.topBar}>
-      <Pressable
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Text style={styles.backText}>← Back</Text>
-      </Pressable>
-      <Text style={styles.topBarTitle}>Route Diagnostics</Text>
-      <View style={styles.placeholder} />
-    </View>
-  );
-
   const successCount = results.filter((r) => r.success).length;
   const failCount = results.filter((r) => !r.success).length;
 
   return (
-    <Screen scroll={true} padded={true} header={header}>
-      <Card style={styles.card}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader title="Route Diagnostics" showBack={true} />
+      
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
+      <GlassCard style={styles.card}>
         <Text style={styles.sectionTitle}>Navigation Tests</Text>
         <Text style={styles.description}>
           Tests all navigation routes to ensure no crashes occur.
@@ -117,10 +115,10 @@ export function DiagnosticsScreen() {
             </Text>
           </View>
         )}
-      </Card>
+      </GlassCard>
 
       {results.length > 0 && (
-        <Card style={styles.card}>
+        <GlassCard style={styles.card}>
           <Text style={styles.sectionTitle}>Test Results</Text>
           <ScrollView style={styles.resultsList}>
             {results.map((result, index) => (
@@ -140,35 +138,23 @@ export function DiagnosticsScreen() {
               </View>
             ))}
           </ScrollView>
-        </Card>
+        </GlassCard>
       )}
-    </Screen>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: tokens.space.xl,
-    paddingTop: tokens.space.md,
-    paddingBottom: tokens.space.md,
+  container: {
+    flex: 1,
+    backgroundColor: tokens.colors.background.primary,
   },
-  backButton: {
-    padding: tokens.space.sm,
+  scrollView: {
+    flex: 1,
   },
-  backText: {
-    fontSize: tokens.type.body.fontSize,
-    color: tokens.colors.accent.blue,
-  },
-  placeholder: {
-    width: 60,
-  },
-  topBarTitle: {
-    fontSize: tokens.type.h2.fontSize,
-    fontWeight: tokens.type.h2.fontWeight,
-    color: tokens.colors.text.primary,
+  scrollContent: {
+    padding: tokens.space.lg,
   },
   card: {
     marginBottom: tokens.space.lg,
@@ -201,7 +187,7 @@ const styles = StyleSheet.create({
   summary: {
     marginTop: tokens.space.md,
     padding: tokens.space.sm,
-    backgroundColor: tokens.colors.card.base,
+    backgroundColor: tokens.colors.background.secondary,
     borderRadius: tokens.radius.sm,
   },
   summaryText: {

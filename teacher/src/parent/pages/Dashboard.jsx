@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../../shared/context/SocketContext';
 import { useTranslation } from 'react-i18next';
 import { useChild } from '../context/ChildContext';
 import { useNotification } from '../context/NotificationContext';
@@ -17,50 +18,82 @@ import {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { on, off, connected } = useSocket();
   const { selectedChildId } = useChild();
   const { refreshNotifications, count = 0 } = useNotification();
-  const [child, setChild] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!selectedChildId) return;
-    
-    const loadData = async () => {
-      try {
-        const [childResponse, activitiesResponse, mealsResponse, mediaResponse] = await Promise.all([
-          api.get(`/child/${selectedChildId}`).catch(() => ({ data: null })),
-          api.get(`/activities?limit=5&childId=${selectedChildId}`).catch(() => ({ data: { activities: [] } })),
-          api.get(`/meals?limit=5&childId=${selectedChildId}`).catch(() => ({ data: { meals: [] } })),
-          api.get(`/media?limit=5&childId=${selectedChildId}`).catch(() => ({ data: { media: [] } })),
-        ]);
+    try {
+      const [childResponse, activitiesResponse, mealsResponse, mediaResponse] = await Promise.all([
+        api.get(`/child/${selectedChildId}`).catch(() => ({ data: null })),
+        api.get(`/activities?limit=5&childId=${selectedChildId}`).catch(() => ({ data: { activities: [] } })),
+        api.get(`/meals?limit=5&childId=${selectedChildId}`).catch(() => ({ data: { meals: [] } })),
+        api.get(`/media?limit=5&childId=${selectedChildId}`).catch(() => ({ data: { media: [] } })),
+      ]);
 
-        const childData = childResponse.data;
-        const activities = activitiesResponse.data?.activities || activitiesResponse.data || [];
-        const meals = mealsResponse.data?.meals || mealsResponse.data || [];
-        const media = mediaResponse.data?.media || mediaResponse.data || [];
+      const activities = activitiesResponse.data?.activities || activitiesResponse.data || [];
+      const meals = mealsResponse.data?.meals || mealsResponse.data || [];
+      const media = mediaResponse.data?.media || mediaResponse.data || [];
 
-        setChild(childData);
-        setStats({
-          activities: Array.isArray(activities) ? activities.length : 0,
-          meals: Array.isArray(meals) ? meals.length : 0,
-          media: Array.isArray(media) ? media.length : 0,
-          recentActivity: Array.isArray(activities) && activities.length > 0 ? activities[0] : null,
-        });
-        
-        // Refresh notifications after loading data
-        refreshNotifications();
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
+      setStats({
+        activities: Array.isArray(activities) ? activities.length : 0,
+        meals: Array.isArray(meals) ? meals.length : 0,
+        media: Array.isArray(media) ? media.length : 0,
+        recentActivity: Array.isArray(activities) && activities.length > 0 ? activities[0] : null,
+      });
+
+      // Refresh notifications after loading data
+      refreshNotifications();
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedChildId, refreshNotifications]);
+
+  useEffect(() => {
+    loadData();
+  }, [selectedChildId, loadData]);
+
+  // Real-time WebSocket listeners
+  useEffect(() => {
+    if (!connected || !selectedChildId) return;
+
+    const handleDataChange = (data) => {
+      console.log('[Dashboard] Data change received:', data);
+      loadData(); // Reload dashboard data
     };
 
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChildId]);
+    // Subscribe to all relevant events
+    on('activity:created', handleDataChange);
+    on('activity:updated', handleDataChange);
+    on('activity:deleted', handleDataChange);
+    on('meal:created', handleDataChange);
+    on('meal:updated', handleDataChange);
+    on('meal:deleted', handleDataChange);
+    on('media:created', handleDataChange);
+    on('media:updated', handleDataChange);
+    on('media:deleted', handleDataChange);
+    on('child:updated', handleDataChange);
+
+    // Cleanup
+    return () => {
+      off('activity:created', handleDataChange);
+      off('activity:updated', handleDataChange);
+      off('activity:deleted', handleDataChange);
+      off('meal:created', handleDataChange);
+      off('meal:updated', handleDataChange);
+      off('meal:deleted', handleDataChange);
+      off('media:created', handleDataChange);
+      off('media:updated', handleDataChange);
+      off('media:deleted', handleDataChange);
+      off('child:updated', handleDataChange);
+    };
+  }, [connected, selectedChildId, on, off, loadData]);
 
   if (loading) {
     return (
