@@ -303,17 +303,10 @@ const Ratings = () => {
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-6">
           <p className="text-sm text-gray-600 mb-1">{t('ratings.totalRatings')}</p>
           <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-        </Card>
-        <Card className="p-6">
-          <p className="text-sm text-gray-600 mb-1">{t('ratings.overallAverage')}</p>
-          <div className="flex items-center gap-2">
-            <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-            <p className="text-2xl font-bold text-gray-900">{stats.average.toFixed(1)}</p>
-          </div>
         </Card>
         <Card className="p-6">
           <p className="text-sm text-gray-600 mb-1">{t('ratings.schoolsCount')}</p>

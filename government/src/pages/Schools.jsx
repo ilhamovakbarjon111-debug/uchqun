@@ -63,7 +63,7 @@ const Schools = () => {
       </div>
 
       {/* Global stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-6">
           <p className="text-sm text-gray-600 mb-1">
             {t('schools.totalSchools', { defaultValue: 'Jami maktablar' })}
@@ -75,15 +75,6 @@ const Schools = () => {
             {t('schools.totalReviews', { defaultValue: 'Jami baholar' })}
           </p>
           <p className="text-2xl font-bold text-gray-900">{globalStats.totalReviews}</p>
-        </Card>
-        <Card className="p-6">
-          <p className="text-sm text-gray-600 mb-1">
-            {t('schools.globalAverage', { defaultValue: 'Umumiy o\'rtacha reyting' })}
-          </p>
-          <div className="flex items-center gap-2">
-            <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-            <p className="text-2xl font-bold text-gray-900">{globalStats.globalAverageRating.toFixed(1)}</p>
-          </div>
         </Card>
       </div>
 
