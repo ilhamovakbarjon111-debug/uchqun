@@ -711,69 +711,164 @@ export const getMyRating = async (req, res) => {
  * POST /api/parent/school-rating
  */
 export const rateSchool = async (req, res) => {
-  try {
-    const { schoolId, schoolName, stars, comment } = req.body;
-    const parentId = req.user?.id;
+  // Log incoming request for debugging
+  logger.info('Rate school request received', {
+    hasBody: !!req.body,
+    bodyKeys: req.body ? Object.keys(req.body) : [],
+    hasUser: !!req.user,
+    userId: req.user?.id,
+    userRole: req.user?.role,
+  });
 
-    if (!parentId) {
-      return res.status(401).json({ error: 'Authentication required' });
+  try {
+    // 1. Validate request body exists
+    if (!req.body || typeof req.body !== 'object') {
+      logger.warn('Invalid request body', { body: req.body });
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'Request body is required and must be a valid JSON object',
+      });
     }
 
-    // Stars (1-5) is REQUIRED
-    if (stars === undefined || stars === null) {
+    const { schoolId, schoolName, stars, comment } = req.body;
+
+    // 2. Validate authentication
+    const parentId = req.user?.id;
+    if (!parentId) {
+      logger.warn('Unauthenticated request to rate school');
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'You must be logged in to rate a school',
+      });
+    }
+
+    // 3. Validate user role
+    if (req.user?.role !== 'parent') {
+      logger.warn('Non-parent user attempted to rate school', {
+        userId: parentId,
+        role: req.user?.role,
+      });
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only parents can rate schools',
+      });
+    }
+
+    // 4. Validate stars rating
+    if (stars === undefined || stars === null || stars === '') {
+      logger.warn('Missing stars rating', { body: req.body });
       return res.status(400).json({
         error: 'Stars rating required',
-        message: 'Please provide a star rating from 1 to 5'
+        message: 'Please provide a star rating from 1 to 5',
       });
     }
 
     const starsNum = Number(stars);
-    if (isNaN(starsNum) || starsNum < 1 || starsNum > 5 || !Number.isInteger(starsNum)) {
+    if (isNaN(starsNum)) {
+      logger.warn('Invalid stars format', { stars, starsType: typeof stars });
       return res.status(400).json({
         error: 'Invalid stars rating',
-        message: 'Stars rating must be an integer between 1 and 5'
+        message: 'Stars rating must be a number',
       });
     }
 
-    // Evaluation is completely removed - only stars and comment are used
+    if (!Number.isInteger(starsNum)) {
+      logger.warn('Stars not an integer', { stars, starsNum });
+      return res.status(400).json({
+        error: 'Invalid stars rating',
+        message: 'Stars rating must be an integer',
+      });
+    }
 
+    if (starsNum < 1 || starsNum > 5) {
+      logger.warn('Stars out of range', { starsNum });
+      return res.status(400).json({
+        error: 'Invalid stars rating',
+        message: 'Stars rating must be between 1 and 5',
+      });
+    }
+
+    // 5. Validate comment if provided
+    let commentValue = null;
+    if (comment !== undefined && comment !== null) {
+      if (typeof comment !== 'string') {
+        logger.warn('Invalid comment type', { comment, commentType: typeof comment });
+        return res.status(400).json({
+          error: 'Invalid comment',
+          message: 'Comment must be a string',
+        });
+      }
+      commentValue = comment.trim() || null;
+    }
+
+    // 6. Validate schoolId or schoolName is provided
+    if (!schoolId && (!schoolName || typeof schoolName !== 'string' || schoolName.trim().length === 0)) {
+      logger.warn('Missing school identifier', { schoolId, schoolName });
+      return res.status(400).json({
+        error: 'School identifier required',
+        message: 'Either schoolId or schoolName must be provided',
+      });
+    }
+
+    // 7. Validate UUID format if schoolId is provided
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (schoolId && !uuidRegex.test(schoolId)) {
+      logger.warn('Invalid schoolId format', { schoolId });
+      return res.status(400).json({
+        error: 'Invalid school ID format',
+        message: 'School ID must be a valid UUID',
+      });
+    }
+
+    // 8. Find or create school
     let school = null;
     let finalSchoolId = schoolId;
 
-    // If schoolId is provided, find school by ID
     if (schoolId) {
+      // Find school by ID
       try {
         school = await School.findByPk(schoolId);
         if (!school) {
-          return res.status(404).json({ error: 'School not found' });
+          logger.warn('School not found by ID', { schoolId, parentId });
+          return res.status(404).json({
+            error: 'School not found',
+            message: `No school found with ID: ${schoolId}`,
+          });
         }
-        finalSchoolId = schoolId;
+        finalSchoolId = school.id;
+        logger.info('School found by ID', { schoolId: finalSchoolId, schoolName: school.name });
       } catch (schoolError) {
-        logger.error('Error finding school by ID', {
+        logger.error('Database error finding school by ID', {
           error: schoolError.message,
           stack: schoolError.stack,
           schoolId,
           parentId,
+          errorName: schoolError.name,
         });
-        return res.status(500).json({ error: 'Failed to find school' });
+        return res.status(500).json({
+          error: 'Database error',
+          message: 'Failed to find school. Please try again.',
+        });
       }
-    } else if (schoolName && typeof schoolName === 'string' && schoolName.trim().length > 0) {
-      // If schoolName is provided but no schoolId, try to find or create school
+    } else {
+      // Find or create school by name
+      const trimmedName = schoolName.trim();
       try {
+        // Try exact match first
         school = await School.findOne({
           where: {
             name: {
-              [Op.iLike]: schoolName.trim(),
+              [Op.iLike]: trimmedName,
             },
           },
         });
 
+        // Try partial match if exact match fails
         if (!school) {
-          // Try partial match
           school = await School.findOne({
             where: {
               name: {
-                [Op.iLike]: `%${schoolName.trim()}%`,
+                [Op.iLike]: `%${trimmedName}%`,
               },
             },
           });
@@ -781,161 +876,233 @@ export const rateSchool = async (req, res) => {
 
         if (school) {
           finalSchoolId = school.id;
+          logger.info('School found by name', { schoolId: finalSchoolId, schoolName: school.name });
         } else {
-          // Create new school if not found
+          // Create new school
           try {
             school = await School.create({
-              name: schoolName.trim(),
-              type: 'both', // Default value for new schools
+              name: trimmedName,
+              type: 'both',
             });
             finalSchoolId = school.id;
             logger.info('School created during rating', {
-              schoolId: school.id,
+              schoolId: finalSchoolId,
               schoolName: school.name,
               parentId,
             });
           } catch (createError) {
-            logger.error('Error creating school during rating', {
+            logger.error('Database error creating school', {
               error: createError.message,
               stack: createError.stack,
-              schoolName: schoolName.trim(),
+              schoolName: trimmedName,
               parentId,
+              errorName: createError.name,
             });
-            return res.status(500).json({ error: 'Failed to create school' });
+            return res.status(500).json({
+              error: 'Database error',
+              message: 'Failed to create school. Please try again.',
+            });
           }
         }
       } catch (findError) {
-        logger.error('Error finding school by name', {
+        logger.error('Database error finding school by name', {
           error: findError.message,
           stack: findError.stack,
-          schoolName: schoolName.trim(),
+          schoolName: trimmedName,
           parentId,
+          errorName: findError.name,
         });
-        return res.status(500).json({ error: 'Failed to find school' });
+        return res.status(500).json({
+          error: 'Database error',
+          message: 'Failed to find or create school. Please try again.',
+        });
       }
-    } else {
-      return res.status(400).json({ error: 'School ID or school name is required' });
     }
 
-    // Ensure we have a valid schoolId before proceeding
-    if (!finalSchoolId || finalSchoolId === null || finalSchoolId === undefined) {
-      logger.error('No schoolId available for rating', {
+    // 9. Final validation - ensure we have a valid schoolId
+    if (!finalSchoolId || !uuidRegex.test(finalSchoolId)) {
+      logger.error('Invalid finalSchoolId after processing', {
+        finalSchoolId,
         schoolId,
         schoolName,
-        finalSchoolId,
         hasSchool: !!school,
       });
-      return res.status(400).json({ error: 'Unable to identify school for rating' });
-    }
-
-    // Validate that schoolId is a valid UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(finalSchoolId)) {
-      logger.error('Invalid schoolId format', {
-        schoolId: finalSchoolId,
-        parentId,
+      return res.status(500).json({
+        error: 'Internal error',
+        message: 'Unable to identify school. Please try again.',
       });
-      return res.status(400).json({ error: 'Invalid school ID format' });
     }
 
-    // Validate that parentId is a valid UUID format
-    if (!uuidRegex.test(parentId)) {
-      logger.error('Invalid parentId format', {
-        parentId,
-        schoolId: finalSchoolId,
-      });
-      return res.status(400).json({ error: 'Invalid parent ID format' });
-    }
-
-    // Verify school exists in database (double check)
+    // 10. Verify parent exists in database
     try {
-      const schoolExists = await School.findByPk(finalSchoolId);
-      if (!schoolExists) {
-        logger.error('School not found in database', {
+      const parent = await User.findByPk(parentId);
+      if (!parent) {
+        logger.error('Parent not found in database', { parentId });
+        return res.status(404).json({
+          error: 'User not found',
+          message: 'Your account was not found. Please contact support.',
+        });
+      }
+    } catch (parentError) {
+      logger.error('Database error verifying parent', {
+        error: parentError.message,
+        parentId,
+      });
+      return res.status(500).json({
+        error: 'Database error',
+        message: 'Failed to verify your account. Please try again.',
+      });
+    }
+
+    // 11. Create or update rating
+    let rating;
+    let created;
+    try {
+      [rating, created] = await SchoolRating.findOrCreate({
+        where: {
+          schoolId: finalSchoolId,
+          parentId,
+        },
+        defaults: {
+          stars: starsNum,
+          comment: commentValue,
+        },
+      });
+
+      if (!created) {
+        // Update existing rating
+        rating.stars = starsNum;
+        rating.comment = commentValue;
+        await rating.save();
+        logger.info('School rating updated', {
+          ratingId: rating.id,
+          schoolId: finalSchoolId,
+          parentId,
+          stars: starsNum,
+        });
+      } else {
+        logger.info('School rating created', {
+          ratingId: rating.id,
+          schoolId: finalSchoolId,
+          parentId,
+          stars: starsNum,
+        });
+      }
+    } catch (ratingError) {
+      // Handle specific database errors
+      if (ratingError.name === 'SequelizeUniqueConstraintError') {
+        logger.error('Unique constraint violation', {
+          error: ratingError.message,
           schoolId: finalSchoolId,
           parentId,
         });
-        return res.status(404).json({ error: 'School not found' });
-      }
-    } catch (schoolCheckError) {
-      logger.error('Error verifying school exists', {
-        error: schoolCheckError.message,
-        schoolId: finalSchoolId,
-        parentId,
-      });
-      return res.status(500).json({ error: 'Failed to verify school' });
-    }
-
-    // Check if parent has any children (optional validation)
-    // If parent has children, try to update their schoolId if it matches
-    try {
-      const children = await Child.findAll({
-        where: { parentId },
-        limit: 1,
-      });
-      
-      if (children.length > 0) {
-        const child = children[0];
-        // Update child's schoolId if it was null and school name matches
-        if (!child.schoolId && finalSchoolId && school) {
-          try {
-            await child.update({ schoolId: finalSchoolId });
-            logger.info('Updated child schoolId', {
-              childId: child.id,
+        // Try to find and update existing rating
+        try {
+          rating = await SchoolRating.findOne({
+            where: {
               schoolId: finalSchoolId,
+              parentId,
+            },
+          });
+          if (rating) {
+            rating.stars = starsNum;
+            rating.comment = commentValue;
+            await rating.save();
+            logger.info('School rating updated after constraint violation', {
+              ratingId: rating.id,
             });
-          } catch (err) {
-            logger.warn('Failed to update child schoolId during rating', {
-              childId: child.id,
-              schoolId: finalSchoolId,
-              error: err.message,
-            });
+          } else {
+            throw ratingError;
           }
+        } catch (retryError) {
+          logger.error('Failed to retry after constraint violation', {
+            error: retryError.message,
+          });
+          return res.status(409).json({
+            error: 'Conflict',
+            message: 'A rating already exists for this school. Please try again.',
+          });
         }
+      } else if (ratingError.name === 'SequelizeForeignKeyConstraintError') {
+        logger.error('Foreign key constraint error', {
+          error: ratingError.message,
+          originalMessage: ratingError.original?.message,
+          schoolId: finalSchoolId,
+          parentId,
+        });
+        return res.status(400).json({
+          error: 'Invalid reference',
+          message: 'School or parent reference is invalid. Please check your data.',
+        });
+      } else if (ratingError.name === 'SequelizeValidationError') {
+        const validationMessages = ratingError.errors?.map(e => e.message).join(', ') || ratingError.message;
+        logger.error('Validation error', {
+          error: validationMessages,
+          errors: ratingError.errors,
+        });
+        return res.status(400).json({
+          error: 'Validation error',
+          message: validationMessages,
+        });
+      } else {
+        logger.error('Database error saving rating', {
+          error: ratingError.message,
+          stack: ratingError.stack,
+          errorName: ratingError.name,
+          schoolId: finalSchoolId,
+          parentId,
+        });
+        throw ratingError; // Re-throw to be caught by outer catch
       }
-    } catch (err) {
-      logger.warn('Error checking children during rating', {
-        error: err.message,
-        parentId,
+    }
+
+    // 12. Safely serialize and return response
+    try {
+      const ratingData = rating.toJSON ? rating.toJSON() : rating.get({ plain: true });
+      
+      res.json({
+        success: true,
+        message: 'School rating saved successfully',
+        data: ratingData,
       });
-      // Continue with rating even if child check fails
+    } catch (jsonError) {
+      logger.error('Error serializing rating to JSON', {
+        error: jsonError.message,
+        ratingId: rating?.id,
+      });
+      // Still return success but without full data
+      res.json({
+        success: true,
+        message: 'School rating saved successfully',
+        data: {
+          id: rating.id,
+          schoolId: rating.schoolId,
+          parentId: rating.parentId,
+          stars: rating.stars,
+        },
+      });
     }
-
-    // Upsert rating - same pattern as teacher rating
-    const [rating, created] = await SchoolRating.findOrCreate({
-      where: {
-        schoolId: finalSchoolId,
-        parentId,
-      },
-      defaults: {
-        stars: starsNum,
-        comment: comment || null,
-      },
-    });
-
-    if (!created) {
-      rating.stars = starsNum;
-      rating.comment = comment || null;
-      await rating.save();
-    }
-
-    res.json({
-      success: true,
-      message: 'School rating saved successfully',
-      data: rating.toJSON(),
-    });
   } catch (error) {
-    logger.error('Rate school error', { 
-      error: error.message, 
+    // Catch-all error handler - should never reach here if all cases are handled above
+    logger.error('Unexpected error in rateSchool', {
+      error: error.message,
       stack: error.stack,
+      errorName: error.name,
+      errorCode: error.code,
       parentId: req.user?.id,
-      schoolId: req.body?.schoolId,
-      schoolName: req.body?.schoolName,
+      body: req.body,
     });
-    res.status(500).json({ 
-      error: 'Failed to rate school',
-      message: 'An error occurred while saving the rating. Please try again.',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+
+    // Return safe error response
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'An unexpected error occurred. Please try again later.',
+      ...(process.env.NODE_ENV === 'development' && {
+        details: {
+          message: error.message,
+          name: error.name,
+        },
+      }),
     });
   }
 };
