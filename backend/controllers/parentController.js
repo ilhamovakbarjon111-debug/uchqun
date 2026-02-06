@@ -509,6 +509,8 @@ export const rateMyTeacher = async (req, res) => {
     const [rating, created] = await TeacherRating.findOrCreate({
       where: { teacherId: parent.teacherId, parentId: req.user.id },
       defaults: {
+        teacherId: parent.teacherId,
+        parentId: req.user.id,
         stars: starsNum,
         comment: comment || null,
       },
@@ -964,6 +966,8 @@ export const rateSchool = async (req, res) => {
           parentId,
         },
         defaults: {
+          schoolId: finalSchoolId,
+          parentId,
           stars: starsNum,
           comment: commentValue,
         },
