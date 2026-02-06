@@ -260,3 +260,37 @@ export const syncDatabase = async (force = false) => {
 
 export default models;
 
+// Named exports for convenience
+export {
+  User,
+  Document,
+  ParentActivity,
+  ParentMeal,
+  ParentMedia,
+  TeacherResponsibility,
+  TeacherTask,
+  TeacherWorkHistory,
+  Progress,
+  Group,
+  Child,
+  Activity,
+  Media,
+  Meal,
+  Notification,
+  TeacherRating,
+  ChatMessage,
+  School,
+  SchoolRating,
+  SuperAdminMessage,
+  AdminRegistrationRequest,
+  EmotionalMonitoring,
+  Therapy,
+  TherapyUsage,
+  AIWarning,
+  PushNotification,
+  Payment,
+  GovernmentStats,
+  BusinessStats,
+  RefreshToken,
+  sequelize,
+};
