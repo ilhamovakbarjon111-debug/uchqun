@@ -66,7 +66,8 @@
     "yearsOld": "лет",
     "quickActions": "Быстрые действия",
     "aiAssistant": "AI Помощник",
-    "individualPlan": "Индивидуальный план"
+    "individualPlan": "Индивидуальный план",
+    "children": "детей"
   },
   "parentsPage": {
     "title": "Управление родителями",
@@ -383,7 +384,20 @@
     "yes": "Да",
     "no": "Нет",
     "language": "Язык",
-    "exit": "Выход"
+    "exit": "Выход",
+    "role": "Роль",
+    "editProfile": "Редактировать профиль",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "myChildren": "Мои дети",
+    "yearsOld": "лет",
+    "noChildren": "Дети не прикреплены",
+    "nameRequired": "Имя обязательно",
+    "updated": "Профиль успешно обновлен",
+    "updateFailed": "Не удалось обновить профиль",
+    "photoPermissionRequired": "Требуется разрешение на доступ к фото",
+    "photoUploaded": "Фото профиля успешно обновлено",
+    "photoUploadFailed": "Не удалось загрузить фото"
   },
   "cancel": "Отмена",
   "save": "Сохранить",

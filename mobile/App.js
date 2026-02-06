@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -9,7 +10,7 @@ import { NotificationProvider } from './src/context/NotificationContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 import { NetworkBanner } from './src/components/common/NetworkBanner';
-import './src/i18n/config'; // Initialize i18n
+import { i18nReady } from './src/i18n/config';
 
 // Global error handler for unhandled promise rejections
 if (typeof ErrorUtils !== 'undefined') {
@@ -23,6 +24,14 @@ if (typeof ErrorUtils !== 'undefined') {
 }
 
 export default function App() {
+  const [i18nLoaded, setI18nLoaded] = useState(false);
+
+  useEffect(() => {
+    i18nReady.then(() => setI18nLoaded(true)).catch(() => setI18nLoaded(true));
+  }, []);
+
+  if (!i18nLoaded) return null;
+
   return (
     <ErrorBoundary>
       <SafeAreaProvider>

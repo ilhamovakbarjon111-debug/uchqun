@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { StyleSheet, Text, View, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { loadMessages, addMessage, markRead, updateMessage, deleteMessage } from '../../services/chatStore';
 import tokens from '../../styles/tokens';
@@ -35,28 +35,29 @@ export function ChatScreen() {
   const BOTTOM_NAV_HEIGHT = 75;
   const bottomPadding = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
-  useEffect(() => {
-    let alive = true;
-    let intervalId;
+  // Only poll when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
 
-    const load = async () => {
-      if (!conversationId) return;
-      const msgs = await loadMessages(conversationId);
-      if (!alive) return;
-      setMessages(Array.isArray(msgs) ? msgs : []);
-      await markRead(conversationId);
-      if (loading) setLoading(false);
-    };
+      const load = async () => {
+        if (!conversationId) return;
+        const msgs = await loadMessages(conversationId);
+        if (!alive) return;
+        setMessages(Array.isArray(msgs) ? msgs : []);
+        await markRead(conversationId);
+        if (loading) setLoading(false);
+      };
 
-    load();
-    // Poll for new messages every 15 seconds (reduced from 5s to prevent performance issues)
-    intervalId = setInterval(load, 15000);
+      load();
+      const intervalId = setInterval(load, 15000);
 
-    return () => {
-      alive = false;
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [conversationId]);
+      return () => {
+        alive = false;
+        clearInterval(intervalId);
+      };
+    }, [conversationId])
+  );
 
   const sorted = useMemo(
     () =>

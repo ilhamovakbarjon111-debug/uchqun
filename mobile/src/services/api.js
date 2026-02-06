@@ -71,15 +71,21 @@ api.interceptors.response.use(
   }
 );
 
-// Cache interceptor for GET responses
+// Cache interceptor for GET responses + invalidation on mutations
 api.interceptors.response.use(
   async (response) => {
-    // Cache successful GET responses (guard: response.config may be missing on synthetic responses)
-    if (response.config?.method === 'get' && response.status >= 200 && response.status < 300) {
+    const method = response.config?.method;
+    if (method === 'get' && response.status >= 200 && response.status < 300) {
+      // Cache successful GET responses
       try {
         const { cacheService } = await import('./cacheService');
-        const params = response.config.params;
-        cacheService.set(response.config.url, params, response.data);
+        cacheService.set(response.config.url, response.config.params, response.data);
+      } catch {}
+    } else if (['post', 'put', 'delete', 'patch'].includes(method) && response.status >= 200 && response.status < 300) {
+      // Invalidate cache after successful mutations so fresh data is fetched next time
+      try {
+        const { cacheService } = await import('./cacheService');
+        await cacheService.clear();
       } catch {}
     }
     return response;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, TouchableOpacity, AppState, Animated, RefreshControl, Dimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable, AppState, Animated, RefreshControl, Dimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -48,104 +48,59 @@ export function ParentDashboardScreen() {
     loadData();
   }, []);
 
-  // Real-time data loading - reload when screen is focused or child changes
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-
-      // Set up auto-refresh every 30 seconds when screen is focused
-      const interval = setInterval(() => {
-        loadData();
-      }, 30000); // 30 seconds
-
-      return () => clearInterval(interval);
-    }, [selectedChildId])
-  );
-
-  // Auto-refresh when app comes to foreground
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active') {
-        loadData(); // Refresh when app becomes active
-      }
-    });
-
-    return () => subscription?.remove();
-  }, [selectedChildId]);
+  const initialLoadDone = useRef(false);
 
   // Real-time WebSocket listeners for instant updates
   useEffect(() => {
     if (!connected) return;
 
-    const handleActivityChange = (data) => {
-      console.log('[Dashboard] Activity change received:', data);
-      loadData(); // Reload stats when activity changes
-    };
+    const handleChange = () => loadData(false);
 
-    const handleMealChange = (data) => {
-      console.log('[Dashboard] Meal change received:', data);
-      loadData(); // Reload stats when meal changes
-    };
+    on('activity:created', handleChange);
+    on('activity:updated', handleChange);
+    on('activity:deleted', handleChange);
+    on('meal:created', handleChange);
+    on('meal:updated', handleChange);
+    on('meal:deleted', handleChange);
+    on('media:created', handleChange);
+    on('media:updated', handleChange);
+    on('media:deleted', handleChange);
+    on('child:updated', handleChange);
 
-    const handleMediaChange = (data) => {
-      console.log('[Dashboard] Media change received:', data);
-      loadData(); // Reload stats when media changes
-    };
-
-    const handleChildUpdate = (data) => {
-      console.log('[Dashboard] Child updated:', data);
-      loadData(); // Reload to update child info
-    };
-
-    // Subscribe to all relevant events
-    on('activity:created', handleActivityChange);
-    on('activity:updated', handleActivityChange);
-    on('activity:deleted', handleActivityChange);
-    on('meal:created', handleMealChange);
-    on('meal:updated', handleMealChange);
-    on('meal:deleted', handleMealChange);
-    on('media:created', handleMediaChange);
-    on('media:updated', handleMediaChange);
-    on('media:deleted', handleMediaChange);
-    on('child:updated', handleChildUpdate);
-
-    // Cleanup on unmount
     return () => {
-      off('activity:created', handleActivityChange);
-      off('activity:updated', handleActivityChange);
-      off('activity:deleted', handleActivityChange);
-      off('meal:created', handleMealChange);
-      off('meal:updated', handleMealChange);
-      off('meal:deleted', handleMealChange);
-      off('media:created', handleMediaChange);
-      off('media:updated', handleMediaChange);
-      off('media:deleted', handleMediaChange);
-      off('child:updated', handleChildUpdate);
+      off('activity:created', handleChange);
+      off('activity:updated', handleChange);
+      off('activity:deleted', handleChange);
+      off('meal:created', handleChange);
+      off('meal:updated', handleChange);
+      off('meal:deleted', handleChange);
+      off('media:created', handleChange);
+      off('media:updated', handleChange);
+      off('media:deleted', handleChange);
+      off('child:updated', handleChange);
     };
-  }, [connected, on, off]);
+  }, [connected, on, off, loadData]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async (isInitial = false) => {
     try {
-      setLoading(true);
-      // Load data like website: get children first, then load stats for selected child
+      if (isInitial) setLoading(true);
+
       const childrenData = await parentService.getChildren().catch(() => []);
-      const children = Array.isArray(childrenData) ? childrenData : [];
-      setChildren(children);
-      
-      // Select first child if available
-      if (children.length > 0 && !selectedChildId) {
-        setSelectedChildId(children[0].id);
+      const childrenList = Array.isArray(childrenData) ? childrenData : [];
+      setChildren(childrenList);
+
+      // Select first child if none selected
+      let activeChildId = selectedChildId;
+      if (childrenList.length > 0 && !activeChildId) {
+        activeChildId = childrenList[0].id;
+        setSelectedChildId(activeChildId);
       }
 
-      // If we have a selected child, load REAL-TIME stats for that child (no limit for accurate count)
-      if (selectedChildId || (children.length > 0 && children[0].id)) {
-        const childId = selectedChildId || children[0].id;
-        
-        // Get full counts (no limit) for real-time statistics like website
+      if (activeChildId) {
         const [activitiesRes, mealsRes, mediaRes, therapiesRes] = await Promise.all([
-          parentService.getActivities({ childId }).catch(() => []), // No limit = get all for accurate count
-          parentService.getMeals({ childId }).catch(() => []), // No limit = get all for accurate count
-          parentService.getMedia({ childId }).catch(() => []), // No limit = get all for accurate count
+          parentService.getActivities({ childId: activeChildId }).catch(() => []),
+          parentService.getMeals({ childId: activeChildId }).catch(() => []),
+          parentService.getMedia({ childId: activeChildId }).catch(() => []),
           api.get('/therapy', { params: { isActive: true } }).catch(() => ({ data: { data: { therapies: [] } } })),
         ]);
 
@@ -156,38 +111,43 @@ export function ParentDashboardScreen() {
         const therapies = Array.isArray(therapiesData) ? therapiesData : [];
 
         setStats({
-          activities: Array.isArray(activities) ? activities.length : 0,
-          meals: Array.isArray(meals) ? meals.length : 0,
-          media: Array.isArray(media) ? media.length : 0,
-          therapies: Array.isArray(therapies) ? therapies.length : 0,
+          activities: activities.length,
+          meals: meals.length,
+          media: media.length,
+          therapies: therapies.length,
         });
       } else {
-        setStats({
-          activities: 0,
-          meals: 0,
-          media: 0,
-          therapies: 0,
-        });
-      }
-      
-      // Refresh notifications after loading data
-      if (refreshNotifications) {
-        refreshNotifications();
+        setStats({ activities: 0, meals: 0, media: 0, therapies: 0 });
       }
     } catch (error) {
-      console.error('[ParentDashboard] Fatal error loading dashboard:', error);
+      console.error('[ParentDashboard] Error loading dashboard:', error);
       setChildren([]);
-      setStats({
-        activities: 0,
-        meals: 0,
-        media: 0,
-        therapies: 0,
-      });
+      setStats({ activities: 0, meals: 0, media: 0, therapies: 0 });
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [selectedChildId]);
+
+  // Load data on focus, auto-refresh every 30s, and refresh on foreground — single consolidated effect
+  useFocusEffect(
+    useCallback(() => {
+      const isInitial = !initialLoadDone.current;
+      loadData(isInitial);
+      initialLoadDone.current = true;
+
+      const interval = setInterval(() => loadData(false), 30000);
+
+      const subscription = AppState.addEventListener('change', (nextAppState) => {
+        if (nextAppState === 'active') loadData(false);
+      });
+
+      return () => {
+        clearInterval(interval);
+        subscription?.remove();
+      };
+    }, [loadData])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);

@@ -57,7 +57,8 @@
     "myChildren": "Mening bolalarim",
     "yearsOld": "yosh",
     "quickActions": "Tezkor harakatlar",
-    "aiAssistant": "AI Yordamchi"
+    "aiAssistant": "AI Yordamchi",
+    "children": "farzand"
   },
   "parentsPage": {
     "title": "Ota-onalarni boshqarish",
@@ -337,7 +338,22 @@
     "no": "Yo'q",
     "language": "Til",
     "exit": "Chiqish",
-    "role": "Rol"
+    "role": "Rol",
+    "editProfile": "Profilni tahrirlash",
+    "firstName": "Ism",
+    "lastName": "Familiya",
+    "myChildren": "Mening bolalarim",
+    "yearsOld": "yosh",
+    "noChildren": "Bolalar biriktirilmagan",
+    "nameRequired": "Ism kiritilishi shart",
+    "updated": "Profil muvaffaqiyatli yangilandi",
+    "updateFailed": "Profilni yangilashda xatolik",
+    "photoPermissionRequired": "Foto kutubxonaga ruxsat talab qilinadi",
+    "photoUploaded": "Profil rasmi muvaffaqiyatli yangilandi",
+    "photoUploadFailed": "Rasmni yuklashda xatolik",
+    "uploadImage": "Rasm yuklash",
+    "selectImageFromGallery": "Galeriyadan rasm tanlash",
+    "imageFormatHint": "JPG, PNG yoki GIF (maks. 5MB)"
   },
   "child": {
     "title": "Farzand profili",

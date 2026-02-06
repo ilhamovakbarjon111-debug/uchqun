@@ -52,6 +52,6 @@ export const getAvailableLanguages = () => [
   { code: 'ru', name: 'Russian', nativeName: 'Русский' },
 ];
 
-initI18n();
+export const i18nReady = initI18n();
 
 export default i18n;

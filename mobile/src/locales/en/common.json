@@ -57,7 +57,8 @@
     "myChildren": "My Children",
     "yearsOld": "years old",
     "quickActions": "Quick Actions",
-    "aiAssistant": "AI Assistant"
+    "aiAssistant": "AI Assistant",
+    "children": "children"
   },
   "parentsPage": {
     "title": "Parent Management",
@@ -66,7 +67,8 @@
     "searchPlaceholder": "Search by name, email or phone...",
     "noSearchResults": "No parents found for this search",
     "results": "results",
-    "children": "{{count}} child",
+    "children": "children",
+    "childCount": "{{count}} child",
     "children_plural": "{{count}} children",
     "noChildInfo": "No child information",
     "noParents": "No parents yet",
@@ -311,7 +313,23 @@
     "yes": "Yes",
     "no": "No",
     "language": "Language",
-    "exit": "Exit"
+    "exit": "Exit",
+    "role": "Role",
+    "editProfile": "Edit Profile",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "myChildren": "My Children",
+    "yearsOld": "years old",
+    "noChildren": "No children attached",
+    "nameRequired": "Name is required",
+    "updated": "Profile updated successfully",
+    "updateFailed": "Failed to update profile",
+    "photoPermissionRequired": "Photo library permission is required",
+    "photoUploaded": "Profile photo updated successfully",
+    "photoUploadFailed": "Failed to upload photo",
+    "uploadImage": "Upload image",
+    "selectImageFromGallery": "Select image from gallery",
+    "imageFormatHint": "JPG, PNG or GIF (max. 5MB)"
   },
   "child": {
     "title": "Child Profile",

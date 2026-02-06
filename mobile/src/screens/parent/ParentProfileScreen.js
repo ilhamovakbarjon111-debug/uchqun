@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, View, Image, TouchableOpacity, Alert, ActivityIndicator, Animated, TextInput } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,13 +17,22 @@ import { API_URL } from '../../config';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-function getAvatarUrl(avatar) {
+function getAvatarUrl(avatar, bustCache = false) {
   if (!avatar) return null;
-  if (avatar.startsWith('http')) return avatar;
-  const base = (API_URL || '').replace(/\/api\/?$/, '');
-  return `${base}${avatar.startsWith('/') ? '' : '/'}${avatar}`;
+  let url;
+  if (avatar.startsWith('http')) {
+    url = avatar;
+  } else {
+    const base = (API_URL || '').replace(/\/api\/?$/, '');
+    url = `${base}${avatar.startsWith('/') ? '' : '/'}${avatar}`;
+  }
+  if (bustCache) {
+    const sep = url.includes('?') ? '&' : '?';
+    url += `${sep}t=${Date.now()}`;
+  }
+  return url;
 }
 
 export function ParentProfileScreen() {
@@ -43,6 +52,7 @@ export function ParentProfileScreen() {
   });
   const [monitoringRecords, setMonitoringRecords] = useState([]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarVersion, setAvatarVersion] = useState(0);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     firstName: '',
@@ -57,9 +67,15 @@ export function ParentProfileScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
-  useEffect(() => {
-    loadProfile();
+  // Refresh profile data when screen gains focus (picks up web changes)
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+      refreshUser();
+    }, [])
+  );
 
+  useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -231,7 +247,7 @@ export function ParentProfileScreen() {
         type,
       });
 
-      const response = await api.post('/user/avatar', formData, {
+      const response = await api.put('/user/avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -239,6 +255,7 @@ export function ParentProfileScreen() {
 
       if (response.data?.avatarUrl) {
         await refreshUser();
+        setAvatarVersion(v => v + 1);
         Alert.alert(
           t('common.success', { defaultValue: 'Success' }),
           t('profile.photoUploaded', { defaultValue: 'Profile photo updated successfully' })
@@ -312,7 +329,7 @@ export function ParentProfileScreen() {
               <TouchableOpacity onPress={handleAvatarUpload} disabled={uploadingAvatar}>
                 <View style={styles.avatarContainer}>
                   {u.avatar ? (
-                    <Image source={{ uri: getAvatarUrl(u.avatar) }} style={styles.avatarImage} resizeMode="cover" />
+                    <Image source={{ uri: getAvatarUrl(u.avatar, avatarVersion > 0) }} style={styles.avatarImage} resizeMode="cover" />
                   ) : (
                     <LinearGradient colors={['#A78BFA', '#8B5CF6']} style={styles.avatarGradient}>
                       <Text style={styles.avatarText}>
