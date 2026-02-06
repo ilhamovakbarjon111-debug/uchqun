@@ -140,13 +140,6 @@ const SchoolCard = ({ school, t }) => {
             </div>
           </div>
         </div>
-        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${LEVEL_COLORS[level] || LEVEL_COLORS[0]}`}>
-          <Award className="w-3 h-3" />
-          {level
-            ? `${t('ratings.level')} ${level}`
-            : t('schools.unrated', { defaultValue: 'Unrated' })
-          }
-        </span>
       </div>
 
       <div className="flex items-center gap-3 mb-4">

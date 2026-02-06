@@ -242,13 +242,6 @@ const Dashboard = () => {
                           </div>
                           <Building2 className="w-5 h-5 text-blue-600" />
                           <h3 className="font-bold text-gray-900">{school.name}</h3>
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${LEVEL_COLORS[level] || LEVEL_COLORS[0]}`}>
-                            <Award className="w-3 h-3" />
-                            {level
-                              ? `${t('schools.level', { defaultValue: 'Daraja' })} ${level}`
-                              : t('schools.unrated', { defaultValue: 'Baholanmagan' })
-                            }
-                          </span>
                         </div>
                         {school.address && (
                           <p className="text-sm text-gray-600 mb-2">{school.address}</p>
