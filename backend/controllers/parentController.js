@@ -970,7 +970,7 @@ export const rateSchool = async (req, res) => {
           parentId,
           stars: starsNum,
           comment: commentValue,
-          // Don't set evaluation in defaults - let database default handle it
+          // evaluation will use database default value
         },
       });
 

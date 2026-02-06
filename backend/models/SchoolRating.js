@@ -67,7 +67,7 @@ const SchoolRating = sequelize.define('SchoolRating', {
   evaluation: {
     type: DataTypes.JSONB,
     allowNull: true,
-    defaultValue: {},
+    // Don't set defaultValue here - let database default handle it
   },
   comment: {
     type: DataTypes.TEXT,
