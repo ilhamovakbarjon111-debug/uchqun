@@ -25,12 +25,13 @@ const SchoolRating = sequelize.define('SchoolRating', {
   },
   stars: {
     type: DataTypes.INTEGER,
-    allowNull: false, // Stars is required
+    allowNull: true, // Allow null in database for backward compatibility, but validate in controller
     validate: {
-      // Custom validator for valid integer between 1-5
+      // Custom validator for valid integer between 1-5 (only when value is provided)
       isValidStars(value) {
+        // Allow null/undefined for backward compatibility with existing records
         if (value === null || value === undefined) {
-          throw new Error('Stars rating is required');
+          return true;
         }
         const num = Number(value);
         if (isNaN(num) || !Number.isInteger(num)) {

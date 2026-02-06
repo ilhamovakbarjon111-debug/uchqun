@@ -956,28 +956,29 @@ export const rateSchool = async (req, res) => {
       });
     }
 
-    // 11. Create or update rating
+    // 11. Create or update rating (using findOrCreate like teacher rating)
     let rating;
     let created;
     try {
-      // First try to find existing rating
-      rating = await SchoolRating.findOne({
+      [rating, created] = await SchoolRating.findOrCreate({
         where: {
           schoolId: finalSchoolId,
           parentId,
         },
+        defaults: {
+          schoolId: finalSchoolId,
+          parentId,
+          stars: starsNum,
+          comment: commentValue,
+          // Don't set evaluation in defaults - let database default handle it
+        },
       });
 
-      if (rating) {
+      if (!created) {
         // Update existing rating
         rating.stars = starsNum;
         rating.comment = commentValue;
-        // Ensure evaluation exists if it's null
-        if (!rating.evaluation) {
-          rating.evaluation = {};
-        }
         await rating.save();
-        created = false;
         logger.info('School rating updated', {
           ratingId: rating.id,
           schoolId: finalSchoolId,
@@ -985,15 +986,6 @@ export const rateSchool = async (req, res) => {
           stars: starsNum,
         });
       } else {
-        // Create new rating
-        rating = await SchoolRating.create({
-          schoolId: finalSchoolId,
-          parentId,
-          stars: starsNum,
-          comment: commentValue,
-          evaluation: {}, // Ensure evaluation is set to empty object
-        });
-        created = true;
         logger.info('School rating created', {
           ratingId: rating.id,
           schoolId: finalSchoolId,
