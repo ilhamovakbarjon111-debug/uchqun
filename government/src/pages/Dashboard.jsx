@@ -208,9 +208,18 @@ const Dashboard = () => {
         ) : (
           <div className="space-y-4">
             {schools
-              .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
-              .map((school) => {
+              .sort((a, b) => {
+                // Sort by average rating (descending), then by ratings count (descending)
+                const ratingA = a.averageRating || 0;
+                const ratingB = b.averageRating || 0;
+                if (ratingB !== ratingA) {
+                  return ratingB - ratingA;
+                }
+                return (b.ratingsCount || 0) - (a.ratingsCount || 0);
+              })
+              .map((school, index) => {
                 const level = school.governmentLevel ?? 0;
+                const rank = index + 1;
                 return (
                   <div
                     key={school.id}
@@ -219,6 +228,18 @@ const Dashboard = () => {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
+                          {/* Rank Badge */}
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-base flex-shrink-0 ${
+                            rank === 1 
+                              ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-400' 
+                              : rank === 2 
+                              ? 'bg-gray-100 text-gray-700 border-2 border-gray-400'
+                              : rank === 3
+                              ? 'bg-orange-100 text-orange-700 border-2 border-orange-400'
+                              : 'bg-primary-100 text-primary-600'
+                          }`}>
+                            {rank}
+                          </div>
                           <Building2 className="w-5 h-5 text-blue-600" />
                           <h3 className="font-bold text-gray-900">{school.name}</h3>
                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${LEVEL_COLORS[level] || LEVEL_COLORS[0]}`}>
