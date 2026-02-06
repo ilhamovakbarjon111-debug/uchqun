@@ -960,24 +960,24 @@ export const rateSchool = async (req, res) => {
     let rating;
     let created;
     try {
-      [rating, created] = await SchoolRating.findOrCreate({
+      // First try to find existing rating
+      rating = await SchoolRating.findOne({
         where: {
           schoolId: finalSchoolId,
           parentId,
         },
-        defaults: {
-          schoolId: finalSchoolId,
-          parentId,
-          stars: starsNum,
-          comment: commentValue,
-        },
       });
 
-      if (!created) {
+      if (rating) {
         // Update existing rating
         rating.stars = starsNum;
         rating.comment = commentValue;
+        // Ensure evaluation exists if it's null
+        if (!rating.evaluation) {
+          rating.evaluation = {};
+        }
         await rating.save();
+        created = false;
         logger.info('School rating updated', {
           ratingId: rating.id,
           schoolId: finalSchoolId,
@@ -985,6 +985,15 @@ export const rateSchool = async (req, res) => {
           stars: starsNum,
         });
       } else {
+        // Create new rating
+        rating = await SchoolRating.create({
+          schoolId: finalSchoolId,
+          parentId,
+          stars: starsNum,
+          comment: commentValue,
+          evaluation: {}, // Ensure evaluation is set to empty object
+        });
+        created = true;
         logger.info('School rating created', {
           ratingId: rating.id,
           schoolId: finalSchoolId,
@@ -1095,9 +1104,11 @@ export const rateSchool = async (req, res) => {
       errorCode: error.code,
       parentId: req.user?.id,
       body: req.body,
+      originalError: error.original?.message,
+      errors: error.errors?.map(e => ({ message: e.message, path: e.path, value: e.value })),
     });
 
-    // Return safe error response
+    // Return safe error response with more details in development
     res.status(500).json({
       error: 'Internal server error',
       message: 'An unexpected error occurred. Please try again later.',
@@ -1105,6 +1116,8 @@ export const rateSchool = async (req, res) => {
         details: {
           message: error.message,
           name: error.name,
+          originalError: error.original?.message,
+          errors: error.errors?.map(e => ({ message: e.message, path: e.path })),
         },
       }),
     });
