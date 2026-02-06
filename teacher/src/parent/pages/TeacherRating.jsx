@@ -19,6 +19,7 @@ const TeacherRating = () => {
   const [school, setSchool] = useState(null);
   const [schoolRating, setSchoolRating] = useState(null);
   const [schoolSummary, setSchoolSummary] = useState({ average: 0, count: 0 });
+  const [schoolAllRatings, setSchoolAllRatings] = useState([]); // All ratings from all parents
   const [schoolStars, setSchoolStars] = useState(0);
   const [schoolComment, setSchoolComment] = useState('');
   
@@ -76,12 +77,13 @@ const TeacherRating = () => {
       setSummary(ratingData.summary || { average: 0, count: 0 });
 
       // School rating data
-      const schoolRatingData = schoolRatingRes?.data?.data || { rating: null, school: null, summary: { average: 0, count: 0 } };
+      const schoolRatingData = schoolRatingRes?.data?.data || { rating: null, school: null, summary: { average: 0, count: 0 }, allRatings: [] };
       setSchool(schoolRatingData.school);
       setSchoolRating(schoolRatingData.rating);
       setSchoolStars(schoolRatingData.rating?.stars || 0);
       setSchoolComment(schoolRatingData.rating?.comment || '');
       setSchoolSummary(schoolRatingData.summary || { average: 0, count: 0 });
+      setSchoolAllRatings(schoolRatingData.allRatings || []); // Set all ratings
     } catch (err) {
       console.error('Error loading rating data:', err);
       setError(t('ratingPage.errorLoad'));
@@ -213,6 +215,7 @@ const TeacherRating = () => {
       });
       const ratingData = refreshRes?.data?.data || {};
       setSchoolSummary(ratingData.summary || { average: 0, count: 0 });
+      setSchoolAllRatings(ratingData.allRatings || []); // Update all ratings
       // Also update school data in case it was found/created
       if (ratingData.school) {
         setSchool(ratingData.school);
@@ -629,6 +632,47 @@ const TeacherRating = () => {
                   </div>
                 </div>
               </Card>
+
+              {/* All Ratings from Other Parents */}
+              {schoolAllRatings && schoolAllRatings.length > 0 && (
+                <Card className="space-y-4">
+                  <p className="text-sm font-semibold text-gray-900">{t('schoolRatingPage.allRatings', { defaultValue: 'Barcha baholar' })}</p>
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {schoolAllRatings.map((r) => (
+                      <div key={r.id} className="border border-gray-200 rounded-xl p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                className="w-4 h-4"
+                                fill={s <= (r.stars || 0) ? '#22c55e' : 'none'}
+                                stroke={s <= (r.stars || 0) ? '#16a34a' : '#d1d5db'}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs text-gray-400">
+                            {r.updatedAt || r.createdAt 
+                              ? new Date(r.updatedAt || r.createdAt).toLocaleDateString(locale)
+                              : ''}
+                          </span>
+                        </div>
+                        {r.comment && (
+                          <div className="flex items-start gap-2 text-gray-700">
+                            <MessageSquare className="w-4 h-4 text-gray-400 mt-0.5" />
+                            <p className="text-sm leading-relaxed">{r.comment}</p>
+                          </div>
+                        )}
+                        {r.parentName && (
+                          <p className="text-xs text-gray-500">
+                            {t('schoolRatingPage.byParent', { name: r.parentName, defaultValue: `Baholovchi: ${r.parentName}` })}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
             </div>
           </div>
         </>
