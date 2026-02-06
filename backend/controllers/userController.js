@@ -58,7 +58,12 @@ export const updateAvatar = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    const filename = `avatar-${user.id}-${Date.now()}.${req.file.mimetype.split('/')[1] || 'jpg'}`;
+    // Normalize extension - Appwrite expects jpg, not jpeg
+    let extension = (req.file.mimetype.split('/')[1] || 'jpg').toLowerCase();
+    if (extension === 'jpeg') extension = 'jpg';
+    const validExtensions = ['jpg', 'png', 'gif', 'webp'];
+    if (!validExtensions.includes(extension)) extension = 'jpg';
+    const filename = `avatar-${user.id}-${Date.now()}.${extension}`;
     const uploadResult = await uploadFile(req.file.buffer, filename, req.file.mimetype);
     await user.update({ avatar: uploadResult.url });
     await user.reload();

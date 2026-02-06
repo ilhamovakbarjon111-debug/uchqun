@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, View, Image, TouchableOpacity, Alert, ActivityIndicator, Animated, TextInput } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Image, TouchableOpacity, Alert, ActivityIndicator, Animated, TextInput, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -230,42 +230,53 @@ export function ParentProfileScreen() {
         quality: 0.8,
       });
 
-      if (result.canceled) return;
+      if (result.canceled || !result.assets || result.assets.length === 0) return;
 
       setUploadingAvatar(true);
 
       const asset = result.assets[0];
       const uri = asset.uri;
-      const filename = uri.split('/').pop();
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      // Generate safe filename and detect MIME type
+      let filename = `avatar-${Date.now()}.jpg`;
+      let mimeType = 'image/jpeg';
+
+      const uriParts = uri.split('/');
+      const uriFilename = uriParts[uriParts.length - 1];
+      if (uriFilename && uriFilename.includes('.')) {
+        filename = uriFilename;
+        const ext = filename.split('.').pop().toLowerCase();
+        if (ext === 'png') mimeType = 'image/png';
+        else if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg';
+        else if (ext === 'gif') mimeType = 'image/gif';
+        else if (ext === 'webp') mimeType = 'image/webp';
+      }
 
       const formData = new FormData();
       formData.append('avatar', {
-        uri,
+        uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
         name: filename,
-        type,
+        type: mimeType,
       });
 
-      const response = await api.put('/user/avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      // Do NOT set Content-Type manually — the API interceptor removes it
+      // so React Native can auto-set the multipart boundary
+      await api.put('/user/avatar', formData, {
+        timeout: 60000,
       });
 
-      if (response.data?.avatarUrl) {
-        await refreshUser();
-        setAvatarVersion(v => v + 1);
-        Alert.alert(
-          t('common.success', { defaultValue: 'Success' }),
-          t('profile.photoUploaded', { defaultValue: 'Profile photo updated successfully' })
-        );
-      }
+      await refreshUser();
+      setAvatarVersion(v => v + 1);
+      Alert.alert(
+        t('common.success', { defaultValue: 'Success' }),
+        t('profile.photoUploaded', { defaultValue: 'Profile photo updated successfully' })
+      );
     } catch (error) {
       console.error('Avatar upload error:', error);
+      const errorMessage = error?.response?.data?.error || error?.message || t('profile.photoUploadFailed', { defaultValue: 'Failed to upload photo' });
       Alert.alert(
         t('common.error', { defaultValue: 'Error' }),
-        t('profile.photoUploadFailed', { defaultValue: 'Failed to upload photo' })
+        errorMessage
       );
     } finally {
       setUploadingAvatar(false);
@@ -356,15 +367,6 @@ export function ParentProfileScreen() {
                   <View style={styles.emailRow}>
                     <Ionicons name="mail-outline" size={12} color="rgba(255, 255, 255, 0.7)" />
                     <Text style={styles.profileEmail}>{u.email ?? '—'}</Text>
-                  </View>
-                  <View style={styles.roleBadge}>
-                    <LinearGradient
-                      colors={['rgba(167, 139, 250, 0.25)', 'rgba(139, 92, 246, 0.25)']}
-                      style={styles.roleBadgeGradient}
-                    >
-                      <Ionicons name="person" size={12} color="#C4B5FD" />
-                      <Text style={styles.roleText}>{t('dashboard.roleParent', { defaultValue: 'Parent' })}</Text>
-                    </LinearGradient>
                   </View>
                   <TouchableOpacity style={styles.editButton} onPress={() => setEditing(true)}>
                     <Ionicons name="create-outline" size={16} color="#FFFFFF" />
@@ -717,21 +719,6 @@ const styles = StyleSheet.create({
   profileEmail: {
     fontSize: 14,
     color: tokens.colors.text.secondary,
-  },
-  roleBadge: {
-    marginBottom: 16,
-    backgroundColor: tokens.colors.semantic.successSoft,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  roleText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: tokens.colors.semantic.success,
   },
   editButton: {
     flexDirection: 'row',

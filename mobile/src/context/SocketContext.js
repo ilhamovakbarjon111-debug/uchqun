@@ -62,9 +62,9 @@ export function SocketProvider({ children }) {
       },
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: Infinity,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 30000,
+      reconnectionAttempts: 5,
       timeout: 20000,
     });
 

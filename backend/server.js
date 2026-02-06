@@ -199,13 +199,16 @@ app.use(requestLogger);
 
 // Request timeout middleware - prevent 499 errors
 app.use((req, res, next) => {
-  // Set timeout to 30 seconds for all requests
-  req.setTimeout(30000, () => {
+  // File uploads (multipart) and media routes get 120s, everything else 30s
+  const isUpload = req.headers['content-type']?.includes('multipart') ||
+    req.path.includes('/avatar') || req.path.includes('/media');
+  const timeout = isUpload ? 120000 : 30000;
+  req.setTimeout(timeout, () => {
     if (!res.headersSent) {
-      logger.warn('Request timeout', { 
-        method: req.method, 
+      logger.warn('Request timeout', {
+        method: req.method,
         path: req.path,
-        ip: req.ip 
+        ip: req.ip
       });
       res.status(504).json({ error: 'Request timeout' });
     }
