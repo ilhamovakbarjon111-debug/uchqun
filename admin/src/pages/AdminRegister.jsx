@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { Crown, Upload, FileText, User, Mail, Phone, X, CheckCircle } from 'lucide-react';
+import { Crown, Upload, FileText, User, Mail, Phone, X, CheckCircle, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const AdminRegister = () => {
@@ -11,6 +11,7 @@ const AdminRegister = () => {
     lastName: '',
     email: '',
     phone: '',
+    telegramUsername: '',
   });
   const [certificateFile, setCertificateFile] = useState(null);
   const [passportFile, setPassportFile] = useState(null);
@@ -64,8 +65,8 @@ const AdminRegister = () => {
     setLoading(true);
 
     // Validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
-      setError('Ism, familiya, email va telefon raqami to\'ldirilishi shart');
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.telegramUsername) {
+      setError('Ism, familiya, email, telefon raqami va Telegram username to\'ldirilishi shart');
       setLoading(false);
       return;
     }
@@ -84,6 +85,7 @@ const AdminRegister = () => {
       formDataToSend.append('lastName', formData.lastName || '');
       formDataToSend.append('email', formData.email || '');
       formDataToSend.append('phone', formData.phone || '');
+      formDataToSend.append('telegramUsername', formData.telegramUsername || '');
 
       // Debug: Log what we're sending
       console.log('Sending form data:', {
@@ -141,7 +143,7 @@ const AdminRegister = () => {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Muvaffaqiyatli yuborildi!</h1>
           <p className="text-gray-600 mb-4">
             Sizning so'rovingiz super-admin ko'rib chiqish uchun yuborildi. 
-            Tasdiqlangandan so'ng login ma'lumotlari emailingizga yuboriladi.
+            Tasdiqlangandan so'ng login ma'lumotlari sizga yuboriladi.
           </p>
           <p className="text-sm text-gray-500">
             Login sahifasiga yo'naltirilmoqdasiz...
@@ -241,6 +243,32 @@ const AdminRegister = () => {
             </div>
           </div>
 
+          <div>
+            <label htmlFor="telegramUsername" className="block text-sm font-medium text-gray-700 mb-2">
+              Telegram username <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <MessageSquare className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                id="telegramUsername"
+                name="telegramUsername"
+                type="text"
+                value={formData.telegramUsername}
+                onChange={(e) => {
+                  // Remove @ if user types it
+                  const value = e.target.value.replace('@', '');
+                  setFormData({ ...formData, telegramUsername: value });
+                }}
+                required
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="username (yoki @username)"
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Login ma'lumotlari Telegram orqali yuboriladi
+            </p>
+          </div>
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -321,7 +349,10 @@ const AdminRegister = () => {
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
             <p className="font-semibold mb-1">Eslatma:</p>
-            <p>So'rovingiz super-admin tomonidan ko'rib chiqiladi. Tasdiqlangandan so'ng login ma'lumotlari emailingizga yuboriladi.</p>
+            <p>So'rovingiz super-admin tomonidan ko'rib chiqiladi. Tasdiqlangandan so'ng login ma'lumotlari sizga yuboriladi.</p>
+            {formData.telegramUsername && (
+              <p className="mt-2">Telegram username kiritilgan: @{formData.telegramUsername}</p>
+            )}
           </div>
 
           <div className="flex gap-4">

@@ -5,7 +5,7 @@ import logger from '../utils/logger.js';
 import { Op } from 'sequelize';
 import { uploadFile } from '../config/storage.js';
 import fs from 'fs';
-import { sendAdminApprovalEmail } from '../utils/email.js';
+// Email and Telegram sending removed - super admin will send credentials manually
 
 /**
  * Generate a cryptographically secure random password
@@ -56,33 +56,37 @@ export const submitRegistrationRequest = async (req, res) => {
     const lastName = req.body?.lastName?.trim() || '';
     const email = req.body?.email?.trim() || '';
     const phone = req.body?.phone?.trim() || '';
+    const telegramUsername = req.body?.telegramUsername?.trim()?.replace('@', '') || null;
 
-    // Validation - faqat kerakli maydonlar
-    if (!firstName || !lastName || !email || !phone) {
+    // Validation - kerakli maydonlar (telegramUsername majburiy)
+    if (!firstName || !lastName || !email || !phone || !telegramUsername) {
       const missingFields = [];
       if (!firstName) missingFields.push('firstName');
       if (!lastName) missingFields.push('lastName');
       if (!email) missingFields.push('email');
       if (!phone) missingFields.push('phone');
+      if (!telegramUsername) missingFields.push('telegramUsername');
       
       logger.warn('Validation failed', {
         firstName,
         lastName,
         email,
         phone,
+        telegramUsername,
         missingFields,
         bodyKeys: req.body ? Object.keys(req.body) : 'no body',
         body: req.body,
       });
       
       return res.status(400).json({
-        error: 'Ism, familiya, email va telefon raqami to\'ldirilishi shart',
+        error: 'Ism, familiya, email, telefon raqami va Telegram username to\'ldirilishi shart',
         details: {
           received: { 
             firstName: firstName || null, 
             lastName: lastName || null, 
             email: email || null, 
-            phone: phone || null 
+            phone: phone || null,
+            telegramUsername: telegramUsername || null
           },
           missingFields,
           bodyKeys: req.body ? Object.keys(req.body) : [],
@@ -155,6 +159,7 @@ export const submitRegistrationRequest = async (req, res) => {
       lastName: lastName.trim(),
       email: email.toLowerCase().trim(),
       phone: phone.trim(),
+      telegramUsername: telegramUsername,
       certificateFile: certificateFilePath,
       passportFile: passportFilePath,
       status: 'pending',
@@ -351,32 +356,26 @@ export const approveRegistrationRequest = async (req, res) => {
     request.approvedUserId = adminUser.id;
     await request.save();
 
-    // Send email with login credentials
-    try {
-      await sendAdminApprovalEmail(request.email, generatedPassword, request.firstName);
-      logger.info('Approval email sent', { email: request.email });
-    } catch (emailError) {
-      logger.error('Failed to send approval email', {
-        error: emailError.message,
-        email: request.email,
-      });
-      // Don't fail the request if email fails, but log it
-    }
-
     logger.info('Admin registration request approved', {
       requestId: id,
       adminUserId: adminUser.id,
       reviewedBy: req.user.id,
       email: request.email,
+      telegramUsername: request.telegramUsername,
     });
 
     res.json({
       success: true,
-      message: 'Registration request approved and admin account created. Login credentials sent to email.',
+      message: 'Registration request approved and admin account created. Please send login credentials manually.',
       data: {
         request: request.toJSON(),
         admin: adminUser.toJSON(),
-        password: generatedPassword, // Return password in response for super-admin to see
+        password: generatedPassword, // Return password in response for super-admin to send manually
+        credentials: {
+          email: request.email,
+          password: generatedPassword,
+          telegramUsername: request.telegramUsername,
+        },
       },
     });
   } catch (error) {

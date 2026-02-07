@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -75,6 +75,7 @@ const SuperAdmin = () => {
   const [approvingRequest, setApprovingRequest] = useState(false);
   const [rejectingRequest, setRejectingRequest] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [approvedCredentials, setApprovedCredentials] = useState(null);
   const { success, error: showError } = useToast();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -97,7 +98,7 @@ const SuperAdmin = () => {
     };
 
     loadAdmins();
-  }, [showError]);
+  }, [showError, t]);
 
   // Load existing governments
   useEffect(() => {
@@ -108,7 +109,7 @@ const SuperAdmin = () => {
         setGovernments(res.data?.data || []);
       } catch (error) {
         console.error('Failed to load governments', error);
-        showError('Government foydalanuvchilarini yuklashda xatolik');
+        showError(t('superAdmin.governmentLoadError', { defaultValue: 'Government foydalanuvchilarini yuklashda xatolik' }));
         setGovernments([]);
       } finally {
         setLoadingGovernments(false);
@@ -116,7 +117,7 @@ const SuperAdmin = () => {
     };
 
     loadGovernments();
-  }, [showError]);
+  }, [showError, t]);
 
   // Load schools
   useEffect(() => {
@@ -321,20 +322,20 @@ const SuperAdmin = () => {
     const trimmedPassword = govPassword.trim();
     
     if (!trimmedFirstName || !trimmedLastName || !trimmedEmail || !trimmedPassword) {
-      showError('Barcha maydonlar to\'ldirilishi kerak');
+        showError(t('superAdmin.validation.allFieldsRequired', { defaultValue: 'Barcha maydonlar to\'ldirilishi kerak' }));
       return;
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
-      showError('Email formati noto\'g\'ri');
+      showError(t('superAdmin.validation.invalidEmail', { defaultValue: 'Email formati noto\'g\'ri' }));
       return;
     }
 
     // Validate password length
     if (trimmedPassword.length < 6) {
-      showError('Parol kamida 6 belgidan iborat bo\'lishi kerak');
+      showError(t('superAdmin.validation.passwordMinLength', { defaultValue: 'Parol kamida 6 belgidan iborat bo\'lishi kerak' }));
       return;
     }
 
@@ -348,7 +349,7 @@ const SuperAdmin = () => {
       });
       
       if (response.data?.success) {
-      success('Government foydalanuvchisi muvaffaqiyatli yaratildi');
+      success(t('superAdmin.governmentCreated', { defaultValue: 'Government foydalanuvchisi muvaffaqiyatli yaratildi' }));
       setGovFirstName('');
       setGovLastName('');
       setGovEmail('');
@@ -357,11 +358,11 @@ const SuperAdmin = () => {
       const res = await api.get('/super-admin/government');
       setGovernments(res.data?.data || []);
       } else {
-        showError(response.data?.error || 'Government foydalanuvchisini yaratishda xatolik');
+        showError(response.data?.error || t('superAdmin.governmentCreateError', { defaultValue: 'Government foydalanuvchisini yaratishda xatolik' }));
       }
     } catch (error) {
       console.error('Create government error:', error);
-      let errorMessage = 'Government foydalanuvchisini yaratishda xatolik';
+      let errorMessage = t('superAdmin.governmentCreateError', { defaultValue: 'Government foydalanuvchisini yaratishda xatolik' });
       
       if (error.response?.status === 403) {
         const errorData = error.response?.data;
@@ -370,7 +371,7 @@ const SuperAdmin = () => {
         } else if (errorData?.error) {
           errorMessage = errorData.error;
         } else {
-          errorMessage = 'Ruxsat yo\'q. Faqat Admin foydalanuvchilari government yaratishi mumkin.';
+          errorMessage = t('superAdmin.noPermission', { defaultValue: 'Ruxsat yo\'q. Faqat Admin foydalanuvchilari government yaratishi mumkin.' });
         }
         
         // Log detailed error for debugging
@@ -380,7 +381,7 @@ const SuperAdmin = () => {
           currentRole: errorData?.currentRole,
         });
       } else if (error.response?.status === 401) {
-        errorMessage = 'Kirish talab qilinadi. Iltimos, qayta kiring.';
+        errorMessage = t('superAdmin.loginRequired', { defaultValue: 'Kirish talab qilinadi. Iltimos, qayta kiring.' });
       } else if (error.response?.data?.error) {
         errorMessage = error.response.data.error;
       } else if (error.response?.data?.details) {
@@ -416,36 +417,42 @@ const SuperAdmin = () => {
         email: editGovEmail,
         password: editGovPassword || undefined,
       });
-      success('Government foydalanuvchi muvaffaqiyatli yangilandi');
+      success(t('superAdmin.governmentUpdated', { defaultValue: 'Government foydalanuvchi muvaffaqiyatli yangilandi' }));
       const res = await api.get('/super-admin/government');
       setGovernments(res.data?.data || []);
       setEditingGovernment(null);
       setEditGovPassword('');
     } catch (error) {
-      showError(error.response?.data?.error || 'Government foydalanuvchi yangilashda xatolik');
+      showError(error.response?.data?.error || t('superAdmin.governmentUpdateError', { defaultValue: 'Government foydalanuvchi yangilashda xatolik' }));
     } finally {
       setEditGovSaving(false);
     }
   };
 
   const handleDeleteGovernment = async (id) => {
-    if (!confirm('Bu government foydalanuvchisini o\'chirishni xohlaysizmi?')) return;
+    if (!confirm(t('superAdmin.confirmDeleteGovernment', { defaultValue: 'Bu government foydalanuvchisini o\'chirishni xohlaysizmi?' }))) return;
     try {
       await api.delete(`/super-admin/government/${id}`);
-      success('Government foydalanuvchi muvaffaqiyatli o\'chirildi');
+      success(t('superAdmin.governmentDeleted', { defaultValue: 'Government foydalanuvchi muvaffaqiyatli o\'chirildi' }));
       setGovernments((prev) => prev.filter((g) => g.id !== id));
     } catch (error) {
-      showError(error.response?.data?.error || 'Government foydalanuvchi o\'chirishda xatolik');
+      showError(error.response?.data?.error || t('superAdmin.governmentDeleteError', { defaultValue: 'Government foydalanuvchi o\'chirishda xatolik' }));
     }
   };
 
   const handleApproveRequest = async (id) => {
-    if (!confirm('Bu so\'rovni tasdiqlaysizmi? Login ma\'lumotlari emailga yuboriladi.')) return;
+    if (!confirm(t('superAdmin.confirmApprove', { defaultValue: 'Bu so\'rovni tasdiqlaysizmi? Login ma\'lumotlari ko\'rsatiladi va siz ularni foydalanuvchiga yuborishingiz kerak.' }))) return;
     
     setApprovingRequest(true);
     try {
       const res = await api.post(`/super-admin/admin-registrations/${id}/approve`, {});
-      success('So\'rov tasdiqlandi va login ma\'lumotlari emailga yuborildi');
+      
+      // Show credentials to super admin for manual sending
+      const credentials = res.data?.data?.credentials;
+      setApprovedCredentials(credentials);
+      
+      success(t('superAdmin.requestApproved', { defaultValue: 'So\'rov tasdiqlandi. Login ma\'lumotlarini foydalanuvchiga yuboring.' }));
+      
       // Reload requests
       const requestsRes = await api.get('/super-admin/admin-registrations?status=pending');
       setRegistrationRequests(requestsRes.data?.data || []);
@@ -453,7 +460,7 @@ const SuperAdmin = () => {
       const adminsRes = await api.get('/super-admin/admins');
       setAdmins(adminsRes.data?.data || []);
     } catch (error) {
-      showError(error.response?.data?.error || 'So\'rovni tasdiqlashda xatolik');
+      showError(error.response?.data?.error || t('superAdmin.approveError', { defaultValue: 'So\'rovni tasdiqlashda xatolik' }));
     } finally {
       setApprovingRequest(false);
     }
@@ -465,14 +472,14 @@ const SuperAdmin = () => {
       await api.post(`/super-admin/admin-registrations/${id}/reject`, {
         reason: rejectionReason.trim() || null,
       });
-      success('So\'rov rad etildi');
+      success(t('superAdmin.requestRejected', { defaultValue: 'So\'rov rad etildi' }));
       setSelectedRequest(null);
       setRejectionReason('');
       // Reload requests
       const res = await api.get('/super-admin/admin-registrations?status=pending');
       setRegistrationRequests(res.data?.data || []);
     } catch (error) {
-      showError(error.response?.data?.error || 'So\'rovni rad etishda xatolik');
+      showError(error.response?.data?.error || t('superAdmin.rejectError', { defaultValue: 'So\'rovni rad etishda xatolik' }));
     } finally {
       setRejectingRequest(false);
     }
@@ -571,6 +578,16 @@ const SuperAdmin = () => {
             }`}
           >
             {t('superAdmin.tabs.payments', { defaultValue: 'To\'lovlar' })}
+          </button>
+          <button
+            onClick={() => setActiveTab('registrations')}
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+              activeTab === 'registrations'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {t('superAdmin.tabs.registrations', { defaultValue: 'Ro\'yxatdan o\'tish' })}
           </button>
         </div>
       </div>
@@ -695,7 +712,7 @@ const SuperAdmin = () => {
                 <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : admins.length === 0 ? (
-              <p className="text-sm text-gray-600">{t('superAdmin.toastLoadError')}</p>
+              <p className="text-sm text-gray-600">{t('superAdmin.noAdmins', { defaultValue: 'Adminlar topilmadi' })}</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {admins.map((adm) => (
@@ -729,7 +746,7 @@ const SuperAdmin = () => {
                         onClick={() => handleDeleteAdmin(adm.id)}
                         className="px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
                       >
-                        {t('superAdmin.toastDelete')}
+                        {t('superAdmin.delete', { defaultValue: 'O\'chirish' })}
                       </button>
                     </div>
                   </div>
@@ -762,11 +779,11 @@ const SuperAdmin = () => {
                     {/* Statistics Summary */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                       <div className="bg-blue-50 rounded-xl p-4">
-                        <p className="text-sm text-blue-600 font-medium mb-1">Jami Maktablar</p>
+                        <p className="text-sm text-blue-600 font-medium mb-1">{t('superAdmin.totalSchools', { defaultValue: 'Jami Maktablar' })}</p>
                         <p className="text-2xl font-bold text-blue-900">{schools.length}</p>
                       </div>
                       <div className="bg-purple-50 rounded-xl p-4">
-                        <p className="text-sm text-purple-600 font-medium mb-1">Jami Baholar</p>
+                        <p className="text-sm text-purple-600 font-medium mb-1">{t('superAdmin.totalRatings', { defaultValue: 'Jami Baholar' })}</p>
                         <p className="text-2xl font-bold text-purple-900">
                           {schools.reduce((sum, s) => sum + (s.summary?.count || 0), 0)}
                         </p>
@@ -980,9 +997,9 @@ const SuperAdmin = () => {
             <>
               <div className="text-center">
                 <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-2">
-                  Davlat Foydalanuvchisini Yaratish
+                  {t('superAdmin.createGovernmentTitle', { defaultValue: 'Davlat Foydalanuvchisini Yaratish' })}
                 </h2>
-                <p className="text-gray-600 font-medium">Government panel uchun yangi foydalanuvchi yarating</p>
+                <p className="text-gray-600 font-medium">{t('superAdmin.createGovernmentSubtitle', { defaultValue: 'Government panel uchun yangi foydalanuvchi yarating' })}</p>
               </div>
 
               <Card className="p-8">
@@ -991,29 +1008,29 @@ const SuperAdmin = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                         <User className="w-4 h-4 text-gray-400" />
-                        Ism
+                        {t('superAdmin.form.firstName')}
                       </label>
                       <input
                         type="text"
                         required
                         value={govFirstName}
                         onChange={(e) => setGovFirstName(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Ism"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder={t('superAdmin.form.firstName')}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                         <User className="w-4 h-4 text-gray-400" />
-                        Familiya
+                        {t('superAdmin.form.lastName')}
                       </label>
                       <input
                         type="text"
                         required
                         value={govLastName}
                         onChange={(e) => setGovLastName(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Familiya"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder={t('superAdmin.form.lastName')}
                       />
                     </div>
                   </div>
@@ -1021,14 +1038,14 @@ const SuperAdmin = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                       <Mail className="w-4 h-4 text-gray-400" />
-                      Email
+                      {t('superAdmin.form.email')}
                     </label>
                     <input
                       type="email"
                       required
                       value={govEmail}
                       onChange={(e) => setGovEmail(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="email@example.com"
                     />
                   </div>
@@ -1036,18 +1053,18 @@ const SuperAdmin = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                       <Lock className="w-4 h-4 text-gray-400" />
-                      Parol
+                      {t('superAdmin.form.password')}
                     </label>
                     <input
                       type="password"
                       required
                       value={govPassword}
                       onChange={(e) => setGovPassword(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="••••••••"
                       minLength={6}
                     />
-                    <p className="mt-1 text-xs text-gray-500">Parol kamida 6 belgidan iborat bo'lishi kerak</p>
+                    <p className="mt-1 text-xs text-gray-500">{t('superAdmin.form.passwordMinLength', { defaultValue: 'Parol kamida 6 belgidan iborat bo\'lishi kerak' })}</p>
                   </div>
 
                   <button
@@ -1058,12 +1075,12 @@ const SuperAdmin = () => {
                     {govLoading ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Yaratilmoqda...</span>
+                        <span>{t('superAdmin.creating', { defaultValue: 'Yaratilmoqda...' })}</span>
                       </>
                     ) : (
                       <>
                         <Plus className="w-5 h-5" />
-                        <span>Government Foydalanuvchisini Yaratish</span>
+                        <span>{t('superAdmin.createGovernment', { defaultValue: 'Government Foydalanuvchisini Yaratish' })}</span>
                       </>
                     )}
                   </button>
@@ -1073,7 +1090,7 @@ const SuperAdmin = () => {
               {/* Governments List */}
               <div className="mt-8">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  Qo'shilgan Government Foydalanuvchilar ({governments.length})
+                  {t('superAdmin.governmentList', { defaultValue: 'Qo\'shilgan Government Foydalanuvchilar' })} ({governments.length})
                 </h3>
                 {loadingGovernments ? (
                   <Card className="p-8">
@@ -1084,7 +1101,7 @@ const SuperAdmin = () => {
                 ) : governments.length === 0 ? (
                   <Card className="p-8">
                     <p className="text-sm text-gray-600 text-center py-8">
-                      Hozircha government foydalanuvchilar yo'q
+                      {t('superAdmin.noGovernments', { defaultValue: 'Hozircha government foydalanuvchilar yo\'q' })}
                     </p>
                   </Card>
                 ) : (
@@ -1109,10 +1126,10 @@ const SuperAdmin = () => {
                                   ? 'bg-green-100 text-green-700' 
                                   : 'bg-gray-100 text-gray-600'
                               }`}>
-                                {gov.isActive ? 'Faol' : 'Nofaol'}
+                                {gov.isActive ? t('superAdmin.active', { defaultValue: 'Faol' }) : t('superAdmin.inactive', { defaultValue: 'Nofaol' })}
                               </span>
                               <span className="px-2 py-1 bg-primary-100 text-primary-700 rounded-full text-xs font-medium">
-                                Government
+                                {t('superAdmin.government', { defaultValue: 'Government' })}
                               </span>
                             </div>
                           </div>
@@ -1128,7 +1145,7 @@ const SuperAdmin = () => {
                             onClick={() => handleDeleteGovernment(gov.id)}
                             className="px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
                           >
-                            {t('superAdmin.toastDelete')}
+                            {t('superAdmin.delete', { defaultValue: 'O\'chirish' })}
                           </button>
                         </div>
                       </div>
@@ -1143,9 +1160,9 @@ const SuperAdmin = () => {
             <>
               <div className="text-center">
                 <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-2">
-                  Admin Ro'yxatdan O'tish So'rovlari
+                  {t('superAdmin.registrationsTitle', { defaultValue: 'Admin Ro\'yxatdan O\'tish So\'rovlari' })}
                 </h2>
-                <p className="text-gray-600 font-medium">Yangi admin so'rovlarini ko'rib chiqing va tasdiqlang</p>
+                <p className="text-gray-600 font-medium">{t('superAdmin.registrationsSubtitle', { defaultValue: 'Yangi admin so\'rovlarini ko\'rib chiqing va tasdiqlang' })}</p>
               </div>
 
               <Card className="p-6 space-y-4">
@@ -1154,7 +1171,7 @@ const SuperAdmin = () => {
                     <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : registrationRequests.length === 0 ? (
-                  <p className="text-sm text-gray-600 text-center py-8">Hozircha so'rovlar yo'q</p>
+                  <p className="text-sm text-gray-600 text-center py-8">{t('superAdmin.noRegistrations', { defaultValue: 'Hozircha so\'rovlar yo\'q' })}</p>
                 ) : (
                   <div className="space-y-4">
                     {registrationRequests.map((request) => (
@@ -1179,6 +1196,10 @@ const SuperAdmin = () => {
                                     {request.phone}
                                   </span>
                                 )}
+                                <span className="flex items-center gap-1">
+                                  <MessageSquare className="w-4 h-4" />
+                                  {request.telegramUsername ? `@${request.telegramUsername}` : 'Telegram username kiritilmagan'}
+                                </span>
                               </div>
                             </div>
 
@@ -1230,7 +1251,7 @@ const SuperAdmin = () => {
                               className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                               <Check className="w-4 h-4" />
-                              Tasdiqlash
+                              {t('superAdmin.approve', { defaultValue: 'Tasdiqlash' })}
                             </button>
                             <button
                               onClick={() => setSelectedRequest(request)}
@@ -1238,7 +1259,7 @@ const SuperAdmin = () => {
                               className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                               <X className="w-4 h-4" />
-                              Rad etish
+                              {t('superAdmin.reject', { defaultValue: 'Rad etish' })}
                             </button>
                           </div>
                         </div>
@@ -1254,7 +1275,7 @@ const SuperAdmin = () => {
                   <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                       <h3 className="text-lg font-bold text-gray-900">
-                        So'rovni rad etish
+                        {t('superAdmin.rejectRequest', { defaultValue: 'So\'rovni rad etish' })}
                       </h3>
                       <button
                         onClick={() => {
@@ -1268,17 +1289,17 @@ const SuperAdmin = () => {
                     </div>
                     <div className="p-6 space-y-4">
                       <p className="text-sm text-gray-600">
-                        {selectedRequest.firstName} {selectedRequest.lastName} so'rovini rad etishni tasdiqlaysizmi?
+                        {selectedRequest.firstName} {selectedRequest.lastName} {t('superAdmin.confirmReject', { defaultValue: 'so\'rovini rad etishni tasdiqlaysizmi?' })}
                       </p>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Rad etish sababi (ixtiyoriy)
+                          {t('superAdmin.rejectionReason', { defaultValue: 'Rad etish sababi (ixtiyoriy)' })}
                         </label>
                         <textarea
                           value={rejectionReason}
                           onChange={(e) => setRejectionReason(e.target.value)}
                           rows={4}
-                          placeholder="Rad etish sababini kiriting..."
+                          placeholder={t('superAdmin.rejectionReasonPlaceholder', { defaultValue: 'Rad etish sababini kiriting...' })}
                           className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                       </div>
@@ -1291,7 +1312,7 @@ const SuperAdmin = () => {
                           className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors"
                           disabled={rejectingRequest}
                         >
-                          Bekor qilish
+                          {t('superAdmin.cancel', { defaultValue: 'Bekor qilish' })}
                         </button>
                         <button
                           onClick={() => handleRejectRequest(selectedRequest.id)}
@@ -1301,14 +1322,128 @@ const SuperAdmin = () => {
                           {rejectingRequest ? (
                             <>
                               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                              <span>Rad etilmoqda...</span>
+                              <span>{t('superAdmin.rejecting', { defaultValue: 'Rad etilmoqda...' })}</span>
                             </>
                           ) : (
                             <>
                               <X className="w-4 h-4" />
-                              <span>Rad etish</span>
+                              <span>{t('superAdmin.reject', { defaultValue: 'Rad etish' })}</span>
                             </>
                           )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Approved Credentials Modal */}
+              {approvedCredentials && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                  <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
+                    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-gray-900">
+                        {t('superAdmin.credentialsTitle', { defaultValue: 'Login Ma\'lumotlari' })}
+                      </h3>
+                      <button
+                        onClick={() => setApprovedCredentials(null)}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <X className="w-5 h-5 text-gray-500" />
+                      </button>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p className="text-sm font-semibold text-green-800 mb-3">
+                          {t('superAdmin.credentialsNote', { defaultValue: 'Quyidagi ma\'lumotlarni foydalanuvchiga yuboring:' })}
+                        </p>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              {t('superAdmin.form.email')}
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                readOnly
+                                value={approvedCredentials.email || ''}
+                                className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-mono"
+                              />
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(approvedCredentials.email);
+                                  success(t('superAdmin.copied', { defaultValue: 'Nusxalandi' }));
+                                }}
+                                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm transition-colors"
+                              >
+                                {t('superAdmin.copy', { defaultValue: 'Nusxalash' })}
+                              </button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              {t('superAdmin.form.password')}
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                readOnly
+                                value={approvedCredentials.password || ''}
+                                className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-mono"
+                              />
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(approvedCredentials.password);
+                                  success(t('superAdmin.copied', { defaultValue: 'Nusxalandi' }));
+                                }}
+                                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm transition-colors"
+                              >
+                                {t('superAdmin.copy', { defaultValue: 'Nusxalash' })}
+                              </button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Telegram Username
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                readOnly
+                                value={approvedCredentials.telegramUsername ? `@${approvedCredentials.telegramUsername}` : 'Kiritilmagan'}
+                                className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm"
+                              />
+                              {approvedCredentials.telegramUsername && (
+                                <a
+                                  href={`https://t.me/${approvedCredentials.telegramUsername}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm transition-colors"
+                                >
+                                  {t('superAdmin.openTelegram', { defaultValue: 'Telegram' })}
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            const text = `Email: ${approvedCredentials.email}\nParol: ${approvedCredentials.password}${approvedCredentials.telegramUsername ? `\nTelegram: @${approvedCredentials.telegramUsername}` : '\nTelegram: Kiritilmagan'}`;
+                            navigator.clipboard.writeText(text);
+                            success(t('superAdmin.allCopied', { defaultValue: 'Barcha ma\'lumotlar nusxalandi' }));
+                          }}
+                          className="flex-1 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold transition-colors shadow-sm flex items-center justify-center gap-2"
+                        >
+                          <FileText className="w-4 h-4" />
+                          {t('superAdmin.copyAll', { defaultValue: 'Barchasini nusxalash' })}
+                        </button>
+                        <button
+                          onClick={() => setApprovedCredentials(null)}
+                          className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors"
+                        >
+                          {t('superAdmin.close', { defaultValue: 'Yopish' })}
                         </button>
                       </div>
                     </div>
@@ -1318,26 +1453,86 @@ const SuperAdmin = () => {
             </>
           )}
 
+          {activeTab === 'payments' && (
+            <>
+              <div className="text-center">
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-2">
+                  {t('superAdmin.paymentsTitle', { defaultValue: 'To\'lovlar' })}
+                </h2>
+                <p className="text-gray-600 font-medium">{t('superAdmin.paymentsSubtitle', { defaultValue: 'Barcha to\'lovlar ro\'yxati' })}</p>
+              </div>
+
+              <Card className="p-6 space-y-4">
+                {loadingPayments ? (
+                  <div className="flex items-center justify-center min-h-[120px]">
+                    <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : payments.length === 0 ? (
+                  <p className="text-sm text-gray-600 text-center py-8">{t('superAdmin.noPayments', { defaultValue: 'To\'lovlar topilmadi' })}</p>
+                ) : (
+                  <div className="space-y-4">
+                    {payments.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-gray-900">
+                                {payment.parent?.firstName} {payment.parent?.lastName}
+                              </h3>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                payment.status === 'completed'
+                                  ? 'bg-green-100 text-green-700'
+                                  : payment.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-red-100 text-red-700'
+                              }`}>
+                                {payment.status === 'completed' ? t('superAdmin.paymentCompleted', { defaultValue: 'To\'langan' }) :
+                                 payment.status === 'pending' ? t('superAdmin.paymentPending', { defaultValue: 'Kutilmoqda' }) :
+                                 t('superAdmin.paymentFailed', { defaultValue: 'Xatolik' })}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-1">
+                              {t('superAdmin.amount', { defaultValue: 'Summa' })}: {payment.amount?.toLocaleString('uz-UZ')} {t('superAdmin.currency', { defaultValue: 'so\'m' })}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(payment.createdAt).toLocaleString('uz-UZ')}
+                            </p>
+                            {payment.description && (
+                              <p className="text-sm text-gray-600 mt-2">{payment.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </>
+          )}
+
           {/* Edit Government modal */}
           {editingGovernment && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
               <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">Tahrirlash</h3>
+                    <h3 className="text-lg font-bold text-gray-900">{t('superAdmin.editTitle')}</h3>
                     <p className="text-sm text-gray-500">{editingGovernment.email}</p>
                   </div>
                   <button
                     onClick={() => setEditingGovernment(null)}
                     className="text-gray-500 hover:text-gray-700"
                   >
-                    ×
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
                 <form onSubmit={handleUpdateGovernment} className="p-6 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Ism</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('superAdmin.form.firstName')}</label>
                       <input
                         type="text"
                         required
@@ -1347,7 +1542,7 @@ const SuperAdmin = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Familiya</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('superAdmin.form.lastName')}</label>
                       <input
                         type="text"
                         required
@@ -1359,7 +1554,7 @@ const SuperAdmin = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('superAdmin.form.email')}</label>
                     <input
                       type="email"
                       required
@@ -1370,13 +1565,13 @@ const SuperAdmin = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Yangi parol (ixtiyoriy)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('superAdmin.form.newPassword', { defaultValue: 'Yangi parol (ixtiyoriy)' })}</label>
                     <div className="relative">
                       <input
                         type={showPasswords.edit ? 'text' : 'password'}
                         value={editGovPassword}
                         onChange={(e) => setEditGovPassword(e.target.value)}
-                        placeholder="Parolni o'zgartirmasangiz bo'sh qoldiring"
+                        placeholder={t('superAdmin.form.passwordOptional', { defaultValue: 'Parolni o\'zgartirmasangiz bo\'sh qoldiring' })}
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent pr-10"
                       />
                       <button
@@ -1396,7 +1591,7 @@ const SuperAdmin = () => {
                       className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold transition-colors"
                       disabled={editGovSaving}
                     >
-                      Bekor qilish
+                      {t('superAdmin.form.cancel')}
                     </button>
                     <button
                       type="submit"
@@ -1406,10 +1601,10 @@ const SuperAdmin = () => {
                       {editGovSaving ? (
                         <>
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Saqlanmoqda...</span>
+                          <span>{t('superAdmin.saving', { defaultValue: 'Saqlanmoqda...' })}</span>
                         </>
                       ) : (
-                        <span>Saqlash</span>
+                        <span>{t('superAdmin.form.save')}</span>
                       )}
                     </button>
                   </div>
@@ -1431,7 +1626,7 @@ const SuperAdmin = () => {
                     onClick={() => setEditingAdmin(null)}
                     className="text-gray-500 hover:text-gray-700"
                   >
-                    ×
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
                 <form onSubmit={handleUpdateAdmin} className="p-6 space-y-4">
@@ -1486,7 +1681,7 @@ const SuperAdmin = () => {
                         type={showPasswords.edit ? 'text' : 'password'}
                         value={editPassword}
                         onChange={(e) => setEditPassword(e.target.value)}
-                        placeholder="Parolni o'zgartirish uchun kiriting"
+                        placeholder={t('superAdmin.form.passwordChange', { defaultValue: 'Parolni o\'zgartirish uchun kiriting' })}
                         className="w-full px-4 py-2.5 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                       <button

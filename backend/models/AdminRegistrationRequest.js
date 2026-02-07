@@ -55,6 +55,11 @@ const AdminRegistrationRequest = sequelize.define('AdminRegistrationRequest', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  telegramUsername: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    comment: 'Telegram username (without @) - required field',
+  },
   status: {
     type: DataTypes.ENUM('pending', 'approved', 'rejected'),
     defaultValue: 'pending',

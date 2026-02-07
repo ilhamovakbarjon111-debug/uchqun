@@ -30,27 +30,48 @@ const createTransporter = () => {
     });
   }
 
-  // Development: Use ethereal.email for testing (no real emails sent)
-  if (process.env.NODE_ENV === 'development') {
+  // Development: Use console logging for testing (no real emails sent)
+  // But only if explicitly in development AND no email config
+  if (process.env.NODE_ENV === 'development' && !process.env.SMTP_HOST && !process.env.GMAIL_CLIENT_ID) {
     logger.warn('No email configuration found. Using console logging for email in development.');
     return {
       sendMail: async (options) => {
-        logger.info('📧 Email would be sent:', {
+        logger.info('📧 Email would be sent (Development Mode - NOT SENT):', {
           to: options.to,
           subject: options.subject,
           text: options.text?.substring(0, 100) + '...',
         });
-        console.log('\n=== EMAIL (Development Mode) ===');
+        console.log('\n=== EMAIL (Development Mode - NOT SENT) ===');
         console.log('To:', options.to);
         console.log('Subject:', options.subject);
         console.log('Body:', options.text || options.html);
-        console.log('===============================\n');
-        return { messageId: 'dev-' + Date.now() };
+        console.log('===========================================\n');
+        // Return a special flag to indicate this is dev mode
+        return { messageId: 'dev-' + Date.now(), devMode: true };
       },
     };
   }
 
-  throw new Error('Email configuration not found. Please set SMTP or Gmail OAuth2 credentials.');
+  // Production or if email config is missing in production
+  if (process.env.NODE_ENV !== 'development') {
+    throw new Error('Email configuration not found. Please set SMTP or Gmail OAuth2 credentials in production.');
+  }
+  
+  // If we reach here in development without config, use console mode
+  logger.warn('No email configuration found. Using console logging for email.');
+  return {
+    sendMail: async (options) => {
+      logger.info('📧 Email would be sent (NOT SENT):', {
+        to: options.to,
+        subject: options.subject,
+      });
+      console.log('\n=== EMAIL (NOT SENT - No Config) ===');
+      console.log('To:', options.to);
+      console.log('Subject:', options.subject);
+      console.log('====================================\n');
+      return { messageId: 'no-config-' + Date.now(), devMode: true };
+    },
+  };
 };
 
 /**
@@ -74,6 +95,17 @@ export async function sendEmail(to, subject, text, html = null) {
     };
 
     const info = await transporter.sendMail(mailOptions);
+    
+    // Check if email was actually sent (not dev mode)
+    if (info.devMode) {
+      logger.warn('Email NOT sent - using development/mock mode', {
+        to,
+        subject,
+      });
+      // Throw error so caller knows email wasn't sent
+      throw new Error('Email konfiguratsiyasi topilmadi. SMTP yoki Gmail OAuth2 sozlamalari kerak.');
+    }
+    
     logger.info('Email sent successfully', {
       to,
       subject,
@@ -176,5 +208,18 @@ Uchqun Jamoasi
     </html>
   `;
 
-  return await sendEmail(email, subject, text, html);
+  try {
+    const result = await sendEmail(email, subject, text, html);
+    // If in dev mode and no real email was sent, throw an error
+    if (result.devMode) {
+      throw new Error('Email konfiguratsiyasi topilmadi. Production muhitida SMTP yoki Gmail OAuth2 sozlamalari kerak.');
+    }
+    return result;
+  } catch (error) {
+    logger.error('sendAdminApprovalEmail failed', {
+      email,
+      error: error.message,
+    });
+    throw error;
+  }
 }
