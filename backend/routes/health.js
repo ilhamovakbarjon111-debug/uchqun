@@ -10,16 +10,19 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
   try {
-    // Simple health check - just return OK
+    // Simple health check - just return OK immediately
     // Don't check database here to avoid blocking deployment
+    // Railway needs fast response for healthchecks
     res.status(200).json({
       status: 'ok',
       timestamp: new Date().toISOString(),
       service: 'uchqun-backend',
       environment: process.env.NODE_ENV || 'development',
+      uptime: process.uptime(),
     });
   } catch (error) {
     // Even if there's an error, return 200 to allow deployment
+    // This ensures Railway doesn't fail deployment due to healthcheck errors
     res.status(200).json({
       status: 'ok',
       timestamp: new Date().toISOString(),
