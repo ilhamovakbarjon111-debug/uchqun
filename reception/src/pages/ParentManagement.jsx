@@ -1,4 +1,4 @@
-﻿// Reception ParentManagement - Updated to use /reception/parents endpoint
+﻿// Reception ParentManagement - Updated with Edit Child functionality
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 import Card from '../components/Card';
@@ -18,7 +18,8 @@ import {
   UserCheck,
   UsersRound,
   Eye,
-  EyeOff
+  EyeOff,
+  Camera
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -30,7 +31,9 @@ const ParentManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showChildModal, setShowChildModal] = useState(false);
+  const [showEditChildModal, setShowEditChildModal] = useState(false); // New state for edit child modal
   const [selectedParentId, setSelectedParentId] = useState(null);
+  const [selectedChild, setSelectedChild] = useState(null); // New state for selected child
   const [editingParent, setEditingParent] = useState(null);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -58,6 +61,8 @@ const ParentManagement = () => {
     disabilityType: '',
     specialNeeds: '',
     school: 'Uchqun School',
+    photo: null,
+    photoPreview: null,
   });
   const { success, error: showError } = useToast();
   const { t } = useTranslation();
@@ -155,9 +160,43 @@ const ParentManagement = () => {
     }
   };
 
+  // NEW: Handle Edit Child
+  const handleEditChild = (parentId, child) => {
+    setSelectedParentId(parentId);
+    setSelectedChild(child);
+    setChildFormData({
+      firstName: child.firstName || '',
+      lastName: child.lastName || '',
+      dateOfBirth: child.dateOfBirth ? child.dateOfBirth.split('T')[0] : '',
+      gender: child.gender || 'Male',
+      disabilityType: child.disabilityType || '',
+      specialNeeds: child.specialNeeds || '',
+      school: child.school || 'Uchqun School',
+      photo: null,
+      photoPreview: child.photoUrl || null,
+    });
+    setShowEditChildModal(true);
+  };
+
+  // NEW: Handle Delete Child
+  const handleDeleteChild = async (parentId, childId) => {
+    if (!window.confirm(t('parentsPage.confirmDeleteChild'))) {
+      return;
+    }
+
+    try {
+      await api.delete(`/reception/children/${childId}`);
+      success(t('parentsPage.toastDeleteChild'));
+      loadParents();
+    } catch (error) {
+      console.error('Error deleting child:', error);
+      showError(error.response?.data?.error || t('parentsPage.toastDeleteError'));
+    }
+  };
 
   const handleAddChild = (parentId) => {
     setSelectedParentId(parentId);
+    setSelectedChild(null);
     setChildFormData({
       firstName: '',
       lastName: '',
@@ -167,6 +206,7 @@ const ParentManagement = () => {
       specialNeeds: '',
       school: 'Uchqun School',
       photo: null,
+      photoPreview: null,
     });
     setShowChildModal(true);
   };
@@ -225,6 +265,72 @@ const ParentManagement = () => {
       const errorDetails = error.response?.data?.missing ? `Missing: ${JSON.stringify(error.response.data.missing)}` : '';
       showError(`${errorMessage}${errorDetails ? ` - ${errorDetails}` : ''}`);
     }
+  };
+
+  // NEW: Handle Update Child
+  const handleUpdateChild = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedParentId || !selectedChild?.id) {
+      showError('Parent ID or Child ID is missing');
+      return;
+    }
+
+    // Validate required fields
+    if (!childFormData.firstName || !childFormData.lastName || !childFormData.dateOfBirth || 
+        !childFormData.disabilityType || !childFormData.school) {
+      showError('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('parentId', selectedParentId);
+      formDataToSend.append('child[firstName]', childFormData.firstName.trim());
+      formDataToSend.append('child[lastName]', childFormData.lastName.trim());
+      formDataToSend.append('child[dateOfBirth]', childFormData.dateOfBirth);
+      formDataToSend.append('child[gender]', childFormData.gender || 'Male');
+      formDataToSend.append('child[disabilityType]', childFormData.disabilityType.trim());
+      if (childFormData.specialNeeds) {
+        formDataToSend.append('child[specialNeeds]', childFormData.specialNeeds.trim());
+      }
+      formDataToSend.append('child[school]', childFormData.school.trim());
+      if (childFormData.photo) {
+        formDataToSend.append('child[photo]', childFormData.photo);
+      }
+      
+      await api.put(`/reception/children/${selectedChild.id}`, formDataToSend);
+      success('Child updated successfully');
+      setShowEditChildModal(false);
+      loadParents();
+    } catch (error) {
+      console.error('Error updating child:', error);
+      console.error('Error response:', error.response?.data);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to update child';
+      const errorDetails = error.response?.data?.missing ? `Missing: ${JSON.stringify(error.response.data.missing)}` : '';
+      showError(`${errorMessage}${errorDetails ? ` - ${errorDetails}` : ''}`);
+    }
+  };
+
+  // NEW: Handle photo change for child
+  const handleChildPhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setChildFormData({
+        ...childFormData,
+        photo: file,
+        photoPreview: URL.createObjectURL(file)
+      });
+    }
+  };
+
+  // NEW: Remove photo
+  const handleRemovePhoto = () => {
+    setChildFormData({
+      ...childFormData,
+      photo: null,
+      photoPreview: null
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -409,24 +515,55 @@ const ParentManagement = () => {
                         <div key={child.id} className="bg-primary-50 rounded-lg p-3 border border-primary-100">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <p className="font-semibold text-gray-900 text-sm">
-                                {child.firstName} {child.lastName}
-                              </p>
-                              <div className="mt-1 space-y-1">
-                                <p className="text-xs text-gray-600">
-                                  <span className="font-medium">{t('parentsPage.class')}</span> {child.class}
-                                </p>
-                                {child.teacher && (
-                                  <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Teacher:</span> {child.teacher}
-                                  </p>
+                              <div className="flex items-start gap-3">
+                                {child.photoUrl ? (
+                                  <img 
+                                    src={child.photoUrl} 
+                                    alt={`${child.firstName} ${child.lastName}`}
+                                    className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
+                                    {child.firstName?.charAt(0)}{child.lastName?.charAt(0)}
+                                  </div>
                                 )}
-                                {child.disabilityType && (
-                                  <p className="text-xs text-gray-600">
-                                    <span className="font-medium">{t('parentsPage.disability')}</span> {child.disabilityType}
+                                <div className="flex-1">
+                                  <p className="font-semibold text-gray-900 text-sm">
+                                    {child.firstName} {child.lastName}
                                   </p>
-                                )}
+                                  <div className="mt-1 space-y-1">
+                                    <p className="text-xs text-gray-600">
+                                      <span className="font-medium">{t('parentsPage.class')}</span> {child.class}
+                                    </p>
+                                    {child.teacher && (
+                                      <p className="text-xs text-gray-600">
+                                        <span className="font-medium">Teacher:</span> {child.teacher}
+                                      </p>
+                                    )}
+                                    {child.disabilityType && (
+                                      <p className="text-xs text-gray-600">
+                                        <span className="font-medium">{t('parentsPage.disability')}</span> {child.disabilityType}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => handleEditChild(parent.id, child)}
+                                className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
+                                title="Edit Child"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteChild(parent.id, child.id)}
+                                className="p-1 text-gray-500 hover:text-red-600 transition-colors"
+                                title="Delete Child"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -786,47 +923,47 @@ const ParentManagement = () => {
 
             <form onSubmit={handleSubmitChild} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('parentsPage.form.childFirstName')} <span className="text-red-500">*</span>
-                        </label>
+                  </label>
                   <input
                     type="text"
-                          required
+                    required
                     value={childFormData.firstName}
                     onChange={(e) => setChildFormData({ ...childFormData, firstName: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
-                      </div>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('parentsPage.form.childLastName')} <span className="text-red-500">*</span>
                   </label>
-                      <input
+                  <input
                     type="text"
                     required
                     value={childFormData.lastName}
                     onChange={(e) => setChildFormData({ ...childFormData, lastName: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
                 </div>
-                    </div>
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('parentsPage.form.childDob')} <span className="text-red-500">*</span>
-                          </label>
-                          <input
+                  </label>
+                  <input
                     type="date"
-                            required
+                    required
                     value={childFormData.dateOfBirth}
                     onChange={(e) => setChildFormData({ ...childFormData, dateOfBirth: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('parentsPage.form.childGender')} <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -845,15 +982,15 @@ const ParentManagement = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t('parentsPage.form.childDisability')} <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            required
+                </label>
+                <input
+                  type="text"
+                  required
                   value={childFormData.disabilityType}
                   onChange={(e) => setChildFormData({ ...childFormData, disabilityType: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                          />
-                        </div>
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t('parentsPage.form.childSpecialNeeds')}</label>
@@ -865,19 +1002,65 @@ const ParentManagement = () => {
                 />
               </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t('parentsPage.form.childSchool')} <span className="text-red-500">*</span>
-                          </label>
-                          <input
+                </label>
+                <input
                   type="text"
-                            required
+                  required
                   value={childFormData.school}
                   onChange={(e) => setChildFormData({ ...childFormData, school: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                          />
-                        </div>
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
 
+              {/* Photo Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('parentsPage.form.childPhoto')}
+                </label>
+                <div className="flex items-center gap-4">
+                  {childFormData.photoPreview ? (
+                    <div className="relative">
+                      <img
+                        src={childFormData.photoPreview}
+                        alt="Preview"
+                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                      <Camera className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      type="file"
+                      id="childPhoto"
+                      accept="image/*"
+                      onChange={handleChildPhotoChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="childPhoto"
+                      className="cursor-pointer px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm"
+                    >
+                      {t('parentsPage.form.uploadPhoto')}
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t('parentsPage.form.photoSize')}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               <div className="flex gap-3 pt-4">
                 <button
@@ -899,9 +1082,186 @@ const ParentManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Edit Child Modal */}
+      {showEditChildModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">Bolani tahrirlash</h2>
+              <button
+                onClick={() => {
+                  setShowEditChildModal(false);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateChild} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('parentsPage.form.childFirstName')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={childFormData.firstName}
+                    onChange={(e) => setChildFormData({ ...childFormData, firstName: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('parentsPage.form.childLastName')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={childFormData.lastName}
+                    onChange={(e) => setChildFormData({ ...childFormData, lastName: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('parentsPage.form.childDob')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={childFormData.dateOfBirth}
+                    onChange={(e) => setChildFormData({ ...childFormData, dateOfBirth: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('parentsPage.form.childGender')} <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={childFormData.gender}
+                    onChange={(e) => setChildFormData({ ...childFormData, gender: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="Male">{t('gender.male', 'Erkak')}</option>
+                    <option value="Female">{t('gender.female', 'Ayol')}</option>
+                    <option value="Other">{t('gender.other', 'Boshqa')}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('parentsPage.form.childDisability')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={childFormData.disabilityType}
+                  onChange={(e) => setChildFormData({ ...childFormData, disabilityType: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('parentsPage.form.childSpecialNeeds')}</label>
+                <textarea
+                  value={childFormData.specialNeeds}
+                  onChange={(e) => setChildFormData({ ...childFormData, specialNeeds: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('parentsPage.form.childSchool')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={childFormData.school}
+                  onChange={(e) => setChildFormData({ ...childFormData, school: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Photo Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('parentsPage.form.childPhoto')}
+                </label>
+                <div className="flex items-center gap-4">
+                  {childFormData.photoPreview ? (
+                    <div className="relative">
+                      <img
+                        src={childFormData.photoPreview}
+                        alt="Preview"
+                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                      <Camera className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      type="file"
+                      id="editChildPhoto"
+                      accept="image/*"
+                      onChange={handleChildPhotoChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="editChildPhoto"
+                      className="cursor-pointer px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm"
+                    >
+                      {t('parentsPage.form.uploadPhoto')}
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t('parentsPage.form.photoSize')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditChildModal(false)}
+                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                >
+                  {t('parentsPage.form.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  {t('parentsPage.buttons.updateChild')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default ParentManagement;
-
