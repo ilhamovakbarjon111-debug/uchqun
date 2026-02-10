@@ -9,6 +9,8 @@ import {
   getSavedStats,
   getAdmins,
   getAdminDetails,
+  getTeachersList,
+  getParentsList,
 } from '../controllers/governmentController.js';
 import { authenticate, requireGovernment } from '../middleware/auth.js';
 
@@ -23,8 +25,14 @@ router.get('/overview', getOverview);
 // Schools statistics
 router.get('/schools', getSchoolsStats);
 
-// Students statistics
+// Students list
 router.get('/students', getStudentsStats);
+
+// Teachers list
+router.get('/teachers', getTeachersList);
+
+// Parents list
+router.get('/parents', getParentsList);
 
 // Ratings statistics
 router.get('/ratings', getRatingsStats);

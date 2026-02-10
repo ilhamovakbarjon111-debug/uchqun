@@ -253,50 +253,118 @@ export const getSchoolsStats = async (req, res) => {
 };
 
 /**
- * Get students statistics
+ * Get students statistics and list (for government panel)
  * GET /api/government/students
  */
 export const getStudentsStats = async (req, res) => {
   try {
-    const { schoolId, region: _region, district: _district } = req.query;
+    const { schoolId, limit = 500, offset = 0 } = req.query;
+    const limitNum = Math.min(parseInt(limit, 10) || 500, 1000);
+    const offsetNum = parseInt(offset, 10) || 0;
 
     const where = {};
     if (schoolId) {
       where.schoolId = schoolId;
     }
 
-    const students = await Child.findAll({
+    const { count, rows: students } = await Child.findAndCountAll({
       where,
+      limit: limitNum,
+      offset: offsetNum,
+      order: [['createdAt', 'DESC']],
       include: [
         {
           model: School,
           as: 'childSchool',
           required: false,
+          attributes: ['id', 'name'],
+        },
+        {
+          model: User,
+          as: 'parent',
+          required: false,
+          attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
         },
       ],
-    });
-
-    // Group by school
-    const bySchool = {};
-    students.forEach(student => {
-      const schoolName = student.childSchool?.name || 'Unknown';
-      if (!bySchool[schoolName]) {
-        bySchool[schoolName] = 0;
-      }
-      bySchool[schoolName]++;
     });
 
     res.json({
       success: true,
       data: {
-        total: students.length,
-        bySchool,
-        students: students.slice(0, 100), // Limit response size
+        total: count,
+        students: students.map(s => {
+          const j = s.toJSON();
+          j.schoolName = s.childSchool?.name || s.school || '—';
+          j.parentName = s.parent ? `${s.parent.firstName} ${s.parent.lastName}` : '—';
+          return j;
+        }),
       },
     });
   } catch (error) {
     logger.error('Get students stats error', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to fetch students statistics' });
+  }
+};
+
+/**
+ * Get all teachers list (for government panel)
+ * GET /api/government/teachers
+ */
+export const getTeachersList = async (req, res) => {
+  try {
+    const { limit = 500, offset = 0 } = req.query;
+    const limitNum = Math.min(parseInt(limit, 10) || 500, 1000);
+    const offsetNum = parseInt(offset, 10) || 0;
+
+    const { count, rows: teachers } = await User.findAndCountAll({
+      where: { role: 'teacher' },
+      attributes: { exclude: ['password'] },
+      limit: limitNum,
+      offset: offsetNum,
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json({
+      success: true,
+      data: {
+        total: count,
+        teachers: teachers.map(t => t.toJSON()),
+      },
+    });
+  } catch (error) {
+    logger.error('Get teachers list error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch teachers list' });
+  }
+};
+
+/**
+ * Get all parents list (for government panel)
+ * GET /api/government/parents
+ */
+export const getParentsList = async (req, res) => {
+  try {
+    const { limit = 500, offset = 0 } = req.query;
+    const limitNum = Math.min(parseInt(limit, 10) || 500, 1000);
+    const offsetNum = parseInt(offset, 10) || 0;
+
+    const { count, rows: parents } = await User.findAndCountAll({
+      where: { role: 'parent' },
+      attributes: { exclude: ['password'] },
+      limit: limitNum,
+      offset: offsetNum,
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json({
+      success: true,
+      data: {
+        total: count,
+        parents: parents.map(p => p.toJSON()),
+      },
+    });
+  } catch (error) {
+    logger.error('Get parents list error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to fetch parents list' });
   }
 };
 

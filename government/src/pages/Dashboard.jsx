@@ -74,24 +74,28 @@ const Dashboard = () => {
       value: stats?.schools || 0,
       icon: Building2,
       color: 'bg-blue-500',
+      path: '/government/schools',
     },
     {
       title: t('dashboard.totalStudents', { defaultValue: 'Jami O\'quvchilar' }),
       value: stats?.students || 0,
       icon: Users,
       color: 'bg-green-500',
+      path: '/government/students',
     },
     {
       title: t('dashboard.totalTeachers', { defaultValue: 'Jami O\'qituvchilar' }),
       value: stats?.teachers || 0,
       icon: GraduationCap,
       color: 'bg-purple-500',
+      path: '/government/teachers',
     },
     {
       title: t('dashboard.totalParents', { defaultValue: 'Jami Ota-onalar' }),
       value: stats?.parents || 0,
       icon: Users,
       color: 'bg-orange-500',
+      path: '/government/parents',
     },
   ];
 
@@ -109,12 +113,16 @@ const Dashboard = () => {
         </p>
       </div>
 
-      {/* Overview Cards */}
+      {/* Overview Cards - bosilganda tegishli sahifaga o'tadi */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {overviewCards.map((card, index) => {
           const Icon = card.icon;
           return (
-            <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
+            <Card
+              key={index}
+              className="p-6 hover:shadow-lg transition-shadow cursor-pointer hover:ring-2 hover:ring-primary-500/30"
+              onClick={() => card.path && navigate(card.path)}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">{card.title}</p>
