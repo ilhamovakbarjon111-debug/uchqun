@@ -1,4 +1,5 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import Card from '../components/Card';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 
 const Settings = () => {
+  const { t } = useTranslation();
   const { user, setUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [passwordForm, setPasswordForm] = useState({
@@ -70,7 +72,7 @@ const Settings = () => {
 
   const handleSendMessage = async () => {
     if (!messageSubject.trim() || !messageText.trim()) {
-      showError('Subject va xabar to\'ldirilishi kerak');
+      showError(t('profile.messageRequired'));
       return;
     }
 
@@ -80,7 +82,7 @@ const Settings = () => {
         subject: messageSubject.trim(),
         message: messageText.trim(),
       });
-      success('Xabar muvaffaqiyatli yuborildi');
+      success(t('profile.messageSent'));
       setMessageSubject('');
       setMessageText('');
       setShowMessageModal(false);
@@ -88,7 +90,7 @@ const Settings = () => {
       await loadMessages();
     } catch (error) {
       console.error('Error sending message:', error);
-      showError(error.response?.data?.error || 'Xabar yuborishda xatolik');
+      showError(error.response?.data?.error || t('profile.messageError'));
     } finally {
       setSendingMessage(false);
     }
@@ -114,7 +116,7 @@ const Settings = () => {
       }
     } catch (error) {
       console.error('Error loading profile:', error);
-      showError(error.response?.data?.error || 'Error loading profile');
+      showError(error.response?.data?.error || t('settings.loadProfileError'));
     } finally {
       setLoading(false);
     }
@@ -125,13 +127,13 @@ const Settings = () => {
     
     try {
       const response = await api.put('/user/profile', profileForm);
-      success('Profile updated successfully');
+      success(t('settings.profileUpdateSuccess'));
       if (setUser) {
         setUser(response.data);
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      showError(error.response?.data?.error || 'Error updating profile');
+      showError(error.response?.data?.error || t('settings.profileUpdateError'));
     }
   };
 
@@ -139,7 +141,7 @@ const Settings = () => {
     e.preventDefault();
     
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      showError('New passwords do not match');
+      showError(t('settings.passwordsDoNotMatch'));
       return;
     }
 
@@ -148,7 +150,7 @@ const Settings = () => {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });
-      success('Password changed successfully');
+      success(t('settings.passwordChangeSuccess'));
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
@@ -156,7 +158,7 @@ const Settings = () => {
       });
     } catch (error) {
       console.error('Error changing password:', error);
-      showError(error.response?.data?.error || 'Error changing password');
+      showError(error.response?.data?.error || t('settings.passwordChangeError'));
     }
   };
 
@@ -171,8 +173,8 @@ const Settings = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-4xl font-black text-gray-900 tracking-tight">Settings</h1>
-        <p className="text-gray-500 font-medium mt-1">Manage your profile and account settings</p>
+        <h1 className="text-4xl font-black text-gray-900 tracking-tight">{t('settings.title')}</h1>
+        <p className="text-gray-500 font-medium mt-1">{t('settings.subtitle')}</p>
       </div>
 
       {/* Profile Settings */}
@@ -180,13 +182,13 @@ const Settings = () => {
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-6">
             <User className="w-6 h-6 text-primary-600" />
-            <h2 className="text-xl font-bold text-gray-900">Profile Information</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('settings.profileInfo')}</h2>
           </div>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.firstName')}</label>
                 <input
                   type="text"
                   value={profileForm.firstName}
@@ -197,7 +199,7 @@ const Settings = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.lastName')}</label>
                 <input
                   type="text"
                   value={profileForm.lastName}
@@ -219,13 +221,13 @@ const Settings = () => {
                 disabled
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
               />
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              <p className="text-xs text-gray-500 mt-1">{t('settings.emailCannotChange')}</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Phone className="w-4 h-4 inline mr-2" />
-                Phone
+                {t('profile.phone')}
               </label>
               <input
                 type="tel"
@@ -243,7 +245,7 @@ const Settings = () => {
               className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-sm"
             >
               <Save className="w-5 h-5" />
-              Save Profile
+              {t('settings.saveProfile')}
             </button>
           </div>
         </Card>
@@ -254,7 +256,7 @@ const Settings = () => {
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-6">
             <Bell className="w-6 h-6 text-primary-600" />
-            <h2 className="text-xl font-bold text-gray-900">Notification Preferences</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('settings.notificationPreferences')}</h2>
           </div>
 
           <div className="space-y-4">
@@ -272,8 +274,8 @@ const Settings = () => {
                 className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
               />
               <div>
-                <span className="text-sm font-medium text-gray-700">Email Notifications</span>
-                <p className="text-xs text-gray-500">Receive updates via email</p>
+                <span className="text-sm font-medium text-gray-700">{t('settings.emailNotifications')}</span>
+                <p className="text-xs text-gray-500">{t('settings.emailNotificationsDesc')}</p>
               </div>
             </label>
 
@@ -291,8 +293,8 @@ const Settings = () => {
                 className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
               />
               <div>
-                <span className="text-sm font-medium text-gray-700">Push Notifications</span>
-                <p className="text-xs text-gray-500">Receive push notifications in browser</p>
+                <span className="text-sm font-medium text-gray-700">{t('settings.pushNotifications')}</span>
+                <p className="text-xs text-gray-500">{t('settings.pushNotificationsDesc')}</p>
               </div>
             </label>
           </div>
@@ -303,7 +305,7 @@ const Settings = () => {
               className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-sm"
             >
               <Save className="w-5 h-5" />
-              Save Preferences
+              {t('settings.savePreferences')}
             </button>
           </div>
         </Card>
@@ -314,12 +316,12 @@ const Settings = () => {
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-6">
             <Lock className="w-6 h-6 text-primary-600" />
-            <h2 className="text-xl font-bold text-gray-900">Change Password</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('settings.changePassword')}</h2>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.currentPassword')}</label>
               <div className="relative">
                 <input
                   type={showPasswords.current ? 'text' : 'password'}
@@ -339,7 +341,7 @@ const Settings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.newPassword')}</label>
               <div className="relative">
                 <input
                   type={showPasswords.new ? 'text' : 'password'}
@@ -357,11 +359,11 @@ const Settings = () => {
                   {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Password must be at least 8 characters long</p>
+              <p className="text-xs text-gray-500 mt-1">{t('settings.passwordMinLength')}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.confirmNewPassword')}</label>
               <div className="relative">
                 <input
                   type={showPasswords.confirm ? 'text' : 'password'}
@@ -388,7 +390,7 @@ const Settings = () => {
               className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors shadow-sm"
             >
               <Save className="w-5 h-5" />
-              Change Password
+              {t('settings.changePasswordButton')}
             </button>
           </div>
         </Card>
@@ -398,10 +400,10 @@ const Settings = () => {
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
           <MessageSquare className="w-6 h-6 text-primary-600" />
-          <h2 className="text-xl font-bold text-gray-900">Contact Super-Admin</h2>
+          <h2 className="text-xl font-bold text-gray-900">{t('profile.contactSuperAdmin')}</h2>
         </div>
         <p className="text-sm text-gray-600 mb-4">
-          Super-adminga xabar yuborish uchun quyidagi tugmani bosing
+          {t('profile.contactDescription')}
         </p>
         <div className="flex gap-3">
           <button
@@ -409,7 +411,7 @@ const Settings = () => {
             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-sm"
           >
             <MessageSquare className="w-5 h-5" />
-            Super-adminga xabar yuborish
+            {t('profile.sendMessage')}
           </button>
           {myMessages.length > 0 && (
             <button
@@ -417,7 +419,7 @@ const Settings = () => {
               className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors shadow-sm relative"
             >
               <MessageSquare className="w-5 h-5" />
-              Mening xabarlarim
+              {t('profile.myMessages')}
               {myMessages.some(m => m.reply) && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                   {myMessages.filter(m => m.reply).length}
@@ -449,22 +451,22 @@ const Settings = () => {
             
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Mavzu</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.subject')}</label>
                 <input
                   type="text"
                   value={messageSubject}
                   onChange={(e) => setMessageSubject(e.target.value)}
-                  placeholder="Xabar mavzusi..."
+                  placeholder={t('profile.subjectPlaceholder')}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Xabar</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.message')}</label>
                 <textarea
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   rows={6}
-                  placeholder="Xabaringizni yozing..."
+                  placeholder={t('profile.messagePlaceholder')}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -476,7 +478,7 @@ const Settings = () => {
                 className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors"
                 disabled={sendingMessage}
               >
-                Bekor qilish
+                {t('profile.cancel')}
               </button>
               <button
                 onClick={handleSendMessage}
@@ -486,12 +488,12 @@ const Settings = () => {
                 {sendingMessage ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Yuborilmoqda...</span>
+                    <span>{t('profile.sending')}</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>Yuborish</span>
+                    <span>{t('profile.send')}</span>
                   </>
                 )}
               </button>
@@ -509,7 +511,7 @@ const Settings = () => {
                 <div className="p-3 bg-green-100 rounded-full">
                   <MessageSquare className="w-6 h-6 text-green-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">Mening xabarlarim</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{t('profile.myMessages')}</h2>
               </div>
               <button
                 onClick={() => setShowMessagesModal(false)}
@@ -526,7 +528,7 @@ const Settings = () => {
             ) : myMessages.length === 0 ? (
               <div className="text-center py-12">
                 <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Hozircha xabarlar yo'q</p>
+                <p className="text-gray-500">{t('profile.noMessages')}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -553,7 +555,7 @@ const Settings = () => {
                     </div>
                     
                     <div className="mb-4">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Sizning xabaringiz:</p>
+                      <p className="text-sm font-medium text-gray-700 mb-2">{t('profile.yourMessage')}:</p>
                       <p className="text-gray-800 bg-gray-50 rounded-lg p-4 whitespace-pre-wrap">{msg.message}</p>
                     </div>
 

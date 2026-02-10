@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -207,7 +207,7 @@ const Dashboard = () => {
                       <p className="text-sm text-gray-500">{parent.email}</p>
                       {parent.children && parent.children.length > 0 && (
                         <p className="text-xs text-gray-400 mt-1">
-                          {parent.children.length} {parent.children.length === 1 ? 'child' : 'children'}
+                          {parent.children.length} {parent.children.length === 1 ? t('dashboard.child') : t('dashboard.children')}
                         </p>
                       )}
                     </div>

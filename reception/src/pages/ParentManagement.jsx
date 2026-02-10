@@ -215,14 +215,14 @@ const ParentManagement = () => {
     e.preventDefault();
     
     if (!selectedParentId) {
-      showError('Parent ID is missing');
+      showError(t('parentsPage.parentIdMissing'));
       return;
     }
 
     // Validate required fields
     if (!childFormData.firstName || !childFormData.lastName || !childFormData.dateOfBirth || 
         !childFormData.disabilityType || !childFormData.school) {
-      showError('Please fill in all required fields');
+      showError(t('parentsPage.childRequiredFields'));
       return;
     }
 
@@ -255,13 +255,13 @@ const ParentManagement = () => {
       });
       
       await api.post('/reception/children', formDataToSend);
-      success('Child added successfully');
+      success(t('parentsPage.toastChildAdded'));
       setShowChildModal(false);
       loadParents();
     } catch (error) {
       console.error('Error adding child:', error);
       console.error('Error response:', error.response?.data);
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to add child';
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || t('parentsPage.failedAddChild');
       const errorDetails = error.response?.data?.missing ? `Missing: ${JSON.stringify(error.response.data.missing)}` : '';
       showError(`${errorMessage}${errorDetails ? ` - ${errorDetails}` : ''}`);
     }
@@ -272,14 +272,14 @@ const ParentManagement = () => {
     e.preventDefault();
     
     if (!selectedParentId || !selectedChild?.id) {
-      showError('Parent ID or Child ID is missing');
+      showError(t('parentsPage.parentIdMissing'));
       return;
     }
 
     // Validate required fields
     if (!childFormData.firstName || !childFormData.lastName || !childFormData.dateOfBirth || 
         !childFormData.disabilityType || !childFormData.school) {
-      showError('Please fill in all required fields');
+      showError(t('parentsPage.childRequiredFields'));
       return;
     }
 
@@ -300,13 +300,13 @@ const ParentManagement = () => {
       }
       
       await api.put(`/reception/children/${selectedChild.id}`, formDataToSend);
-      success('Child updated successfully');
+      success(t('parentsPage.toastChildUpdated'));
       setShowEditChildModal(false);
       loadParents();
     } catch (error) {
       console.error('Error updating child:', error);
       console.error('Error response:', error.response?.data);
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to update child';
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || t('parentsPage.failedUpdateChild');
       const errorDetails = error.response?.data?.missing ? `Missing: ${JSON.stringify(error.response.data.missing)}` : '';
       showError(`${errorMessage}${errorDetails ? ` - ${errorDetails}` : ''}`);
     }
@@ -553,14 +553,14 @@ const ParentManagement = () => {
                               <button
                                 onClick={() => handleEditChild(parent.id, child)}
                                 className="p-1 text-gray-500 hover:text-primary-600 transition-colors"
-                                title="Edit Child"
+                                title={t('parentsPage.editChildTitle')}
                               >
                                 <Edit2 className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleDeleteChild(parent.id, child.id)}
                                 className="p-1 text-gray-500 hover:text-red-600 transition-colors"
-                                title="Delete Child"
+                                title={t('parentsPage.buttons.delete')}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -573,7 +573,7 @@ const ParentManagement = () => {
                 ) : (
                   <div className="flex items-center gap-2 text-sm text-gray-400 italic pt-3 border-t border-gray-100">
                     <Baby className="w-4 h-4" />
-                    <span>No children registered</span>
+                    <span>{t('parentsPage.noChildrenRegistered')}</span>
                   </div>
                 )}
               </div>
@@ -1088,7 +1088,7 @@ const ParentManagement = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Bolani tahrirlash</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{t('parentsPage.editChildTitle')}</h2>
               <button
                 onClick={() => {
                   setShowEditChildModal(false);

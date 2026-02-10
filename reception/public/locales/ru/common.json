@@ -29,7 +29,23 @@
     "stats": "Статистика",
     "totalParents": "Всего родителей",
     "totalTeachers": "Всего учителей",
-    "totalGroups": "Всего групп"
+    "totalGroups": "Всего групп",
+    "child": "ребенок",
+    "children": "детей",
+    "teachersList": "Учителя",
+    "parentsList": "Родители",
+    "noTeachers": "Пока нет учителей",
+    "noParents": "Пока нет родителей",
+    "addTeacher": "Добавить учителя",
+    "addParent": "Добавить родителя",
+    "viewAll": "Всё",
+    "active": "Активный",
+    "inactive": "Неактивный"
+  },
+  "common": {
+    "viewAll": "Всё",
+    "active": "Активный",
+    "inactive": "Неактивный"
   },
   "parentsPage": {
     "title": "Управление родителями",
@@ -85,6 +101,25 @@
       "edit": "Редактировать",
       "delete": "Удалить",
       "addChild": "Добавить ребенка"
+    },
+    "editChildTitle": "Редактировать ребенка",
+    "noChildrenRegistered": "Нет зарегистрированных детей",
+    "parentIdMissing": "Не указан ID родителя",
+    "childRequiredFields": "Заполните все обязательные поля",
+    "toastChildAdded": "Ребенок добавлен",
+    "toastChildUpdated": "Ребенок обновлен",
+    "toastDeleteChild": "Ребенок удален",
+    "confirmDeleteChild": "Удалить этого ребенка?",
+    "failedAddChild": "Ошибка при добавлении ребенка",
+    "failedUpdateChild": "Ошибка при обновлении ребенка",
+    "form": {
+      "groupRequired": "Выбор группы обязателен",
+      "groupRequiredHint": "Нужен для просмотра активностей и питания ребенка"
+    },
+    "gender": {
+      "male": "Мужской",
+      "female": "Женский",
+      "other": "Другое"
     }
   },
   "teachersPage": {
@@ -165,6 +200,33 @@
       "capacity": "Вместимость:",
       "teacher": "Учитель:"
     }
+  },
+  "settings": {
+    "title": "Настройки",
+    "subtitle": "Управление профилем и настройками аккаунта",
+    "profileInfo": "Информация профиля",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "emailCannotChange": "Email нельзя изменить",
+    "saveProfile": "Сохранить профиль",
+    "notificationPreferences": "Настройки уведомлений",
+    "emailNotifications": "Email уведомления",
+    "emailNotificationsDesc": "Получать обновления по email",
+    "pushNotifications": "Push уведомления",
+    "pushNotificationsDesc": "Получать push в браузере",
+    "savePreferences": "Сохранить настройки",
+    "changePassword": "Изменить пароль",
+    "currentPassword": "Текущий пароль",
+    "newPassword": "Новый пароль",
+    "confirmNewPassword": "Подтвердите новый пароль",
+    "passwordMinLength": "Пароль должен быть не менее 8 символов",
+    "changePasswordButton": "Изменить пароль",
+    "profileUpdateSuccess": "Профиль обновлен",
+    "profileUpdateError": "Ошибка обновления профиля",
+    "passwordChangeSuccess": "Пароль изменен",
+    "passwordChangeError": "Ошибка смены пароля",
+    "passwordsDoNotMatch": "Пароли не совпадают",
+    "loadProfileError": "Ошибка загрузки профиля"
   },
   "profile": {
     "title": "Профиль",

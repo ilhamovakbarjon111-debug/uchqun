@@ -29,7 +29,23 @@
     "stats": "Statistika",
     "totalParents": "Jami ota-onalar",
     "totalTeachers": "Jami o'qituvchilar",
-    "totalGroups": "Jami guruhlar"
+    "totalGroups": "Jami guruhlar",
+    "child": "bola",
+    "children": "bola",
+    "teachersList": "O'qituvchilar",
+    "parentsList": "Ota-onalar",
+    "noTeachers": "Hozircha o'qituvchilar yo'q",
+    "noParents": "Hozircha ota-onalar yo'q",
+    "addTeacher": "O'qituvchi qo'shish",
+    "addParent": "Ota-ona qo'shish",
+    "viewAll": "Barchasi",
+    "active": "Aktiv",
+    "inactive": "Noaktiv"
+  },
+  "common": {
+    "viewAll": "Barchasi",
+    "active": "Aktiv",
+    "inactive": "Noaktiv"
   },
   "parentsPage": {
     "title": "Ota-onalarni boshqarish",
@@ -85,7 +101,17 @@
       "edit": "Tahrirlash",
       "delete": "O'chirish",
       "addChild": "Bola qo'shish"
-    }
+    },
+    "editChildTitle": "Bolani tahrirlash",
+    "noChildrenRegistered": "Bola ro'yxatdan o'tmagan",
+    "parentIdMissing": "Ota-ona ID kiritilmagan",
+    "childRequiredFields": "Iltimos, barcha majburiy maydonlarni to'ldiring",
+    "toastChildAdded": "Bola muvaffaqiyatli qo'shildi",
+    "toastChildUpdated": "Bola yangilandi",
+    "toastDeleteChild": "Bola o'chirildi",
+    "confirmDeleteChild": "Ushbu bolani o'chirmoqchimisiz?",
+    "failedAddChild": "Bolani qo'shishda xatolik",
+    "failedUpdateChild": "Bolani yangilashda xatolik"
   },
   "teachersPage": {
     "title": "O'qituvchilarni boshqarish",
@@ -165,6 +191,33 @@
       "capacity": "Sig'im:",
       "teacher": "O'qituvchi:"
     }
+  },
+  "settings": {
+    "title": "Sozlamalar",
+    "subtitle": "Profil va hisob sozlamalarini boshqarish",
+    "profileInfo": "Profil ma'lumotlari",
+    "firstName": "Ism",
+    "lastName": "Familiya",
+    "emailCannotChange": "Email o'zgartirilmaydi",
+    "saveProfile": "Profilni saqlash",
+    "notificationPreferences": "Bildirishnoma sozlamalari",
+    "emailNotifications": "Email bildirishnomalari",
+    "emailNotificationsDesc": "Email orqali yangilanishlar",
+    "pushNotifications": "Push bildirishnomalari",
+    "pushNotificationsDesc": "Brauzerda push bildirishnomalar",
+    "savePreferences": "Sozlamalarni saqlash",
+    "changePassword": "Parolni o'zgartirish",
+    "currentPassword": "Joriy parol",
+    "newPassword": "Yangi parol",
+    "confirmNewPassword": "Yangi parolni tasdiqlang",
+    "passwordMinLength": "Parol kamida 8 ta belgidan iborat bo'lishi kerak",
+    "changePasswordButton": "Parolni o'zgartirish",
+    "profileUpdateSuccess": "Profil yangilandi",
+    "profileUpdateError": "Profilni yangilashda xatolik",
+    "passwordChangeSuccess": "Parol muvaffaqiyatli o'zgartirildi",
+    "passwordChangeError": "Parolni o'zgartirishda xatolik",
+    "passwordsDoNotMatch": "Yangi parollar mos kelmadi",
+    "loadProfileError": "Profilni yuklashda xatolik"
   },
   "profile": {
     "title": "Profil",

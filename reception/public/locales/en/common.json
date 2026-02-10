@@ -29,7 +29,23 @@
     "stats": "Statistics",
     "totalParents": "Total Parents",
     "totalTeachers": "Total Teachers",
-    "totalGroups": "Total Groups"
+    "totalGroups": "Total Groups",
+    "child": "child",
+    "children": "children",
+    "teachersList": "Teachers",
+    "parentsList": "Parents",
+    "noTeachers": "No teachers yet",
+    "noParents": "No parents yet",
+    "addTeacher": "Add Teacher",
+    "addParent": "Add Parent",
+    "viewAll": "View All",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "common": {
+    "viewAll": "View All",
+    "active": "Active",
+    "inactive": "Inactive"
   },
   "parentsPage": {
     "title": "Parent Management",
@@ -85,7 +101,17 @@
       "edit": "Edit",
       "delete": "Delete",
       "addChild": "Add Child"
-    }
+    },
+    "editChildTitle": "Edit child",
+    "noChildrenRegistered": "No children registered",
+    "parentIdMissing": "Parent ID is missing",
+    "childRequiredFields": "Please fill in all required fields",
+    "toastChildAdded": "Child added successfully",
+    "toastChildUpdated": "Child updated successfully",
+    "toastDeleteChild": "Child deleted",
+    "confirmDeleteChild": "Are you sure you want to delete this child?",
+    "failedAddChild": "Failed to add child",
+    "failedUpdateChild": "Failed to update child"
   },
   "teachersPage": {
     "title": "Teacher Management",
@@ -160,6 +186,33 @@
       "capacity": "Capacity:",
       "teacher": "Teacher:"
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your profile and account settings",
+    "profileInfo": "Profile Information",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "emailCannotChange": "Email cannot be changed",
+    "saveProfile": "Save Profile",
+    "notificationPreferences": "Notification Preferences",
+    "emailNotifications": "Email Notifications",
+    "emailNotificationsDesc": "Receive updates via email",
+    "pushNotifications": "Push Notifications",
+    "pushNotificationsDesc": "Receive push notifications in browser",
+    "savePreferences": "Save Preferences",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "passwordMinLength": "Password must be at least 8 characters long",
+    "changePasswordButton": "Change Password",
+    "profileUpdateSuccess": "Profile updated successfully",
+    "profileUpdateError": "Error updating profile",
+    "passwordChangeSuccess": "Password changed successfully",
+    "passwordChangeError": "Error changing password",
+    "passwordsDoNotMatch": "New passwords do not match",
+    "loadProfileError": "Error loading profile"
   },
   "profile": {
     "title": "Profile",
