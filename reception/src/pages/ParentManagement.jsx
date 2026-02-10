@@ -1,4 +1,4 @@
-﻿// Reception ParentManagement - Updated with Edit Child functionality
+// Reception ParentManagement - Updated with Edit Child functionality
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 import Card from '../components/Card';
@@ -173,7 +173,7 @@ const ParentManagement = () => {
       specialNeeds: child.specialNeeds || '',
       school: child.school || 'Uchqun School',
       photo: null,
-      photoPreview: child.photoUrl || null,
+      photoPreview: (child.photo || child.photoUrl) || null,
     });
     setShowEditChildModal(true);
   };
@@ -516,9 +516,9 @@ const ParentManagement = () => {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-start gap-3">
-                                {child.photoUrl ? (
+                                {(child.photo || child.photoUrl) ? (
                                   <img 
-                                    src={child.photoUrl} 
+                                    src={child.photo || child.photoUrl} 
                                     alt={`${child.firstName} ${child.lastName}`}
                                     className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
                                   />

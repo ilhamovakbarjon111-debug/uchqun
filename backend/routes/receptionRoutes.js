@@ -14,6 +14,8 @@ import {
   deleteTeacher,
   deleteParent,
   createChildForParent,
+  updateChildForReception,
+  deleteChildForReception,
   getTeacherRatings,
   getMyMessages,
 } from '../controllers/receptionController.js';
@@ -55,6 +57,8 @@ router.put('/parents/:id', updateParent);
 router.delete('/parents/:id', deleteParent);
 // Add child to existing parent (separate endpoint to avoid route conflicts)
 router.post('/children', upload.fields([{ name: 'child[photo]', maxCount: 1 }]), createChildForParent);
+router.put('/children/:id', upload.fields([{ name: 'child[photo]', maxCount: 1 }]), updateChildForReception);
+router.delete('/children/:id', deleteChildForReception);
 
 // Groups (for parent assignment)
 router.get('/groups', getGroups);

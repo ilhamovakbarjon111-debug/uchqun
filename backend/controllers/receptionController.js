@@ -8,7 +8,7 @@ import School from '../models/School.js';
 import logger from '../utils/logger.js';
 import bcrypt from 'bcryptjs';
 import { Op, fn, col } from 'sequelize';
-import { uploadFile } from '../config/storage.js';
+import { uploadFile, deleteFile } from '../config/storage.js';
 import fs from 'fs';
 
 /**
@@ -444,7 +444,7 @@ export const createParent = async (req, res) => {
         {
           model: Child,
           as: 'children',
-          attributes: ['id', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'disabilityType', 'school', 'class', 'teacher'],
+          attributes: ['id', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'disabilityType', 'specialNeeds', 'school', 'class', 'teacher', 'photo'],
           required: false,
         },
       ],
@@ -524,7 +524,7 @@ export const getParents = async (req, res) => {
         {
           model: Child,
           as: 'children',
-          attributes: ['id', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'disabilityType', 'school', 'class', 'teacher'],
+          attributes: ['id', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'disabilityType', 'specialNeeds', 'school', 'class', 'teacher', 'photo'],
           required: false,
         },
       ],
@@ -663,7 +663,7 @@ export const updateParent = async (req, res) => {
         {
           model: Child,
           as: 'children',
-          attributes: ['id', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'disabilityType', 'school', 'class', 'teacher'],
+          attributes: ['id', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'disabilityType', 'specialNeeds', 'school', 'class', 'teacher', 'photo'],
           required: false,
         },
       ],
@@ -943,6 +943,154 @@ export const createChildForParent = async (req, res) => {
   } catch (error) {
     logger.error('Create child error', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to create child' });
+  }
+};
+
+/**
+ * Update a child (reception can update children of parents they created)
+ * PUT /api/reception/children/:id
+ */
+export const updateChildForReception = async (req, res) => {
+  try {
+    const { id: childId } = req.params;
+
+    const child = await Child.findByPk(childId, {
+      include: [{ model: User, as: 'parent', attributes: ['id', 'createdBy'] }],
+    });
+    if (!child || !child.parent) {
+      return res.status(404).json({ error: 'Child not found' });
+    }
+    if (child.parent.createdBy !== req.user.id) {
+      return res.status(403).json({ error: 'You can only update children of parents you created' });
+    }
+
+    const firstName = req.body['child[firstName]'] ?? req.body.child?.firstName ?? child.firstName;
+    const lastName = req.body['child[lastName]'] ?? req.body.child?.lastName ?? child.lastName;
+    const dateOfBirth = req.body['child[dateOfBirth]'] ?? req.body.child?.dateOfBirth ?? child.dateOfBirth;
+    const gender = req.body['child[gender]'] ?? req.body.child?.gender ?? child.gender;
+    const disabilityType = req.body['child[disabilityType]'] ?? req.body.child?.disabilityType ?? child.disabilityType;
+    const specialNeeds = req.body['child[specialNeeds]'] !== undefined ? (req.body['child[specialNeeds]'] ?? req.body.child?.specialNeeds ?? null) : child.specialNeeds;
+    const school = req.body['child[school]'] ?? req.body.child?.school ?? child.school;
+
+    if (!firstName || !lastName || !dateOfBirth || !gender || !disabilityType || !school) {
+      return res.status(400).json({
+        error: 'First name, last name, date of birth, gender, disability type, and school are required',
+      });
+    }
+
+    let photoUrl = child.photo;
+    if (req.files && req.files['child[photo]'] && req.files['child[photo]'][0]) {
+      const photoFile = req.files['child[photo]'][0];
+      try {
+        if (child.photo) {
+          try {
+            await deleteFile(child.photo);
+          } catch (e) {
+            logger.warn('Error deleting old child photo', { error: e.message });
+          }
+        }
+        const fileBuffer = fs.readFileSync(photoFile.path);
+        const uploadResult = await uploadFile(fileBuffer, photoFile.filename, photoFile.mimetype);
+        photoUrl = uploadResult?.url || child.photo;
+        try {
+          fs.unlinkSync(photoFile.path);
+        } catch (e) {
+          logger.warn('Error deleting local photo file', { error: e.message });
+        }
+      } catch (error) {
+        logger.error('Error uploading child photo', { error: error.message });
+      }
+    } else if (req.body['child[photo]'] && typeof req.body['child[photo]'] === 'string') {
+      photoUrl = req.body['child[photo]'];
+    }
+
+    let schoolId = child.schoolId;
+    if (school) {
+      try {
+        let foundSchool = await School.findOne({
+          where: { name: { [Op.iLike]: school } },
+        });
+        if (!foundSchool) {
+          foundSchool = await School.findOne({
+            where: { name: { [Op.iLike]: `%${school}%` } },
+          });
+        }
+        if (foundSchool) schoolId = foundSchool.id;
+      } catch (e) {
+        logger.warn('School lookup failed for child update', { error: e.message });
+      }
+    }
+
+    await child.update({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      dateOfBirth,
+      gender,
+      disabilityType: disabilityType.trim(),
+      specialNeeds: specialNeeds === '' ? null : (specialNeeds && specialNeeds.trim()) || null,
+      school: school.trim(),
+      schoolId: schoolId ?? child.schoolId,
+      photo: photoUrl,
+    });
+
+    logger.info('Child updated by Reception', {
+      childId: child.id,
+      parentId: child.parentId,
+      updatedBy: req.user.id,
+    });
+
+    res.json({
+      success: true,
+      message: 'Child updated successfully',
+      data: child.toJSON(),
+    });
+  } catch (error) {
+    logger.error('Update child (reception) error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to update child' });
+  }
+};
+
+/**
+ * Delete a child (reception can delete children of parents they created)
+ * DELETE /api/reception/children/:id
+ */
+export const deleteChildForReception = async (req, res) => {
+  try {
+    const { id: childId } = req.params;
+
+    const child = await Child.findByPk(childId, {
+      include: [{ model: User, as: 'parent', attributes: ['id', 'createdBy'] }],
+    });
+    if (!child || !child.parent) {
+      return res.status(404).json({ error: 'Child not found' });
+    }
+    if (child.parent.createdBy !== req.user.id) {
+      return res.status(403).json({ error: 'You can only delete children of parents you created' });
+    }
+
+    if (child.photo) {
+      try {
+        await deleteFile(child.photo);
+      } catch (e) {
+        logger.warn('Failed to delete child photo from storage', { childId, error: e.message });
+      }
+    }
+
+    await child.destroy();
+
+    logger.info('Child deleted by Reception', {
+      childId,
+      parentId: child.parentId,
+      deletedBy: req.user.id,
+    });
+
+    res.json({
+      success: true,
+      message: 'Child deleted successfully',
+    });
+  } catch (error) {
+    logger.error('Delete child (reception) error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to delete child' });
   }
 };
 
