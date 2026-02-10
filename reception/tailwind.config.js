@@ -1,6 +1,4 @@
 /** @type {import('tailwindcss').Config} */
-import colors from 'tailwindcss/colors';
-
 const brandPurple = {
   50: '#f5f3ff',
   100: '#ede9fe',
@@ -20,12 +18,11 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    colors: {
-      ...colors,
-      orange: brandPurple, // Map orange to purple (same as teacher/parent)
-      primary: brandPurple,
-    },
     extend: {
+      colors: {
+        orange: brandPurple,
+        primary: brandPurple,
+      },
       animation: {
         'slide-in': 'slideIn 0.3s ease-out',
       },

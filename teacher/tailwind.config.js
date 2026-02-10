@@ -1,6 +1,4 @@
 /** @type {import('tailwindcss').Config} */
-import colors from 'tailwindcss/colors';
-
 const brandBlue = {
   50: '#eff6ff',
   100: '#dbeafe',
@@ -20,13 +18,11 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    // Important: define colors at top-level (not only extend) to ensure defaults are overridden.
-    colors: {
-      ...colors,
-      orange: brandBlue,
-      primary: brandBlue,
-    },
     extend: {
+      colors: {
+        orange: brandBlue,
+        primary: brandBlue,
+      },
       animation: {
         'slide-in': 'slideIn 0.3s ease-out',
       },

@@ -135,7 +135,6 @@ const TherapyManagement = () => {
       therapyType: therapy.therapyType || 'music',
       contentUrl: therapy.contentUrl || '',
       contentType: therapy.contentType || 'audio',
-      childId: '', // Don't pre-fill childId when editing
       duration: therapy.duration || '',
       ageGroup: therapy.ageGroup || 'all',
       difficultyLevel: therapy.difficultyLevel || 'all',

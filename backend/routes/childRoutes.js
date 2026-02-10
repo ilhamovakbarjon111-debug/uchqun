@@ -1,13 +1,13 @@
 import express from 'express';
-import { getChildren, getChild, updateChild } from '../controllers/childController.js';
+import { getChildren, getChild, updateChild, deleteChild } from '../controllers/childController.js';
 import { authenticate, requireParent } from '../middleware/auth.js';
 import { updateChildValidator, childIdValidator } from '../validators/childValidator.js';
 import { handleValidationErrors } from '../middleware/validation.js';
-import { uploadChildPhoto } from '../middleware/uploadChildren.js'; // ✅ To'g'ri yo'l
+import { uploadChildPhoto } from '../middleware/uploadChildren.js';
 
 const router = express.Router();
 
-// Public debug endpoint (no auth required) - MUST be before authenticate middleware
+// Public debug endpoint
 router.get('/debug/appwrite', (req, res) => {
     const appwriteConfigured = Boolean(
         process.env.APPWRITE_ENDPOINT &&
@@ -27,18 +27,23 @@ router.get('/debug/appwrite', (req, res) => {
 });
 
 router.use(authenticate);
-// Note: We don't use requireParent here because updateChild already checks parentId: req.user.id
-// This allows flexibility for future admin/reception access if needed
 
-// Get all children
+// GET endpoints
 router.get('/', getChildren);
-
-// Get one child
 router.get('/:id', childIdValidator, handleValidationErrors, getChild);
 
-// Update child avatar (NO validators - just photo path)
+// DELETE child endpoint
+router.delete('/:id', 
+    childIdValidator, 
+    handleValidationErrors, 
+    deleteChild
+);
+
+// PUT endpoints - tahrirlash uchun
 router.put(
     '/:id/avatar',
+    childIdValidator,
+    handleValidationErrors,
     async (req, res) => {
         try {
             const { id } = req.params;
@@ -46,40 +51,87 @@ router.put(
             
             const Child = (await import('../models/Child.js')).default;
             
+            // Check if child exists and belongs to parent
             const child = await Child.findOne({
-                where: { id, parentId: req.user.id }
+                where: { 
+                    id, 
+                    parentId: req.user.id 
+                }
             });
             
             if (!child) {
-                return res.status(404).json({ error: 'Child not found' });
+                return res.status(404).json({ 
+                    error: 'Child not found or you do not have permission' 
+                });
             }
             
-            await child.update({ photo });
+            // Update only photo field
+            await child.update({ 
+                photo,
+                updatedAt: new Date()
+            });
+            
             await child.reload();
             
+            // Format response
             const childData = child.toJSON();
-            childData.age = child.getAge();
+            childData.age = child.getAge ? child.getAge() : null;
             
-            res.json(childData);
+            res.json({
+                success: true,
+                message: 'Avatar updated successfully',
+                data: childData
+            });
+            
         } catch (error) {
             console.error('Update avatar error:', error);
-            res.status(500).json({ error: 'Failed to update avatar' });
+            res.status(500).json({ 
+                error: 'Failed to update avatar',
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
         }
     }
 );
 
-// Update child + photo upload (supports both multipart and base64)
-// Multer middleware will be skipped if Content-Type is application/json
+// Update child with photo support (BETTER VERSION)
 router.put(
     '/:id',
-    uploadChildPhoto.single('photo'), // multer (will skip if not multipart)
-    childIdValidator,
+    // First check child exists
+    async (req, res, next) => {
+        try {
+            const Child = (await import('../models/Child.js')).default;
+            const { id } = req.params;
+            
+            const child = await Child.findOne({
+                where: { 
+                    id, 
+                    parentId: req.user.id 
+                }
+            });
+            
+            if (!child) {
+                return res.status(404).json({ 
+                    error: 'Child not found or you do not have permission' 
+                });
+            }
+            
+            req.child = child; // Attach child to request
+            next();
+        } catch (error) {
+            console.error('Child check error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    },
+    // Then handle file upload (if multipart/form-data)
+    uploadChildPhoto.single('photo'),
+    // Then validate
+    updateChildValidator,
     handleValidationErrors,
-    // SKIP updateChildValidator to allow photoBase64 through
+    // Finally update
     updateChild
 );
 
-// DEBUG endpoint - test multer
+// Test endpoint
 router.post('/test-upload', uploadChildPhoto.single('photo'), (req, res) => {
     console.log('=== TEST UPLOAD ===');
     console.log('req.file:', req.file);

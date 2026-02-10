@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import Child from '../models/Child.js';
 import User from '../models/User.js';
 import Group from '../models/Group.js';
-import { uploadFile } from '../config/storage.js';
+import { uploadFile, deleteFile } from '../config/storage.js'; // deleteFile qo'shildi
 import logger from '../utils/logger.js';
 import { emitToUser } from '../config/socket.js';
 
@@ -21,7 +21,7 @@ export const getChildren = async (req, res) => {
           model: Group,
           as: 'childGroup',
           attributes: ['id', 'name'],
-          required: false, // Child may not have a group
+          required: false,
         },
       ],
       order: [['createdAt', 'ASC']],
@@ -60,7 +60,7 @@ export const getChild = async (req, res) => {
           model: Group,
           as: 'childGroup',
           attributes: ['id', 'name'],
-          required: false, // Child may not have a group
+          required: false,
         },
       ],
     });
@@ -79,6 +79,64 @@ export const getChild = async (req, res) => {
   }
 };
 
+// Delete child
+export const deleteChild = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const child = await Child.findOne({
+      where: {
+        id,
+        parentId: req.user.id,
+      },
+    });
+
+    if (!child) {
+      return res.status(404).json({ error: 'Child not found or you do not have permission' });
+    }
+
+    // Delete photo from storage if exists
+    if (child.photo) {
+      try {
+        await deleteFile(child.photo);
+        logger.info('Child photo deleted', { childId: id, photoUrl: child.photo });
+      } catch (deleteError) {
+        logger.warn('Failed to delete child photo from storage', {
+          childId: id,
+          error: deleteError.message,
+          photoUrl: child.photo,
+        });
+        // Continue deleting child even if photo deletion fails
+      }
+    }
+
+    // Store parentId for socket emission before deletion
+    const parentId = child.parentId;
+
+    // Delete child from database
+    await child.destroy();
+
+    // Emit real-time delete notification to parent
+    emitToUser(parentId, 'child:deleted', {
+      childId: id,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.json({
+      success: true,
+      message: 'Child deleted successfully',
+    });
+  } catch (error) {
+    logger.error('Delete child error', {
+      error: error.message,
+      childId: req.params?.id,
+      userId: req.user?.id,
+    });
+    res.status(500).json({ error: 'Failed to delete child' });
+  }
+};
+
+// Update child
 export const updateChild = async (req, res) => {
   try {
     const { id } = req.params;
@@ -99,29 +157,56 @@ export const updateChild = async (req, res) => {
     // Handle photo upload - supports both multipart (req.file) and base64 (req.body.photoBase64)
     if (req.file) {
       try {
-        const fileBuffer = req.file.buffer;
-        // Get extension from original filename or mimetype
-        let extension = req.file.originalname.substring(req.file.originalname.lastIndexOf('.') + 1) || 
-                       req.file.mimetype.split('/')[1] || 'jpg';
-        // Normalize extension - Appwrite expects jpg, not jpeg
-        if (extension === 'jpeg') {
-          extension = 'jpg';
+        // Delete old photo if exists
+        if (child.photo) {
+          try {
+            await deleteFile(child.photo);
+            logger.info('Old child photo deleted', { childId: id, oldPhotoUrl: child.photo });
+          } catch (deleteError) {
+            logger.warn('Failed to delete old child photo', {
+              childId: id,
+              error: deleteError.message,
+              oldPhotoUrl: child.photo,
+            });
+          }
         }
-        // Ensure extension is lowercase and valid
+
+        const fileBuffer = req.file.buffer;
+        let extension = req.file.originalname.substring(req.file.originalname.lastIndexOf('.') + 1) ||
+                     req.file.mimetype.split('/')[1] || 'jpg';
+        
+        if (extension === 'jpeg') extension = 'jpg';
+        
         const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         if (!validExtensions.includes(extension.toLowerCase())) {
-          extension = 'jpg'; // Default to jpg if invalid
+          extension = 'jpg';
         }
+        
         const filename = `child-${id}-${Date.now()}.${extension.toLowerCase()}`;
 
         const uploadResult = await uploadFile(fileBuffer, filename, req.file.mimetype);
+        
+        if (!uploadResult?.url) {
+          throw new Error('Upload succeeded but no URL returned');
+        }
+        
         updateData.photo = uploadResult.url;
         delete updateData.photoBase64;
+        
       } catch (uploadError) {
-        logger.error('Photo upload error (multipart)', { error: uploadError.message, childId: id });
-        return res.status(500).json({ error: 'Failed to upload photo' });
+        logger.error('Photo upload error (multipart)', { 
+          error: uploadError.message,
+          childId: id,
+          stack: uploadError.stack,
+        });
+        return res.status(500).json({ 
+          error: 'Failed to upload photo',
+          details: process.env.NODE_ENV === 'development' ? uploadError.message : undefined,
+        });
       }
-    } else if (req.body.photoBase64) {
+      
+    } else if (req.body.photoBase64 && req.body.photoBase64 !== child.photo) {
+      // Only process if photoBase64 is provided AND it's different from current photo
       try {
         if (typeof req.body.photoBase64 !== 'string') {
           return res.status(400).json({ error: 'photoBase64 must be a string' });
@@ -129,12 +214,13 @@ export const updateChild = async (req, res) => {
 
         const matches = req.body.photoBase64.match(/^data:(.+);base64,(.+)$/);
         if (!matches || matches.length !== 3) {
-          logger.warn('Invalid base64 format', { 
+          logger.warn('Invalid base64 format', {
             hasPrefix: req.body.photoBase64.startsWith('data:'),
             length: req.body.photoBase64.length,
-            preview: req.body.photoBase64.substring(0, 50)
           });
-          return res.status(400).json({ error: 'Invalid base64 photo format. Expected format: data:image/jpeg;base64,...' });
+          return res.status(400).json({ 
+            error: 'Invalid base64 photo format. Expected format: data:image/jpeg;base64,...' 
+          });
         }
 
         const mimetype = matches[1];
@@ -155,136 +241,126 @@ export const updateChild = async (req, res) => {
           return res.status(400).json({ error: 'Invalid base64 encoding' });
         }
 
-        // Normalize extension - Appwrite expects jpg, not jpeg
-        let extension = mimetype.split('/')[1] || 'jpg';
-        if (extension === 'jpeg') {
-          extension = 'jpg';
+        // Delete old photo if exists
+        if (child.photo) {
+          try {
+            await deleteFile(child.photo);
+            logger.info('Old child photo deleted', { childId: id, oldPhotoUrl: child.photo });
+          } catch (deleteError) {
+            logger.warn('Failed to delete old child photo', {
+              childId: id,
+              error: deleteError.message,
+              oldPhotoUrl: child.photo,
+            });
+          }
         }
-        // Ensure extension is lowercase and valid
+
+        // Normalize extension
+        let extension = mimetype.split('/')[1] || 'jpg';
+        if (extension === 'jpeg') extension = 'jpg';
+        
         const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         if (!validExtensions.includes(extension.toLowerCase())) {
-          extension = 'jpg'; // Default to jpg if invalid
+          extension = 'jpg';
         }
+        
         const filename = `child-${id}-${Date.now()}.${extension.toLowerCase()}`;
 
-        logger.info('Uploading child photo', { 
-          childId: id, 
-          filename, 
-          mimetype, 
+        logger.info('Uploading child photo', {
+          childId: id,
+          filename,
+          mimetype,
           size: fileBuffer.length,
-          bufferLength: fileBuffer.length
         });
 
-        let uploadResult;
-        try {
-          uploadResult = await uploadFile(fileBuffer, filename, mimetype);
-          logger.info('Upload file result:', { 
-            hasUrl: !!uploadResult?.url,
-            url: uploadResult?.url?.substring(0, 100),
-            hasPath: !!uploadResult?.path
-          });
-        } catch (uploadFileError) {
-          logger.error('uploadFile error in childController', {
-            error: uploadFileError.message,
-            stack: uploadFileError.stack,
-            childId: id,
-            filename,
-            mimetype,
-            bufferSize: fileBuffer.length,
-            errorCode: uploadFileError.code,
-            errorType: uploadFileError.type,
-            errorResponse: uploadFileError.response ? {
-              status: uploadFileError.response.status,
-              statusText: uploadFileError.response.statusText,
-              data: uploadFileError.response.data
-            } : null
-          });
-          
-          // Return more specific error message
-          const errorMessage = uploadFileError.response?.data?.message || uploadFileError.message || 'Unknown upload error';
-          const errorCode = uploadFileError.code || uploadFileError.response?.status || 'UNKNOWN';
-          
-          return res.status(500).json({ 
-            error: 'Failed to upload photo',
-            message: `Storage upload failed: ${errorMessage}`,
-            code: errorCode,
-            details: process.env.NODE_ENV === 'development' ? {
-              originalError: uploadFileError.message,
-              stack: uploadFileError.stack
-            } : undefined
-          });
-        }
+        const uploadResult = await uploadFile(fileBuffer, filename, mimetype);
+        
+        logger.info('Upload file result:', {
+          hasUrl: !!uploadResult?.url,
+          url: uploadResult?.url?.substring(0, 100),
+        });
 
         if (!uploadResult || !uploadResult.url) {
           logger.error('Upload result missing URL', { uploadResult, childId: id });
-          return res.status(500).json({ 
+          return res.status(500).json({
             error: 'Upload succeeded but no URL returned',
-            details: process.env.NODE_ENV === 'development' ? 'Upload result is missing URL field' : undefined
+            details: process.env.NODE_ENV === 'development' ? 'Upload result is missing URL field' : undefined,
           });
         }
 
         updateData.photo = uploadResult.url;
         delete updateData.photoBase64;
         
-        logger.info('Child photo uploaded successfully', { 
-          childId: id, 
-          url: uploadResult.url.substring(0, 100)
+        logger.info('Child photo uploaded successfully', {
+          childId: id,
+          url: uploadResult.url.substring(0, 100),
         });
+        
       } catch (uploadError) {
-        logger.error('Photo upload error (base64)', { 
-          error: uploadError.message, 
+        logger.error('Photo upload error (base64)', {
+          error: uploadError.message,
           stack: uploadError.stack,
           childId: id,
-          hasPhotoBase64: !!req.body.photoBase64,
-          photoBase64Length: req.body.photoBase64?.length,
-          photoBase64Type: typeof req.body.photoBase64,
           errorCode: uploadError.code,
-          errorName: uploadError.name,
-          errorResponse: uploadError.response ? {
-            status: uploadError.response.status,
-            statusText: uploadError.response.statusText,
-            data: uploadError.response.data
-          } : null,
-          originalError: uploadError.originalError ? {
-            message: uploadError.originalError.message,
-            code: uploadError.originalError.code
-          } : null
         });
         
-        // If error was already handled (response sent), don't send again
-        if (res.headersSent) {
-          return;
-        }
+        if (res.headersSent) return;
         
-        const errorMessage = uploadError.message || 'Unknown upload error';
-        const errorCode = uploadError.code || 'UNKNOWN';
-        
-        return res.status(500).json({ 
+        return res.status(500).json({
           error: 'Failed to upload photo',
-          message: errorMessage,
-          code: errorCode,
-          details: process.env.NODE_ENV === 'development' ? {
-            stack: uploadError.stack,
-            name: uploadError.name,
-            originalError: uploadError.originalError ? uploadError.originalError.message : undefined
-          } : undefined
+          message: uploadError.message || 'Unknown upload error',
+          code: uploadError.code || 'UNKNOWN',
         });
       }
+    } else if (req.body.removePhoto === true || req.body.removePhoto === 'true') {
+      // Handle photo removal
+      if (child.photo) {
+        try {
+          await deleteFile(child.photo);
+          logger.info('Child photo removed as requested', { childId: id, photoUrl: child.photo });
+        } catch (deleteError) {
+          logger.warn('Failed to delete child photo', {
+            childId: id,
+            error: deleteError.message,
+            photoUrl: child.photo,
+          });
+        }
+      }
+      updateData.photo = null;
     }
 
     try {
-      await child.update(updateData);
+      // Validate required fields before update
+      const requiredFields = ['firstName', 'lastName', 'dateOfBirth', 'disabilityType'];
+      const missingFields = requiredFields.filter(field => 
+        !updateData[field] && updateData[field] !== ''
+      );
+      
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          missing: missingFields,
+        });
+      }
+
+      // Update child with timestamp
+      await child.update({
+        ...updateData,
+        updatedAt: new Date(),
+      });
+      
       await child.reload();
+      
     } catch (updateError) {
       logger.error('Child update error', {
         error: updateError.message,
         stack: updateError.stack,
         childId: id,
-        updateData: { ...updateData, photo: updateData.photo?.substring(0, 100) }
       });
+      
       return res.status(500).json({
         error: 'Failed to update child record',
-        details: process.env.NODE_ENV === 'development' ? updateError.message : undefined
+        details: process.env.NODE_ENV === 'development' ? updateError.message : undefined,
       });
     }
 
@@ -297,32 +373,84 @@ export const updateChild = async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    res.json(childData);
-  } catch (error) {
-    logger.error('Update child error', { 
-      error: error.message, 
-      stack: error.stack,
-      childId: req.params?.id, 
-      userId: req.user?.id,
-      hasPhotoBase64: !!req.body?.photoBase64,
-      hasFile: !!req.file,
-      errorName: error.name,
-      errorCode: error.code
+    res.json({
+      success: true,
+      message: 'Child updated successfully',
+      data: childData,
     });
     
-    // If error was already handled (response sent), don't send again
-    if (res.headersSent) {
-      return;
-    }
+  } catch (error) {
+    logger.error('Update child error', {
+      error: error.message,
+      stack: error.stack,
+      childId: req.params?.id,
+      userId: req.user?.id,
+    });
     
-    res.status(500).json({ 
+    if (res.headersSent) return;
+    
+    res.status(500).json({
       error: 'Failed to update child',
       message: error.message || 'Unknown error occurred',
-      details: process.env.NODE_ENV === 'development' ? {
-        stack: error.stack,
-        name: error.name,
-        code: error.code
-      } : undefined
+    });
+  }
+};
+
+// Add child (if needed for direct child creation)
+export const addChild = async (req, res) => {
+  try {
+    const { parentId, ...childData } = req.body;
+
+    // Validate parent exists
+    const parent = await User.findByPk(parentId);
+    if (!parent) {
+      return res.status(404).json({ error: 'Parent not found' });
+    }
+
+    // Validate required fields
+    const requiredFields = ['firstName', 'lastName', 'dateOfBirth', 'disabilityType'];
+    const missingFields = requiredFields.filter(field => !childData[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        missing: missingFields,
+      });
+    }
+
+    // Create child
+    const child = await Child.create({
+      ...childData,
+      parentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const childResponse = child.toJSON();
+    childResponse.age = child.getAge();
+
+    // Emit real-time notification
+    emitToUser(parentId, 'child:added', {
+      child: childResponse,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Child added successfully',
+      data: childResponse,
+    });
+    
+  } catch (error) {
+    logger.error('Add child error', {
+      error: error.message,
+      stack: error.stack,
+      parentId: req.body?.parentId,
+    });
+    
+    res.status(500).json({
+      error: 'Failed to add child',
+      message: error.message || 'Unknown error occurred',
     });
   }
 };
