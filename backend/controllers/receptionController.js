@@ -5,6 +5,12 @@ import Document from '../models/Document.js';
 import TeacherRating from '../models/TeacherRating.js';
 import SuperAdminMessage from '../models/SuperAdminMessage.js';
 import School from '../models/School.js';
+import TherapyUsage from '../models/TherapyUsage.js';
+import Payment from '../models/Payment.js';
+import Activity from '../models/Activity.js';
+import Media from '../models/Media.js';
+import Meal from '../models/Meal.js';
+import Progress from '../models/Progress.js';
 import logger from '../utils/logger.js';
 import bcrypt from 'bcryptjs';
 import { Op, fn, col } from 'sequelize';
@@ -1075,6 +1081,14 @@ export const deleteChildForReception = async (req, res) => {
         logger.warn('Failed to delete child photo from storage', { childId, error: e.message });
       }
     }
+
+    // Remove or nullify dependent records so FK does not block child.destroy()
+    await TherapyUsage.destroy({ where: { childId } });
+    await Payment.update({ childId: null }, { where: { childId } });
+    await Activity.destroy({ where: { childId } });
+    await Media.destroy({ where: { childId } });
+    await Meal.destroy({ where: { childId } });
+    await Progress.destroy({ where: { childId } });
 
     await child.destroy();
 
