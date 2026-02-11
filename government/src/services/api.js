@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'https://uchqun-production.up.railway.app/api';
+const TOKEN_KEY = 'government_accessToken';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -14,6 +15,11 @@ api.interceptors.request.use(
   (config) => {
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
+    }
+    // Cross-origin (Netlify → Railway) da cookie ishonchsiz — Bearer token ishlatamiz
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -35,6 +41,7 @@ api.interceptors.response.use(
       
       if (!isAuthEndpoint) {
         localStorage.removeItem('user');
+        localStorage.removeItem(TOKEN_KEY);
         const isLoginPage = window.location.pathname === '/login' || window.location.pathname.startsWith('/login');
         if (!isLoginPage) {
           window.location.href = '/login';
