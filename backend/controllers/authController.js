@@ -8,7 +8,7 @@ const generateTokens = (userId) => {
   const accessToken = jwt.sign(
     { userId, jti: crypto.randomUUID() },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE || '7d' } // Extended to 7 days instead of 15 minutes
+    { expiresIn: process.env.JWT_EXPIRE || '30d' } // 30 days — login 1 oy davomida saqlanadi
   );
 
   return { accessToken };
@@ -151,9 +151,11 @@ export const login = async (req, res) => {
       path: '/',
     };
 
+    // Cookie muddati token bilan bir xil (30 kun)
+    const maxAgeMs = 30 * 24 * 60 * 60 * 1000;
     res.cookie('accessToken', accessToken, {
       ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: maxAgeMs,
     });
 
     // Note: Refresh tokens are no longer stored in database for simplicity
@@ -182,7 +184,7 @@ export const login = async (req, res) => {
   }
 };
 
-// Refresh token endpoint removed - access tokens now last 7 days
+// Refresh token endpoint removed - access tokens last 30 days
 
 export const logout = async (req, res) => {
   try {
