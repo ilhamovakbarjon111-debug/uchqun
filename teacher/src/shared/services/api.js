@@ -10,12 +10,13 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor — FormData content-type
 api.interceptors.request.use(
   (config) => {
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
+    const token = localStorage.getItem('accessToken');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)

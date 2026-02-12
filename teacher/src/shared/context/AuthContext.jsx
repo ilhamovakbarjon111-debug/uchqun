@@ -97,9 +97,10 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { user: userData } = response.data;
+      const { user: userData, accessToken } = response.data;
 
       if (userData) {
+        if (accessToken) localStorage.setItem('accessToken', accessToken);
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         return { success: true };
@@ -117,6 +118,8 @@ export const AuthProvider = ({ children }) => {
     try { await api.post('/auth/logout'); } catch { /* ignore */ }
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     try {
       window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'logout' }));
     } catch {

@@ -1,21 +1,23 @@
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'https://uchqun-production.up.railway.app/api';
+const TOKEN_KEY = 'admin_accessToken';
 
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Send HttpOnly cookies with every request
+  withCredentials: true,
 });
 
-// Request interceptor — FormData content-type
 api.interceptors.request.use(
   (config) => {
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)
@@ -37,6 +39,7 @@ api.interceptors.response.use(
       
       if (!isAuthEndpoint) {
         localStorage.removeItem('user');
+        localStorage.removeItem(TOKEN_KEY);
         const isLoginPage = window.location.pathname === '/login' || window.location.pathname.startsWith('/login');
         if (!isLoginPage) {
           window.location.href = '/login';

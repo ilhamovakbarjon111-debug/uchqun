@@ -43,12 +43,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { user: userData } = response.data;
+      const { user: userData, accessToken } = response.data;
 
       if (userData.role !== 'reception') {
         return { success: false, error: 'Access denied. Reception role required.' };
       }
 
+      if (accessToken) localStorage.setItem('reception_accessToken', accessToken);
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       return { success: true };
@@ -64,6 +65,7 @@ export const AuthProvider = ({ children }) => {
     try { await api.post('/auth/logout'); } catch { /* ignore */ }
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('reception_accessToken');
   };
 
   const value = {
