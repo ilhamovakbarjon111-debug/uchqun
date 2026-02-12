@@ -4,11 +4,11 @@ import User from '../models/User.js';
 import logger from '../utils/logger.js';
 
 const generateTokens = (userId) => {
-  // Only generate access token - no refresh token needed
+  // Access token har doim 30 kun — env (masalan Railway) qisqa (15m) bo‘lsa ham ishlatilmaydi
   const accessToken = jwt.sign(
     { userId, jti: crypto.randomUUID() },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE || '30d' } // 30 days — login 1 oy davomida saqlanadi
+    { expiresIn: '30d' }
   );
 
   return { accessToken };
