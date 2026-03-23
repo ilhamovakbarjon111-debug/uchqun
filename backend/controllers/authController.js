@@ -3,12 +3,14 @@ import crypto from 'crypto';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
 
+// Token muddati — qattiq 90 kun (env ishlatilmaydi)
+const ACCESS_TOKEN_EXPIRY = '90d';
+
 const generateTokens = (userId) => {
-  // Access token har doim 30 kun — env (masalan Railway) qisqa (15m) bo‘lsa ham ishlatilmaydi
   const accessToken = jwt.sign(
     { userId, jti: crypto.randomUUID() },
     process.env.JWT_SECRET,
-    { expiresIn: '30d' }
+    { expiresIn: ACCESS_TOKEN_EXPIRY }
   );
 
   return { accessToken };
@@ -151,8 +153,8 @@ export const login = async (req, res) => {
       path: '/',
     };
 
-    // Cookie muddati token bilan bir xil (30 kun)
-    const maxAgeMs = 30 * 24 * 60 * 60 * 1000;
+    // Cookie muddati token bilan bir xil (90 kun)
+    const maxAgeMs = 90 * 24 * 60 * 60 * 1000;
     res.cookie('accessToken', accessToken, {
       ...cookieOptions,
       maxAge: maxAgeMs,
@@ -165,6 +167,7 @@ export const login = async (req, res) => {
     res.json({
       success: true,
       accessToken,
+      expiresIn: ACCESS_TOKEN_EXPIRY,
       user: user.toJSON(),
     });
   } catch (error) {

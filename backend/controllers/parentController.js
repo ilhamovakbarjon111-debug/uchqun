@@ -58,7 +58,7 @@ export const getMyChildren = async (req, res) => {
  */
 export const getMyActivities = async (req, res) => {
   try {
-    const { limit = 50, offset = 0, activityType, startDate, endDate } = req.query;
+    const { limit = 50, offset = 0, activityType, startDate, endDate, childId } = req.query;
 
     // Get parent's groupId
     const parent = await User.findByPk(req.user.id, { attributes: ['groupId'] });
@@ -93,7 +93,27 @@ export const getMyActivities = async (req, res) => {
       });
     }
 
-    // Query teacher-created activities for all children in the parent's group
+    const myChildren = await Child.findAll({
+      where: { parentId: req.user.id },
+      attributes: ['id'],
+    });
+    const myChildIds = myChildren.map((child) => child.id);
+
+    if (myChildIds.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        total: 0,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      });
+    }
+
+    if (childId && !myChildIds.includes(childId)) {
+      return res.status(403).json({ error: 'You do not have access to this child' });
+    }
+
+    // Query teacher-created activities only for this parent's child(ren)
     const whereActivity = {};
 
     if (activityType) {
@@ -111,7 +131,9 @@ export const getMyActivities = async (req, res) => {
       include: [{
         model: Child,
         as: 'child',
-        where: { groupId: parent.groupId },
+        where: {
+          id: childId ? childId : { [Op.in]: myChildIds },
+        },
         attributes: ['id', 'firstName', 'lastName', 'photo'],
         required: true,
       }],
@@ -169,7 +191,7 @@ export const getActivityById = async (req, res) => {
  */
 export const getMyMeals = async (req, res) => {
   try {
-    const { limit = 50, offset = 0, mealType, startDate, endDate } = req.query;
+    const { limit = 50, offset = 0, mealType, startDate, endDate, childId } = req.query;
 
     // Get parent's groupId
     const parent = await User.findByPk(req.user.id, { attributes: ['groupId'] });
@@ -204,7 +226,27 @@ export const getMyMeals = async (req, res) => {
       });
     }
 
-    // Query teacher-created meals for all children in the parent's group
+    const myChildren = await Child.findAll({
+      where: { parentId: req.user.id },
+      attributes: ['id'],
+    });
+    const myChildIds = myChildren.map((child) => child.id);
+
+    if (myChildIds.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        total: 0,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      });
+    }
+
+    if (childId && !myChildIds.includes(childId)) {
+      return res.status(403).json({ error: 'You do not have access to this child' });
+    }
+
+    // Query teacher-created meals only for this parent's child(ren)
     const whereMeal = {};
 
     if (mealType) {
@@ -222,7 +264,9 @@ export const getMyMeals = async (req, res) => {
       include: [{
         model: Child,
         as: 'child',
-        where: { groupId: parent.groupId },
+        where: {
+          id: childId ? childId : { [Op.in]: myChildIds },
+        },
         attributes: ['id', 'firstName', 'lastName', 'photo'],
         required: true,
       }],

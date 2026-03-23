@@ -13,7 +13,7 @@ import {
   Settings,
   Heart,
   Building2,
-  Music,
+  Lightbulb,
   Bot,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -85,7 +85,7 @@ const Sidebar = ({ onClose }) => {
     { name: t('nav.meals'), href: '/meals', icon: Utensils },
     { name: t('nav.media'), href: '/media', icon: ImageIcon },
     { name: t('nav.rating'), href: '/rating', icon: Star },
-    { name: t('nav.therapy', { defaultValue: 'Terapiya' }), href: '/therapy', icon: Music },
+    { name: t('nav.therapy', { defaultValue: 'Foydali' }), href: '/therapy', icon: Lightbulb },
     { name: t('nav.aiChat'), href: '/ai-chat', icon: Heart },
     { name: t('nav.chat'), href: '/chat', icon: MessageCircle, badge: unreadChat },
     { name: t('nav.notifications', { defaultValue: 'Notifications' }), href: '/notifications', icon: Bell, badge: count },

@@ -8,11 +8,10 @@ import { useTranslation } from 'react-i18next';
 import {
   Music,
   Video,
-  FileText,
+  Lightbulb,
   Play,
   Clock,
   Star,
-  Filter,
   Search,
 } from 'lucide-react';
 
@@ -81,7 +80,7 @@ const Therapy = () => {
       case 'video':
         return Video;
       case 'content':
-        return FileText;
+        return Lightbulb;
       default:
         return Play;
     }
@@ -124,10 +123,10 @@ const Therapy = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {t('therapy.title', { defaultValue: 'Terapiya' })}
+          {t('therapy.title', { defaultValue: 'Foydali' })}
         </h1>
         <p className="text-gray-600">
-          {t('therapy.subtitle', { defaultValue: 'Musiqa, video va content terapiyalar' })}
+          {t('therapy.subtitle', { defaultValue: 'Musiqa, video va tavsiya bo\'limi' })}
         </p>
       </div>
 
@@ -182,7 +181,7 @@ const Therapy = () => {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            {t('therapy.content', { defaultValue: 'Content' })}
+            {t('therapy.content', { defaultValue: 'Tavsiya' })}
           </button>
         </div>
       </div>

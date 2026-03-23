@@ -1,9 +1,11 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Activity,
   Camera,
   Users,
   UtensilsCrossed,
+  HeartPulse,
+  Star,
 } from 'lucide-react';
 import Card from '../shared/components/Card';
 import LoadingSpinner from '../shared/components/LoadingSpinner';
@@ -40,17 +42,25 @@ const Dashboard = () => {
           }, 0);
         };
 
-        const [activitiesCount, mealsCount, mediaCount] = await Promise.all([
+        const [activitiesCount, mealsCount, mediaCount, ratingsRes, monitoringRes] = await Promise.all([
           fetchCount('/activities', 'activities'),
           fetchCount('/meals', 'meals'),
           fetchCount('/media', 'media'),
+          api.get('/teacher/ratings').catch(() => ({ data: { data: [] } })),
+          api.get('/teacher/emotional-monitoring?limit=100').catch(() => ({ data: { data: [] } })),
         ]);
+        const ratings = Array.isArray(ratingsRes.data?.data) ? ratingsRes.data.data : [];
+        const myRating = ratings.find((item) => item.id === user?.id);
+        const monitoringRecords = Array.isArray(monitoringRes.data?.data) ? monitoringRes.data.data : [];
 
         setStats({
           activities: activitiesCount,
           meals: mealsCount,
           media: mediaCount,
           parents: parents.length,
+          rating: Number(myRating?.rating || 0).toFixed(1),
+          ratingsCount: Number(myRating?.totalRatings || 0),
+          statusEntries: monitoringRecords.length,
         });
       } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -75,6 +85,8 @@ const Dashboard = () => {
     { title: t('dashboard.activities'), value: stats?.activities || 0, icon: Activity, href: '/teacher/activities' },
     { title: t('dashboard.meals'), value: stats?.meals || 0, icon: UtensilsCrossed, href: '/teacher/meals' },
     { title: t('dashboard.media'), value: stats?.media || 0, icon: Camera, href: '/teacher/media' },
+    { title: t('dashboard.teacherRating', { defaultValue: "Mening bahom" }), value: `${stats?.rating || '0.0'} (${stats?.ratingsCount || 0})`, icon: Star, href: '/teacher' },
+    { title: t('dashboard.childStatus', { defaultValue: "Bola holati yozuvlari" }), value: stats?.statusEntries || 0, icon: HeartPulse, href: '/teacher/monitoring' },
   ];
 
   // Get role display text based on user role
@@ -102,7 +114,7 @@ const Dashboard = () => {
 
       <div className="relative z-10">
         <h2 className="text-lg font-semibold text-white mb-4 drop-shadow-sm">{t('dashboard.overview')}</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           {overviewCards.map((card) => (
             <Card key={card.title} className="p-4 hover:shadow-lg transition">
               <a href={card.href} className="flex items-center gap-4">

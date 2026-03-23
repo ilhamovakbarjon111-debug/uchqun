@@ -13,6 +13,8 @@ import {
   UtensilsCrossed,
   Camera,
   Bell,
+  HeartPulse,
+  Star,
   ChevronRight,
 } from 'lucide-react';
 
@@ -34,15 +36,30 @@ const Dashboard = () => {
         api.get(`/meals?limit=5&childId=${selectedChildId}`).catch(() => ({ data: { meals: [] } })),
         api.get(`/media?limit=5&childId=${selectedChildId}`).catch(() => ({ data: { media: [] } })),
       ]);
+      const [ratingsResponse, monitoringResponse] = await Promise.all([
+        api.get('/parent/ratings').catch(() => ({ data: { data: { summary: { average: 0, count: 0 } } } })),
+        api.get(`/parent/emotional-monitoring/child/${selectedChildId}?limit=1`).catch(() => ({ data: { data: [] } })),
+      ]);
 
       const activities = activitiesResponse.data?.activities || activitiesResponse.data || [];
       const meals = mealsResponse.data?.meals || mealsResponse.data || [];
       const media = mediaResponse.data?.media || mediaResponse.data || [];
+      const ratingsSummary = ratingsResponse.data?.data?.summary || { average: 0, count: 0 };
+      const latestMonitoring = Array.isArray(monitoringResponse.data?.data) && monitoringResponse.data.data.length > 0
+        ? monitoringResponse.data.data[0]
+        : null;
+      const emotionalState = latestMonitoring?.emotionalState || {};
+      const emotionalTotal = Object.keys(emotionalState).length;
+      const emotionalChecked = Object.values(emotionalState).filter(Boolean).length;
+      const emotionalScore = emotionalTotal > 0 ? Math.round((emotionalChecked / emotionalTotal) * 100) : 0;
 
       setStats({
         activities: Array.isArray(activities) ? activities.length : 0,
         meals: Array.isArray(meals) ? meals.length : 0,
         media: Array.isArray(media) ? media.length : 0,
+        teacherRating: Number(ratingsSummary.average || 0).toFixed(1),
+        teacherRatingCount: Number(ratingsSummary.count || 0),
+        childStatusScore: emotionalScore,
         recentActivity: Array.isArray(activities) && activities.length > 0 ? activities[0] : null,
       });
 
@@ -122,6 +139,18 @@ const Dashboard = () => {
       icon: Camera,
       href: '/media',
     },
+    {
+      title: t('dashboard.childStatus', { defaultValue: "Bolaning holati" }),
+      value: `${stats?.childStatusScore || 0}%`,
+      icon: HeartPulse,
+      href: '/child',
+    },
+    {
+      title: t('dashboard.teacherRating', { defaultValue: "Tarbiyachi bahosi" }),
+      value: `${stats?.teacherRating || '0.0'} (${stats?.teacherRatingCount || 0})`,
+      icon: Star,
+      href: '/rating',
+    },
   ];
 
   return (
@@ -153,7 +182,7 @@ const Dashboard = () => {
           {/* Overview Cards */}
           <div>
             <h2 className="text-lg font-semibold text-white mb-4 drop-shadow-sm">{t('dashboard.overview')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
               {overviewCards.map((card) => (
                 <Link key={card.title} to={card.href}>
                   <Card className="p-5 hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm cursor-pointer group">
